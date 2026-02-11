@@ -25,7 +25,7 @@ function ymToWhereLte(ym: { year: number; month: number }) {
   };
 }
 
-export async function GET(request: NextRequest, { params }: { params: { brand: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ brand: string }> }) {
   const start = Date.now();
   const endpoint = "/api/v1/brands/{brand}/metrics";
 
@@ -34,7 +34,8 @@ export async function GET(request: NextRequest, { params }: { params: { brand: s
 
   const { ctx, headers } = auth;
 
-  const brand = params.brand as Brand;
+  const { brand: brandParam } = await params;
+  const brand = brandParam as Brand;
   if (!Object.values(Brand).includes(brand)) {
     const res = NextResponse.json({ error: "BAD_REQUEST", code: "BAD_REQUEST", message: "Invalid brand" }, { status: 400 });
     headers.forEach((v, k) => res.headers.set(k, v));
@@ -176,7 +177,7 @@ export async function GET(request: NextRequest, { params }: { params: { brand: s
         requestId: ctx.requestId,
         tierAtRequest: ctx.tier,
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     return res;
   } catch (e) {
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest, { params }: { params: { brand: s
         requestId: ctx.requestId,
         tierAtRequest: ctx.tier,
       },
-    }).catch(() => {});
+    }).catch(() => { });
 
     const res = NextResponse.json(
       { error: "INTERNAL", code: "INTERNAL", message: e instanceof Error ? e.message : "Internal error" },
