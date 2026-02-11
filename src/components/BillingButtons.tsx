@@ -40,25 +40,45 @@ export function BillingButtons() {
   }
 
   return (
-    <section style={{ marginTop: 16 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button disabled={isLoading} onClick={() => run(() => startCheckout("starter", "month"))} style={{ padding: "10px 14px" }}>
-          Starter (Monthly)
+    <section>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button
+          disabled={isLoading}
+          onClick={() => run(() => startCheckout("starter", "month"))}
+          className="btn btn-outline btn-sm"
+        >
+          Starter Monthly
         </button>
-        <button disabled={isLoading} onClick={() => run(() => startCheckout("starter", "year"))} style={{ padding: "10px 14px" }}>
-          Starter (Yearly)
+        <button
+          disabled={isLoading}
+          onClick={() => run(() => startCheckout("starter", "year"))}
+          className="btn btn-outline btn-sm"
+        >
+          Starter Yearly
         </button>
-        <button disabled={isLoading} onClick={() => run(() => startCheckout("pro", "month"))} style={{ padding: "10px 14px" }}>
-          Pro (Monthly)
+        <button
+          disabled={isLoading}
+          onClick={() => run(() => startCheckout("pro", "month"))}
+          className="btn btn-primary btn-sm"
+        >
+          Pro Monthly
         </button>
-        <button disabled={isLoading} onClick={() => run(() => startCheckout("pro", "year"))} style={{ padding: "10px 14px" }}>
-          Pro (Yearly)
+        <button
+          disabled={isLoading}
+          onClick={() => run(() => startCheckout("pro", "year"))}
+          className="btn btn-primary btn-sm"
+        >
+          Pro Yearly
         </button>
-        <button disabled={isLoading} onClick={() => run(openPortal)} style={{ padding: "10px 14px" }}>
-          Manage Subscription
+        <button
+          disabled={isLoading}
+          onClick={() => run(openPortal)}
+          className="btn btn-ghost btn-sm"
+        >
+          Manage Subscription →
         </button>
       </div>
-      {err ? <p style={{ marginTop: 12, color: "#b00020" }}>{err}</p> : null}
+      {err ? <p className="error-text">{err}</p> : null}
     </section>
   );
 }

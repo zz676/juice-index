@@ -26,16 +26,39 @@ export function CreateApiKeyButton() {
   }
 
   return (
-    <section style={{ marginTop: 12 }}>
-      <button onClick={createKey} disabled={isLoading} style={{ padding: "10px 14px" }}>
-        {isLoading ? "Creating..." : "Create API key"}
+    <div>
+      <button onClick={createKey} disabled={isLoading} className="btn btn-primary btn-sm">
+        {isLoading ? "Creating..." : "+ Create API Key"}
       </button>
       {newKey ? (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontWeight: 600 }}>New key (shown once):</div>
-          <pre style={{ padding: 12, background: "#f6f6f6", overflowX: "auto" }}>{newKey}</pre>
+        <div
+          style={{
+            marginTop: 16,
+            padding: 16,
+            background: "var(--green-50)",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--green-200)",
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: "0.85rem", marginBottom: 8, color: "var(--green-800)" }}>
+            🔑 New key (shown once):
+          </div>
+          <code
+            style={{
+              display: "block",
+              padding: 12,
+              background: "var(--gray-900)",
+              color: "var(--green-400)",
+              borderRadius: "var(--radius-sm)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.85rem",
+              overflowX: "auto",
+            }}
+          >
+            {newKey}
+          </code>
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

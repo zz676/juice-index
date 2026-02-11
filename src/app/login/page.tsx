@@ -31,23 +31,59 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 520 }}>
-      <h1>Login</h1>
-      <p>Sign in via email magic link (Supabase Auth).</p>
-      <form onSubmit={onSubmit} style={{ display: "flex", gap: 8 }}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          required
-          style={{ flex: 1, padding: 10 }}
-        />
-        <button type="submit" disabled={isLoading} style={{ padding: "10px 14px" }}>
-          {isLoading ? "Sending..." : "Send link"}
-        </button>
-      </form>
-      {status ? <p style={{ marginTop: 12 }}>{status}</p> : null}
+    <main
+      style={{
+        minHeight: "calc(100vh - 160px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        background:
+          "radial-gradient(ellipse at 50% 0%, var(--green-50) 0%, var(--bg) 60%)",
+      }}
+    >
+      <div className="card" style={{ width: "100%", maxWidth: 440 }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <img
+            src="/logo.png"
+            alt="Juice Index"
+            style={{ height: 48, marginBottom: 16 }}
+          />
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: 6 }}>
+            Welcome back
+          </h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>
+            Sign in with a magic link sent to your email.
+          </p>
+        </div>
+        <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            className="input"
+          />
+          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ width: "100%" }}>
+            {isLoading ? "Sending..." : "Send Magic Link"}
+          </button>
+        </form>
+        {status ? (
+          <p
+            style={{
+              marginTop: 16,
+              padding: "10px 14px",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "0.9rem",
+              background: status.includes("Check") ? "var(--green-50)" : "#fef2f2",
+              color: status.includes("Check") ? "var(--green-700)" : "#dc2626",
+            }}
+          >
+            {status}
+          </p>
+        ) : null}
+      </div>
     </main>
   );
 }

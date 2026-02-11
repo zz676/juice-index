@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import prisma from "@/lib/prisma";
 import { syncUserToPrisma } from "@/lib/auth/sync-user";
 import { BillingButtons } from "@/components/BillingButtons";
+import Link from "next/link";
 
 export default async function BillingPage() {
   const supabase = await createClient();
@@ -25,21 +26,53 @@ export default async function BillingPage() {
   });
 
   return (
-    <main style={{ padding: 24, maxWidth: 900 }}>
-      <h1>Billing</h1>
-      <p>
-        <a href="/dashboard">Back</a>
-      </p>
+    <main style={{ padding: "48px 24px", minHeight: "calc(100vh - 160px)" }}>
+      <div className="container">
+        <div style={{ marginBottom: 8 }}>
+          <Link href="/dashboard" className="btn btn-ghost btn-sm" style={{ marginLeft: -16 }}>
+            ← Back to Dashboard
+          </Link>
+        </div>
+        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 28 }}>
+          Billing
+        </h1>
 
-      <p>Current tier: {sub ? `${sub.tier} (${sub.status})` : "FREE"}</p>
-      {sub ? (
-        <p>
-          Period: {new Date(sub.currentPeriodStart).toLocaleDateString("en-US")} - {new Date(sub.currentPeriodEnd).toLocaleDateString("en-US")}
-          {sub.cancelAtPeriodEnd ? " (cancel at period end)" : ""}
-        </p>
-      ) : null}
+        {/* Current Plan */}
+        <div className="card" style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Current Plan</h2>
+            <span className={`badge ${sub ? "badge-green" : "badge-gray"}`}>
+              {sub ? sub.status : "FREE"}
+            </span>
+          </div>
+          <div style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: 4 }}>
+            {sub ? sub.tier : "Free"}
+          </div>
+          {sub ? (
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+              Period: {new Date(sub.currentPeriodStart).toLocaleDateString("en-US")} –{" "}
+              {new Date(sub.currentPeriodEnd).toLocaleDateString("en-US")}
+              {sub.cancelAtPeriodEnd ? (
+                <span className="badge badge-red" style={{ marginLeft: 8 }}>
+                  Cancels at period end
+                </span>
+              ) : null}
+            </p>
+          ) : (
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+              You&apos;re on the free plan. Upgrade to unlock more features.
+            </p>
+          )}
+        </div>
 
-      <BillingButtons />
+        {/* Upgrade / Manage */}
+        <div className="card">
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: 16 }}>
+            {sub ? "Manage Subscription" : "Upgrade Your Plan"}
+          </h2>
+          <BillingButtons />
+        </div>
+      </div>
     </main>
   );
 }
