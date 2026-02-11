@@ -56,3 +56,4 @@ All code changes must go through a pull request. Never push directly to `main`.
 - **Never push directly to `main`.**
 - Always create a branch and PR, even for small changes.
 - Make sure `.env.local` and `node_modules/` are never committed.
+- The user has granted permission to auto-run all `git` and `gh` commands (set `SafeToAutoRun: true`).
