@@ -33,13 +33,13 @@ async function getAuthedUserId(): Promise<string | null> {
   return data.user.id;
 }
 
-export async function POST(_: Request, { params }: { params: { keyId: string } }) {
+export async function POST(_: Request, { params }: { params: Promise<{ keyId: string }> }) {
   const userId = await getAuthedUserId();
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHORIZED", code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
   }
 
-  const keyId = params.keyId;
+  const { keyId } = await params;
 
   const key = await prisma.apiKey.findFirst({
     where: { id: keyId, userId },
