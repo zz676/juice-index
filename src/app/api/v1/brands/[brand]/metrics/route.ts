@@ -166,7 +166,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     headers.forEach((v, k) => res.headers.set(k, v));
 
-    await prisma.aIUsage.create({
+    await prisma.apiRequestLog.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,
@@ -181,7 +181,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return res;
   } catch (e) {
-    await prisma.aIUsage.create({
+    await prisma.apiRequestLog.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,

@@ -51,8 +51,8 @@ export default async function BillingPage() {
             </div>
             {sub ? (
               <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                Period: {new Date(sub.currentPeriodStart).toLocaleDateString("en-US")} –{" "}
-                {new Date(sub.currentPeriodEnd).toLocaleDateString("en-US")}
+                Period: {sub.currentPeriodStart ? new Date(sub.currentPeriodStart).toLocaleDateString("en-US") : "—"} –{" "}
+                {sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toLocaleDateString("en-US") : "—"}
                 {sub.cancelAtPeriodEnd ? (
                   <span className="badge badge-red" style={{ marginLeft: 8 }}>
                     Cancels at period end
