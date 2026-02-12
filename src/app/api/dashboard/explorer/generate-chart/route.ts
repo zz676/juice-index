@@ -126,38 +126,20 @@ export async function POST(req: Request) {
         }
 
         // Execute query
-        // const result = await prisma.$queryRawUnsafe(object.sql);
+        const result = await prisma.$queryRawUnsafe(object.sql);
 
-        // MOCK DATA GENERATION (until DB has real data)
-        // Create an array of data points based on the config.
-        const mockDataLength = 12; // e.g. 12 months
-        const mockData = Array.from({ length: mockDataLength }, (_, i) => {
-            const point: any = {};
-            // Handle x-axis (assume time-series for now if key contains date/month/year)
-            if (object.config.xAxisKey.toLowerCase().includes('month')) {
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                point[object.config.xAxisKey] = months[i % 12];
-            } else if (object.config.xAxisKey.toLowerCase().includes('year')) {
-                point[object.config.xAxisKey] = (2020 + i).toString();
-            } else {
-                point[object.config.xAxisKey] = `Category ${i + 1}`;
-            }
-
-            // Populate series data
-            object.config.series.forEach(s => {
-                point[s.key] = Math.floor(Math.random() * 1000) + 100;
-            });
-
-            return point;
-        });
+        // Check if result is an array
+        if (!Array.isArray(result)) {
+            return NextResponse.json({ error: "Invalid query result format" }, { status: 500 });
+        }
 
         return NextResponse.json({
-            data: mockData,
+            data: result,
             config: object.config,
             title: object.title,
             description: object.description,
             sql: object.sql,
-            mock: true
+            mock: false
         });
 
     } catch (error) {
