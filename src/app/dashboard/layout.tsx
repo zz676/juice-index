@@ -9,23 +9,32 @@ const navItems = [
     { href: "/dashboard/explorer", icon: "show_chart", label: "Data Explorer" },
     { href: "/dashboard/keys", icon: "vpn_key", label: "API Keys" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
+    { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];
+
+import { createClient } from "@/lib/supabase/client";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
+    const supabase = createClient();
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        window.location.href = "/login";
+    };
 
     return (
         <div className="bg-background-light font-display text-slate-custom-800 antialiased overflow-hidden h-screen flex">
             {/* Sidebar */}
             <aside className="w-64 bg-white border-r border-slate-custom-200 flex flex-col justify-between h-full p-6 flex-shrink-0 z-20 shadow-sm">
-                <div>
+                <div className="flex-1 flex flex-col">
                     <div className="flex items-center gap-3 mb-10 px-2">
                         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(106,218,27,0.4)]">
                             J
                         </div>
                         <h1 className="text-xl font-bold tracking-tight text-slate-custom-900">Juice Index</h1>
                     </div>
-                    <nav className="space-y-2">
+                    <nav className="space-y-2 flex-1">
                         {navItems.map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -33,8 +42,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-full font-medium transition-all group ${isActive
-                                            ? "bg-primary/20 text-slate-custom-900"
-                                            : "text-slate-custom-600 hover:bg-slate-custom-100"
+                                        ? "bg-primary/20 text-slate-custom-900"
+                                        : "text-slate-custom-600 hover:bg-slate-custom-100"
                                         }`}
                                 >
                                     <span className={`material-icons-round transition-transform group-hover:scale-110 ${isActive ? "text-primary" : "group-hover:text-primary"}`}>
@@ -45,6 +54,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                             );
                         })}
                     </nav>
+
+                    <button
+                        onClick={handleSignOut}
+                        className="flex items-center gap-3 px-4 py-3 rounded-full font-medium text-slate-custom-600 hover:bg-slate-custom-100 transition-all group mt-auto mb-6"
+                    >
+                        <span className="material-icons-round group-hover:text-red-500 transition-colors">logout</span>
+                        Sign Out
+                    </button>
                 </div>
                 {/* Pro Upgrade Card */}
                 <div className="bg-slate-custom-900 rounded-lg p-5 text-center relative overflow-hidden group cursor-pointer">
