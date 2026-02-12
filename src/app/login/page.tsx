@@ -1,16 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Mail, Lock, CheckCircle, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"magic" | "password">("magic"); // 'magic' or 'password'
-  const [isSignUp, setIsSignUp] = useState(false); // only for password mode
+
+  // Initialize state from URL params
+  const [mode, setMode] = useState<"magic" | "password">("magic");
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    const modeParam = searchParams.get("mode");
+    const intentParam = searchParams.get("intent");
+
+    if (modeParam === "password") setMode("password");
+    if (modeParam === "magic") setMode("magic");
+
+    if (intentParam === "signup") setIsSignUp(true);
+    if (intentParam === "signin") setIsSignUp(false);
+  }, [searchParams]);
+
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -272,5 +289,14 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
