@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
   }
 
   const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  const result = await prisma.apiUsage.deleteMany({
-    where: { timestamp: { lt: cutoff } },
+  const result = await prisma.aIUsage.deleteMany({
+    where: { createdAt: { lt: cutoff } },
   });
 
   return NextResponse.json({ deleted: result.count, cutoff: cutoff.toISOString() });
