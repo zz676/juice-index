@@ -1,0 +1,276 @@
+
+/// LEGACY MODELS (Preserved to prevent dropping tables used by external project)
+
+model LegacyAIUsage {
+  id           String   @id @default(cuid())
+  type         String
+  model        String
+  size         String?
+  cost         Float
+  success      Boolean
+  errorMsg     String?
+  postId       String?
+  source       String
+  createdAt    DateTime @default(now())
+  inputTokens  Int?
+  outputTokens Int?
+  durationMs   Int?
+  
+  @@index([createdAt])
+  @@index([postId])
+  @@index([source])
+  @@map("juice_ai_usage_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyAccount {
+  id                String       @id
+  userId            String
+  provider          AuthProvider
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime
+  User              LegacyUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("Account")
+  @@ignore
+}
+
+model LegacyDigestContent {
+  id             String    @id @default(cuid())
+  scheduledFor   DateTime
+  content        String
+  postIds        String[]
+  topPostId      String
+  status         String    @default("PENDING")
+  postedAt       DateTime?
+  tweetId        String?
+  createdAt      DateTime  @default(now())
+  digestImageUrl String?
+
+  @@index([scheduledFor])
+  @@index([status])
+  @@map("juice_digest_content_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyEmailEvent {
+  id                String            @id
+  notificationId    String
+  event             EmailEventType
+  timestamp         DateTime          @default(now())
+  metadata          Json?
+  EmailNotification LegacyEmailNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@map("juice_email_events_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyEmailNotification {
+  id         String       @id
+  userId     String
+  type       EmailType
+  subject    String
+  postIds    String[]
+  status     EmailStatus  @default(PENDING)
+  messageId  String?
+  error      String?
+  sentAt     DateTime?
+  createdAt  DateTime     @default(now())
+  EmailEvent LegacyEmailEvent[]
+  User       LegacyUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([type, sentAt])
+  @@index([userId])
+  @@map("juice_email_notifications_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyMagicLink {
+  id        String   @id
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("juice_magic_links_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyMetricPost {
+  id            String           @id @default(cuid())
+  postType      MetricPostType
+  year          Int
+  period        Int
+  brand         Brand
+  content       String
+  chartImageUrl String?
+  status        MetricPostStatus @default(DRAFT)
+  tweetId       String?
+  postedAt      DateTime?
+  dataSnapshot  Json?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  attempts      Int              @default(0)
+  lastError     String?
+  lastAttemptAt DateTime?        @db.Timestamptz(6)
+  approvedAt    DateTime?        @db.Timestamptz(6)
+  approvedBy    String?
+
+  @@unique([postType, year, period, brand])
+  @@index([year, period])
+  @@index([status])
+  @@map("juice_metric_posts_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyPostingLog {
+  id        String   @id @default(cuid())
+  postType  String
+  tweetId   String
+  postIds   String[]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("juice_posting_logs_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacySubscriber {
+  id          String    @id
+  email       String    @unique
+  language    Language  @default(EN)
+  categories  String[]
+  frequency   Frequency @default(DAILY)
+  verified    Boolean   @default(false)
+  verifyToken String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@index([verified])
+  @@map("juice_subscribers_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyUser {
+  id                String              @id
+  email             String              @unique
+  name              String?
+  avatarUrl         String?
+  passwordHash      String?
+  emailVerified     Boolean             @default(false)
+  emailVerifyToken  String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  role              UserRole            @default(USER)
+  Account           LegacyAccount[]
+  EmailNotification LegacyEmailNotification[]
+  SavedPost         LegacySavedPost[]
+  Session           LegacySession[]
+  UserPreference    LegacyUserPreference?
+  XAccount          LegacyXAccount?
+
+  @@index([emailVerified])
+  @@map("User")
+  @@ignore
+}
+
+model LegacySavedPost {
+  id      String   @id
+  userId  String
+  postId  String
+  savedAt DateTime @default(now())
+  User    LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+  @@map("juice_saved_posts_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacySession {
+  id           String   @id
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  User         LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("Session")
+  @@ignore
+}
+
+model LegacyUserPreference {
+  id              String    @id
+  userId          String    @unique
+  brands          Brand[]
+  topics          Topic[]
+  digestFrequency Frequency @default(DAILY)
+  alertsEnabled   Boolean   @default(true)
+  alertThreshold  Int       @default(80)
+  language        Language  @default(EN)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  User            LegacyUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("juice_user_preferences_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyXPublication {
+  id                  String         @id
+  postId              String         @unique
+  status              XPublishStatus @default(PENDING)
+  tweetId             String?
+  tweetUrl            String?
+  publishedAt         DateTime?
+  imageSource         ImageSource    @default(NONE)
+  mediaId             String?
+  attempts            Int            @default(0)
+  lastError           String?
+  nextRetryAt         DateTime?
+  likes               Int            @default(0)
+  retweets            Int            @default(0)
+  replies             Int            @default(0)
+  impressions         Int            @default(0)
+  engagementUpdatedAt DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime
+
+  @@index([status, nextRetryAt], map: "idx_xpub_pending")
+  @@map("juice_x_publications_legacy_DoNotUse")
+  @@ignore
+}
+
+model LegacyXAccount {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  xUserId        String   @unique
+  username       String
+  displayName    String?
+  avatarUrl      String?
+  accessToken    String
+  refreshToken   String
+  tokenExpiresAt DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  User           LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("juice_x_accounts_legacy_DoNotUse")
+  @@ignore
+}

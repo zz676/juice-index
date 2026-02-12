@@ -62,6 +62,15 @@ export default async function DashboardPage() {
               </p>
             </div>
           </Link>
+          <Link href="/dashboard/explorer" style={{ textDecoration: "none", color: "inherit" }}>
+            <div className="card" style={{ cursor: "pointer" }}>
+              <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>📊</div>
+              <h3 style={{ fontSize: "1.1rem", marginBottom: 6 }}>Data Explorer</h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+                Ask questions and visualize EV data with AI.
+              </p>
+            </div>
+          </Link>
           <Link href="/docs" style={{ textDecoration: "none", color: "inherit" }}>
             <div className="card" style={{ cursor: "pointer" }}>
               <div style={{ fontSize: "1.5rem", marginBottom: 8 }}>📖</div>
