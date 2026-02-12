@@ -7,6 +7,7 @@ export type ChartType = "bar" | "line" | "horizontalBar";
 export interface ChartConfig {
     chartType: ChartType;
     title: string;
+    description: string;
     backgroundColor: string;
     barColor: string;
     fontColor: string;
@@ -27,6 +28,7 @@ export interface ChartConfig {
 export const DEFAULT_CHART_CONFIG: ChartConfig = {
     chartType: "bar",
     title: "Data Results",
+    description: "Visualization of requested data",
     backgroundColor: "#ffffff",
     barColor: "#6ada1b",
     fontColor: "#1e293b",

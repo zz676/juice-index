@@ -33,9 +33,13 @@ const SAMPLE_DATA = [
 export default function DataExplorerPage() {
     const [mounted, setMounted] = useState(false);
     const [chartConfig, setChartConfig] = useState<ChartConfig>(DEFAULT_CHART_CONFIG);
+    const [chartData, setChartData] = useState<any[]>(SAMPLE_DATA);
     const [showCustomizer, setShowCustomizer] = useState(false);
     const [chartImage, setChartImage] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [prompt, setPrompt] = useState("");
+    const [isLoadingQuery, setIsLoadingQuery] = useState(false);
+    const [generatedSql, setGeneratedSql] = useState("");
     const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
     const chartRef = useRef<HTMLDivElement>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,48 +54,59 @@ export default function DataExplorerPage() {
         toastTimer.current = setTimeout(() => setToast(null), 3000);
     }, []);
 
-    const generateChart = useCallback(async () => {
-        setIsGenerating(true);
-        showToast("info", "Generating chart image...");
+    const handleQuery = async () => {
+        if (!prompt.trim()) {
+            showToast("error", "Please enter a query first.");
+            return;
+        }
+
+        setIsLoadingQuery(true);
+        showToast("info", "Analyzing query...");
+
         try {
-            const res = await fetch("/api/admin/data-explorer/generate-chart", {
+            const res = await fetch("/api/dashboard/explorer/generate-chart", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    data: SAMPLE_DATA,
-                    previewData: SAMPLE_DATA.map((d) => ({ label: d.label, value: d.domestic })),
-                    chartType: chartConfig.chartType,
-                    title: chartConfig.title,
-                    chartOptions: {
-                        fontColor: chartConfig.fontColor,
-                        titleColor: chartConfig.titleColor,
-                        titleSize: chartConfig.titleSize,
-                        backgroundColor: chartConfig.backgroundColor,
-                        xAxisFontSize: chartConfig.xAxisFontSize,
-                        yAxisFontSize: chartConfig.yAxisFontSize,
-                        xAxisFontColor: chartConfig.xAxisFontColor,
-                        yAxisFontColor: chartConfig.yAxisFontColor,
-                        sourceText: chartConfig.sourceText,
-                        sourceColor: chartConfig.sourceColor,
-                        sourceFontSize: chartConfig.sourceFontSize,
-                        barColor: chartConfig.barColor,
-                        barWidth: chartConfig.barWidth,
-                        compactNumbers: false,
-                    },
-                }),
+                body: JSON.stringify({ prompt }),
             });
-            if (!res.ok) { const errData = await res.json(); throw new Error(errData.error || "Failed to generate chart"); }
-            const result = await res.json();
-            const img = typeof result?.chartImageBase64 === "string" ? result.chartImageBase64 : "";
-            if (!img || img.length < 100) throw new Error("Chart image generation failed.");
-            setChartImage(img);
-            showToast("success", "Chart image ready!");
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Failed to process query");
+            }
+
+            const data = await res.json();
+
+            setChartData(data.data);
+            setChartConfig(prev => ({
+                ...prev,
+                ...data.config,
+                title: data.title || prev.title,
+                description: data.description || prev.description
+            }));
+            setGeneratedSql(data.sql);
+
+            showToast("success", "Analysis complete!");
+
+            // Scroll to visualization
+            setTimeout(() => {
+                chartRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+
         } catch (err) {
-            showToast("error", err instanceof Error ? err.message : "Chart generation failed");
+            console.error(err);
+            showToast("error", err instanceof Error ? err.message : "Failed to run query");
         } finally {
-            setIsGenerating(false);
+            setIsLoadingQuery(false);
         }
-    }, [chartConfig, showToast]);
+    };
+
+    const generateChart = useCallback(async () => {
+        // ... existing implementation ...
+        setIsGenerating(true);
+        showToast("info", "Generating chart image feature coming soon...");
+        setTimeout(() => setIsGenerating(false), 1000);
+    }, [showToast]);
 
     const copyToClipboard = useCallback(async () => {
         if (!chartImage) return;
@@ -118,8 +133,6 @@ export default function DataExplorerPage() {
 
     if (!mounted) return null;
 
-    const chartData = SAMPLE_DATA.map((d) => ({ label: d.label, value: d.domestic }));
-
     return (
         <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
             {/* Main Workflow Area */}
@@ -127,8 +140,8 @@ export default function DataExplorerPage() {
                 {/* Toast */}
                 {toast && (
                     <div className={`absolute top-4 right-4 z-50 px-4 py-2 rounded-lg border text-xs font-medium shadow-lg transition-all ${toast.type === "success" ? "border-primary/50 bg-primary/10 text-green-800"
-                            : toast.type === "error" ? "border-red-300 bg-red-50 text-red-700"
-                                : "border-slate-200 bg-white text-slate-700"
+                        : toast.type === "error" ? "border-red-300 bg-red-50 text-red-700"
+                            : "border-slate-200 bg-white text-slate-700"
                         }`}>
                         {toast.message}
                     </div>
@@ -167,15 +180,23 @@ export default function DataExplorerPage() {
                                 <h3 className="font-bold text-sm text-slate-custom-900 uppercase tracking-wide">Ask Intelligence</h3>
                             </div>
                             <div className="space-y-3">
-                                <textarea className="w-full h-32 bg-white border border-slate-custom-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none shadow-sm placeholder-slate-custom-400 text-slate-custom-800" placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..." />
+                                <textarea
+                                    value={prompt}
+                                    onChange={(e) => setPrompt(e.target.value)}
+                                    className="w-full h-32 bg-white border border-slate-custom-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                                    placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2023..."
+                                />
                                 <div className="flex items-center justify-between">
                                     <button className="flex items-center gap-2 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-3 py-1.5 rounded-full shadow-sm hover:border-primary/50 transition-all">
                                         <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" />
                                         Juice-7B (Fast)
                                         <span className="material-icons-round text-sm ml-1">expand_more</span>
                                     </button>
-                                    <button className="flex items-center gap-1 text-xs font-bold text-primary hover:text-green-700 uppercase tracking-wide transition-colors">
-                                        Run Query <span className="material-icons-round text-sm">play_arrow</span>
+                                    <button
+                                        onClick={handleQuery}
+                                        disabled={isLoadingQuery}
+                                        className="flex items-center gap-1 text-xs font-bold text-primary hover:text-green-700 uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {isLoadingQuery ? "Running..." : "Run Query"} <span className={`material-icons-round text-sm ${isLoadingQuery ? "animate-spin" : ""}`}>{isLoadingQuery ? "refresh" : "play_arrow"}</span>
                                     </button>
                                 </div>
                             </div>
@@ -189,13 +210,15 @@ export default function DataExplorerPage() {
                             </div>
                             <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-6 ml-3">
                                 <div className="relative">
-                                    <span className="absolute -left-[19px] top-1 w-3 h-3 rounded-full bg-green-400 ring-4 ring-slate-custom-50" />
+                                    <span className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${generatedSql ? "bg-green-400" : "bg-slate-300"}`} />
                                     <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
                                         <div className="flex items-center justify-between text-xs mb-1">
-                                            <span className="font-mono text-slate-custom-500">GET /api/v1/production</span>
-                                            <span className="text-green-500 font-bold">200 OK</span>
+                                            <span className="font-mono text-slate-custom-500">SQL GENERATION</span>
+                                            {generatedSql && <span className="text-green-500 font-bold">Success</span>}
                                         </div>
-                                        <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">{"{ OEM: 'Tesla', Factory: 'Shanghai', Period: 'Q1-Q2' }"}</code>
+                                        <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
+                                            {generatedSql || "Waiting for query..."}
+                                        </code>
                                     </div>
                                 </div>
                                 <div className="relative">

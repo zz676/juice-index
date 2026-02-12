@@ -16,3 +16,17 @@ const TIER_RANK: Record<ApiTier, number> = {
 export function hasTier(tier: ApiTier, minTier: ApiTier): boolean {
   return TIER_RANK[tier] >= TIER_RANK[minTier];
 }
+
+export function tierLimit(tier: ApiTier): number {
+  switch (tier) {
+    case "STARTER":
+      return 1000;
+    case "PRO":
+      return 10000;
+    case "ENTERPRISE":
+      return 100000;
+    case "FREE":
+    default:
+      return 10; // Lower limit for internal tools/dashboard usage? Or keep as 100?
+  }
+}

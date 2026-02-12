@@ -603,7 +603,7 @@ model MetricPost {
   @@unique([postType, year, period, brand])
   @@index([year, period])
   @@index([status])
-  @@map("juice_metric_posts")
+  @@map("MetricPost")
 }
 
 /// Normalized EV market metric time series values.
@@ -660,6 +660,7 @@ model EVMetric {
   @@index([region])
   @@index([vehicleModel])
   @@index([brand, metric, year], map: "idx_brand_metric_year")
+  @@map("EVMetric")
 }
 
 /// Source metadata for EV metrics (provider, url, coverage).
@@ -681,6 +682,7 @@ model EVMetricSource {
   metric     EVMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
 
   @@index([metricId])
+  @@map("EVMetricSource")
 }
 
 /// Raw scraped article content and extraction metadata.
@@ -801,6 +803,7 @@ model VehicleSpec {
   @@index([model])
   @@index([vehicleType])
   @@index([brand, segment])
+  @@map("VehicleSpec")
 }
 
 /// Source metadata for vehicle specification data.
@@ -822,6 +825,7 @@ model VehicleSpecSource {
   spec       VehicleSpec @relation(fields: [specId], references: [id], onDelete: Cascade)
 
   @@index([specId])
+  @@map("VehicleSpecSource")
 }
 
 /// Monthly China passenger car inventory levels from CPCA (China Passenger Car Association).
@@ -858,6 +862,7 @@ model ChinaPassengerInventory {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("ChinaPassengerInventory")
 }
 
 /// Monthly China power battery installation and production data.
@@ -896,6 +901,7 @@ model ChinaBatteryInstallation {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("ChinaBatteryInstallation")
 }
 
 /// Monthly NEV (New Energy Vehicle) sales statistics from CAAM.
@@ -936,6 +942,7 @@ model CaamNevSales {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("CaamNevSales")
 }
 
 /// Monthly dealer inventory coefficient (库存系数) for China's auto market.
@@ -973,6 +980,7 @@ model ChinaDealerInventoryFactor {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("ChinaDealerInventoryFactor")
 }
 
 /// Monthly NEV retail sales from CPCA (China Passenger Car Association).
@@ -1014,6 +1022,7 @@ model CpcaNevRetail {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("CpcaNevRetail")
 }
 
 /// Monthly NEV production volume from CPCA (China Passenger Car Association).
@@ -1055,6 +1064,7 @@ model CpcaNevProduction {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("CpcaNevProduction")
 }
 
 /// Monthly Vehicle Inventory Alert Index (汽车经销商库存预警指数) - market health indicator.
@@ -1092,6 +1102,7 @@ model ChinaViaIndex {
 
   @@unique([year, month])
   @@index([year, month])
+  @@map("ChinaViaIndex")
 }
 
 /// Monthly battery data by specific battery maker (individual company performance).
@@ -1137,6 +1148,7 @@ model BatteryMakerMonthly {
   @@unique([maker, year, month])
   @@index([maker])
   @@index([year, month])
+  @@map("BatteryMakerMonthly")
 }
 
 /// Monthly export data by manufacturing plant (factory-level exports).
@@ -1184,6 +1196,7 @@ model PlantExports {
   @@index([plant])
   @@index([brand])
   @@index([year, month])
+  @@map("PlantExports")
 }
 
 /// NEV sales summary for a specific date range (typically weekly or bi-weekly reports).
@@ -1235,6 +1248,7 @@ model NevSalesSummary {
 
   @@unique([dataSource, year, startDate, endDate])
   @@index([year])
+  @@map("NevSalesSummary")
 }
 
 /// Monthly automaker sales rankings (top-selling car manufacturers).
@@ -1286,6 +1300,7 @@ model AutomakerRankings {
   @@index([dataSource])
   @@index([automaker])
   @@index([year, month])
+  @@map("AutomakerRankings")
 }
 
 /// Battery maker rankings (top battery manufacturers by market share).
@@ -1341,6 +1356,7 @@ model BatteryMakerRankings {
   @@index([dataSource, scope])
   @@index([maker])
   @@index([year, month])
+  @@map("BatteryMakerRankings")
 }
 
 /// NIO power infrastructure snapshot metrics over time.
@@ -1374,6 +1390,7 @@ model NioPowerSnapshot {
 
   @@index([asOfTime])
   @@index([createdAt])
+  @@map("NioPowerSnapshot")
 }
 
 enum AuthProvider {
