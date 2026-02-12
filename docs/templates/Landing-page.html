@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Juice Index Landing Page</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6ada1b",
+                        "primary-dark": "#5bc217",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#182111",
+                        "deep-slate": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #6ada1b1a 1px, transparent 1px), linear-gradient(to bottom, #6ada1b1a 1px, transparent 1px)",
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .grid-bg {
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-gray-100 font-display transition-colors duration-300 antialiased overflow-x-hidden">
+    <!-- Navbar -->
+    <nav
+        class="fixed w-full z-50 transition-all duration-300 backdrop-blur-md bg-background-light/80 dark:bg-background-dark/80 border-b border-primary/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <div class="flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        J</div>
+                    <span class="font-bold text-xl tracking-tight text-deep-slate dark:text-white">Juice Index</span>
+                </div>
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex space-x-8">
+                    <a class="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-primary transition-colors"
+                        href="#">Features</a>
+                    <a class="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-primary transition-colors"
+                        href="#">Pricing</a>
+                    <a class="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-primary transition-colors"
+                        href="#">Data Sources</a>
+                </div>
+                <!-- Auth Buttons -->
+                <div class="flex items-center space-x-4">
+                    <a class="text-sm font-semibold text-slate-900 dark:text-white hover:text-primary transition-colors"
+                        href="#">Log in</a>
+                    <a class="hidden sm:inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-background-dark bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all"
+                        href="#">
+                        Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- Hero Section -->
+    <div class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
+        <!-- Abstract Background Orbs -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
+            <div
+                class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary/20 rounded-full blur-[100px] opacity-40 mix-blend-multiply dark:mix-blend-screen">
+            </div>
+            <div
+                class="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[80px] opacity-30 mix-blend-multiply dark:mix-blend-screen">
+            </div>
+        </div>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <!-- Badge -->
+            <div
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-8 backdrop-blur-sm">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                <span class="text-xs font-semibold uppercase tracking-wide text-slate-800 dark:text-primary">Live Data
+                    2024 Q1</span>
+            </div>
+            <!-- Main Headline -->
+            <h1
+                class="text-5xl md:text-7xl font-display font-extrabold text-deep-slate dark:text-white tracking-tight mb-6 leading-[1.1]">
+                The Pulse of <br class="hidden md:block" />
+                <span
+                    class="bg-clip-text text-transparent bg-gradient-to-r from-slate-800 via-slate-600 to-slate-800 dark:from-white dark:via-gray-200 dark:to-white">China's
+                    EV Market</span>
+            </h1>
+            <!-- Subheadline -->
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-slate-600 dark:text-gray-300 mb-10 leading-relaxed">
+                Real-time intelligence on production, insurance registrations, and supply chain dynamics for the world's
+                fastest-growing auto sector.
+            </p>
+            <!-- CTAs -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button
+                    class="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-full text-background-dark bg-primary hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(106,218,27,0.4)] transition-all duration-300">
+                    Start Free Trial
+                    <span class="material-icons-outlined ml-2 text-lg">arrow_forward</span>
+                </button>
+                <button
+                    class="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-full text-slate-700 dark:text-white bg-transparent border-2 border-slate-200 dark:border-gray-700 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-all duration-300">
+                    Explore Data
+                </button>
+            </div>
+            <!-- UI Mockup / Visualization -->
+            <div class="mt-20 relative max-w-5xl mx-auto">
+                <div
+                    class="absolute -inset-1 bg-gradient-to-r from-primary/30 to-slate-400/30 rounded-lg blur opacity-20">
+                </div>
+                <div
+                    class="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex items-center justify-center bg-grid-pattern grid-bg">
+                    <!-- Abstract Data Visualization Placeholder -->
+                    <div class="absolute inset-0 flex items-center justify-center opacity-80">
+                        <!-- Left Chart -->
+                        <div
+                            class="w-1/3 h-40 mx-4 bg-gradient-to-t from-primary/10 to-transparent rounded-lg border-b-2 border-primary relative flex items-end gap-2 p-2">
+                            <div class="w-full bg-primary/40 h-[40%] rounded-t-sm"></div>
+                            <div class="w-full bg-primary/60 h-[70%] rounded-t-sm"></div>
+                            <div class="w-full bg-primary h-[55%] rounded-t-sm shadow-[0_0_15px_rgba(106,218,27,0.5)]">
+                            </div>
+                            <div class="w-full bg-primary/30 h-[30%] rounded-t-sm"></div>
+                        </div>
+                        <!-- Middle Floating Card -->
+                        <div
+                            class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 z-10 min-w-[200px]">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs text-slate-500">Weekly Output</span>
+                                <span class="text-xs text-primary font-bold">+12.4%</span>
+                            </div>
+                            <div class="text-2xl font-bold text-deep-slate dark:text-white">42,891</div>
+                            <div class="text-[10px] text-slate-400">Units produced (BYD)</div>
+                        </div>
+                        <!-- Right Graphic -->
+                        <div class="w-1/3 h-40 mx-4 flex items-center justify-center relative">
+                            <div
+                                class="w-32 h-32 border-[12px] border-slate-100 dark:border-slate-800 rounded-full relative">
+                                <div
+                                    class="absolute top-0 left-0 w-full h-full border-[12px] border-primary rounded-full border-t-transparent border-l-transparent rotate-45">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Features Grid (Bento Box) -->
+    <section class="py-20 bg-white/50 dark:bg-black/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-deep-slate dark:text-white mb-4">Granular insights at
+                    every level</h2>
+                <p class="text-slate-600 dark:text-gray-400">Our platform aggregates millions of data points daily to
+                    give you the most accurate picture of the Chinese EV ecosystem.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(300px,auto)]">
+                <!-- Card 1: Production Data -->
+                <div
+                    class="group relative bg-white dark:bg-slate-900 rounded-lg p-8 border border-slate-200 dark:border-slate-800 hover:border-primary/50 dark:hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+                    <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span
+                            class="material-icons-outlined text-9xl text-primary transform rotate-12">precision_manufacturing</span>
+                    </div>
+                    <div class="relative z-10 h-full flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                                <span class="material-icons-outlined text-2xl">factory</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-deep-slate dark:text-white mb-3">Production Data</h3>
+                            <p class="text-slate-600 dark:text-gray-400 leading-relaxed">
+                                Track factory output across major OEMs including BYD, Tesla China, and NIO. Monitor
+                                capacity utilization rates in real-time.
+                            </p>
+                        </div>
+                        <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                            <a class="inline-flex items-center text-sm font-semibold text-primary hover:text-primary-dark"
+                                href="#">
+                                View Factory Analytics <span
+                                    class="material-icons-outlined text-sm ml-1">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2: Insurance Registrations (Tall/Featured if needed, but keeping equal for 3-col bento) -->
+                <div
+                    class="group relative bg-slate-900 dark:bg-slate-800 rounded-lg p-8 border border-slate-800 dark:border-slate-700 md:col-span-1 shadow-2xl overflow-hidden">
+                    <!-- Dark theme specific card for contrast -->
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-primary rounded-full blur-[80px] opacity-20">
+                    </div>
+                    <div class="relative z-10 h-full flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-6 text-primary">
+                                <span class="material-icons-outlined text-2xl">verified</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-white mb-3">Insurance Registrations</h3>
+                            <p class="text-slate-300 leading-relaxed">
+                                The gold standard for demand signals. Access weekly policy registration data broken down
+                                by province, city, and model trim.
+                            </p>
+                        </div>
+                        <div class="mt-8">
+                            <!-- Mini chart visual -->
+                            <div class="flex items-end gap-1 h-16 w-full opacity-80">
+                                <div class="w-full bg-primary/20 h-4 rounded-t-sm"></div>
+                                <div class="w-full bg-primary/40 h-8 rounded-t-sm"></div>
+                                <div class="w-full bg-primary/60 h-6 rounded-t-sm"></div>
+                                <div class="w-full bg-primary h-12 rounded-t-sm"></div>
+                                <div class="w-full bg-primary/80 h-10 rounded-t-sm"></div>
+                                <div class="w-full bg-primary h-14 rounded-t-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3: Supply Chain Analytics -->
+                <div
+                    class="group relative bg-white dark:bg-slate-900 rounded-lg p-8 border border-slate-200 dark:border-slate-800 hover:border-primary/50 dark:hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+                    <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-icons-outlined text-9xl text-primary transform -rotate-12">hub</span>
+                    </div>
+                    <div class="relative z-10 h-full flex flex-col justify-between">
+                        <div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                                <span class="material-icons-outlined text-2xl">local_shipping</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-deep-slate dark:text-white mb-3">Supply Chain Analytics
+                            </h3>
+                            <p class="text-slate-600 dark:text-gray-400 leading-relaxed">
+                                Deep dive into battery costs (LFP vs NMC), lithium pricing trends, and tier-1 component
+                                sourcing networks.
+                            </p>
+                        </div>
+                        <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                            <a class="inline-flex items-center text-sm font-semibold text-primary hover:text-primary-dark"
+                                href="#">
+                                Explore Supply Chain <span
+                                    class="material-icons-outlined text-sm ml-1">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Detailed Value Prop Section (Row Layout) -->
+    <section class="py-24 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center gap-16">
+                <div class="w-full md:w-1/2 relative order-2 md:order-1">
+                    <div
+                        class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 group">
+                        <img alt="Data analytics dashboard showing graphs and maps on a dark screen"
+                            class="w-full h-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                            data-alt="Modern dashboard displaying complex financial data charts"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiJBasAUd4apQA1Y2ybIuIvi1VX06Y1G5V5bMt4bfUMAjEm2XG8Zqd0D-VhA4YRgdwYVWZk4WdBGEgseUGY8Fp2Uoe7jC7WHGwW5gX_EM3usJkNPbXllIjKEDztwcW_KhT5KAxlR8W5C-tTR85AubGsSKUaMl13pAhL7qkq2bCsmy9gi9kI44pBtX3w9Si6_113vAcY2JynKNth8I1BUqS4vXi9P0cESL2FF0o57SWCPaTiECr7YYqxro3kof016n49mXn9QyqPi4" />
+                        <div class="absolute inset-0 bg-primary/10 mix-blend-overlay"></div>
+                    </div>
+                    <!-- Floating Element -->
+                    <div
+                        class="absolute -bottom-6 -right-6 bg-background-light dark:bg-background-dark p-4 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 max-w-xs">
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                                <span class="material-icons-outlined">trending_up</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800 dark:text-white">Predictive Modeling</p>
+                                <p class="text-xs text-slate-500 mt-1">Forecast delivery numbers with 94% accuracy
+                                    before official earnings calls.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2 order-1 md:order-2">
+                    <h2 class="text-3xl md:text-4xl font-bold text-deep-slate dark:text-white mb-6">Built for analysts,
+                        investors, and strategists.</h2>
+                    <p class="text-lg text-slate-600 dark:text-gray-300 mb-8 leading-relaxed">
+                        In the fast-moving Chinese EV market, yesterday's data is irrelevant. Juice Index provides the
+                        granular, high-frequency data you need to make decisions with conviction.
+                    </p>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <span class="material-icons-outlined text-primary">check_circle</span>
+                            <span class="text-slate-700 dark:text-gray-300 font-medium">Daily API updates</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-icons-outlined text-primary">check_circle</span>
+                            <span class="text-slate-700 dark:text-gray-300 font-medium">Exportable CSV &amp; Excel
+                                reports</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="material-icons-outlined text-primary">check_circle</span>
+                            <span class="text-slate-700 dark:text-gray-300 font-medium">Customizable watchlists</span>
+                        </li>
+                    </ul>
+                    <a class="text-primary font-bold hover:underline underline-offset-4 decoration-2" href="#">Read our
+                        methodology -&gt;</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Social Proof / Logos -->
+    <section class="py-16 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p class="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-10">Trusted by leading financial
+                firms</p>
+            <div
+                class="flex flex-wrap justify-center items-center gap-12 md:gap-20 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+                <!-- Using text as placeholder for logos to avoid external image dependencies breaking, stylized as logos -->
+                <div class="text-2xl font-bold text-slate-800 dark:text-white font-serif flex items-center gap-2">
+                    <span class="material-icons-outlined">account_balance</span> GOLDMAN
+                </div>
+                <div
+                    class="text-xl font-bold text-slate-800 dark:text-white font-sans tracking-tighter flex items-center gap-2">
+                    <span class="material-icons-outlined">show_chart</span> MORGAN
+                </div>
+                <div class="text-2xl font-black text-slate-800 dark:text-white italic flex items-center gap-2">
+                    CITIC <span class="w-2 h-2 bg-primary rounded-full"></span>
+                </div>
+                <div class="text-xl font-bold text-slate-800 dark:text-white font-mono flex items-center gap-2">
+                    <span class="material-icons-outlined">language</span> HSBC
+                </div>
+                <div class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-icons-outlined">savings</span> UBS
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Final CTA -->
+    <section class="py-20 bg-deep-slate dark:bg-black relative overflow-hidden">
+        <div class="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div class="absolute right-0 top-0 w-96 h-96 bg-primary rounded-full blur-[120px] opacity-20"></div>
+        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Stop guessing. Start knowing.</h2>
+            <p class="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">Join 500+ institutional investors tracking the
+                Chinese EV revolution with Juice Index.</p>
+            <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                <input
+                    class="flex-1 px-6 py-4 rounded-full border-none focus:ring-2 focus:ring-primary text-slate-900 placeholder-slate-400"
+                    placeholder="Enter your work email" type="email" />
+                <button
+                    class="px-8 py-4 bg-primary text-background-dark font-bold rounded-full hover:bg-primary/90 hover:scale-105 transition-all duration-200 whitespace-nowrap"
+                    type="button">
+                    Get Access
+                </button>
+            </form>
+            <p class="mt-4 text-sm text-slate-500">14-day free trial. No credit card required.</p>
+        </div>
+    </section>
+    <!-- Footer -->
+    <footer
+        class="bg-background-light dark:bg-background-dark pt-16 pb-8 border-t border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div
+                            class="w-6 h-6 bg-primary rounded flex items-center justify-center text-white font-bold text-xs">
+                            J</div>
+                        <span class="font-bold text-lg text-deep-slate dark:text-white">Juice Index</span>
+                    </div>
+                    <p class="text-sm text-slate-500">Providing clarity in the world's most complex automotive market.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-deep-slate dark:text-white mb-4">Platform</h4>
+                    <ul class="space-y-2 text-sm text-slate-600 dark:text-gray-400">
+                        <li><a class="hover:text-primary" href="#">Production Data</a></li>
+                        <li><a class="hover:text-primary" href="#">Insurance Registrations</a></li>
+                        <li><a class="hover:text-primary" href="#">Supply Chain</a></li>
+                        <li><a class="hover:text-primary" href="#">API Access</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-deep-slate dark:text-white mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm text-slate-600 dark:text-gray-400">
+                        <li><a class="hover:text-primary" href="#">About Us</a></li>
+                        <li><a class="hover:text-primary" href="#">Methodology</a></li>
+                        <li><a class="hover:text-primary" href="#">Careers</a></li>
+                        <li><a class="hover:text-primary" href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-deep-slate dark:text-white mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-slate-600 dark:text-gray-400">
+                        <li><a class="hover:text-primary" href="#">Privacy Policy</a></li>
+                        <li><a class="hover:text-primary" href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="border-t border-slate-200 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-xs text-slate-400">© 2024 Juice Index Ltd. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <!-- Social Icons placeholders -->
+                    <a class="text-slate-400 hover:text-primary transition-colors" href="#"><span
+                            class="material-icons-outlined text-lg">public</span></a>
+                    <a class="text-slate-400 hover:text-primary transition-colors" href="#"><span
+                            class="material-icons-outlined text-lg">alternate_email</span></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

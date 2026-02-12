@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Market Analysis Workflow</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6ada1b",
+                        "background-light": "#f7f8f6",
+                        "background-dark": "#182111",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for code blocks */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Chart Gradient Effect */
+        .chart-bar {
+            background: linear-gradient(180deg, #6ada1b 0%, rgba(106, 218, 27, 0.2) 100%);
+        }
+
+        .chart-bar-secondary {
+            background: linear-gradient(180deg, #e5e7eb 0%, rgba(229, 231, 235, 0.2) 100%);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-display min-h-screen flex selection:bg-primary selection:text-white overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside
+        class="w-20 lg:w-24 h-screen flex flex-col items-center py-8 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1f2b16] shrink-0 z-20">
+        <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-10 shadow-lg shadow-primary/30">
+            <span class="material-icons text-white text-3xl">bolt</span>
+        </div>
+        <nav class="flex-1 flex flex-col gap-6 w-full items-center">
+            <button class="p-3 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors">
+                <span class="material-icons">dashboard</span>
+            </button>
+            <button class="p-3 rounded-xl bg-primary/20 text-primary shadow-sm">
+                <span class="material-icons">analytics</span>
+            </button>
+            <button class="p-3 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors">
+                <span class="material-icons">dataset</span>
+            </button>
+            <button class="p-3 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors">
+                <span class="material-icons">folder_open</span>
+            </button>
+        </nav>
+        <div class="mt-auto flex flex-col items-center gap-4">
+            <button class="p-3 rounded-xl text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors">
+                <span class="material-icons">settings</span>
+            </button>
+            <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 dark:border-slate-700">
+                <img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a man smiling"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZBPHPApJBTQxyXZtvmHZ3WrOR5dbrwcImZR_V0YmOQMYSDcm3uV0tiH4KcA-LfJih2Jj6cmH1NB4bOTTif25_KhO_RW057FxZTtryzED3xnCukgcKo183bZ52RFV6h1AQ6mafeouQq1a7Yus13zo5jSXasRRGmy5-22mr8X-uWCGwrQ1ts5mRjb2UkxvOHqWhKLWxdlHwEFc1yTcX55gU9c-MWfA0fHySkwhck6-zK2slQAXyeJb8YQ2CDvrZx00Iq_-DKI0EdRU" />
+            </div>
+        </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Header -->
+        <header
+            class="h-20 px-8 flex items-center justify-between shrink-0 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-semibold text-slate-800 dark:text-white">Workspace <span
+                        class="text-slate-400 mx-2">/</span> EV Market China <span class="text-slate-400 mx-2">/</span>
+                    <span class="text-primary">Analysis 042</span></h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <span
+                    class="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    Live Data
+                </span>
+                <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <span class="material-icons">notifications</span>
+                </button>
+            </div>
+        </header>
+        <!-- Two Column Layout -->
+        <div class="flex-1 p-6 pt-2 pb-6 gap-6 flex overflow-hidden">
+            <!-- Left Column: Input & Logic -->
+            <div class="w-[400px] xl:w-[450px] flex flex-col gap-6 shrink-0 h-full overflow-hidden">
+                <!-- Ask Card -->
+                <div
+                    class="bg-white dark:bg-[#1f2b16] rounded-lg p-6 shadow-sm border border-slate-100 dark:border-slate-800 shrink-0">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-semibold text-lg flex items-center gap-2">
+                            <span class="material-icons text-primary text-xl">psychology</span>
+                            Ask Intelligence
+                        </h2>
+                    </div>
+                    <div class="relative group">
+                        <textarea
+                            class="w-full bg-slate-50 dark:bg-black/20 border-0 rounded-lg p-4 text-slate-700 dark:text-slate-200 resize-none focus:ring-2 focus:ring-primary/50 text-base leading-relaxed placeholder:text-slate-400"
+                            placeholder="Ask about EV sales trends, e.g., 'Compare BYD and Tesla sales in Tier 1 cities for Q3 2023'"
+                            rows="4"></textarea>
+                        <button
+                            class="absolute bottom-3 right-3 bg-primary hover:bg-[#5bc417] text-white p-2 rounded-full shadow-lg shadow-primary/30 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center">
+                            <span class="material-icons text-xl">arrow_upward</span>
+                        </button>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button
+                            class="text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
+                            Recent: XPeng vs Nio
+                        </button>
+                        <button
+                            class="text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-full hover:bg-primary/20 hover:text-primary transition-colors">
+                            Trending: Battery Costs
+                        </button>
+                    </div>
+                </div>
+                <!-- Logic Card -->
+                <div
+                    class="flex-1 bg-slate-900 text-slate-300 rounded-lg shadow-md border border-slate-800 overflow-hidden flex flex-col">
+                    <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                        <span class="text-xs font-mono uppercase tracking-wider text-primary flex items-center gap-2">
+                            <span class="material-icons text-sm">terminal</span> Logic Process
+                        </span>
+                        <div class="flex gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        </div>
+                    </div>
+                    <div class="p-4 font-mono text-sm overflow-y-auto flex-1 custom-scrollbar space-y-4">
+                        <!-- Reasoning Step -->
+                        <div class="border-l-2 border-primary/40 pl-3">
+                            <div class="text-xs text-primary/70 mb-1">STEP 1: ENTITY EXTRACTION</div>
+                            <p class="text-slate-400">Identified Entities: <span class="text-white">"BYD"</span>, <span
+                                    class="text-white">"Tesla"</span></p>
+                            <p class="text-slate-400">Timeframe: <span class="text-white">2023-07-01</span> to <span
+                                    class="text-white">2023-09-30</span></p>
+                            <p class="text-slate-400">Location: <span class="text-white">Tier 1 Cities (CN)</span></p>
+                        </div>
+                        <!-- Code Step -->
+                        <div class="border-l-2 border-primary/40 pl-3">
+                            <div class="text-xs text-primary/70 mb-1">STEP 2: SQL GENERATION</div>
+                            <div class="bg-black/30 p-3 rounded text-xs text-blue-200 mt-2">
+                                <span class="text-purple-400">SELECT</span>
+                                brand,
+                                <span class="text-yellow-200">DATE_TRUNC</span>('month', reg_date) <span
+                                    class="text-purple-400">as</span> month,
+                                <span class="text-yellow-200">SUM</span>(units) <span class="text-purple-400">as</span>
+                                total_units
+                                <span class="text-purple-400">FROM</span> ev_registrations_cn
+                                <span class="text-purple-400">WHERE</span>
+                                city_tier = 1
+                                <span class="text-purple-400">AND</span> brand <span class="text-purple-400">IN</span>
+                                ('BYD', 'Tesla')
+                                <span class="text-purple-400">AND</span> reg_date <span
+                                    class="text-purple-400">BETWEEN</span> '2023-07-01' <span
+                                    class="text-purple-400">AND</span> '2023-09-30'
+                                <span class="text-purple-400">GROUP BY</span> 1, 2
+                                <span class="text-purple-400">ORDER BY</span> 2;
+                            </div>
+                        </div>
+                        <!-- JSON Output -->
+                        <div class="border-l-2 border-primary/40 pl-3">
+                            <div class="text-xs text-primary/70 mb-1">STEP 3: DATA FETCH</div>
+                            <div class="text-slate-500 text-xs italic">Fetched 6 rows in 0.04s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Column: Visualization & Compose -->
+            <div class="flex-1 flex flex-col gap-6 h-full overflow-hidden">
+                <!-- Visualization Canvas -->
+                <div
+                    class="flex-1 bg-white dark:bg-[#1f2b16] rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-6 shrink-0 z-10">
+                        <div>
+                            <h3 class="text-2xl font-bold text-slate-800 dark:text-white">Q3 2023 Market Share: Tier 1
+                                Cities</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Comparing monthly registration
+                                volumes</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-full">
+                            <button
+                                class="bg-white dark:bg-slate-700 text-primary px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm transition-all">Chart</button>
+                            <button
+                                class="text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-full text-xs font-medium hover:text-slate-800 dark:hover:text-slate-200 transition-all">Table</button>
+                        </div>
+                    </div>
+                    <!-- Chart Area -->
+                    <div
+                        class="flex-1 w-full relative flex items-end justify-between gap-4 px-4 pb-8 border-b border-slate-200 dark:border-slate-700/50">
+                        <!-- Y Axis Lines -->
+                        <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pr-4">
+                            <div
+                                class="w-full h-px bg-slate-100 dark:bg-slate-800 border-dashed border-t border-slate-200 dark:border-slate-800">
+                            </div>
+                            <div
+                                class="w-full h-px bg-slate-100 dark:bg-slate-800 border-dashed border-t border-slate-200 dark:border-slate-800">
+                            </div>
+                            <div
+                                class="w-full h-px bg-slate-100 dark:bg-slate-800 border-dashed border-t border-slate-200 dark:border-slate-800">
+                            </div>
+                            <div
+                                class="w-full h-px bg-slate-100 dark:bg-slate-800 border-dashed border-t border-slate-200 dark:border-slate-800">
+                            </div>
+                        </div>
+                        <!-- Data Group 1 (July) -->
+                        <div class="relative flex-1 h-full flex items-end justify-center gap-2 group">
+                            <div
+                                class="w-12 bg-slate-200 dark:bg-slate-700 rounded-t-lg h-[45%] relative group-hover:opacity-80 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    Tesla: 12,402</div>
+                            </div>
+                            <div
+                                class="w-12 chart-bar rounded-t-lg h-[65%] relative group-hover:opacity-90 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    BYD: 18,291</div>
+                            </div>
+                            <span class="absolute -bottom-6 text-xs text-slate-400 font-medium">July</span>
+                        </div>
+                        <!-- Data Group 2 (Aug) -->
+                        <div class="relative flex-1 h-full flex items-end justify-center gap-2 group">
+                            <div
+                                class="w-12 bg-slate-200 dark:bg-slate-700 rounded-t-lg h-[52%] relative group-hover:opacity-80 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    Tesla: 14,100</div>
+                            </div>
+                            <div
+                                class="w-12 chart-bar rounded-t-lg h-[72%] relative group-hover:opacity-90 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    BYD: 21,440</div>
+                            </div>
+                            <span class="absolute -bottom-6 text-xs text-slate-400 font-medium">Aug</span>
+                        </div>
+                        <!-- Data Group 3 (Sept) -->
+                        <div class="relative flex-1 h-full flex items-end justify-center gap-2 group">
+                            <div
+                                class="w-12 bg-slate-200 dark:bg-slate-700 rounded-t-lg h-[48%] relative group-hover:opacity-80 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    Tesla: 13,205</div>
+                            </div>
+                            <div
+                                class="w-12 chart-bar rounded-t-lg h-[85%] relative group-hover:opacity-90 transition-opacity">
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+                                    BYD: 24,103</div>
+                            </div>
+                            <span class="absolute -bottom-6 text-xs text-slate-400 font-medium">Sept</span>
+                        </div>
+                    </div>
+                    <!-- Legend -->
+                    <div class="mt-8 flex justify-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-primary"></div>
+                            <span class="text-sm text-slate-600 dark:text-slate-300">BYD</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                            <span class="text-sm text-slate-600 dark:text-slate-300">Tesla</span>
+                        </div>
+                    </div>
+                    <!-- Collapsible Table Drawer Preview -->
+                    <div class="border-t border-slate-100 dark:border-slate-800 mt-4 pt-2">
+                        <button
+                            class="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-primary transition-colors w-full justify-center py-2">
+                            <span class="material-icons text-base">expand_more</span>
+                            View Raw Data (24 Rows)
+                        </button>
+                    </div>
+                </div>
+                <!-- Compose & Publish Section -->
+                <div
+                    class="h-[220px] bg-white dark:bg-[#1f2b16] rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 p-5 flex flex-col shrink-0">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Analyst Composer</h4>
+                        <div class="flex items-center gap-2 text-xs text-slate-400">
+                            <span class="material-icons text-base">public</span> Public Post
+                        </div>
+                    </div>
+                    <div class="flex-1 flex gap-4">
+                        <!-- Chart Thumbnail -->
+                        <div
+                            class="w-32 h-24 rounded-lg bg-slate-50 dark:bg-black/20 border border-slate-100 dark:border-slate-800 flex items-center justify-center relative overflow-hidden group shrink-0">
+                            <div
+                                class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center">
+                                <span class="material-icons text-primary">edit</span>
+                            </div>
+                            <div
+                                class="w-full h-full p-2 flex items-end gap-1 opacity-60 grayscale group-hover:grayscale-0 transition-all">
+                                <div class="w-1/3 h-[60%] bg-primary rounded-t-sm"></div>
+                                <div class="w-1/3 h-[80%] bg-primary rounded-t-sm"></div>
+                                <div class="w-1/3 h-[40%] bg-primary rounded-t-sm"></div>
+                            </div>
+                            <div class="absolute top-1 right-1 bg-black/50 text-white text-[10px] px-1 rounded">ATCH
+                            </div>
+                        </div>
+                        <!-- Text Editor -->
+                        <div class="flex-1 relative">
+                            <textarea
+                                class="w-full h-full bg-transparent border-0 p-0 text-slate-800 dark:text-slate-200 resize-none focus:ring-0 placeholder:text-slate-300 text-lg leading-snug font-medium"
+                                placeholder="Write your insight...">BYD continues to dominate the domestic market in Tier 1 cities with a 15% MoM increase, widening the gap with Tesla significantly in September. #EV #ChinaData</textarea>
+                        </div>
+                    </div>
+                    <div
+                        class="mt-auto pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex gap-2">
+                            <button class="text-slate-400 hover:text-primary transition-colors p-1"><span
+                                    class="material-icons text-xl">image</span></button>
+                            <button class="text-slate-400 hover:text-primary transition-colors p-1"><span
+                                    class="material-icons text-xl">poll</span></button>
+                            <button class="text-slate-400 hover:text-primary transition-colors p-1"><span
+                                    class="material-icons text-xl">sentiment_satisfied_alt</span></button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-400 font-mono">152/280</span>
+                            <button
+                                class="bg-primary hover:bg-[#5bc417] text-white px-6 py-2 rounded-full font-semibold shadow-lg shadow-primary/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                                Post to X
+                                <svg class="w-4 h-4 fill-current" viewbox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
