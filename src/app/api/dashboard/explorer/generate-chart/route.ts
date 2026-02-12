@@ -309,7 +309,7 @@ function renderChartConfig(params: {
               ? style.sourceFontSize
               : 12,
         },
-      },
+      } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
         x: {
           beginAtZero: isHorizontal,
