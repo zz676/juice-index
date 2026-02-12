@@ -1,8 +1,4 @@
 # juice-index
-<<<<<<< HEAD
-Data hub of evjuice.net
-=======
-
 API SaaS for China EV market data, backed by an existing Supabase Postgres database.
 
 ## Key Rules
@@ -19,4 +15,3 @@ API SaaS for China EV market data, backed by an existing Supabase Postgres datab
 ## Docs
 - Swagger UI: `/docs`
 - OpenAPI JSON: `/api/openapi.json`
->>>>>>> d7e9a5c (MVP)
