@@ -1,18 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+interface DashboardStats {
+  cards: Array<{ icon: string; label: string; value: string; change?: string; up?: boolean; badge?: string; suffix?: string }>;
+  chart: {
+    labels: string[];
+    currentYear: number[];
+    previousYear: number[];
+  };
+}
+
+interface DashboardFeed {
+  news: Array<{ id: string; tag: string; tagColor: string; time: string; title: string; desc: string }>;
+  catalysts: Array<{ month: string; day: string; title: string; desc: string; tags: string[]; highlight?: string }>;
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [feed, setFeed] = useState<DashboardFeed | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [statsRes, feedRes] = await Promise.all([
+          fetch("/api/dashboard/stats"),
+          fetch("/api/dashboard/feed")
+        ]);
+
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (feedRes.ok) setFeed(await feedRes.json());
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-32 bg-slate-custom-100 rounded-lg"></div>
+          ))}
+        </div>
+        <div className="h-96 bg-slate-custom-100 rounded-lg"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-3 h-64 bg-slate-custom-100 rounded-lg"></div>
+          <div className="lg:col-span-2 h-64 bg-slate-custom-100 rounded-lg"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        {[
-          { icon: "electric_car", label: "NEV Penetration Rate", value: "38.4%", change: "+2.1%", up: true },
-          { icon: "local_shipping", label: "Weekly Insured Units", value: "124k", change: "-0.8%", up: false },
-          { icon: "leaderboard", label: "Leading OEM", value: "BYD", badge: "Top 1" },
-          { icon: "battery_charging_full", label: "Battery Price (LFP)", value: "$75", suffix: "/kWh", badge: "Index" },
-        ].map((card, i) => (
+        {stats?.cards.map((card, i) => (
           <div key={i} className="bg-white p-6 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100 group hover:border-primary/30 transition-all relative overflow-hidden">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-slate-custom-50 rounded-full text-slate-custom-500">
@@ -79,6 +129,10 @@ export default function DashboardPage() {
                 <stop offset="100%" stopColor="#6ada1b" stopOpacity="0" />
               </linearGradient>
             </defs>
+            {/* Note: SVG paths would need to be dynamic based on stats.chart.data in a real implementation.
+                For now we keep the static SVG or we could use Recharts here as well. 
+                Keeping static for visual consistency with the mock for now as dynamic SVG path generation is complex.
+            */}
             <path d="M0,150 C50,140 100,160 150,130 C200,100 250,110 300,90 C350,70 400,80 450,100 C500,120 550,110 600,130 C650,150 700,140 750,120 L800,110" fill="none" stroke="#60a5fa" strokeDasharray="4" strokeOpacity="0.4" strokeWidth="2" />
             <path d="M0,120 C50,100 100,110 150,80 C200,50 250,60 300,40 C350,20 400,30 450,50 C500,70 550,40 600,60 C650,80 700,50 750,30 L800,40 V200 H0 Z" fill="url(#gp)" />
             <path d="M0,120 C50,100 100,110 150,80 C200,50 250,60 300,40 C350,20 400,30 450,50 C500,70 550,40 600,60 C650,80 700,50 750,30 L800,40" fill="none" stroke="#6ada1b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" className="drop-shadow-[0_4px_6px_rgba(106,218,27,0.4)]" />
@@ -90,10 +144,9 @@ export default function DashboardPage() {
             <div className="absolute -bottom-1 w-2 h-2 bg-slate-custom-900 rotate-45"></div>
           </div>
           <div className="absolute bottom-0 left-10 right-0 flex justify-between text-[10px] text-slate-custom-400 uppercase tracking-wider">
-            {["W36", "W37", "W38", "W39", "W40", "W41"].map(w => <span key={w}>{w}</span>)}
-            <span className="text-primary font-bold">W42</span>
-            <span>W43</span>
-            <span>W44</span>
+            {stats?.chart.labels.slice(0, 6).map((w) => <span key={w}>{w}</span>)}
+            <span className="text-primary font-bold">{stats?.chart.labels[6]}</span>
+            {stats?.chart.labels.slice(7).map((w) => <span key={w}>{w}</span>)}
           </div>
         </div>
       </div>
@@ -107,11 +160,7 @@ export default function DashboardPage() {
             <Link href="#" className="text-xs font-semibold text-primary hover:text-primary/80 uppercase tracking-wide">View All</Link>
           </div>
           <div className="space-y-3">
-            {[
-              { tag: "Policy", tagColor: "bg-primary/10 text-green-700", time: "2 hours ago", title: "Shenzhen announces new subsidies for EV trade-ins, boosting Q4 outlook", desc: "The municipal government revealed a tiered subsidy plan up to 10,000 RMB per vehicle..." },
-              { tag: "Tech", tagColor: "bg-blue-50 text-blue-600", time: "5 hours ago", title: "XPeng rolls out XNGP ADAS to 20 more cities", desc: "Beta testing shows 30% reduction in disengagement rates in urban scenarios..." },
-              { tag: "Supply Chain", tagColor: "bg-orange-50 text-orange-600", time: "Yesterday", title: "CATL to launch new condensed matter battery in Q3", desc: "Higher energy density promises to unlock aviation applications..." },
-            ].map((item, i) => (
+            {feed?.news.map((item, i) => (
               <div key={i} className="bg-white p-4 rounded-lg border border-slate-custom-100 hover:border-primary/40 transition-all cursor-pointer group flex gap-4 items-start">
                 <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-slate-custom-100 overflow-hidden flex items-center justify-center">
                   <span className="material-icons-round text-slate-custom-400">image</span>
@@ -135,11 +184,7 @@ export default function DashboardPage() {
             <h3 className="font-bold text-slate-custom-900 text-lg">Upcoming Catalysts</h3>
           </div>
           <div className="bg-white rounded-lg border border-slate-custom-100 p-1">
-            {[
-              { month: "Oct", day: "24", title: "Xiaomi Earnings Call", desc: "Expected to reveal EV margin data.", tags: ["Earnings", "1810.HK"] },
-              { month: "Nov", day: "01", title: "Monthly Deliveries", desc: "Major OEMs release Oct figures.", tags: ["Macro"], highlight: "High Impact" },
-              { month: "Nov", day: "17", title: "Guangzhou Auto Show", desc: "Li Auto MPV launch event.", tags: ["Event"] },
-            ].map((item, i) => (
+            {feed?.catalysts.map((item, i) => (
               <div key={i} className="flex gap-4 p-3 border-b border-slate-custom-50 last:border-0 hover:bg-slate-custom-50 rounded-lg transition-colors">
                 <div className="flex flex-col items-center justify-center bg-slate-custom-100 w-14 h-14 rounded-2xl text-center flex-shrink-0">
                   <span className="text-[10px] text-slate-custom-500 uppercase font-bold">{item.month}</span>
