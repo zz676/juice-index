@@ -457,6 +457,7 @@ model User {
   UserPreference    UserPreference?
   XAccount          XAccount?
   subscriptions     ApiSubscription[]
+  apiKeys           ApiKey[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1527,18 +1528,62 @@ enum ScrapeStatus {
   PENDING
 }
 
-model ApiSubscription {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  stripeCustomerId String?
-  stripeSubscriptionId String?
-  tier             String   @default("FREE")
-  status           String   @default("active")
-  currentPeriodEnd DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+model ApiKey {
+  id                String    @id @default(cuid())
+  userId            String
+  name              String?
+  keyPrefix         String
+  keyHash           String    @unique
+  isActive          Boolean   @default(true)
+  revokedAt         DateTime?
+  expiresAt         DateTime?
+  rateLimitOverride Int?
+  tierOverride      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  User             User     @relation(fields: [userId], references: [id])
+  User              User      @relation(fields: [userId], references: [id])
+  ApiRequestLog     ApiRequestLog[]
+
+  @@index([keyHash])
+  @@index([userId])
+  @@map("juice_api_keys")
+}
+
+model ApiRequestLog {
+  id             String   @id @default(cuid())
+  apiKeyId       String
+  userId         String
+  endpoint       String
+  method         String
+  statusCode     Int
+  durationMs     Int?
+  requestId      String?
+  tierAtRequest  String?
+  createdAt      DateTime @default(now())
+
+  ApiKey         ApiKey   @relation(fields: [apiKeyId], references: [id])
+
+  @@index([apiKeyId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("juice_api_request_logs")
+}
+
+model ApiSubscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  tier                 String    @default("FREE")
+  status               String    @default("active")
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  User                 User      @relation(fields: [userId], references: [id])
   @@map("juice_api_subscriptions")
 }
 

@@ -109,7 +109,7 @@ export async function authenticatePublicApi(request: NextRequest, opts: ApiAuthO
   if (!rl.success) {
     // Log 429 as authenticated usage.
     try {
-      await prisma.aIUsage.create({
+      await prisma.apiRequestLog.create({
         data: {
           apiKeyId: apiKey.id,
           userId: apiKey.userId,
