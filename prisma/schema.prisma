@@ -26,20 +26,20 @@ model AIUsage {
   postId       String?
   /// Source identifier for the record.
   source       String
+  /// Timestamp when the record was created.
+  createdAt    DateTime @default(now())
   /// Prompt token count for text completions.
   inputTokens  Int?
   /// Completion token count for text completions.
   outputTokens Int?
   /// Request duration in milliseconds.
   durationMs   Int?
-  /// Timestamp when the record was created.
-  createdAt    DateTime @default(now())
-  /// Related post record.
   Post         Post?    @relation(fields: [postId], references: [id])
 
   @@index([createdAt])
   @@index([postId])
   @@index([source])
+  @@map("juice_ai_usage")
 }
 
 /// Stores OAuth account details linked to a user (provider tokens and metadata).
@@ -66,38 +66,39 @@ model Account {
   createdAt         DateTime     @default(now())
   /// Timestamp when the record was last updated.
   updatedAt         DateTime
-  /// Related user record.
   User              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
+  @@map("juice_accounts")
 }
 
 /// Stores scheduled digest posts, their content, and posting metadata.
 model DigestContent {
   /// Primary identifier for the record.
-  id           String    @id @default(cuid())
+  id             String    @id @default(cuid())
   /// Scheduled execution time.
-  scheduledFor DateTime
+  scheduledFor   DateTime
   /// Body/content text.
-  content      String
+  content        String
   /// List of related post identifiers.
-  postIds      String[]
+  postIds        String[]
   /// Identifier of the primary/top post for this record.
-  topPostId    String
+  topPostId      String
+  /// Workflow status for the record.
+  status         String    @default("PENDING")
+  /// Timestamp when the record was posted to X.
+  postedAt       DateTime?
+  /// X tweet identifier.
+  tweetId        String?
+  /// Timestamp when the record was created.
+  createdAt      DateTime  @default(now())
   /// URL of the generated digest image.
   digestImageUrl String?
-  /// Workflow status for the record.
-  status       String    @default("PENDING")
-  /// Timestamp when the record was posted to X.
-  postedAt     DateTime?
-  /// X tweet identifier.
-  tweetId      String?
-  /// Timestamp when the record was created.
-  createdAt    DateTime  @default(now())
 
   @@index([scheduledFor])
   @@index([status])
+  @@map("juice_digest_content")
 }
 
 /// Records delivery events for email notifications (open, click, bounce, etc.).
@@ -112,10 +113,10 @@ model EmailEvent {
   timestamp         DateTime          @default(now())
   /// Raw JSON payload for metadata.
   metadata          Json?
-  /// Related email notification record.
   EmailNotification EmailNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
   @@index([notificationId])
+  @@map("juice_email_events")
 }
 
 /// Stores outgoing email notifications and their delivery state.
@@ -140,14 +141,13 @@ model EmailNotification {
   sentAt     DateTime?
   /// Timestamp when the record was created.
   createdAt  DateTime     @default(now())
-  /// List of email event.
   EmailEvent EmailEvent[]
-  /// Related user record.
   User       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([type, sentAt])
   @@index([userId])
+  @@map("juice_email_notifications")
 }
 
 /// Stores magic-link tokens used for passwordless authentication.
@@ -167,6 +167,7 @@ model MagicLink {
 
   @@index([email])
   @@index([expiresAt])
+  @@map("juice_magic_links")
 }
 
 /// Primary news post record with source metadata and translated content.
@@ -229,15 +230,10 @@ model Post {
   publishedToDiscord Boolean?         @default(false)
   /// Timestamp for discord published.
   discordPublishedAt DateTime?
-  /// List of aiusage.
   AIUsage            AIUsage[]
-  /// Related post content record.
   PostContent        PostContent?
-  /// Related post translation record.
   PostTranslation    PostTranslation?
-  /// List of saved post.
   SavedPost          SavedPost[]
-  /// Related xpublication record.
   XPublication       XPublication?
 
   @@index([brand])
@@ -325,7 +321,6 @@ model PostContent {
   createdAt   DateTime @default(now())
   /// Timestamp when the record was last updated.
   updatedAt   DateTime
-  /// Related post record.
   Post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
@@ -349,7 +344,6 @@ model PostTranslation {
   createdAt    DateTime @default(now())
   /// Timestamp when the record was last updated.
   updatedAt    DateTime
-  /// Related post record.
   Post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
@@ -367,6 +361,7 @@ model PostingLog {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+  @@map("juice_posting_logs")
 }
 
 /// User-saved posts for later reading or curation.
@@ -379,14 +374,13 @@ model SavedPost {
   postId  String
   /// Timestamp for saved.
   savedAt DateTime @default(now())
-  /// Related post record.
   Post    Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  /// Related user record.
   User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
   @@index([userId])
+  @@map("juice_saved_posts")
 }
 
 /// User session records for authentication.
@@ -403,10 +397,10 @@ model Session {
   createdAt    DateTime @default(now())
   /// Timestamp when the record was last updated.
   updatedAt    DateTime
-  /// Related user record.
   User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("juice_sessions")
 }
 
 /// Newsletter subscriber profile and delivery preferences.
@@ -431,6 +425,7 @@ model Subscriber {
   updatedAt   DateTime
 
   @@index([verified])
+  @@map("juice_subscribers")
 }
 
 /// Application user profile and auth metadata.
@@ -455,26 +450,16 @@ model User {
   updatedAt         DateTime
   /// Role value (UserRole).
   role              UserRole            @default(USER)
-  /// List of account.
   Account           Account[]
-  /// List of email notification.
   EmailNotification EmailNotification[]
-  /// List of saved post.
   SavedPost         SavedPost[]
-  /// List of session.
   Session           Session[]
-  /// Related user preference record.
   UserPreference    UserPreference?
-  /// List of apikey.
-  ApiKey            ApiKey[]
-  /// List of apiusage.
-  ApiUsage          ApiUsage[]
-  /// Related apisubscription record.
-  ApiSubscription   ApiSubscription?
-  /// Related xaccount record.
   XAccount          XAccount?
+  subscriptions     ApiSubscription[]
 
   @@index([emailVerified])
+  @@map("juice_users")
 }
 
 /// Per-user content and notification preferences.
@@ -499,127 +484,8 @@ model UserPreference {
   createdAt       DateTime  @default(now())
   /// Timestamp when the record was last updated.
   updatedAt       DateTime
-  /// Related user record.
   User            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// ==========================================
-// API SaaS Tables (Juice Index)
-// ==========================================
-
-/// API key issued to a user for authenticated access to the public API.
-model ApiKey {
-  /// Primary identifier for the record.
-  id                String   @id @default(cuid())
-
-  /// Identifier of the owning user.
-  userId             String
-  /// Friendly name for the key (for dashboards).
-  name               String?
-
-  /// Prefix shown in UI for identification (e.g. first 8 chars).
-  keyPrefix          String
-  /// SHA-256 hash of the full secret key.
-  keyHash            String   @unique
-
-  /// Whether the key is active.
-  isActive           Boolean  @default(true)
-
-  /// Per-key rate limit override (requests/day). Null means tier default.
-  rateLimitOverride  Int?
-  /// Per-key tier override (e.g. "FREE", "STARTER", "PRO"). Null means subscription-derived.
-  tierOverride       String?
-
-  /// Timestamp when the key was revoked.
-  revokedAt          DateTime?
-  /// Timestamp when the key expires (optional).
-  expiresAt          DateTime?
-
-  /// Timestamp when the record was created.
-  createdAt          DateTime @default(now())
-
-  /// Related user record.
-  User               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// List of apiusage.
-  ApiUsage           ApiUsage[]
-
-  @@index([userId])
-  @@index([isActive])
-}
-
-/// Subscription state for API tier enforcement (backed by Stripe in v1).
-/// If no row exists for a user, they are treated as FREE.
-model ApiSubscription {
-  /// Primary identifier for the record.
-  id                  String   @id @default(cuid())
-
-  /// Identifier of the owning user (one subscription row per user).
-  userId               String   @unique
-
-  /// Subscription tier (TEXT): "FREE", "STARTER", "PRO", "ENTERPRISE".
-  tier                 String
-  /// Subscription status (TEXT): e.g. "active", "trialing", "canceled", "past_due".
-  status               String
-
-  /// Stripe customer identifier (optional for manual tiering).
-  stripeCustomerId     String?  @unique
-  /// Stripe subscription identifier (optional for manual tiering).
-  stripeSubscriptionId String?  @unique
-
-  /// Current billing period start (Stripe).
-  currentPeriodStart   DateTime
-  /// Current billing period end (Stripe).
-  currentPeriodEnd     DateTime
-  /// Whether cancellation is scheduled at period end.
-  cancelAtPeriodEnd    Boolean  @default(false)
-
-  /// Timestamp when the record was created.
-  createdAt            DateTime @default(now())
-  /// Timestamp when the record was last updated.
-  updatedAt            DateTime @updatedAt
-
-  /// Related user record.
-  User                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([tier])
-  @@index([status])
-}
-
-/// Per-request API usage log for billing, debugging, and analytics.
-model ApiUsage {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Identifier of the API key used.
-  apiKeyId      String
-  /// Denormalized user identifier for efficient billing queries.
-  userId        String
-
-  /// Route template or endpoint name.
-  endpoint      String
-  /// HTTP method.
-  method        String
-  /// HTTP status code.
-  statusCode    Int
-  /// Request duration in milliseconds.
-  durationMs    Int
-
-  /// Timestamp when the request occurred.
-  timestamp     DateTime @default(now())
-
-  /// Optional request identifier (for tracing).
-  requestId     String?
-  /// Tier at request time (TEXT).
-  tierAtRequest String?
-
-  /// Related apikey record.
-  ApiKey        ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  /// Related user record.
-  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([apiKeyId, timestamp])
-  @@index([userId, timestamp])
-  @@index([endpoint, timestamp])
+  @@map("juice_user_preferences")
 }
 
 /// Tracks X (Twitter) publication attempts and outcomes per post.
@@ -660,10 +526,10 @@ model XPublication {
   createdAt           DateTime       @default(now())
   /// Timestamp when the record was last updated.
   updatedAt           DateTime
-  /// Related post record.
   Post                Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
 
-  @@index([status, nextRetryAt], map: "idx_xpub_pending")
+  @@index([status, nextRetryAt], map: "idx_juice_xpub_pending")
+  @@map("juice_x_publications")
 }
 
 /// Stores linked X account credentials/configuration for posting.
@@ -690,8 +556,823 @@ model XAccount {
   createdAt      DateTime @default(now())
   /// Timestamp when the record was last updated.
   updatedAt      DateTime @updatedAt
-  /// Related user record.
   User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("juice_x_accounts")
+}
+
+/// Data-driven metric posts prepared for X publication.
+model MetricPost {
+  /// Primary identifier for the record.
+  id            String           @id @default(cuid())
+  /// Post type value (MetricPostType).
+  postType      MetricPostType
+  /// Calendar year for the record.
+  year          Int
+  /// Reporting period value for the record.
+  period        Int
+  /// Brand value (Brand).
+  brand         Brand
+  /// Body/content text.
+  content       String
+  /// URL for chart image url.
+  chartImageUrl String?
+  /// Workflow status for the record.
+  status        MetricPostStatus @default(DRAFT)
+  /// X tweet identifier.
+  tweetId       String?
+  /// Timestamp when the record was posted to X.
+  postedAt      DateTime?
+  /// Raw JSON payload for data snapshot.
+  dataSnapshot  Json?
+  /// Timestamp when the record was created.
+  createdAt     DateTime         @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt     DateTime         @updatedAt
+  /// Numeric value for attempts.
+  attempts      Int              @default(0)
+  /// Last error.
+  lastError     String?
+  /// Timestamp for last attempt.
+  lastAttemptAt DateTime?        @db.Timestamptz(6)
+  /// Timestamp when the record was approved.
+  approvedAt    DateTime?        @db.Timestamptz(6)
+  /// Identifier of the approving user or system.
+  approvedBy    String?
+
+  @@unique([postType, year, period, brand])
+  @@index([year, period])
+  @@index([status])
+  @@map("juice_metric_posts")
+}
+
+/// Normalized EV market metric time series values.
+model EVMetric {
+  /// Primary identifier for the record.
+  id           String           @id @default(cuid())
+  /// Brand value (Brand).
+  brand        Brand
+  /// Metric value (MetricType).
+  metric       MetricType
+  /// Period type value (PeriodType).
+  periodType   PeriodType
+  /// Calendar year for the record.
+  year         Int
+  /// Reporting period value for the record.
+  period       Int
+  /// Vehicle model.
+  vehicleModel String?
+  /// Region.
+  region       String?
+  /// Category.
+  category     String?
+  /// Data source.
+  dataSource   String?
+  /// Numeric value for value.
+  value        Float
+  /// Unit.
+  unit         String?
+  /// Numeric value for yoy change.
+  yoyChange    Float?
+  /// Numeric value for mom change.
+  momChange    Float?
+  /// Numeric value for market share.
+  marketShare  Float?
+  /// Numeric value for ranking.
+  ranking      Int?
+  /// Canonical source URL for the record.
+  sourceUrl    String?
+  /// Source title.
+  sourceTitle  String?
+  /// Numeric value for confidence.
+  confidence   Float            @default(1.0)
+  /// Timestamp when the record was created.
+  createdAt    DateTime         @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt    DateTime         @updatedAt
+  sources      EVMetricSource[]
+
+  @@unique([brand, metric, periodType, year, period, vehicleModel, region, category, dataSource])
+  @@index([brand])
+  @@index([metric])
+  @@index([periodType, year, period])
+  @@index([year, period])
+  @@index([region])
+  @@index([vehicleModel])
+  @@index([brand, metric, year], map: "idx_brand_metric_year")
+}
+
+/// Source metadata for EV metrics (provider, url, coverage).
+model EVMetricSource {
+  /// Primary identifier for the record.
+  id         String   @id @default(cuid())
+  /// Identifier of the related metric.
+  metricId   String
+  /// Source type.
+  sourceType String
+  /// Raw text.
+  rawText    String?
+  /// Image URL for the record.
+  imageUrl   String?
+  /// Raw JSON payload for parse log.
+  parseLog   Json?
+  /// Timestamp when the record was created.
+  createdAt  DateTime @default(now())
+  metric     EVMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@index([metricId])
+}
+
+/// Raw scraped article content and extraction metadata.
+model ScrapedArticle {
+  /// Primary identifier for the record.
+  id            String       @id @default(cuid())
+  /// Canonical source URL for the record.
+  sourceUrl     String       @unique
+  /// Url hash.
+  urlHash       String       @unique
+  /// Title text for the record.
+  title         String
+  /// Short summary text.
+  summary       String?
+  /// Timestamp when the record was published.
+  publishedAt   DateTime?
+  /// Preview image.
+  previewImage  String?
+  /// Workflow status for the record.
+  status        ScrapeStatus @default(PENDING)
+  /// Article type.
+  articleType   String?
+  /// Whether needs ocr is true.
+  needsOcr      Boolean      @default(false)
+  /// Whether ocr completed is true.
+  ocrCompleted  Boolean      @default(false)
+  /// Raw JSON payload for extracted data.
+  extractedData Json?
+  /// Numeric value for metrics count.
+  metricsCount  Int          @default(0)
+  /// Numeric value for specs count.
+  specsCount    Int          @default(0)
+  /// Error message.
+  errorMessage  String?
+  /// Numeric value for retry count.
+  retryCount    Int          @default(0)
+  /// Timestamp for scraped.
+  scrapedAt     DateTime     @default(now())
+  /// Timestamp for processed.
+  processedAt   DateTime?
+  /// Timestamp when the record was last updated.
+  updatedAt     DateTime     @updatedAt
+  /// Month number (1-12).
+  month         Int?
+  /// Calendar year for the record.
+  year          Int?
+
+  @@index([status])
+  @@index([scrapedAt])
+  @@index([articleType])
+  @@index([month, year])
+}
+
+/// Vehicle specification records for EV models.
+model VehicleSpec {
+  /// Primary identifier for the record.
+  id                 String              @id @default(cuid())
+  /// Brand value (Brand).
+  brand              Brand
+  /// Model name or identifier.
+  model              String
+  /// Variant.
+  variant            String
+  /// Launch date.
+  launchDate         String?
+  /// Vehicle type value (VehicleType).
+  vehicleType        VehicleType?
+  /// Segment.
+  segment            String?
+  /// Numeric value for starting price.
+  startingPrice      Float?
+  /// Numeric value for current price.
+  currentPrice       Float?
+  /// Numeric value for length mm.
+  lengthMm           Int?
+  /// Numeric value for width mm.
+  widthMm            Int?
+  /// Numeric value for height mm.
+  heightMm           Int?
+  /// Numeric value for wheelbase mm.
+  wheelbaseMm        Int?
+  /// Numeric value for acceleration.
+  acceleration       Float?
+  /// Numeric value for top speed.
+  topSpeed           Int?
+  /// Numeric value for motor power kw.
+  motorPowerKw       Int?
+  /// Numeric value for motor torque nm.
+  motorTorqueNm      Int?
+  /// Numeric value for battery capacity.
+  batteryCapacity    Float?
+  /// Numeric value for range cltc.
+  rangeCltc          Int?
+  /// Numeric value for range wltp.
+  rangeWltp          Int?
+  /// Numeric value for range epa.
+  rangeEpa           Int?
+  /// Numeric value for fuel tank volume.
+  fuelTankVolume     Float?
+  /// Numeric value for engine displacement.
+  engineDisplacement Float?
+  /// Numeric value for max charging power.
+  maxChargingPower   Int?
+  /// Numeric value for charging time10 to80.
+  chargingTime10To80 Int?
+  /// Canonical source URL for the record.
+  sourceUrl          String?
+  /// Numeric value for confidence.
+  confidence         Float               @default(1.0)
+  /// Timestamp when the record was created.
+  createdAt          DateTime            @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt          DateTime            @updatedAt
+  sources            VehicleSpecSource[]
+
+  @@unique([brand, model, variant])
+  @@index([brand])
+  @@index([model])
+  @@index([vehicleType])
+  @@index([brand, segment])
+}
+
+/// Source metadata for vehicle specification data.
+model VehicleSpecSource {
+  /// Primary identifier for the record.
+  id         String      @id @default(cuid())
+  /// Identifier of the related spec.
+  specId     String
+  /// Source type.
+  sourceType String
+  /// Raw text.
+  rawText    String?
+  /// Image URL for the record.
+  imageUrl   String?
+  /// Raw JSON payload for parse log.
+  parseLog   Json?
+  /// Timestamp when the record was created.
+  createdAt  DateTime    @default(now())
+  spec       VehicleSpec @relation(fields: [specId], references: [id], onDelete: Cascade)
+
+  @@index([specId])
+}
+
+/// Monthly China passenger car inventory levels from CPCA (China Passenger Car Association).
+/// Tracks total inventory at dealerships and manufacturers across China.
+/// Used to monitor supply-demand balance in China's automotive market.
+/// Data frequency: Monthly
+/// Primary source: CPCA reports
+/// Use case: Analyze inventory trends, predict production adjustments, assess market health
+model ChinaPassengerInventory {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("million_units")
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly China power battery installation and production data.
+/// Tracks batteries installed in EVs (installation) and total production by Chinese battery industry.
+/// Installation typically differs from production as batteries may be exported or stockpiled.
+/// Data frequency: Monthly
+/// Primary source: CABIA (China Automotive Battery Innovation Alliance)
+/// Use case: Track EV adoption, battery industry growth, supply chain dynamics
+model ChinaBatteryInstallation {
+  /// Primary identifier for the record.
+  id           String    @id @default(cuid())
+  /// Calendar year for the record.
+  year         Int
+  /// Month number (1-12).
+  month        Int
+  /// Numeric value for installation.
+  installation Float
+  /// Numeric value for production.
+  production   Float?
+  /// Unit.
+  unit         String    @default("GWh")
+  /// Description.
+  description  String?
+  /// Canonical source URL for the record.
+  sourceUrl    String
+  /// Source title.
+  sourceTitle  String
+  /// Image URL for the record.
+  imageUrl     String?
+  /// Timestamp when the record was created.
+  createdAt    DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt    DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt  DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly NEV (New Energy Vehicle) sales statistics from CAAM.
+/// CAAM (China Association of Automobile Manufacturers) is the official industry body.
+/// CAAM data typically includes both domestic sales and exports, representing total production sold.
+/// Data frequency: Monthly
+/// Primary source: CAAM official releases
+/// Use case: Track total NEV market size, compare with CPCA retail data
+model CaamNevSales {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("vehicles")
+  /// Numeric value for yoy change.
+  yoyChange   Float?
+  /// Numeric value for mom change.
+  momChange   Float?
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly dealer inventory coefficient (库存系数) for China's auto market.
+/// The inventory coefficient represents months of inventory at dealerships.
+/// Interpretation: 1.0 = 1 month of stock, 1.5+ = oversupply/weak demand, <0.8 = shortage/strong demand
+/// Healthy range is typically 0.8-1.2. Above 1.5 signals market pressure on dealers.
+/// Data frequency: Monthly
+/// Primary source: China Automobile Dealers Association (CADA)
+/// Use case: Assess dealer health, predict pricing pressure, market demand signals
+model ChinaDealerInventoryFactor {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("ratio")
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly NEV retail sales from CPCA (China Passenger Car Association).
+/// Retail sales = units sold to end consumers (registered for road use).
+/// Differs from wholesale: retail reflects actual consumer demand, wholesale reflects dealer orders.
+/// CPCA data focuses on passenger vehicles; excludes commercial vehicles.
+/// Data frequency: Monthly
+/// Primary source: CPCA official releases
+/// Use case: Track consumer EV adoption, compare with wholesale to assess channel inventory
+model CpcaNevRetail {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("vehicles")
+  /// Numeric value for yoy change.
+  yoyChange   Float?
+  /// Numeric value for mom change.
+  momChange   Float?
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly NEV production volume from CPCA (China Passenger Car Association).
+/// Production = units manufactured by automakers during the month.
+/// Production typically leads sales data; comparing production vs sales shows inventory build/draw.
+/// CPCA data focuses on passenger vehicles; excludes commercial vehicles.
+/// Data frequency: Monthly
+/// Primary source: CPCA official releases
+/// Use case: Track manufacturing output, predict future supply, compare with sales
+model CpcaNevProduction {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("vehicles")
+  /// Numeric value for yoy change.
+  yoyChange   Float?
+  /// Numeric value for mom change.
+  momChange   Float?
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly Vehicle Inventory Alert Index (汽车经销商库存预警指数) - market health indicator.
+/// The VIA Index works like PMI: >50% indicates contraction/pessimism, <50% indicates expansion/optimism.
+/// Interpretation: 50% = neutral, 60%+ = significant dealer stress, <45% = healthy/optimistic market
+/// This is a sentiment and inventory pressure indicator surveyed from dealers.
+/// Data frequency: Monthly
+/// Primary source: China Automobile Dealers Association (CADA)
+/// Use case: Gauge dealer confidence, predict market trends, assess inventory pressure
+model ChinaViaIndex {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("percent")
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([year, month])
+  @@index([year, month])
+}
+
+/// Monthly battery data by specific battery maker (individual company performance).
+/// Tracks installation and production volumes for major battery manufacturers.
+/// Major makers: CATL, BYD, LG Energy Solution, SK On, Panasonic, CALB, Gotion (Guoxuan), EVE, Sunwoda
+/// Data frequency: Monthly
+/// Primary source: CABIA (China), SNE Research (Global)
+/// Use case: Track individual battery company performance, market share trends, competitive analysis
+model BatteryMakerMonthly {
+  /// Primary identifier for the record.
+  id           String    @id @default(cuid())
+  /// Maker.
+  maker        String
+  /// Calendar year for the record.
+  year         Int
+  /// Month number (1-12).
+  month        Int
+  /// Numeric value for installation.
+  installation Float
+  /// Numeric value for production.
+  production   Float?
+  /// Unit.
+  unit         String    @default("GWh")
+  /// Numeric value for yoy change.
+  yoyChange    Float?
+  /// Numeric value for mom change.
+  momChange    Float?
+  /// Description.
+  description  String?
+  /// Canonical source URL for the record.
+  sourceUrl    String
+  /// Source title.
+  sourceTitle  String
+  /// Image URL for the record.
+  imageUrl     String?
+  /// Timestamp when the record was created.
+  createdAt    DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt    DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt  DateTime?
+
+  @@unique([maker, year, month])
+  @@index([maker])
+  @@index([year, month])
+}
+
+/// Monthly export data by manufacturing plant (factory-level exports).
+/// Tracks vehicles exported from specific manufacturing facilities.
+/// Key plants: Tesla Gigafactory Shanghai, BYD Shenzhen, NIO Hefei, etc.
+/// Useful for understanding export hub performance and regional production strategy.
+/// Data frequency: Monthly
+/// Primary source: China Customs, company announcements
+/// Use case: Track export performance by plant, supply chain analysis, regional production trends
+model PlantExports {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Plant.
+  plant       String
+  /// Brand.
+  brand       String
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("vehicles")
+  /// Numeric value for yoy change.
+  yoyChange   Float?
+  /// Numeric value for mom change.
+  momChange   Float?
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([plant, year, month])
+  @@index([plant])
+  @@index([brand])
+  @@index([year, month])
+}
+
+/// NEV sales summary for a specific date range (typically weekly or bi-weekly reports).
+/// CPCA releases weekly sales estimates during the month before full monthly data.
+/// Contains both retail (to consumers) and wholesale (to dealers) figures for comparison.
+/// Retail-wholesale gap indicates channel inventory changes.
+/// Data frequency: Weekly or bi-weekly
+/// Primary source: CPCA weekly flash reports
+/// Use case: Early month-to-date sales tracking, weekly trends, retail vs wholesale analysis
+model NevSalesSummary {
+  /// Primary identifier for the record.
+  id             String    @id @default(cuid())
+  /// Data source.
+  dataSource     String    @default("CPCA")
+  /// Calendar year for the record.
+  year           Int
+  /// Start date.
+  startDate      String
+  /// End date.
+  endDate        String
+  /// Numeric value for retail sales.
+  retailSales    Float
+  /// Numeric value for retail yoy.
+  retailYoy      Float?
+  /// Numeric value for retail mom.
+  retailMom      Float?
+  /// Numeric value for wholesale sales.
+  wholesaleSales Float?
+  /// Numeric value for wholesale yoy.
+  wholesaleYoy   Float?
+  /// Numeric value for wholesale mom.
+  wholesaleMom   Float?
+  /// Unit.
+  unit           String    @default("vehicles")
+  /// Description.
+  description    String?
+  /// Canonical source URL for the record.
+  sourceUrl      String
+  /// Source title.
+  sourceTitle    String
+  /// Image URL for the record.
+  imageUrl       String?
+  /// Timestamp when the record was created.
+  createdAt      DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt      DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt    DateTime?
+
+  @@unique([dataSource, year, startDate, endDate])
+  @@index([year])
+}
+
+/// Monthly automaker sales rankings (top-selling car manufacturers).
+/// Tracks competitive positioning of major automakers in China's auto market.
+/// Rankings may be for overall sales or NEV-specific depending on the source article.
+/// Major automakers: BYD, Geely, SAIC, Changan, GAC, Great Wall, NIO, Xpeng, Li Auto, etc.
+/// Data frequency: Monthly
+/// Primary source: CPCA (passenger), CAAM (all vehicles)
+/// Use case: Competitive analysis, market share tracking, brand performance comparison
+model AutomakerRankings {
+  /// Primary identifier for the record.
+  id          String    @id @default(cuid())
+  /// Data source.
+  dataSource  String    @default("CPCA")
+  /// Calendar year for the record.
+  year        Int
+  /// Month number (1-12).
+  month       Int
+  /// Numeric value for ranking.
+  ranking     Int
+  /// Automaker.
+  automaker   String
+  /// Numeric value for value.
+  value       Float
+  /// Unit.
+  unit        String    @default("vehicles")
+  /// Numeric value for yoy change.
+  yoyChange   Float?
+  /// Numeric value for mom change.
+  momChange   Float?
+  /// Numeric value for market share.
+  marketShare Float?
+  /// Description.
+  description String?
+  /// Canonical source URL for the record.
+  sourceUrl   String
+  /// Source title.
+  sourceTitle String
+  /// Image URL for the record.
+  imageUrl    String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt DateTime?
+
+  @@unique([dataSource, year, month, automaker])
+  @@index([dataSource])
+  @@index([automaker])
+  @@index([year, month])
+}
+
+/// Battery maker rankings (top battery manufacturers by market share).
+/// Tracks competitive positioning in both China domestic and global battery markets.
+/// China market dominated by CATL, BYD; global includes LG, SK, Panasonic, Samsung SDI.
+/// Can be monthly snapshots, year-to-date (YTD), or yearly totals.
+/// Data frequency: Monthly, quarterly, or yearly
+/// Primary source: CABIA (China domestic), SNE Research (Global)
+/// Use case: Battery industry competitive analysis, supply chain understanding, market share trends
+model BatteryMakerRankings {
+  /// Primary identifier for the record.
+  id               String    @id @default(cuid())
+  /// Data source.
+  dataSource       String
+  /// OAuth scopes granted for the token.
+  scope            String
+  /// Period type.
+  periodType       String    @default("MONTHLY")
+  /// Calendar year for the record.
+  year             Int
+  /// Month number (1-12).
+  month            Int?
+  /// Numeric value for ranking.
+  ranking          Int
+  /// Maker.
+  maker            String
+  /// Numeric value for value.
+  value            Float
+  /// Unit.
+  unit             String    @default("GWh")
+  /// Numeric value for yoy change.
+  yoyChange        Float?
+  /// Numeric value for market share.
+  marketShare      Float?
+  /// Numeric value for share vs prev month.
+  shareVsPrevMonth Float?
+  /// Description.
+  description      String?
+  /// Canonical source URL for the record.
+  sourceUrl        String
+  /// Source title.
+  sourceTitle      String
+  /// Image URL for the record.
+  imageUrl         String?
+  /// Timestamp when the record was created.
+  createdAt        DateTime  @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt        DateTime  @updatedAt
+  /// Timestamp when the record was published.
+  publishedAt      DateTime?
+
+  @@unique([dataSource, scope, year, month, maker])
+  @@index([dataSource, scope])
+  @@index([maker])
+  @@index([year, month])
+}
+
+/// NIO power infrastructure snapshot metrics over time.
+model NioPowerSnapshot {
+  /// Primary identifier for the record.
+  id                     String   @id @default(cuid())
+  /// As of time.
+  asOfTime               DateTime @unique
+  /// Numeric value for total stations.
+  totalStations          Int
+  /// Numeric value for swap stations.
+  swapStations           Int
+  /// Numeric value for highway swap stations.
+  highwaySwapStations    Int
+  /// Numeric value for cumulative swaps.
+  cumulativeSwaps        BigInt
+  /// Numeric value for charging stations.
+  chargingStations       Int
+  /// Numeric value for charging piles.
+  chargingPiles          Int
+  /// Numeric value for cumulative charges.
+  cumulativeCharges      BigInt
+  /// Numeric value for third party piles.
+  thirdPartyPiles        Int
+  /// Numeric value for third party usage percent.
+  thirdPartyUsagePercent Float
+  /// Timestamp when the record was created.
+  createdAt              DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt              DateTime @updatedAt
+
+  @@index([asOfTime])
+  @@index([createdAt])
 }
 
 enum AuthProvider {
@@ -708,10 +1389,10 @@ enum Brand {
   ZEEKR
   XIAOMI
   TESLA_CHINA
-  LEAPMOTOR
-  GEELY
   OTHER_BRAND
   INDUSTRY
+  LEAPMOTOR
+  GEELY
 }
 
 enum EmailEventType {
@@ -794,94 +1475,34 @@ enum XPublishStatus {
   SKIPPED
 }
 
-// ==========================================
-// Metric Posts for X (Data-Driven Posts)
-// ==========================================
-
 enum MetricPostType {
-  BRAND_TREND          // 12-month trend for single brand
-  ALL_BRANDS_COMPARISON // All brands for single month
+  BRAND_TREND
+  ALL_BRANDS_COMPARISON
 }
 
 enum MetricPostStatus {
+  PENDING
+  POSTED
+  FAILED
   DRAFT
   APPROVED
   POSTING
-  POSTED
-  FAILED
   SKIPPED
 }
 
-/// Data-driven metric posts prepared for X publication.
-model MetricPost {
-  /// Primary identifier for the record.
-  id            String           @id @default(cuid())
-  /// Post type value (MetricPostType).
-  postType      MetricPostType
-  /// Calendar year for the record.
-  year          Int
-  /// Reporting period value for the record.
-  period        Int
-  /// Brand value (Brand).
-  brand         Brand
-  /// Body/content text.
-  content       String
-  /// URL for chart image url.
-  chartImageUrl String?
-  /// Workflow status for the record.
-  status        MetricPostStatus @default(DRAFT)
-  /// X tweet identifier.
-  tweetId       String?
-  /// Timestamp when the record was posted to X.
-  postedAt      DateTime?
-  /// Numeric value for attempts.
-  attempts      Int              @default(0)
-  /// Last error.
-  lastError     String?
-  /// Timestamp for last attempt.
-  lastAttemptAt DateTime?
-  /// Timestamp when the record was approved.
-  approvedAt    DateTime?
-  /// Identifier of the approving user or system.
-  approvedBy    String?
-  /// Raw JSON payload for data snapshot.
-  dataSnapshot  Json?
-  /// Timestamp when the record was created.
-  createdAt     DateTime         @default(now())
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime         @updatedAt
-
-  @@unique([postType, year, period, brand])
-  @@index([year, period])
-  @@index([status])
-}
-
-// ==========================================
-// EV Metrics Enums
-// ==========================================
-
 enum MetricType {
-  // Sales related
-  DELIVERY          // Customer deliveries
-  SALES             // Retail sales
-  WHOLESALE         // Wholesale sales
-  PRODUCTION        // Production volume
-
-  // Battery related
-  BATTERY_INSTALL   // Battery installations (GWh)
-
-  // Financial
-  REVENUE           // Revenue
-
-  // Market data
-  MARKET_SHARE      // Market share percentage
-  RANKING           // Ranking position
-
-  // Industry indicators
-  IMPORTS           // Import volume
-  EXPORTS           // Export volume
-  REGISTRATIONS     // License plate registrations
-  DEALER_INVENTORY  // Dealer inventory coefficient
+  DELIVERY
+  SALES
+  WHOLESALE
+  PRODUCTION
+  BATTERY_INSTALL
+  REVENUE
+  MARKET_SHARE
+  RANKING
+  IMPORTS
+  EXPORTS
+  REGISTRATIONS
+  DEALER_INVENTORY
 }
 
 enum PeriodType {
@@ -891,1041 +1512,308 @@ enum PeriodType {
 }
 
 enum VehicleType {
-  BEV    // Battery Electric Vehicle
-  EREV   // Extended Range Electric Vehicle
-  PHEV   // Plug-in Hybrid Electric Vehicle
-  HEV    // Hybrid Electric Vehicle
+  BEV
+  EREV
+  PHEV
+  HEV
 }
 
 enum ScrapeStatus {
-  SUCCESS           // Successfully extracted data
-  SKIPPED_DUPLICATE // Skipped as duplicate
-  SKIPPED_NO_DATA   // No extractable data
-  SKIPPED_PAYWALL   // Requires subscription
-  FAILED            // Extraction failed
-  PENDING           // Pending processing
+  SUCCESS
+  SKIPPED_DUPLICATE
+  SKIPPED_NO_DATA
+  SKIPPED_PAYWALL
+  FAILED
+  PENDING
 }
 
-// ==========================================
-// EV Metrics Tables
-// ==========================================
-
-/// Normalized EV market metric time series values.
-model EVMetric {
-  /// Primary identifier for the record.
-  id          String      @id @default(cuid())
-
-  // Dimension fields
-  /// Brand value (Brand).
-  brand       Brand
-  /// Metric value (MetricType).
-  metric      MetricType
-  /// Period type value (PeriodType).
-  periodType  PeriodType
-  /// Calendar year for the record.
-  year        Int
-  /// Reporting period value for the record.
-  period      Int
-
-  // Optional dimensions (for granular data)
-  /// Vehicle model.
-  vehicleModel String?
-  /// Region.
-  region      String?
-  /// Category.
-  category    String?
-  /// Data source.
-  dataSource  String?
-
-  // Value fields
-  /// Numeric value for value.
-  value       Float
-  /// Unit.
-  unit        String?
-  /// Numeric value for yoy change.
-  yoyChange   Float?
-  /// Numeric value for mom change.
-  momChange   Float?
-  /// Numeric value for market share.
-  marketShare Float?
-  /// Numeric value for ranking.
-  ranking     Int?
-
-  // Source tracking
-  /// Canonical source URL for the record.
-  sourceUrl   String?
-  /// Source title.
-  sourceTitle String?
-  /// Numeric value for confidence.
-  confidence  Float       @default(1.0)
-
-  // Timestamps
-  /// Timestamp when the record was created.
-  createdAt   DateTime    @default(now())
-  /// Timestamp when the record was last updated.
-  updatedAt   DateTime    @updatedAt
-
-  // Relations
-  /// List of sources.
-  sources     EVMetricSource[]
-
-  // Unique constraint
-  @@unique([brand, metric, periodType, year, period, vehicleModel, region, category, dataSource])
-
-  // Indexes
-  @@index([brand])
-  @@index([metric])
-  @@index([periodType, year, period])
-  @@index([year, period])
-  @@index([region])
-  @@index([vehicleModel])
-  @@index([brand, metric, year], map: "idx_brand_metric_year")
-}
-
-/// Source metadata for EV metrics (provider, url, coverage).
-model EVMetricSource {
-  /// Primary identifier for the record.
-  id          String    @id @default(cuid())
-  /// Identifier of the related metric.
-  metricId    String
-  /// Metric value (EVMetric).
-  metric      EVMetric  @relation(fields: [metricId], references: [id], onDelete: Cascade)
-
-  /// Source type.
-  sourceType  String
-  /// Raw text.
-  rawText     String?
-  /// Image URL for the record.
-  imageUrl    String?
-  /// Raw JSON payload for parse log.
-  parseLog    Json?
-
-  /// Timestamp when the record was created.
-  createdAt   DateTime  @default(now())
-
-  @@index([metricId])
-}
-
-// ==========================================
-// Scrape Tracking Table (deduplication)
-// ==========================================
-
-/// Raw scraped article content and extraction metadata.
-model ScrapedArticle {
-  /// Primary identifier for the record.
-  id            String        @id @default(cuid())
-
-  // Article identifier (for deduplication)
-  /// Canonical source URL for the record.
-  sourceUrl     String        @unique
-  /// Url hash.
-  urlHash       String        @unique
-
-  // Article metadata
-  /// Title text for the record.
-  title         String
-  /// Short summary text.
-  summary       String?
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-  /// Preview image.
-  previewImage  String?
-
-  // Time period (extracted from title)
-  /// Month number (1-12).
-  month         Int?
-  /// Calendar year for the record.
-  year          Int?
-
-  // Processing status
-  /// Workflow status for the record.
-  status        ScrapeStatus  @default(PENDING)
-  /// Article type.
-  articleType   String?
-  /// Whether needs ocr is true.
-  needsOcr      Boolean       @default(false)
-  /// Whether ocr completed is true.
-  ocrCompleted  Boolean       @default(false)
-
-  // Extraction results
-  /// Raw JSON payload for extracted data.
-  extractedData Json?
-  /// Numeric value for metrics count.
-  metricsCount  Int           @default(0)
-  /// Numeric value for specs count.
-  specsCount    Int           @default(0)
-
-  // Error tracking
-  /// Error message.
-  errorMessage  String?
-  /// Numeric value for retry count.
-  retryCount    Int           @default(0)
-
-  // Timestamps
-  /// Timestamp for scraped.
-  scrapedAt     DateTime      @default(now())
-  /// Timestamp for processed.
-  processedAt   DateTime?
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime      @updatedAt
-
-  // Indexes
-  @@index([status])
-  @@index([scrapedAt])
-  @@index([articleType])
-  @@index([month, year])
-}
-
-// ==========================================
-// Vehicle Specs Table
-// ==========================================
-
-/// Vehicle specification records for EV models.
-model VehicleSpec {
-  /// Primary identifier for the record.
-  id              String      @id @default(cuid())
-
-  // Vehicle identification
-  /// Brand value (Brand).
-  brand           Brand
-  /// Model name or identifier.
-  model           String
-  /// Variant.
-  variant         String
-
-  // Basic info
-  /// Launch date.
-  launchDate      String?
-  /// Vehicle type value (VehicleType).
-  vehicleType     VehicleType?
-  /// Segment.
-  segment         String?
-
-  // Price (RMB)
-  /// Numeric value for starting price.
-  startingPrice   Float?
-  /// Numeric value for current price.
-  currentPrice    Float?
-
-  // Dimensions (mm)
-  /// Numeric value for length mm.
-  lengthMm        Int?
-  /// Numeric value for width mm.
-  widthMm         Int?
-  /// Numeric value for height mm.
-  heightMm        Int?
-  /// Numeric value for wheelbase mm.
-  wheelbaseMm     Int?
-
-  // Performance
-  /// Numeric value for acceleration.
-  acceleration    Float?
-  /// Numeric value for top speed.
-  topSpeed        Int?
-  /// Numeric value for motor power kw.
-  motorPowerKw    Int?
-  /// Numeric value for motor torque nm.
-  motorTorqueNm   Int?
-
-  // Battery & Range
-  /// Numeric value for battery capacity.
-  batteryCapacity Float?
-  /// Numeric value for range cltc.
-  rangeCltc       Int?
-  /// Numeric value for range wltp.
-  rangeWltp       Int?
-  /// Numeric value for range epa.
-  rangeEpa        Int?
-
-  // EREV/PHEV specific
-  /// Numeric value for fuel tank volume.
-  fuelTankVolume  Float?
-  /// Numeric value for engine displacement.
-  engineDisplacement Float?
-
-  // Charging
-  /// Numeric value for max charging power.
-  maxChargingPower Int?
-  /// Numeric value for charging time10 to80.
-  chargingTime10To80 Int?
-
-  // Source tracking
-  /// Canonical source URL for the record.
-  sourceUrl       String?
-  /// Numeric value for confidence.
-  confidence      Float       @default(1.0)
-  /// List of sources.
-  sources         VehicleSpecSource[]
-
-  // Timestamps
-  /// Timestamp when the record was created.
-  createdAt       DateTime    @default(now())
-  /// Timestamp when the record was last updated.
-  updatedAt       DateTime    @updatedAt
-
-  // Unique constraint
-  @@unique([brand, model, variant])
-
-  // Indexes
-  @@index([brand])
-  @@index([model])
-  @@index([vehicleType])
-  @@index([brand, segment])
-}
-
-/// Source metadata for vehicle specification data.
-model VehicleSpecSource {
-  /// Primary identifier for the record.
-  id          String      @id @default(cuid())
-  /// Identifier of the related spec.
-  specId      String
-  /// Spec value (VehicleSpec).
-  spec        VehicleSpec @relation(fields: [specId], references: [id], onDelete: Cascade)
-
-  /// Source type.
-  sourceType  String
-  /// Raw text.
-  rawText     String?
-  /// Image URL for the record.
-  imageUrl    String?
-  /// Raw JSON payload for parse log.
-  parseLog    Json?
-
-  /// Timestamp when the record was created.
-  createdAt   DateTime    @default(now())
-
-  @@index([specId])
-}
-
-// ==========================================
-// Industry Data Tables - Time Series
-// ==========================================
-
-/// Monthly China passenger car inventory levels from CPCA (China Passenger Car Association).
-/// Tracks total inventory at dealerships and manufacturers across China.
-/// Used to monitor supply-demand balance in China's automotive market.
-/// Data frequency: Monthly
-/// Primary source: CPCA reports
-/// Use case: Analyze inventory trends, predict production adjustments, assess market health
-model ChinaPassengerInventory {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("million_units")
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly China power battery installation and production data.
-/// Tracks batteries installed in EVs (installation) and total production by Chinese battery industry.
-/// Installation typically differs from production as batteries may be exported or stockpiled.
-/// Data frequency: Monthly
-/// Primary source: CABIA (China Automotive Battery Innovation Alliance)
-/// Use case: Track EV adoption, battery industry growth, supply chain dynamics
-model ChinaBatteryInstallation {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for installation.
-  installation  Float
-
-  /// Numeric value for production.
-  production    Float?
-
-  /// Unit.
-  unit          String   @default("GWh")
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly NEV (New Energy Vehicle) sales statistics from CAAM.
-/// CAAM (China Association of Automobile Manufacturers) is the official industry body.
-/// CAAM data typically includes both domestic sales and exports, representing total production sold.
-/// Data frequency: Monthly
-/// Primary source: CAAM official releases
-/// Use case: Track total NEV market size, compare with CPCA retail data
-model CaamNevSales {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("vehicles")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly dealer inventory coefficient (库存系数) for China's auto market.
-/// The inventory coefficient represents months of inventory at dealerships.
-/// Interpretation: 1.0 = 1 month of stock, 1.5+ = oversupply/weak demand, <0.8 = shortage/strong demand
-/// Healthy range is typically 0.8-1.2. Above 1.5 signals market pressure on dealers.
-/// Data frequency: Monthly
-/// Primary source: China Automobile Dealers Association (CADA)
-/// Use case: Assess dealer health, predict pricing pressure, market demand signals
-model ChinaDealerInventoryFactor {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("ratio")
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly NEV retail sales from CPCA (China Passenger Car Association).
-/// Retail sales = units sold to end consumers (registered for road use).
-/// Differs from wholesale: retail reflects actual consumer demand, wholesale reflects dealer orders.
-/// CPCA data focuses on passenger vehicles; excludes commercial vehicles.
-/// Data frequency: Monthly
-/// Primary source: CPCA official releases
-/// Use case: Track consumer EV adoption, compare with wholesale to assess channel inventory
-model CpcaNevRetail {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("vehicles")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly NEV production volume from CPCA (China Passenger Car Association).
-/// Production = units manufactured by automakers during the month.
-/// Production typically leads sales data; comparing production vs sales shows inventory build/draw.
-/// CPCA data focuses on passenger vehicles; excludes commercial vehicles.
-/// Data frequency: Monthly
-/// Primary source: CPCA official releases
-/// Use case: Track manufacturing output, predict future supply, compare with sales
-model CpcaNevProduction {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("vehicles")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-/// Monthly Vehicle Inventory Alert Index (汽车经销商库存预警指数) - market health indicator.
-/// The VIA Index works like PMI: >50% indicates contraction/pessimism, <50% indicates expansion/optimism.
-/// Interpretation: 50% = neutral, 60%+ = significant dealer stress, <45% = healthy/optimistic market
-/// This is a sentiment and inventory pressure indicator surveyed from dealers.
-/// Data frequency: Monthly
-/// Primary source: China Automobile Dealers Association (CADA)
-/// Use case: Gauge dealer confidence, predict market trends, assess inventory pressure
-model ChinaViaIndex {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("percent")
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([year, month])
-  @@index([year, month])
-}
-
-// ==========================================
-// Industry Data Tables - Entity-Specific Time Series
-// ==========================================
-
-/// Monthly battery data by specific battery maker (individual company performance).
-/// Tracks installation and production volumes for major battery manufacturers.
-/// Major makers: CATL, BYD, LG Energy Solution, SK On, Panasonic, CALB, Gotion (Guoxuan), EVE, Sunwoda
-/// Data frequency: Monthly
-/// Primary source: CABIA (China), SNE Research (Global)
-/// Use case: Track individual battery company performance, market share trends, competitive analysis
-model BatteryMakerMonthly {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Maker.
-  maker         String
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for installation.
-  installation  Float
-
-  /// Numeric value for production.
-  production    Float?
-
-  /// Unit.
-  unit          String   @default("GWh")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([maker, year, month])
-  @@index([maker])
-  @@index([year, month])
-}
-
-/// Monthly export data by manufacturing plant (factory-level exports).
-/// Tracks vehicles exported from specific manufacturing facilities.
-/// Key plants: Tesla Gigafactory Shanghai, BYD Shenzhen, NIO Hefei, etc.
-/// Useful for understanding export hub performance and regional production strategy.
-/// Data frequency: Monthly
-/// Primary source: China Customs, company announcements
-/// Use case: Track export performance by plant, supply chain analysis, regional production trends
-model PlantExports {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Plant.
-  plant         String
-
-  /// Brand.
-  brand         String
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("vehicles")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([plant, year, month])
-  @@index([plant])
-  @@index([brand])
-  @@index([year, month])
-}
-
-// ==========================================
-// Industry Data Tables - Rankings/Tables
-// ==========================================
-
-/// NEV sales summary for a specific date range (typically weekly or bi-weekly reports).
-/// CPCA releases weekly sales estimates during the month before full monthly data.
-/// Contains both retail (to consumers) and wholesale (to dealers) figures for comparison.
-/// Retail-wholesale gap indicates channel inventory changes.
-/// Data frequency: Weekly or bi-weekly
-/// Primary source: CPCA weekly flash reports
-/// Use case: Early month-to-date sales tracking, weekly trends, retail vs wholesale analysis
-model NevSalesSummary {
-  /// Primary identifier for the record.
-  id             String   @id @default(cuid())
-
-  /// Data source.
-  dataSource     String   @default("CPCA")
-
-  /// Calendar year for the record.
-  year           Int
-
-  /// Start date.
-  startDate      String
-
-  /// End date.
-  endDate        String
-
-  /// Numeric value for retail sales.
-  retailSales    Float
-
-  /// Numeric value for retail yoy.
-  retailYoy      Float?
-
-  /// Numeric value for retail mom.
-  retailMom      Float?
-
-  /// Numeric value for wholesale sales.
-  wholesaleSales Float?
-
-  /// Numeric value for wholesale yoy.
-  wholesaleYoy   Float?
-
-  /// Numeric value for wholesale mom.
-  wholesaleMom   Float?
-
-  /// Unit.
-  unit           String   @default("vehicles")
-
-  /// Description.
-  description    String?
-
-  /// Canonical source URL for the record.
-  sourceUrl      String
-
-  /// Source title.
-  sourceTitle    String
-
-  /// Timestamp when the record was published.
-  publishedAt    DateTime?
-
-  /// Image URL for the record.
-  imageUrl       String?
-
-  /// Timestamp when the record was created.
-  createdAt      DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt      DateTime @updatedAt
-
-  @@unique([dataSource, year, startDate, endDate])
-  @@index([year])
-}
-
-/// Monthly automaker sales rankings (top-selling car manufacturers).
-/// Tracks competitive positioning of major automakers in China's auto market.
-/// Rankings may be for overall sales or NEV-specific depending on the source article.
-/// Major automakers: BYD, Geely, SAIC, Changan, GAC, Great Wall, NIO, Xpeng, Li Auto, etc.
-/// Data frequency: Monthly
-/// Primary source: CPCA (passenger), CAAM (all vehicles)
-/// Use case: Competitive analysis, market share tracking, brand performance comparison
-model AutomakerRankings {
-  /// Primary identifier for the record.
-  id            String   @id @default(cuid())
-
-  /// Data source.
-  dataSource    String   @default("CPCA")
-
-  /// Calendar year for the record.
-  year          Int
-
-  /// Month number (1-12).
-  month         Int
-
-  /// Numeric value for ranking.
-  ranking       Int
-
-  /// Automaker.
-  automaker     String
-
-  /// Numeric value for value.
-  value         Float
-
-  /// Unit.
-  unit          String   @default("vehicles")
-
-  /// Numeric value for yoy change.
-  yoyChange     Float?
-
-  /// Numeric value for mom change.
-  momChange     Float?
-
-  /// Numeric value for market share.
-  marketShare   Float?
-
-  /// Description.
-  description   String?
-
-  /// Canonical source URL for the record.
-  sourceUrl     String
-
-  /// Source title.
-  sourceTitle   String
-
-  /// Timestamp when the record was published.
-  publishedAt   DateTime?
-
-  /// Image URL for the record.
-  imageUrl      String?
-
-  /// Timestamp when the record was created.
-  createdAt     DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
-  updatedAt     DateTime @updatedAt
-
-  @@unique([dataSource, year, month, automaker])
-  @@index([dataSource])
-  @@index([automaker])
-  @@index([year, month])
-}
-
-/// Battery maker rankings (top battery manufacturers by market share).
-/// Tracks competitive positioning in both China domestic and global battery markets.
-/// China market dominated by CATL, BYD; global includes LG, SK, Panasonic, Samsung SDI.
-/// Can be monthly snapshots, year-to-date (YTD), or yearly totals.
-/// Data frequency: Monthly, quarterly, or yearly
-/// Primary source: CABIA (China domestic), SNE Research (Global)
-/// Use case: Battery industry competitive analysis, supply chain understanding, market share trends
-model BatteryMakerRankings {
-  /// Primary identifier for the record.
+model ApiSubscription {
   id               String   @id @default(cuid())
-
-  /// Data source.
-  dataSource       String
-
-  /// OAuth scopes granted for the token.
-  scope            String
-
-  /// Period type.
-  periodType       String   @default("MONTHLY")
-
-  /// Calendar year for the record.
-  year             Int
-
-  /// Month number (1-12).
-  month            Int?
-
-  /// Numeric value for ranking.
-  ranking          Int
-
-  /// Maker.
-  maker            String
-
-  /// Numeric value for value.
-  value            Float
-
-  /// Unit.
-  unit             String   @default("GWh")
-
-  /// Numeric value for yoy change.
-  yoyChange        Float?
-
-  /// Numeric value for market share.
-  marketShare      Float?
-
-  /// Numeric value for share vs prev month.
-  shareVsPrevMonth Float?
-
-  /// Description.
-  description      String?
-
-  /// Canonical source URL for the record.
-  sourceUrl        String
-
-  /// Source title.
-  sourceTitle      String
-
-  /// Timestamp when the record was published.
-  publishedAt      DateTime?
-
-  /// Image URL for the record.
-  imageUrl         String?
-
-  /// Timestamp when the record was created.
+  userId           String   @unique
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  tier             String   @default("FREE")
+  status           String   @default("active")
+  currentPeriodEnd DateTime?
   createdAt        DateTime @default(now())
-
-  /// Timestamp when the record was last updated.
   updatedAt        DateTime @updatedAt
 
-  @@unique([dataSource, scope, year, month, maker])
-  @@index([dataSource, scope])
-  @@index([maker])
-  @@index([year, month])
+  User             User     @relation(fields: [userId], references: [id])
+  @@map("juice_api_subscriptions")
 }
 
-/// NIO power infrastructure snapshot metrics over time.
-model NioPowerSnapshot {
-  /// Primary identifier for the record.
-  id                     String   @id @default(cuid())
-  /// As of time.
-  asOfTime               DateTime
-  /// Numeric value for total stations.
-  totalStations          Int
-  /// Numeric value for swap stations.
-  swapStations           Int
-  /// Numeric value for highway swap stations.
-  highwaySwapStations    Int
-  /// Numeric value for cumulative swaps.
-  cumulativeSwaps        BigInt
-  /// Numeric value for charging stations.
-  chargingStations       Int
-  /// Numeric value for charging piles.
-  chargingPiles          Int
-  /// Numeric value for cumulative charges.
-  cumulativeCharges      BigInt
-  /// Numeric value for third party piles.
-  thirdPartyPiles        Int
-  /// Numeric value for third party usage percent.
-  thirdPartyUsagePercent Float
-  /// Timestamp when the record was created.
-  createdAt              DateTime @default(now())
-  /// Timestamp when the record was last updated.
-  updatedAt              DateTime @updatedAt
+/// LEGACY MODELS (Preserved to prevent dropping tables used by external project)
 
-  @@unique([asOfTime])
-  @@index([asOfTime])
+model LegacyAIUsage {
+  id           String   @id @default(cuid())
+  type         String
+  model        String
+  size         String?
+  cost         Float
+  success      Boolean
+  errorMsg     String?
+  postId       String?
+  source       String
+  createdAt    DateTime @default(now())
+  inputTokens  Int?
+  outputTokens Int?
+  durationMs   Int?
+  
   @@index([createdAt])
+  @@index([postId])
+  @@index([source])
+  @@map("AIUsage")
+  @@ignore
+}
+
+model LegacyAccount {
+  id                String       @id
+  userId            String
+  provider          AuthProvider
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  tokenType         String?
+  scope             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime
+  User              LegacyUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("Account")
+  @@ignore
+}
+
+model LegacyDigestContent {
+  id             String    @id @default(cuid())
+  scheduledFor   DateTime
+  content        String
+  postIds        String[]
+  topPostId      String
+  status         String    @default("PENDING")
+  postedAt       DateTime?
+  tweetId        String?
+  createdAt      DateTime  @default(now())
+  digestImageUrl String?
+
+  @@index([scheduledFor])
+  @@index([status])
+  @@map("DigestContent")
+  @@ignore
+}
+
+model LegacyEmailEvent {
+  id                String            @id
+  notificationId    String
+  event             EmailEventType
+  timestamp         DateTime          @default(now())
+  metadata          Json?
+  EmailNotification LegacyEmailNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@map("EmailEvent")
+  @@ignore
+}
+
+model LegacyEmailNotification {
+  id         String       @id
+  userId     String
+  type       EmailType
+  subject    String
+  postIds    String[]
+  status     EmailStatus  @default(PENDING)
+  messageId  String?
+  error      String?
+  sentAt     DateTime?
+  createdAt  DateTime     @default(now())
+  EmailEvent LegacyEmailEvent[]
+  User       LegacyUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([type, sentAt])
+  @@index([userId])
+  @@map("EmailNotification")
+  @@ignore
+}
+
+model LegacyMagicLink {
+  id        String   @id
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("MagicLink")
+  @@ignore
+}
+
+model LegacyMetricPost {
+  id            String           @id @default(cuid())
+  postType      MetricPostType
+  year          Int
+  period        Int
+  brand         Brand
+  content       String
+  chartImageUrl String?
+  status        MetricPostStatus @default(DRAFT)
+  tweetId       String?
+  postedAt      DateTime?
+  dataSnapshot  Json?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  attempts      Int              @default(0)
+  lastError     String?
+  lastAttemptAt DateTime?        @db.Timestamptz(6)
+  approvedAt    DateTime?        @db.Timestamptz(6)
+  approvedBy    String?
+
+  @@unique([postType, year, period, brand])
+  @@index([year, period])
+  @@index([status])
+  @@map("MetricPost")
+  @@ignore
+}
+
+model LegacyPostingLog {
+  id        String   @id @default(cuid())
+  postType  String
+  tweetId   String
+  postIds   String[]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("PostingLog")
+  @@ignore
+}
+
+model LegacySubscriber {
+  id          String    @id
+  email       String    @unique
+  language    Language  @default(EN)
+  categories  String[]
+  frequency   Frequency @default(DAILY)
+  verified    Boolean   @default(false)
+  verifyToken String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@index([verified])
+  @@map("Subscriber")
+  @@ignore
+}
+
+model LegacyUser {
+  id                String              @id
+  email             String              @unique
+  name              String?
+  avatarUrl         String?
+  passwordHash      String?
+  emailVerified     Boolean             @default(false)
+  emailVerifyToken  String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  role              UserRole            @default(USER)
+  Account           LegacyAccount[]
+  EmailNotification LegacyEmailNotification[]
+  SavedPost         LegacySavedPost[]
+  Session           LegacySession[]
+  UserPreference    LegacyUserPreference?
+  XAccount          LegacyXAccount?
+
+  @@index([emailVerified])
+  @@map("User")
+  @@ignore
+}
+
+model LegacySavedPost {
+  id      String   @id
+  userId  String
+  postId  String
+  savedAt DateTime @default(now())
+  User    LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+  @@map("SavedPost")
+  @@ignore
+}
+
+model LegacySession {
+  id           String   @id
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  User         LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("Session")
+  @@ignore
+}
+
+model LegacyUserPreference {
+  id              String    @id
+  userId          String    @unique
+  brands          Brand[]
+  topics          Topic[]
+  digestFrequency Frequency @default(DAILY)
+  alertsEnabled   Boolean   @default(true)
+  alertThreshold  Int       @default(80)
+  language        Language  @default(EN)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  User            LegacyUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("UserPreference")
+  @@ignore
+}
+
+model LegacyXPublication {
+  id                  String         @id
+  postId              String         @unique
+  status              XPublishStatus @default(PENDING)
+  tweetId             String?
+  tweetUrl            String?
+  publishedAt         DateTime?
+  imageSource         ImageSource    @default(NONE)
+  mediaId             String?
+  attempts            Int            @default(0)
+  lastError           String?
+  nextRetryAt         DateTime?
+  likes               Int            @default(0)
+  retweets            Int            @default(0)
+  replies             Int            @default(0)
+  impressions         Int            @default(0)
+  engagementUpdatedAt DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime
+
+  @@index([status, nextRetryAt], map: "idx_legacy_xpub_pending")
+  @@map("XPublication")
+  @@ignore
+}
+
+model LegacyXAccount {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  xUserId        String   @unique
+  username       String
+  displayName    String?
+  avatarUrl      String?
+  accessToken    String
+  refreshToken   String
+  tokenExpiresAt DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  User           LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("XAccount")
+  @@ignore
 }

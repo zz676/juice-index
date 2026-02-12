@@ -1,4 +1,46 @@
-/* ─── Design Tokens ─── */
+@import "tailwindcss";
+
+/* ─── Visual Data Studio Theme ─── */
+@theme {
+  --color-primary: #6ada1b;
+  --color-primary-dark: #5bc016;
+  --color-primary-800: #3d7a12;
+  --color-slate-custom-50: #f8fafc;
+  --color-slate-custom-100: #f1f5f9;
+  --color-slate-custom-200: #e2e8f0;
+  --color-slate-custom-300: #cbd5e1;
+  --color-slate-custom-400: #94a3b8;
+  --color-slate-custom-500: #64748b;
+  --color-slate-custom-600: #475569;
+  --color-slate-custom-700: #334155;
+  --color-slate-custom-800: #1e293b;
+  --color-slate-custom-900: #0f172a;
+  --color-background-light: #f8fafc;
+  --color-background-dark: #0b1120;
+  --font-family-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --spacing: 0.25rem;
+}
+
+/* ─── Base styles compatible with Tailwind ─── */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/*
+ * ────────────────────────────────────────────────
+ *  Legacy styles below are scoped under .legacy-ui
+ *  to avoid conflicts with Tailwind utility classes.
+ *  These are used by /docs, /login, /admin pages.
+ * ────────────────────────────────────────────────
+ */
+
+/* Design Tokens (CSS custom properties are safe, they don't conflict) */
 :root {
   --green-50: #f0fdf0;
   --green-100: #dcfce7;
@@ -33,41 +75,21 @@
   --accent-light: var(--green-50);
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 25px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
   --font: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ─── Reset ─── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-}
-
-a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
-a:hover { color: var(--accent-hover); }
-
-/* ─── Layout ─── */
-.container {
+/* ── Scoped legacy layout ── */
+.legacy-ui .container {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-/* ─── Navigation ─── */
-.nav {
+.legacy-ui .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,7 +98,7 @@ a:hover { color: var(--accent-hover); }
   margin: 0 auto;
 }
 
-.nav-logo {
+.legacy-ui .nav-logo {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -86,30 +108,31 @@ a:hover { color: var(--accent-hover); }
   text-decoration: none;
 }
 
-.nav-logo img {
+.legacy-ui .nav-logo img {
   height: 36px;
   width: 36px;
   object-fit: contain;
 }
 
-.nav-links {
+.legacy-ui .nav-links {
   display: flex;
   align-items: center;
   gap: 32px;
   list-style: none;
 }
 
-.nav-links a {
+.legacy-ui .nav-links a {
   color: var(--text-secondary);
   font-size: 0.95rem;
   font-weight: 500;
   transition: color 0.2s;
 }
 
-.nav-links a:hover { color: var(--text); }
+.legacy-ui .nav-links a:hover {
+  color: var(--text);
+}
 
-/* ─── Buttons ─── */
-.btn {
+.legacy-ui .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -124,59 +147,62 @@ a:hover { color: var(--accent-hover); }
   text-decoration: none;
 }
 
-.btn:disabled {
+.legacy-ui .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-primary {
+.legacy-ui .btn-primary {
   background: var(--accent);
   color: #fff;
   box-shadow: 0 2px 8px rgba(50, 205, 50, 0.25);
 }
-.btn-primary:hover:not(:disabled) {
+
+.legacy-ui .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
   color: #fff;
   box-shadow: 0 4px 16px rgba(50, 205, 50, 0.35);
   transform: translateY(-1px);
 }
 
-.btn-outline {
+.legacy-ui .btn-outline {
   background: transparent;
   color: var(--accent);
   border: 1.5px solid var(--accent);
 }
-.btn-outline:hover:not(:disabled) {
+
+.legacy-ui .btn-outline:hover:not(:disabled) {
   background: var(--accent-light);
   color: var(--accent-hover);
 }
 
-.btn-ghost {
+.legacy-ui .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
   padding: 8px 16px;
 }
-.btn-ghost:hover:not(:disabled) {
+
+.legacy-ui .btn-ghost:hover:not(:disabled) {
   background: var(--gray-100);
   color: var(--text);
 }
 
-.btn-sm {
+.legacy-ui .btn-sm {
   padding: 6px 14px;
   font-size: 0.85rem;
 }
 
-.btn-danger {
+.legacy-ui .btn-danger {
   background: transparent;
   color: #dc2626;
   border: 1.5px solid #fca5a5;
 }
-.btn-danger:hover:not(:disabled) {
+
+.legacy-ui .btn-danger:hover:not(:disabled) {
   background: #fef2f2;
 }
 
-/* ─── Cards ─── */
-.card {
+.legacy-ui .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -185,17 +211,16 @@ a:hover { color: var(--accent-hover); }
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
-.card:hover {
+.legacy-ui .card:hover {
   box-shadow: var(--shadow-md);
 }
 
-.card-accent {
+.legacy-ui .card-accent {
   border-color: var(--accent);
   box-shadow: var(--shadow-md), 0 0 0 1px var(--accent);
 }
 
-/* ─── Badges ─── */
-.badge {
+.legacy-ui .badge {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
@@ -205,29 +230,28 @@ a:hover { color: var(--accent-hover); }
   letter-spacing: 0.02em;
 }
 
-.badge-green {
+.legacy-ui .badge-green {
   background: var(--green-100);
   color: var(--green-700);
 }
 
-.badge-gray {
+.legacy-ui .badge-gray {
   background: var(--gray-100);
   color: var(--gray-600);
 }
 
-.badge-red {
+.legacy-ui .badge-red {
   background: #fee2e2;
   color: #dc2626;
 }
 
-/* ─── Tables ─── */
-.table {
+.legacy-ui .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
 }
 
-.table th {
+.legacy-ui .table th {
   text-align: left;
   padding: 12px 16px;
   font-weight: 600;
@@ -238,17 +262,16 @@ a:hover { color: var(--accent-hover); }
   border-bottom: 2px solid var(--border);
 }
 
-.table td {
+.legacy-ui .table td {
   padding: 12px 16px;
   border-bottom: 1px solid var(--gray-100);
 }
 
-.table tr:hover td {
+.legacy-ui .table tr:hover td {
   background: var(--gray-50);
 }
 
-/* ─── Forms ─── */
-.input {
+.legacy-ui .input {
   padding: 10px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
@@ -261,23 +284,27 @@ a:hover { color: var(--accent-hover); }
   width: 100%;
 }
 
-.input:focus {
+.legacy-ui .input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(50, 205, 50, 0.1);
 }
 
-/* ─── Section Helpers ─── */
-.section { padding: 80px 0; }
-.section-alt { background: var(--bg-subtle); }
+.legacy-ui .section {
+  padding: 80px 0;
+}
 
-.section-title {
+.legacy-ui .section-alt {
+  background: var(--bg-subtle);
+}
+
+.legacy-ui .section-title {
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
   margin-bottom: 12px;
 }
 
-.section-subtitle {
+.legacy-ui .section-subtitle {
   text-align: center;
   color: var(--text-secondary);
   max-width: 600px;
@@ -285,8 +312,7 @@ a:hover { color: var(--accent-hover); }
   font-size: 1.05rem;
 }
 
-/* ─── Footer ─── */
-.footer {
+.legacy-ui .footer {
   border-top: 1px solid var(--border);
   padding: 32px 24px;
   text-align: center;
@@ -296,15 +322,15 @@ a:hover { color: var(--accent-hover); }
   margin: 0 auto;
 }
 
-.footer a {
+.legacy-ui .footer a {
   color: var(--text-secondary);
 }
-.footer a:hover {
+
+.legacy-ui .footer a:hover {
   color: var(--text);
 }
 
-/* ─── Code Block ─── */
-.code-block {
+.legacy-ui .code-block {
   background: var(--gray-900);
   color: #e2e8f0;
   padding: 20px 24px;
@@ -315,20 +341,34 @@ a:hover { color: var(--accent-hover); }
   line-height: 1.7;
 }
 
-.code-block .code-comment { color: #64748b; }
-.code-block .code-string { color: var(--green-400); }
-.code-block .code-keyword { color: #c084fc; }
+.legacy-ui .code-block .code-comment {
+  color: #64748b;
+}
 
-/* ─── Error ─── */
-.error-text {
+.legacy-ui .code-block .code-string {
+  color: var(--green-400);
+}
+
+.legacy-ui .code-block .code-keyword {
+  color: #c084fc;
+}
+
+.legacy-ui .error-text {
   color: #dc2626;
   font-size: 0.9rem;
   margin-top: 8px;
 }
 
-/* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .nav-links { gap: 20px; }
-  .section { padding: 48px 0; }
-  .section-title { font-size: 1.5rem; }
+  .legacy-ui .nav-links {
+    gap: 20px;
+  }
+
+  .legacy-ui .section {
+    padding: 48px 0;
+  }
+
+  .legacy-ui .section-title {
+    font-size: 1.5rem;
+  }
 }
