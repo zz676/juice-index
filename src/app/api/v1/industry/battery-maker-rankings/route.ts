@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     headers.forEach((v, k) => res.headers.set(k, v));
 
-    await prisma.apiUsage.create({
+    await prisma.aIUsage.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     return res;
   } catch (e) {
-    await prisma.apiUsage.create({
+    await prisma.aIUsage.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,

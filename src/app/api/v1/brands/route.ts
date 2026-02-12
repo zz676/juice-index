@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const res = NextResponse.json({ data: brands, data_as_of: ctx.dataAsOf.toISOString(), tier: ctx.tier });
     headers.forEach((v, k) => res.headers.set(k, v));
 
-    await prisma.apiUsage.create({
+    await prisma.aIUsage.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return res;
   } catch (e) {
-    await prisma.apiUsage.create({
+    await prisma.aIUsage.create({
       data: {
         apiKeyId: ctx.apiKeyId,
         userId: ctx.userId,
