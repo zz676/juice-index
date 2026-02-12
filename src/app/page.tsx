@@ -32,8 +32,8 @@ export default function LandingPage() {
               <Link href="/docs" className="text-sm font-medium text-slate-custom-600 hover:text-primary transition-colors">Docs</Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/login" className="text-sm font-semibold text-slate-custom-900 hover:text-primary transition-colors">Log in</Link>
-              <Link href="/login" className="hidden sm:inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-slate-custom-900 bg-primary hover:bg-primary/90 transition-all">
+              <Link href="/login?mode=password&intent=signin" className="text-sm font-semibold text-slate-custom-900 hover:text-primary transition-colors">Log in</Link>
+              <Link href="/login?mode=magic&intent=signup" className="hidden sm:inline-flex items-center justify-center px-5 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-slate-custom-900 bg-primary hover:bg-primary/90 transition-all">
                 Get Started
               </Link>
             </div>
@@ -68,7 +68,7 @@ export default function LandingPage() {
             supply chain dynamics for the world&apos;s fastest-growing auto sector.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/login" className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-full text-slate-custom-900 bg-primary hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(106,218,27,0.4)] transition-all duration-300">
+            <Link href="/login?mode=magic&intent=signup" className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-full text-slate-custom-900 bg-primary hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(106,218,27,0.4)] transition-all duration-300">
               Start Free Trial
               <span className="material-icons-round ml-2 text-lg">arrow_forward</span>
             </Link>
