@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { ChartConfiguration, Plugin, ChartType as JsChartType } from "chart.js";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { Brand, MetricType, PeriodType } from "@prisma/client";
+import { Brand, MetricType, PeriodType, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { rateLimitDaily } from "@/lib/ratelimit";
 import { normalizeTier, tierLimit } from "@/lib/api/tier";
@@ -35,6 +35,8 @@ type ChartStyleOptions = {
   sourceColor?: string;
   sourceFontSize?: number;
   barWidth?: number;
+  showValues?: boolean;
+  showGrid?: boolean;
 };
 
 const DEFAULT_SOURCE_TEXT = "source: evjuice.net";
@@ -54,14 +56,14 @@ const MONTH_NAMES = [
 ];
 
 const QUERY_RESPONSE_SCHEMA = z.object({
-  unsupported: z.boolean().default(false),
-  reason: z.string().optional(),
-  table: z.string().default("eVMetric"),
-  query: z.record(z.any()).default({}),
-  chartType: z.enum(["bar", "line", "horizontalBar"]).default("bar"),
-  chartTitle: z.string().default("Data Results"),
-  explanation: z.string().default(""),
-});
+  unsupported: z.boolean(),
+  reason: z.string(),
+  table: z.string(),
+  query: z.string(),
+  chartType: z.enum(["bar", "line", "horizontalBar"]),
+  chartTitle: z.string(),
+  explanation: z.string(),
+}).strict();
 
 const EV_KEYWORDS = [
   "ev",
@@ -232,6 +234,9 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
       typeof obj.sourceColor === "string" ? obj.sourceColor : undefined,
     sourceFontSize: asNumber(obj.sourceFontSize),
     barWidth: asNumber(obj.barWidth),
+    showValues:
+      typeof obj.showValues === "boolean" ? obj.showValues : undefined,
+    showGrid: typeof obj.showGrid === "boolean" ? obj.showGrid : undefined,
   };
 }
 
@@ -252,6 +257,8 @@ function renderChartConfig(params: {
   const xTickColor = style.xAxisFontColor || textColor;
   const yTickColor = style.yAxisFontColor || textColor;
   const barColor = style.barColor || "#6ada1b";
+  const showValues = style.showValues ?? true;
+  const showGrid = style.showGrid ?? true;
 
   return {
     type: jsType,
@@ -289,7 +296,7 @@ function renderChartConfig(params: {
         },
         legend: { display: false },
         datalabels: {
-          display: chartType !== "line",
+          display: showValues && chartType !== "line",
           anchor: isHorizontal ? "end" : "end",
           align: isHorizontal ? "right" : "top",
           color: textColor,
@@ -313,7 +320,7 @@ function renderChartConfig(params: {
       scales: {
         x: {
           beginAtZero: isHorizontal,
-          grid: { color: "#e5e7eb", display: chartType !== "line" || isHorizontal },
+          grid: { color: "#e5e7eb", display: showGrid },
           ticks: {
             color: xTickColor,
             font: {
@@ -329,7 +336,7 @@ function renderChartConfig(params: {
         },
         y: {
           beginAtZero: !isHorizontal,
-          grid: { color: "#e5e7eb", display: chartType !== "line" || !isHorizontal },
+          grid: { color: "#e5e7eb", display: showGrid },
           ticks: {
             color: yTickColor,
             font: {
@@ -427,28 +434,33 @@ async function enforceRateLimit(userId: string): Promise<
 
 async function getLiveHints() {
   try {
-    const yearsRows = await prisma.eVMetric.findMany({
-      distinct: ["year"],
-      select: { year: true },
-      orderBy: [{ year: "desc" }],
-      take: 6,
-    });
+    const yearsRows = await prisma.$queryRaw<Array<{ year: number }>>(
+      Prisma.sql`
+        SELECT DISTINCT "year"
+        FROM "public"."EVMetric"
+        WHERE "year" IS NOT NULL
+        ORDER BY "year" DESC
+        LIMIT 6
+      `
+    );
 
-    const years = yearsRows.map((row) => row.year);
+    const years = yearsRows
+      .map((row) => Number(row.year))
+      .filter((year) => Number.isFinite(year));
     const latestYear = years[0] ?? new Date().getFullYear();
 
-    const brandsRows = await prisma.eVMetric.findMany({
-      where: {
-        metric: MetricType.DELIVERY,
-        periodType: PeriodType.MONTHLY,
-        year: latestYear,
-        brand: { not: Brand.INDUSTRY },
-      },
-      distinct: ["brand"],
-      select: { brand: true },
-      orderBy: [{ brand: "asc" }],
-      take: 20,
-    });
+    const brandsRows = await prisma.$queryRaw<Array<{ brand: string }>>(
+      Prisma.sql`
+        SELECT DISTINCT ("brand"::text) AS "brand"
+        FROM "public"."EVMetric"
+        WHERE "metric" = CAST(${MetricType.DELIVERY} AS "public"."MetricType")
+          AND "periodType" = CAST(${PeriodType.MONTHLY} AS "public"."PeriodType")
+          AND "year" = ${latestYear}
+          AND "brand" <> CAST(${Brand.INDUSTRY} AS "public"."Brand")
+        ORDER BY "brand" ASC
+        LIMIT 20
+      `
+    );
 
     return {
       latestYear,
@@ -493,17 +505,34 @@ Live DB hints:
 Rules:
 1. If question is not about EV/NEV market data, set unsupported=true and include reason.
 2. Use ONLY allowlisted table names above.
-3. Return Prisma findMany JSON subset using keys: where, orderBy, take, skip, select, distinct.
+3. Return query as a valid JSON string representing Prisma findMany args object.
+   Allowed top-level keys: where, orderBy, take, skip, select, distinct.
+   Example:
+   {"where":{"brand":"TESLA","year":2024},"orderBy":[{"month":"asc"}],"take":12}
 4. Never generate raw SQL, mutations, or unsafe operations.
 5. Default to latest year when user omits year.
 6. Keep take <= 120.
 7. Prefer bar for ranked comparisons, line for trends over time.
 8. explanation should be short, plain English, and mention any assumptions.
+9. Always return ALL keys in schema: unsupported, reason, table, query, chartType, chartTitle, explanation.
+10. If unsupported=false, set reason to an empty string.
 `,
     prompt,
   });
 
   return object;
+}
+
+function parseGeneratedQuery(queryText: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(queryText);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Generated query must be a JSON object.");
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    throw new Error("Generated query JSON is invalid.");
+  }
 }
 
 export async function POST(req: Request) {
@@ -529,6 +558,64 @@ export async function POST(req: Request) {
 
     const limit = await enforceRateLimit(userId);
     if (!limit.ok) return limit.res;
+
+    // Mode 0: Execute an explicit runnable query (from reviewed/edited query JSON)
+    if (
+      typeof payload.table === "string" &&
+      payload.table.trim().length > 0 &&
+      payload.query &&
+      typeof payload.query === "object" &&
+      !Array.isArray(payload.query)
+    ) {
+      const table = payload.table.trim();
+      const query = payload.query as Record<string, unknown>;
+
+      let execution;
+      try {
+        execution = await executeQuery({ table, query });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to execute query";
+        return NextResponse.json(
+          { error: "QUERY_EXECUTION_FAILED", message },
+          { status: 400 }
+        );
+      }
+
+      const preview = buildPreviewData(execution.data);
+      const sqlPreview = prismaFindManyToSql({
+        table: execution.table,
+        query,
+      });
+
+      const chartType =
+        payload.chartType === "line" ||
+        payload.chartType === "bar" ||
+        payload.chartType === "horizontalBar"
+          ? (payload.chartType as ExplorerChartType)
+          : "bar";
+
+      const chartTitle =
+        typeof payload.chartTitle === "string" && payload.chartTitle.trim()
+          ? payload.chartTitle.trim()
+          : "Data Results";
+
+      return NextResponse.json({
+        mode: "query",
+        table: execution.table,
+        data: execution.data,
+        rowCount: execution.rowCount,
+        executionTimeMs: execution.executionTimeMs,
+        previewData: preview.points,
+        xField: preview.xField,
+        yField: preview.yField,
+        chartType,
+        chartTitle,
+        query,
+        queryJson: JSON.stringify(query, null, 2),
+        sql: sqlPreview,
+      });
+    }
 
     // Mode 1: Prompt -> safe query -> results
     if (typeof payload.prompt === "string") {
@@ -576,7 +663,35 @@ export async function POST(req: Request) {
         );
       }
 
-      const query = (generated.query || {}) as Record<string, unknown>;
+      let query: Record<string, unknown>;
+      try {
+        query = parseGeneratedQuery(generated.query || "{}");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to parse generated query";
+        return NextResponse.json(
+          { error: "LLM_ERROR", message },
+          { status: 503 }
+        );
+      }
+      const sqlPreview = prismaFindManyToSql({
+        table: generated.table,
+        query,
+      });
+
+      // Generate runnable query payload without executing it yet.
+      if (payload.previewOnly === true) {
+        return NextResponse.json({
+          mode: "query-plan",
+          table: generated.table,
+          chartType: generated.chartType,
+          chartTitle: generated.chartTitle,
+          explanation: generated.explanation,
+          query,
+          queryJson: JSON.stringify(query, null, 2),
+          sql: sqlPreview,
+        });
+      }
 
       let execution;
       try {
@@ -591,11 +706,6 @@ export async function POST(req: Request) {
       }
 
       const preview = buildPreviewData(execution.data);
-      const sqlPreview = prismaFindManyToSql({
-        table: execution.table,
-        query,
-      });
-
       return NextResponse.json({
         mode: "query",
         table: execution.table,
