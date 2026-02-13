@@ -32,7 +32,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Social Login Handler
-  async function handleSocialLogin(provider: "google" | "twitter") {
+  async function handleSocialLogin(provider: "google" | "x") {
     setIsLoading(true);
     setStatus(null);
     try {
@@ -147,7 +147,7 @@ function LoginForm() {
               Google
             </button>
             <button
-              onClick={() => handleSocialLogin("twitter")}
+              onClick={() => handleSocialLogin("x")}
               disabled={isLoading}
               className="w-full inline-flex justify-center py-2.5 px-4 border border-slate-300 rounded-md shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
             >

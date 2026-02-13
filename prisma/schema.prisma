@@ -1737,7 +1737,7 @@ model LegacyMetricPost {
   @@unique([postType, year, period, brand])
   @@index([year, period])
   @@index([status])
-  @@map("MetricPost")
+  @@map("LegacyMetricPost")
   @@ignore
 }
 
