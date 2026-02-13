@@ -6,13 +6,14 @@ This document outlines the testing strategy for the Visual Data Studio features,
 
 We will adopt a testing pyramid approach, focusing on a solid foundation of unit tests, supported by integration tests for API/DB layers, and critical path E2E tests for user flows.
 
-### 1.1 Unit Tests (Jest / Vitest)
+### 1.1 Unit Tests (Vitest)
 **Focus**: Pure functions, utilities, and isolated component logic.
+**Status**: Vitest is configured (`vitest.config.ts`) with `@/*` path alias support. Run with `npm test`.
 - **Data Transformation**: Testing `chart-data.ts` and other utility functions that format data for Recharts.
 - **Rate Limiting**: Verifying token bucket logic and tier limits in isolation.
 - **Prompt Engineering**: Testing prompt generation logic for the natural language to SQL service.
 
-### 1.2 Integration Tests (Jest / Vitest + Test DB)
+### 1.2 Integration Tests (Vitest + Test DB)
 **Focus**: API endpoints, Database interactions, and Service layers.
 - **API Endpoints**: Testing `/api/dashboard/*` routes for correct status codes, data structure, and error handling.
 - **Database Queries**: Verifying Prisma queries return expected data from the shared schema.
@@ -26,9 +27,9 @@ We will adopt a testing pyramid approach, focusing on a solid foundation of unit
 
 ## 2. Tools & Stack
 
-- **Test Runner**: Vitest (recommended for Vite/Next.js) or Jest.
+- **Test Runner**: Vitest (configured, see `vitest.config.ts`). Run: `npm test` or `npm run test:watch`.
 - **E2E Framework**: Playwright (fast, reliable, native browser support).
-- **Mocking**: `vi` (Vitest) or `jest.mock`.
+- **Mocking**: `vi` (Vitest) — `vi.stubEnv()` for env vars, `vi.mock()` for modules.
 - **Database**: Dockerized Postgres for integration tests (or a dedicated test schema).
 
 ## 3. Test Data Management
