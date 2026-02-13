@@ -34,7 +34,9 @@ export default function DataExplorerPage() {
   const [chartImage, setChartImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [isLoadingQuery, setIsLoadingQuery] = useState(false);
+  const [isGeneratingQueryPlan, setIsGeneratingQueryPlan] = useState(false);
+  const [isRunningQuery, setIsRunningQuery] = useState(false);
+  const [queryJsonText, setQueryJsonText] = useState("");
   const [generatedSql, setGeneratedSql] = useState("");
   const [tableName, setTableName] = useState("");
   const [xField, setXField] = useState("");
@@ -64,35 +66,8 @@ export default function DataExplorerPage() {
     toastTimer.current = setTimeout(() => setToast(null), 3200);
   }, []);
 
-  const handleQuery = async () => {
-    if (!prompt.trim()) {
-      showToast("error", "Please enter a query first.");
-      return;
-    }
-
-    setIsLoadingQuery(true);
-    showToast("info", "Analyzing query...");
-
-    try {
-      const res = await fetch("/api/dashboard/explorer/generate-chart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const data = (await res.json().catch(() => ({}))) as Record<
-        string,
-        unknown
-      >;
-
-      if (!res.ok) {
-        throw new Error(
-          (typeof data.message === "string" && data.message) ||
-            (typeof data.error === "string" && data.error) ||
-            "Failed to process query"
-        );
-      }
-
+  const applyQueryExecutionResult = useCallback(
+    (data: Record<string, unknown>) => {
       const previewData = Array.isArray(data.previewData)
         ? (data.previewData as Array<Record<string, unknown>>)
             .map((point) => ({
@@ -114,9 +89,92 @@ export default function DataExplorerPage() {
       setExecutionTimeMs(
         typeof data.executionTimeMs === "number" ? data.executionTimeMs : null
       );
+      setChartImage(null);
+      setPostDraft("");
+      setQueryJsonText((prev) =>
+        typeof data.queryJson === "string" ? data.queryJson : prev
+      );
+
+      setChartConfig((prev) => ({
+        ...prev,
+        chartType:
+          data.chartType === "bar" ||
+          data.chartType === "line" ||
+          data.chartType === "horizontalBar"
+            ? data.chartType
+            : prev.chartType,
+        title:
+          typeof data.chartTitle === "string" && data.chartTitle.trim()
+            ? data.chartTitle
+            : prev.title,
+      }));
+
+      showToast(
+        "success",
+        previewData.length
+          ? "Query executed successfully."
+          : "Query ran successfully but returned no chartable rows."
+      );
+
+      setTimeout(() => {
+        chartRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 350);
+    },
+    [showToast]
+  );
+
+  const generateRunnableQuery = async () => {
+    if (!prompt.trim()) {
+      showToast("error", "Please enter a query first.");
+      return;
+    }
+
+    setIsGeneratingQueryPlan(true);
+    showToast("info", "Converting question to runnable query...");
+
+    try {
+      const res = await fetch("/api/dashboard/explorer/generate-chart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, previewOnly: true }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+
+      if (!res.ok) {
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            (typeof data.error === "string" && data.error) ||
+            "Failed to process query"
+        );
+      }
+
+      const nextSql =
+        typeof data.sql === "string" && data.sql.trim().length > 0
+          ? data.sql
+          : "-- SQL preview unavailable for this query.";
+      const nextQueryJson =
+        typeof data.queryJson === "string" && data.queryJson.trim().length > 0
+          ? data.queryJson
+          : data.query && typeof data.query === "object"
+          ? JSON.stringify(data.query, null, 2)
+          : "{}";
+
+      setGeneratedSql(nextSql);
+      setTableName(typeof data.table === "string" ? data.table : "");
+      setQueryJsonText(nextQueryJson);
       setAnalysisExplanation(
         typeof data.explanation === "string" ? data.explanation : ""
       );
+      setChartData([]);
+      setRawData([]);
+      setXField("");
+      setYField("");
+      setRowCount(0);
+      setExecutionTimeMs(null);
       setChartImage(null);
       setPostDraft("");
 
@@ -138,16 +196,67 @@ export default function DataExplorerPage() {
             : prev.description,
       }));
 
+      showToast("success", "Runnable query generated. Review and click Run Query.");
+    } catch (err) {
+      console.error(err);
       showToast(
-        "success",
-        previewData.length
-          ? "Analysis complete!"
-          : "Query ran successfully but returned no chartable rows."
+        "error",
+        err instanceof Error ? err.message : "Failed to generate query"
       );
+    } finally {
+      setIsGeneratingQueryPlan(false);
+    }
+  };
 
-      setTimeout(() => {
-        chartRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 350);
+  const runGeneratedQuery = async () => {
+    if (!tableName) {
+      showToast("error", "Generate a query first.");
+      return;
+    }
+
+    let parsedQuery: Record<string, unknown>;
+    try {
+      parsedQuery = JSON.parse(queryJsonText) as Record<string, unknown>;
+      if (!parsedQuery || typeof parsedQuery !== "object" || Array.isArray(parsedQuery)) {
+        throw new Error("Query JSON must be an object.");
+      }
+    } catch (error) {
+      showToast(
+        "error",
+        error instanceof Error ? error.message : "Invalid query JSON."
+      );
+      return;
+    }
+
+    setIsRunningQuery(true);
+    showToast("info", "Running query...");
+
+    try {
+      const res = await fetch("/api/dashboard/explorer/generate-chart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: tableName,
+          query: parsedQuery,
+          chartType: chartConfig.chartType,
+          chartTitle: chartConfig.title,
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+
+      if (!res.ok) {
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            (typeof data.error === "string" && data.error) ||
+            "Failed to run query"
+        );
+      }
+
+      applyQueryExecutionResult(data);
     } catch (err) {
       console.error(err);
       showToast(
@@ -155,7 +264,7 @@ export default function DataExplorerPage() {
         err instanceof Error ? err.message : "Failed to run query"
       );
     } finally {
-      setIsLoadingQuery(false);
+      setIsRunningQuery(false);
     }
   };
 
@@ -190,6 +299,8 @@ export default function DataExplorerPage() {
             sourceColor: chartConfig.sourceColor,
             sourceFontSize: chartConfig.sourceFontSize,
             barWidth: chartConfig.barWidth,
+            showValues: chartConfig.showValues,
+            showGrid: chartConfig.showGrid,
           },
         }),
       });
@@ -292,6 +403,16 @@ export default function DataExplorerPage() {
       showToast("error", "Failed to copy draft.");
     }
   }, [postDraft, showToast]);
+
+  const copySql = useCallback(async () => {
+    if (!generatedSql) return;
+    try {
+      await navigator.clipboard.writeText(generatedSql);
+      showToast("success", "SQL copied.");
+    } catch {
+      showToast("error", "Failed to copy SQL.");
+    }
+  }, [generatedSql, showToast]);
 
   const copyChartToClipboard = useCallback(async () => {
     if (!chartImage) return;
@@ -401,17 +522,17 @@ export default function DataExplorerPage() {
                     </span>
                   </button>
                   <button
-                    onClick={handleQuery}
-                    disabled={isLoadingQuery}
+                    onClick={generateRunnableQuery}
+                    disabled={isGeneratingQueryPlan}
                     className="flex items-center gap-1 text-xs font-bold text-primary hover:text-green-700 uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoadingQuery ? "Running..." : "Run Query"}{" "}
+                    {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}{" "}
                     <span
                       className={`material-icons-round text-sm ${
-                        isLoadingQuery ? "animate-spin" : ""
+                        isGeneratingQueryPlan ? "animate-spin" : ""
                       }`}
                     >
-                      {isLoadingQuery ? "refresh" : "play_arrow"}
+                      {isGeneratingQueryPlan ? "refresh" : "auto_awesome"}
                     </span>
                   </button>
                 </div>
@@ -419,9 +540,85 @@ export default function DataExplorerPage() {
             </section>
 
             <section className="p-6 flex-1 bg-slate-custom-100/50">
-              <div className="flex items-center gap-2 mb-4 opacity-50">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
+              <div className="flex items-center gap-2 mb-4">
+                <span
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold border ${
+                    generatedSql
+                      ? "bg-primary text-slate-custom-900 border-primary/40"
+                      : "bg-slate-custom-200 text-slate-custom-500 border-slate-custom-300"
+                  }`}
+                >
                   2
+                </span>
+                <h3
+                  className={`font-bold text-sm uppercase tracking-wide ${
+                    generatedSql ? "text-slate-custom-900" : "text-slate-custom-500"
+                  }`}
+                >
+                  Review / Edit Query
+                </h3>
+              </div>
+
+              <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm mb-5 overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-custom-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-xs text-slate-custom-700">
+                      Generated Query
+                    </span>
+                    {tableName && (
+                      <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[10px] font-bold">
+                        {tableName}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={copySql}
+                      disabled={!generatedSql}
+                      className="px-2.5 py-1 rounded border border-slate-custom-200 text-[10px] font-bold text-slate-custom-600 hover:text-primary hover:border-primary/40 disabled:opacity-40"
+                    >
+                      Copy SQL
+                    </button>
+                    <button
+                      onClick={runGeneratedQuery}
+                      disabled={isRunningQuery || !tableName || !queryJsonText.trim()}
+                      className="px-3 py-1 rounded bg-primary text-slate-custom-900 text-[10px] font-bold hover:shadow-[0_0_10px_rgba(106,218,27,0.45)] disabled:opacity-50"
+                    >
+                      {isRunningQuery ? "Running..." : "Run Query"}
+                    </button>
+                  </div>
+                </div>
+                <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
+                  {analysisExplanation || "Generate a query, review/edit JSON, then run it."}
+                </div>
+                <div className="p-3 grid grid-cols-1 gap-3">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400 mb-1">
+                      Prisma
+                    </div>
+                    <textarea
+                      value={queryJsonText}
+                      onChange={(e) => setQueryJsonText(e.target.value)}
+                      placeholder='{"where": {...}, "orderBy": [...], "take": 50}'
+                      className="w-full h-28 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400 mb-1">
+                      SQL Preview
+                    </div>
+                    <textarea
+                      value={generatedSql || ""}
+                      readOnly
+                      className="w-full h-24 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-4 opacity-70">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
+                  2.5
                 </span>
                 <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
                   Logic Process
@@ -795,7 +992,9 @@ export default function DataExplorerPage() {
                       Download PNG
                     </button>
                     <button
-                      onClick={downloadImage}
+                      onClick={() =>
+                        showToast("info", "Share link workflow will be wired next.")
+                      }
                       className="px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-xs font-bold hover:bg-slate-custom-800 transition-all flex items-center gap-2 shadow-lg shadow-slate-custom-900/20"
                     >
                       <span className="material-icons-round text-sm">share</span>

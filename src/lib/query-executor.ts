@@ -24,6 +24,16 @@ type AllowedTable = (typeof ALLOWED_TABLES)[number];
 const MAX_RESULTS = 1000;
 const QUERY_TIMEOUT = 5000;
 const ALLOWED_QUERY_KEYS = ["where", "orderBy", "take", "skip", "select", "distinct"];
+const FORBIDDEN_QUERY_KEYS = new Set([
+  "$queryraw",
+  "$executeraw",
+  "delete",
+  "update",
+  "create",
+  "drop",
+  "truncate",
+  "alter",
+]);
 
 function normalizeOrderBy(orderBy: unknown): unknown {
   if (!orderBy) return orderBy;
@@ -59,22 +69,31 @@ function validateQueryStructure(query: Record<string, unknown>): void {
     }
   }
 
-  const queryStr = JSON.stringify(query);
-  const dangerousPatterns = [
-    /\$queryRaw/i,
-    /\$executeRaw/i,
-    /delete/i,
-    /update/i,
-    /create/i,
-    /drop/i,
-    /truncate/i,
-    /alter/i,
-  ];
-
-  for (const pattern of dangerousPatterns) {
-    if (pattern.test(queryStr)) {
-      throw new Error(`Query contains dangerous pattern: ${pattern.source}`);
+  const findForbiddenKeyPath = (value: unknown, path: string): string | null => {
+    if (Array.isArray(value)) {
+      for (let i = 0; i < value.length; i += 1) {
+        const found = findForbiddenKeyPath(value[i], `${path}[${i}]`);
+        if (found) return found;
+      }
+      return null;
     }
+
+    if (!value || typeof value !== "object") return null;
+
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (FORBIDDEN_QUERY_KEYS.has(key.toLowerCase())) {
+        return `${path}.${key}`;
+      }
+      const found = findForbiddenKeyPath(nested, `${path}.${key}`);
+      if (found) return found;
+    }
+
+    return null;
+  };
+
+  const forbiddenPath = findForbiddenKeyPath(query, "query");
+  if (forbiddenPath) {
+    throw new Error(`Query contains forbidden key at ${forbiddenPath}`);
   }
 }
 
