@@ -60,21 +60,16 @@ async function syncUser(user: SupabaseUser) {
         },
     })
 
-    // 2. Ensure ApiSubscription exists
-    // We use upsert to ensure it exists without overwriting existing data if we don't want to
-    // But actually, we just want to create it if it doesn't exist.
-    // upsert is easiest way to "create if not exists"
-    const existingSub = await prisma.apiSubscription.findUnique({
-        where: { userId: user.id },
-    })
+    // 2. Ensure ApiSubscription exists.
+    // Use raw SQL with explicit columns to stay compatible with partially migrated DBs.
+    // Some environments are missing newer columns (e.g. currentPeriodStart/cancelAtPeriodEnd),
+    // which can cause Prisma model-based find/create calls to fail with P2022.
+    const now = new Date()
+    const subscriptionId = globalThis.crypto?.randomUUID?.() ?? `${user.id}-${Date.now()}`
 
-    if (!existingSub) {
-        await prisma.apiSubscription.create({
-            data: {
-                userId: user.id,
-                tier: 'FREE',
-                status: 'active',
-            },
-        })
-    }
+    await prisma.$executeRaw`
+      INSERT INTO "public"."juice_api_subscriptions" ("id", "userId", "tier", "status", "createdAt", "updatedAt")
+      VALUES (${subscriptionId}, ${user.id}, 'FREE', 'active', ${now}, ${now})
+      ON CONFLICT ("userId") DO NOTHING
+    `
 }
