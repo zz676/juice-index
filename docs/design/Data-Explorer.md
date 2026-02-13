@@ -101,6 +101,11 @@ While the user sees a "Studio," the backend ensures safety and performance.
 - **Server-Side Rendering**: Generates identical PNGs regardless of the user's device.
 - **Brand Consistency**: Fonts, colors, and margins are hardcoded to brand guidelines.
 
+### 5. Mobile Responsiveness
+- **Collapsible Sidebar**: On screens below the `lg` breakpoint, a toggle button shows/hides the left input panel.
+- **Auto-collapse**: After generating a query on mobile, the sidebar collapses automatically to maximize chart/data visibility.
+- **Desktop Unaffected**: The 450px sidebar remains always visible on `lg+` screens.
+
 ---
 
 ## Future Roadmap: "The Bloomberg Terminal for EV Content"

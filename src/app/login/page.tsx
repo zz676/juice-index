@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Mail, Lock, CheckCircle, AlertCircle, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 function LoginForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -36,13 +37,29 @@ function LoginForm() {
     setIsLoading(true);
     setStatus(null);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
+      const appUrl = getRedirectBase(window.location.origin);
+
+      // Supabase may register X as "x" or "twitter" depending on config
+      type OAuthProvider = "google" | "x" | "twitter";
+      const candidates: OAuthProvider[] =
+        provider === "x" ? ["x", "twitter"] : ["google"];
+
+      let lastError: Error | null = null;
+      for (const candidate of candidates) {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: candidate,
+          options: { redirectTo: `${appUrl}/auth/callback` },
+        });
+        if (!error) return;
+
+        const msg = error.message.toLowerCase();
+        if (msg.includes("provider is not enabled") || msg.includes("unsupported provider")) {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+      if (lastError) throw lastError;
     } catch (err) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : "Login failed" });
       setIsLoading(false);
@@ -54,7 +71,7 @@ function LoginForm() {
     e.preventDefault();
     setStatus(null);
     setIsLoading(true);
-    const appUrl = window.location.origin;
+    const appUrl = getRedirectBase(window.location.origin);
 
     try {
       if (mode === "magic") {
@@ -232,7 +249,7 @@ function LoginForm() {
                 </div>
                 {!isSignUp && (
                   <div className="flex items-center justify-end mt-1">
-                    <Link href="#" className="text-xs font-medium text-primary hover:text-primary-dark">
+                    <Link href="/forgot-password" className="text-xs font-medium text-primary hover:text-primary-dark">
                       Forgot password?
                     </Link>
                   </div>

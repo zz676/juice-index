@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Mail, CheckCircle, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export default function ForgotPasswordPage() {
     const supabase = useMemo(() => createClient(), []);
@@ -17,8 +18,9 @@ export default function ForgotPasswordPage() {
         setIsLoading(true);
 
         try {
+            const appUrl = getRedirectBase(window.location.origin);
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
+                redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
             });
             if (error) throw error;
             setStatus({

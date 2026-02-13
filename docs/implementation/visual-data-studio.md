@@ -42,20 +42,40 @@ Implemented the necessary API endpoints to power the frontend features, replacin
 - **New Models**: Added `ApiKey`, `ApiRequestLog` for tracking usage.
 - **Updates**: Enhanced `ApiSubscription` to support Stripe fields and tier management.
 
-## 🚀 Next Steps (Phase 3)
+## ✅ Phase 3: Auth Hardening, Real Data & Polish (Complete)
 
-### 1. Data Ingestion
-- Populate the core data tables (`juice_ev_metrics`, `juice_vehicle_specs`, `juice_cpca_nev_retail`) with real datasets.
-- Currently, the API returns mock data if the DB tables are empty.
+### 1. Auth Hardening
+- **Open Redirect Prevention**: Auth callback sanitizes the `next` parameter via `sanitizeNextPath` (`src/lib/auth/sanitize-next-path.ts`).
+- **Configurable Redirect Base**: Login and forgot-password pages use `NEXT_PUBLIC_APP_URL` via `getRedirectBase` (`src/lib/auth/redirect-base.ts`), matching the billing checkout pattern.
+- **X/Twitter Provider Fallback**: Login tries both `"x"` and `"twitter"` provider names for Supabase OAuth compatibility.
+- **Forgot Password Link**: Fixed broken `href="#"` to point to `/forgot-password`.
+
+### 2. Real Dashboard Stats
+- `GET /api/dashboard/stats` now queries `NevSalesSummary`, `CpcaNevRetail`, and `AutomakerRankings` for live data.
+- Returns a structured empty response when no data exists (no more hardcoded mock JSON).
+
+### 3. Stripe Webhook Enhancement
+- Added `checkout.session.completed` handler alongside existing `customer.subscription.*` events.
+- Extracts `userId` from session metadata or `client_reference_id`, upserts `ApiSubscription`.
+
+### 4. Caching
+- In-memory TTL cache (5 min) on `/api/dashboard/stats` to reduce DB load.
+- `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` headers for Vercel edge caching.
+
+### 5. Mobile Responsiveness
+- Data Explorer sidebar is collapsible on mobile via a toggle button.
+- Sidebar auto-collapses after query generation on small screens.
+
+## 🚀 Next Steps (Phase 4)
+
+### 1. Deployment
+- Deploy to Vercel.
+- Set environment variables (`OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `SUPABASE_URL`, `NEXT_PUBLIC_APP_URL`, etc.) in production.
 
 ### 2. Billing Verification
-- **Stripe Integration**: Verify webhook events (`customer.subscription.created/updated`) in a deployed environment.
+- Test Stripe webhook events end-to-end in deployed environment.
 - Test upgrade flows from Free -> Starter -> Pro.
 
-### 3. Deployment
-- Deploy to Vercel (or similar hosting).
-- Set environment variables (`OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `SUPABASE_URL`, etc.) in production.
-
-### 4. Polish & Optimization
-- **Caching**: Implement request caching for `/api/dashboard/stats` to reduce DB load.
-- **Mobile Responsiveness**: Fine-tune the Data Explorer UI for smaller screens.
+### 3. Data Ingestion Monitoring
+- Verify data freshness in `NevSalesSummary`, `CpcaNevRetail`, `AutomakerRankings` tables.
+- Set up alerts if data becomes stale.

@@ -49,6 +49,7 @@ export default function DataExplorerPage() {
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(
     null
   );
+  const [showSidebar, setShowSidebar] = useState(true);
 
   const chartRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -197,6 +198,9 @@ export default function DataExplorerPage() {
       }));
 
       showToast("success", "Runnable query generated. Review and click Run Query.");
+
+      // On mobile, collapse sidebar to show results
+      if (window.innerWidth < 1024) setShowSidebar(false);
     } catch (err) {
       console.error(err);
       showToast(
@@ -462,6 +466,14 @@ export default function DataExplorerPage() {
 
         <header className="h-16 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-white/80 backdrop-blur-sm z-10">
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowSidebar((v) => !v)}
+              className="lg:hidden p-1.5 rounded-md border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/50 transition-all"
+            >
+              <span className="material-icons-round text-sm">
+                {showSidebar ? "chevron_left" : "menu"}
+              </span>
+            </button>
             <h1 className="font-bold text-slate-custom-900 text-lg">
               Market Analysis Workflow
             </h1>
@@ -495,7 +507,7 @@ export default function DataExplorerPage() {
         </header>
 
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
-          <div className="w-full lg:w-[450px] bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto">
+          <div className={`${showSidebar ? "w-full lg:w-[450px]" : "hidden lg:flex lg:w-[450px]"} bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto`}>
             <section className="p-6 border-b border-slate-custom-200 relative group transition-all hover:bg-white">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
               <div className="flex items-center gap-2 mb-4">
