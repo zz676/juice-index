@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+let cachedResponse: { data: unknown; expiry: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function GET() {
   try {
+    // Serve from in-memory cache if fresh
+    if (cachedResponse && Date.now() < cachedResponse.expiry) {
+      return NextResponse.json(cachedResponse.data, {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      });
+    }
+
     // Fetch latest weekly sales summaries (most recent 9 weeks)
     const recentSummaries = await prisma.nevSalesSummary.findMany({
       orderBy: [{ year: "desc" }, { endDate: "desc" }],
@@ -86,7 +98,14 @@ export async function GET() {
 
     const chart = { labels, currentYear, previousYear };
 
-    return NextResponse.json({ cards, chart });
+    const result = { cards, chart };
+    cachedResponse = { data: result, expiry: Date.now() + CACHE_TTL_MS };
+
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
     return NextResponse.json(
