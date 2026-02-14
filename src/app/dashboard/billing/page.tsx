@@ -1,11 +1,20 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import prisma from "@/lib/prisma";
 import { syncUserToPrisma } from "@/lib/auth/sync-user";
-import { BillingButtons } from "@/components/BillingButtons";
-import Link from "next/link";
+import { getSubscription, getUsageCount, getStripeData } from "./data";
+import { getTierLimit } from "./tier-display";
+import CurrentPlanCard from "./current-plan-card";
+import ApiUsageCard from "./api-usage-card";
+import PaymentMethodCard from "./payment-method-card";
+import NextBillingCard from "./next-billing-card";
+import InvoiceHistoryCard from "./invoice-history-card";
+import PlanActionsCard from "./plan-actions-card";
 
-export default async function BillingPage() {
+interface BillingPageProps {
+  searchParams: Promise<{ success?: string; canceled?: string }>;
+}
+
+export default async function BillingPage({ searchParams }: BillingPageProps) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -14,67 +23,88 @@ export default async function BillingPage() {
 
   await syncUserToPrisma(data.user);
 
-  const sub = await prisma.apiSubscription.findUnique({
-    where: { userId: data.user.id },
-    select: {
-      tier: true,
-      status: true,
-      currentPeriodStart: true,
-      currentPeriodEnd: true,
-      cancelAtPeriodEnd: true,
-    },
-  });
+  const params = await searchParams;
+
+  // Fetch subscription + usage in parallel
+  const [subscription, usageCount] = await Promise.all([
+    getSubscription(data.user.id),
+    getUsageCount(data.user.id),
+  ]);
+
+  const tier = subscription?.tier ?? "FREE";
+  const isPaidUser = tier !== "FREE";
+  const tierLimit = getTierLimit(tier);
+
+  // Fetch Stripe data if customer exists
+  const stripeData = subscription?.stripeCustomerId
+    ? await getStripeData(subscription.stripeCustomerId)
+    : { paymentMethod: null, invoices: [], upcomingInvoice: null };
 
   return (
-    <div className="legacy-ui">
-      <main style={{ padding: "48px 24px", minHeight: "calc(100vh - 160px)" }}>
-        <div className="container">
-          <div style={{ marginBottom: 8 }}>
-            <Link href="/dashboard" className="btn btn-ghost btn-sm" style={{ marginLeft: -16 }}>
-              ← Back to Dashboard
-            </Link>
-          </div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 28 }}>
-            Billing
-          </h1>
+    <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-custom-900">Billing</h1>
+        <p className="mt-1 text-sm text-slate-custom-500">
+          Manage your plan, usage, and payment details.
+        </p>
+      </div>
 
-          {/* Current Plan */}
-          <div className="card" style={{ marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>Current Plan</h2>
-              <span className={`badge ${sub ? "badge-green" : "badge-gray"}`}>
-                {sub ? sub.status : "FREE"}
-              </span>
-            </div>
-            <div style={{ fontSize: "1.8rem", fontWeight: 800, marginBottom: 4 }}>
-              {sub ? sub.tier : "Free"}
-            </div>
-            {sub ? (
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                Period: {sub.currentPeriodStart ? new Date(sub.currentPeriodStart).toLocaleDateString("en-US") : "—"} –{" "}
-                {sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toLocaleDateString("en-US") : "—"}
-                {sub.cancelAtPeriodEnd ? (
-                  <span className="badge badge-red" style={{ marginLeft: 8 }}>
-                    Cancels at period end
-                  </span>
-                ) : null}
-              </p>
-            ) : (
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                You&apos;re on the free plan. Upgrade to unlock more features.
-              </p>
-            )}
-          </div>
-
-          {/* Upgrade / Manage */}
-          <div className="card">
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: 16 }}>
-              {sub ? "Manage Subscription" : "Upgrade Your Plan"}
-            </h2>
-            <BillingButtons />
-          </div>
+      {/* Checkout success/canceled banners */}
+      {params.success === "1" && (
+        <div className="mb-6 flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+          <span className="material-icons-round text-[18px] text-green-600 mt-0.5">
+            check_circle
+          </span>
+          <p className="text-sm text-green-700">
+            Your subscription has been activated. Welcome aboard!
+          </p>
         </div>
-      </main>
+      )}
+      {params.canceled === "1" && (
+        <div className="mb-6 flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
+          <span className="material-icons-round text-[18px] text-yellow-600 mt-0.5">
+            info
+          </span>
+          <p className="text-sm text-yellow-700">
+            Checkout was canceled. No changes were made to your account.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        <CurrentPlanCard
+          tier={tier}
+          status={subscription?.status ?? "active"}
+          cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+          currentPeriodStart={subscription?.currentPeriodStart ?? null}
+          currentPeriodEnd={subscription?.currentPeriodEnd ?? null}
+        />
+
+        <ApiUsageCard
+          usageCount={usageCount}
+          tierLimit={tierLimit}
+          tier={tier}
+        />
+
+        <PaymentMethodCard
+          paymentMethod={stripeData.paymentMethod}
+          isPaidUser={isPaidUser}
+        />
+
+        <NextBillingCard
+          upcomingInvoice={stripeData.upcomingInvoice}
+          currentPeriodEnd={subscription?.currentPeriodEnd ?? null}
+          cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
+          isPaidUser={isPaidUser}
+        />
+
+        <InvoiceHistoryCard
+          invoices={stripeData.invoices}
+          isPaidUser={isPaidUser}
+        />
+
+        <PlanActionsCard isPaidUser={isPaidUser} tier={tier} />
+      </div>
     </div>
   );
 }
