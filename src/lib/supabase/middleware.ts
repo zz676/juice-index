@@ -62,9 +62,14 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // OPTIONAL: Redirect logged-in users away from /login or /register
+    // Redirect logged-in users away from /login or /register.
+    // Preserve ?plan= param so "Get Started with Pro" lands on billing.
     if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register') && user) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+        const plan = request.nextUrl.searchParams.get('plan')
+        const dest = plan
+            ? `/dashboard/billing?plan=${encodeURIComponent(plan)}`
+            : '/dashboard'
+        return NextResponse.redirect(new URL(dest, request.url))
     }
 
     return response

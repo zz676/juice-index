@@ -73,6 +73,7 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 The page handles checkout redirect parameters:
 - `?success=1` — green banner: "Your subscription has been activated"
 - `?canceled=1` — yellow banner: "Checkout was canceled"
+- `?plan=pro` or `?plan=starter` — shows an upgrade prompt (UpgradePrompt component) with Monthly/Yearly toggle and "Subscribe Now" button that triggers the Stripe checkout flow. The prompt is hidden if the user is already on the target plan or higher.
 
 ## Tier Display Names
 
@@ -125,9 +126,21 @@ All cards follow the Settings page design system:
 | `next-billing-card.tsx` | Server component | Upcoming charge info |
 | `invoice-history-card.tsx` | Server component | Invoice table with PDF links |
 | `plan-actions-card.tsx` | Client component | Change plan + Stripe portal |
+| `upgrade-prompt.tsx` | Client component | Upgrade CTA shown when `?plan=` is present |
+
+## Plan-Aware Redirect Flow
+
+When a user clicks "Get Started with Pro" on the pricing page (`/pricing`), the `?plan=` parameter is preserved through the full auth flow:
+
+1. **Logged-in user**: Middleware (`src/lib/supabase/middleware.ts`) redirects `/login?plan=pro` → `/dashboard/billing?plan=pro`
+2. **New user (OAuth/magic link)**: Login page passes `?next=/dashboard/billing?plan=pro` to the auth callback, which redirects after authentication
+3. **New user (password)**: Login page redirects directly to `/dashboard/billing?plan=pro` after successful sign-in
+
+The billing page then renders the `UpgradePrompt` component at the top, allowing the user to complete checkout via Stripe.
 
 ## Related
 
 - Settings page now has a "Go to Billing" link instead of inline subscription management (see [settings-page.md](settings-page.md))
 - Stripe portal API: `src/app/api/billing/portal/route.ts`
 - Stripe client: `src/lib/stripe.ts`
+- Pricing page: `src/app/pricing/page.tsx` — links to `/login?plan=pro` and `/login?plan=starter`

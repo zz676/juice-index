@@ -9,9 +9,10 @@ import PaymentMethodCard from "./payment-method-card";
 import NextBillingCard from "./next-billing-card";
 import InvoiceHistoryCard from "./invoice-history-card";
 import PlanActionsCard from "./plan-actions-card";
+import UpgradePrompt from "./upgrade-prompt";
 
 interface BillingPageProps {
-  searchParams: Promise<{ success?: string; canceled?: string }>;
+  searchParams: Promise<{ success?: string; canceled?: string; plan?: string }>;
 }
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
@@ -48,6 +49,11 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           Manage your plan, usage, and payment details.
         </p>
       </div>
+
+      {/* Upgrade prompt from ?plan= (e.g., pricing page → "Get Started with Pro") */}
+      {params.plan && (
+        <UpgradePrompt plan={params.plan} currentTier={tier} />
+      )}
 
       {/* Checkout success/canceled banners */}
       {params.success === "1" && (
