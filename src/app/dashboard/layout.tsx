@@ -76,8 +76,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     ) : (
                         <Link href="/dashboard" className="flex items-center gap-3">
                             <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
-                            <h1 className="text-xl font-bold tracking-tight text-slate-custom-900 whitespace-nowrap">
-                                Juice Index
+                            <h1 className="text-xl tracking-tight whitespace-nowrap">
+                                <span className="font-extrabold text-primary">Juice</span>{" "}
+                                <span className="font-bold text-slate-custom-900">Index</span>
                             </h1>
                         </Link>
                     )}
