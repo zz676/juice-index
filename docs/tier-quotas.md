@@ -56,6 +56,21 @@ Separate rate limit functions with distinct Redis key prefixes:
 - `/api/v1/brands/*` — requires PRO
 - `/api/v1/industry/*` — requires ENTERPRISE
 
+### AI Model Access
+
+The Studio Analyst Composer (Step 4) supports multiple AI models gated by tier. Model definitions live in `/src/lib/studio/models.ts`.
+
+| Model | Provider | Min Tier | Description |
+|-------|----------|----------|-------------|
+| GPT-4o Mini | OpenAI | FREE | Fast & affordable |
+| GPT-4o | OpenAI | PRO | Best reasoning from OpenAI |
+| Claude 3.5 Sonnet | Anthropic | PRO | Balanced speed & quality |
+| Claude Opus 4 | Anthropic | ENTERPRISE | Most capable model |
+
+Users can also adjust the temperature (0.0–1.0) for generation creativity. The model dropdown shows all models but locks those above the user's tier with a lock icon.
+
+The backend validates model access at `POST /api/dashboard/studio/generate-post` — requests for a locked model return 403. The user's tier is fetched client-side via `GET /api/dashboard/tier`.
+
 ### Feature Gates
 
 - **X posting/scheduling**: Requires PRO+ (FREE tier blocked)
@@ -73,7 +88,9 @@ Separate rate limit functions with distinct Redis key prefixes:
 - `src/lib/ratelimit.ts` — added studio and CSV rate limiters
 - `src/app/api/dashboard/user-posts/route.ts` — fixed scheduling bug, added tier gates
 - `src/app/api/dashboard/studio/generate-chart/route.ts` — studio rate limits, watermark
-- `src/app/api/dashboard/studio/generate-post/route.ts` — studio post draft limits
+- `src/app/api/dashboard/studio/generate-post/route.ts` — studio post draft limits, multi-model dispatch
+- `src/app/api/dashboard/tier/route.ts` — client-facing tier endpoint
+- `src/lib/studio/models.ts` — AI model registry and tier-based access helpers
 - `src/app/api/dashboard/api-keys/route.ts` — new, API key management with quota enforcement
 - `src/app/api/dashboard/csv-export/route.ts` — new, CSV export quota tracking
 - `src/app/api/v1/brands/route.ts` — minTier changed to PRO
