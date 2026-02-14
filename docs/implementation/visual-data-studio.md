@@ -66,6 +66,22 @@ Implemented the necessary API endpoints to power the frontend features, replacin
 - Studio sidebar is collapsible on mobile via a toggle button.
 - Sidebar auto-collapses after query generation on small screens.
 
+## ✅ Phase 3.5: Step 1 Model Selector (Complete)
+
+Added a model selector dropdown to Step 1 ("Ask Intelligence") so users can choose which AI model powers query generation, matching the existing Step 4 dropdown pattern.
+
+### Frontend (`src/app/dashboard/studio/page.tsx`)
+- Added `queryModelId` and `isQueryModelDropdownOpen` state (independent from Step 4's `selectedModelId`).
+- Replaced the static "Juice-7B (Fast)" placeholder with a fully functional model dropdown using `MODEL_REGISTRY`.
+- Tier-gated: FREE users can only select GPT-4o Mini; PRO/ENTERPRISE models show a lock icon with an upgrade toast.
+- Passes `modelId` in the `generateRunnableQuery` API call body.
+
+### Backend (`src/app/api/dashboard/studio/generate-chart/route.ts`)
+- Accepts optional `modelId` from the request payload.
+- Validates tier access via `canAccessModel()` — returns 403 if the user's plan doesn't include the requested model.
+- Resolves the correct AI SDK provider (`openai()` or `anthropic()`) based on `ModelDefinition.provider`.
+- Falls back to `gpt-4o-mini` when no `modelId` is provided (preserves existing behavior).
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment

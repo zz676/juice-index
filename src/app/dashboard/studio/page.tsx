@@ -82,6 +82,8 @@ function StudioPageInner() {
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [userTier, setUserTier] = useState<ApiTier>("FREE");
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [queryModelId, setQueryModelId] = useState(DEFAULT_MODEL_ID);
+  const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeSection, setActiveSection] = useState<number>(1);
   const defaultPanelWidth = 450;
@@ -260,7 +262,7 @@ function StudioPageInner() {
       const res = await fetch("/api/dashboard/studio/generate-chart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, previewOnly: true }),
+        body: JSON.stringify({ prompt, previewOnly: true, modelId: queryModelId }),
       });
 
       const data = (await res.json().catch(() => ({}))) as Record<
@@ -705,13 +707,65 @@ function StudioPageInner() {
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
-                  <button className="flex items-center gap-2 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-3 py-1.5 rounded-full shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200">
-                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)]" />
-                    Juice-7B (Fast)
-                    <span className="material-icons-round text-sm ml-1">
-                      expand_more
-                    </span>
-                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsQueryModelDropdownOpen((v) => !v)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                    >
+                      <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                      <span className="max-w-[100px] truncate">
+                        {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName ?? "GPT-4o Mini"}
+                      </span>
+                      <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                    </button>
+                    {isQueryModelDropdownOpen && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsQueryModelDropdownOpen(false)}
+                        />
+                        <div className="absolute left-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
+                          {MODEL_REGISTRY.map((model: ModelDefinition) => {
+                            const accessible = canAccessModel(userTier, model.id);
+                            const isSelected = model.id === queryModelId;
+                            return (
+                              <button
+                                key={model.id}
+                                onClick={() => {
+                                  if (accessible) {
+                                    setQueryModelId(model.id);
+                                    setIsQueryModelDropdownOpen(false);
+                                  } else {
+                                    showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
+                                  }
+                                }}
+                                className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
+                                  accessible
+                                    ? "hover:bg-primary/5 cursor-pointer"
+                                    : "opacity-50 cursor-not-allowed"
+                                } ${isSelected ? "bg-primary/10" : ""}`}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                    {model.displayName}
+                                  </div>
+                                  <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
+                                    {model.description}
+                                  </div>
+                                </div>
+                                {isSelected && accessible && (
+                                  <span className="material-icons-round text-sm text-primary">check</span>
+                                )}
+                                {!accessible && (
+                                  <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
                   <button
                     onClick={generateRunnableQuery}
                     disabled={isGeneratingQueryPlan || !prompt.trim()}
