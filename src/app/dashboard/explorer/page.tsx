@@ -448,7 +448,7 @@ export default function DataExplorerPage() {
   const hasChartData = chartData.length > 0;
 
   return (
-    <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
+    <div className="font-display text-slate-custom-800 absolute inset-0 flex overflow-hidden">
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         {toast && (
           <div
