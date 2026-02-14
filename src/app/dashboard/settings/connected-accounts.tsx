@@ -19,6 +19,7 @@ interface ConnectedAccountsProps {
 const providers = [
     {
         id: "google",
+        matchIds: ["google"],
         name: "Google",
         icon: (
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -31,6 +32,7 @@ const providers = [
     },
     {
         id: "twitter",
+        matchIds: ["twitter", "x"],
         name: "X (Twitter)",
         icon: (
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -38,7 +40,7 @@ const providers = [
             </svg>
         ),
     },
-] as const;
+];
 
 export default function ConnectedAccounts({ identities, hasPassword }: ConnectedAccountsProps) {
     const supabase = useMemo(() => createClient(), []);
@@ -85,7 +87,7 @@ export default function ConnectedAccounts({ identities, hasPassword }: Connected
     return (
         <div className="space-y-4">
             {providers.map((p) => {
-                const linked = identities.find((i) => i.provider === p.id);
+                const linked = identities.find((i) => p.matchIds.includes(i.provider));
                 const isLoading = loading === p.id;
 
                 return (
@@ -105,7 +107,7 @@ export default function ConnectedAccounts({ identities, hasPassword }: Connected
 
                         {linked ? (
                             <button
-                                onClick={() => handleUnlink(p.id, linked.identity_id)}
+                                onClick={() => handleUnlink(linked.provider, linked.identity_id)}
                                 disabled={!canUnlink || isLoading}
                                 title={!canUnlink ? "Set a password before unlinking your only login method" : undefined}
                                 className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-custom-200 text-slate-custom-600 hover:bg-slate-custom-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
