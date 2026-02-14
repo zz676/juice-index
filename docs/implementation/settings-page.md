@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides six sections covering profile management, security, a billing link, preferences, and account deletion. Full billing management has been moved to `/dashboard/billing` (see [billing-page.md](billing-page.md)).
+The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides five sections covering profile management, security, preferences, and account deletion. Full billing management lives at `/dashboard/billing` (see [billing-page.md](billing-page.md)), accessible via the "Subscription & Billing" sidebar nav item.
 
 ## Architecture
 
@@ -46,12 +46,7 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 - Verifies current password via `supabase.auth.signInWithPassword()` before updating
 - Updates via `supabase.auth.updateUser({ password })` (client-side)
 
-### 4. Subscription & Billing
-
-- Replaced with a simple "Go to Billing" link card that navigates to `/dashboard/billing`
-- Full subscription management (plan details, usage tracking, payment methods, invoices, Stripe portal) is now handled by the billing page
-
-### 5. Notification Preferences (`notification-prefs.tsx`)
+### 4. Notification Preferences (`notification-prefs.tsx`)
 
 - Language: EN / ZH radio buttons
 - Digest frequency: DAILY / WEEKLY / NONE radio buttons
@@ -60,7 +55,7 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 - Topic interests: checkbox grid of `Topic` enum values
 - Saved via `updatePreferences` server action (upserts `UserPreference` via Prisma)
 
-### 6. Danger Zone (`danger-zone.tsx`)
+### 5. Danger Zone (`danger-zone.tsx`)
 
 - Red-bordered card with warning text
 - "Delete Account" expands to inline confirmation requiring email input
@@ -72,7 +67,7 @@ The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 g
 
 - **Left column:** Profile, Connected Accounts, Password & Security (identity & security group)
 - **Right column:** Notification Preferences (`lg:row-span-3`, spans all 3 left-column rows)
-- **Full-width bottom:** Subscription & Billing (`lg:col-span-2`), Danger Zone (`lg:col-span-2`)
+- **Full-width bottom:** Danger Zone (`lg:col-span-2`)
 
 At viewport widths below `lg` (1024px), all sections stack into a single column. Grid rows auto-resize when expandable sections (Password & Security, Danger Zone) are toggled.
 
