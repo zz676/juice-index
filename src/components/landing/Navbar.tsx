@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from "@/lib/supabase/client";
+
+import type { User } from "@supabase/supabase-js";
 
 const navLinks = [
   { label: "Features", href: "#features" },
@@ -14,6 +17,14 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+      setUser(authUser);
+    });
+  }, []);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-[4.6rem] backdrop-blur-md bg-background-light/80 border-b border-slate-custom-200/60">
@@ -49,18 +60,29 @@ export default function Navbar() {
 
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              href="/login?mode=password&intent=signin"
-              className="text-[15px] font-medium text-slate-custom-600 hover:text-slate-custom-900 transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/login?mode=magic&intent=signup"
-              className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white hover:bg-primary-dark transition-colors"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white hover:bg-primary-dark transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login?mode=password&intent=signin"
+                  className="text-[15px] font-medium text-slate-custom-600 hover:text-slate-custom-900 transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/login?mode=magic&intent=signup"
+                  className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white hover:bg-primary-dark transition-colors"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -114,20 +136,32 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="mt-6 flex flex-col gap-3">
-                <Link
-                  href="/login?mode=password&intent=signin"
-                  onClick={() => setMobileOpen(false)}
-                  className="text-center py-3 text-sm font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-50 transition-colors"
-                >
-                  Log in
-                </Link>
-                <Link
-                  href="/login?mode=magic&intent=signup"
-                  onClick={() => setMobileOpen(false)}
-                  className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full hover:bg-primary-dark transition-colors"
-                >
-                  Get Started
-                </Link>
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full hover:bg-primary-dark transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login?mode=password&intent=signin"
+                      onClick={() => setMobileOpen(false)}
+                      className="text-center py-3 text-sm font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-50 transition-colors"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      href="/login?mode=magic&intent=signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full hover:bg-primary-dark transition-colors"
+                    >
+                      Get Started
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

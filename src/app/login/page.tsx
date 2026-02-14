@@ -137,7 +137,7 @@ function LoginForm() {
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
           Or{" "}
-          <Link href="/pricing" className="font-medium text-primary hover:text-primary-dark transition-colors">
+          <Link href="/#pricing" className="font-medium text-primary hover:text-primary-dark transition-colors">
             start your 14-day free trial
           </Link>
         </p>

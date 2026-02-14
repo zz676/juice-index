@@ -154,15 +154,6 @@ export default function PricingToggle() {
         ))}
       </div>
 
-      {/* Link to full pricing */}
-      <div className="text-center mt-8">
-        <Link
-          href="/pricing"
-          className="text-sm font-medium text-primary hover:underline underline-offset-4"
-        >
-          See full comparison &rarr;
-        </Link>
-      </div>
     </div>
   );
 }

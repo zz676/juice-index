@@ -13,7 +13,7 @@ export default function UpgradeBanner({
   icon = "lock",
   message,
   ctaText = "Upgrade to Pro",
-  ctaHref = "/pricing",
+  ctaHref = "/dashboard/billing",
 }: UpgradeBannerProps) {
   return (
     <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">

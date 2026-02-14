@@ -118,7 +118,7 @@ export default function XPostingAccount({ xAccount, tier, hasXLoginIdentity }: X
             <span className="material-icons-round text-primary text-base">lock</span>
             <p className="text-xs text-slate-custom-600">
               X posting requires <span className="font-semibold text-primary">Starter</span> or higher.{" "}
-              <a href="/pricing" className="text-primary font-semibold underline hover:text-primary/80">
+              <a href="/dashboard/billing" className="text-primary font-semibold underline hover:text-primary/80">
                 Upgrade now
               </a>
             </p>

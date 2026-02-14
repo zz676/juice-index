@@ -383,7 +383,7 @@ export default function PostsPage() {
               <span className="material-icons-round text-primary text-base">lock</span>
               <p className="text-xs text-slate-custom-600">
                 Publishing and scheduling to X requires <span className="font-semibold text-primary">Pro</span>.{" "}
-                <a href="/pricing" className="text-primary font-semibold underline hover:text-primary/80">Upgrade now</a>
+                <a href="/dashboard/billing" className="text-primary font-semibold underline hover:text-primary/80">Upgrade now</a>
               </p>
             </div>
           )}
