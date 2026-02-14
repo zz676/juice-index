@@ -41,13 +41,15 @@ export default function DangerZone({ userEmail }: DangerZoneProps) {
                 <p className="text-sm text-slate-custom-600">
                     Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
-                <button
-                    onClick={() => setShowConfirm(true)}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-                >
-                    <span className="material-icons-round text-[16px] mr-2">delete_forever</span>
-                    Delete Account
-                </button>
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setShowConfirm(true)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                        <span className="material-icons-round text-[16px] mr-2">delete_forever</span>
+                        Delete Account
+                    </button>
+                </div>
             </div>
         );
     }
