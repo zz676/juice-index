@@ -34,7 +34,7 @@ async function getAuthedUserId(): Promise<string | null> {
   return data.user.id;
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const userId = await getAuthedUserId();
   if (!userId) {
     return NextResponse.json({ error: "UNAUTHORIZED", code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
@@ -49,7 +49,8 @@ export async function POST() {
     return NextResponse.json({ error: "NO_SUBSCRIPTION", code: "NO_SUBSCRIPTION", message: "No subscription found" }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/+$/, "") || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
   const session = await stripe.billingPortal.sessions.create({
     customer: sub.stripeCustomerId,
     return_url: `${appUrl}/dashboard/billing`,

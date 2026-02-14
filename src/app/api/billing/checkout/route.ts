@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
   const interval = body.data.interval as Interval;
   const price = priceId(plan, interval);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/+$/, "") || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
