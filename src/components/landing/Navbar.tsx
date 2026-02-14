@@ -16,7 +16,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 backdrop-blur-md bg-background-light/80 border-b border-slate-custom-200/60">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-[4.6rem] backdrop-blur-md bg-background-light/80 border-b border-slate-custom-200/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
@@ -24,12 +24,13 @@ export default function Navbar() {
             <Image
               src="/logo.png"
               alt="Juice Index"
-              width={32}
-              height={32}
-              className="rounded-lg"
+              width={62}
+              height={62}
+              className=""
             />
-            <span className="font-bold text-lg tracking-tight text-slate-custom-900">
-              Juice Index
+            <span className="text-lg tracking-tight">
+              <span className="font-extrabold text-primary">Juice</span>{" "}
+              <span className="font-bold text-slate-custom-900">Index</span>
             </span>
           </Link>
 

@@ -23,7 +23,7 @@ Full redesign of the landing page (`src/app/page.tsx`) from a monolithic client 
 
 ## Page Sections
 
-1. **Navbar** — Fixed, backdrop blur, `h-16`, real `logo.png` via `next/image`, desktop/mobile responsive
+1. **Navbar** — Fixed, backdrop blur, `h-16`, real `logo.png` via `next/image`, desktop/mobile responsive. Logo text uses split color: "Juice" in lime green (`text-primary`, `font-extrabold`) and "Index" in dark navy (`text-slate-custom-900`, `font-bold`).
 2. **Hero** — Two-column layout (desktop), badge, headline, subtitle, two CTAs, animated data viz
 3. **Features Grid** — 4-column grid with scroll-triggered fade-up animations
 4. **How It Works** — 3 horizontal steps with dashed connector lines (desktop)
