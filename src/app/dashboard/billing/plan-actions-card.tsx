@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 interface PlanActionsCardProps {
   isPaidUser: boolean;
@@ -13,6 +12,8 @@ export default function PlanActionsCard({
 }: PlanActionsCardProps) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (!isPaidUser) return null;
 
   async function openPortal() {
     setPortalLoading(true);
@@ -41,30 +42,22 @@ export default function PlanActionsCard({
       </div>
       <div className="p-6">
         <div className="flex items-center gap-3">
-          <Link
-            href="/#pricing"
-            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+          <button
+            onClick={openPortal}
+            disabled={portalLoading}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 disabled:opacity-50 transition-colors"
           >
-            Change Plan
-          </Link>
-          {isPaidUser && (
-            <button
-              onClick={openPortal}
-              disabled={portalLoading}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 disabled:opacity-50 transition-colors"
-            >
-              {portalLoading ? (
-                <>
-                  <span className="material-icons-round text-[16px] animate-spin mr-2">
-                    progress_activity
-                  </span>
-                  Opening...
-                </>
-              ) : (
-                "Manage Billing"
-              )}
-            </button>
-          )}
+            {portalLoading ? (
+              <>
+                <span className="material-icons-round text-[16px] animate-spin mr-2">
+                  progress_activity
+                </span>
+                Opening...
+              </>
+            ) : (
+              "Manage Billing"
+            )}
+          </button>
         </div>
 
         {error && (
