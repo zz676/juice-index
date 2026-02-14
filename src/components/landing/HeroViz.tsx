@@ -9,7 +9,7 @@ interface QueryScene {
   stats: { label: string; value: string; change: string }[];
 }
 
-const BAR_AREA_HEIGHT = 130; // px, for the chart area above labels
+const BAR_AREA_HEIGHT = 150; // px, for the chart area above labels
 
 const scenes: QueryScene[] = [
   {
@@ -111,8 +111,8 @@ export default function HeroViz() {
   const showStats = phase === "stats" || phase === "hold";
 
   return (
-    <div className="w-full max-w-lg mx-auto lg:mx-0">
-      <div className="bg-white rounded-2xl border border-slate-custom-200 shadow-xl overflow-hidden">
+    <div className="w-full mx-auto lg:mx-0 h-[90%] flex flex-col">
+      <div className="bg-white rounded-2xl border border-slate-custom-200 shadow-xl overflow-hidden flex-1 flex flex-col">
         {/* Query bar */}
         <div className="px-5 py-4 border-b border-slate-custom-100 flex items-center gap-3">
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -129,7 +129,7 @@ export default function HeroViz() {
         </div>
 
         {/* Visualization area */}
-        <div className="px-5 py-5 min-h-[240px] flex flex-col justify-end">
+        <div className="px-5 py-5 min-h-[276px] flex-1 flex flex-col justify-end">
           {/* Processing shimmer */}
           <AnimatePresence>
             {phase === "processing" && (
