@@ -33,6 +33,7 @@ export default function PostsPage() {
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [isPro, setIsPro] = useState(false);
   const [hasXAccount, setHasXAccount] = useState(true);
+  const [hasXLoginIdentity, setHasXLoginIdentity] = useState(false);
 
   // Compose state
   const [composeOpen, setComposeOpen] = useState(false);
@@ -57,6 +58,7 @@ export default function PostsPage() {
         setPagination(json.pagination);
         setIsPro(json.isPro);
         setHasXAccount(json.hasXAccount ?? true);
+        setHasXLoginIdentity(json.hasXLoginIdentity ?? false);
       }
     } catch (error) {
       console.error("Failed to fetch posts", error);
@@ -239,7 +241,21 @@ export default function PostsPage() {
       </div>
 
       {/* X Account Warning */}
-      {isPro && !hasXAccount && (
+      {isPro && !hasXAccount && hasXLoginIdentity && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <span className="material-icons-round text-blue-600 text-xl">info</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-blue-800">You signed in with X — connect it for posting</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Publish directly from your dashboard.{" "}
+              <a href="/dashboard/settings" className="font-semibold underline hover:text-blue-900">
+                Connect in Settings &rarr;
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
+      {isPro && !hasXAccount && !hasXLoginIdentity && (
         <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
           <span className="material-icons-round text-yellow-600 text-xl">warning</span>
           <div className="flex-1">

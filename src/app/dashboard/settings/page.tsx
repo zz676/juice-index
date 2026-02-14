@@ -37,6 +37,9 @@ export default async function SettingsPage() {
     ]);
 
     const tier = normalizeTier(subscription?.tier);
+    const hasXLoginIdentity = (authUser.identities ?? []).some(
+        (i) => i.provider === "twitter" || i.provider === "x"
+    );
 
     if (!user) {
         return <div>User not found. Please re-login.</div>;
@@ -118,7 +121,7 @@ export default async function SettingsPage() {
                     </div>
                     <div className="p-6">
                         <Suspense fallback={<div className="h-12 bg-slate-custom-50 rounded animate-pulse" />}>
-                            <XPostingAccount xAccount={xAccount} tier={tier} />
+                            <XPostingAccount xAccount={xAccount} tier={tier} hasXLoginIdentity={hasXLoginIdentity} />
                         </Suspense>
                     </div>
                 </section>

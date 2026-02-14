@@ -38,6 +38,26 @@ The posting flow is entirely separate from login:
 
 FREE users see a disabled "Connect X for Posting" button with an upgrade prompt.
 
+## X-Login User Nudge
+
+Users who signed in with X (Twitter) as their login provider already have an `AuthProvider.X` record in `juice_accounts`, but this does **not** grant posting ability — posting requires a separate OAuth flow with `tweet.write` scope. To help these users discover the posting feature, targeted nudges appear in two places:
+
+### Posts page (`/dashboard/posts`)
+
+- **X-login users (Starter+, no XAccount)**: A **blue info banner** reads "You signed in with X — connect it for posting" with a link to Settings.
+- **Non-X-login users (Starter+, no XAccount)**: The existing **yellow warning banner** ("No X account connected") is shown unchanged.
+
+### Settings page (`/dashboard/settings`)
+
+In the "X Posting Account" card, when a user has an eligible tier but no connected XAccount:
+- If the user signed in with X, an additional line appears above the connect button: "You're already signed in with X — connect it for posting in one click."
+- If the user signed in with another provider, the default text is shown.
+
+### How it works
+
+- **API**: `GET /api/dashboard/user-posts` queries `juice_accounts` for an `AuthProvider.X` record for the current user and returns `hasXLoginIdentity: boolean` alongside `hasXAccount`.
+- **Settings page**: The server component checks `authUser.identities` for a `"twitter"` or `"x"` provider and passes `hasXLoginIdentity` as a prop to `<XPostingAccount>`.
+
 ## Environment Variables
 
 Required in `.env.local`:
