@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides six sections covering profile management, security, billing, preferences, and account deletion.
+The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides six sections covering profile management, security, a billing link, preferences, and account deletion. Full billing management has been moved to `/dashboard/billing` (see [billing-page.md](billing-page.md)).
 
 ## Architecture
 
@@ -14,17 +14,13 @@ The `/dashboard/settings` page is a full-featured account management page for au
 page.tsx (server)
   ├─ Supabase auth.getUser() → authUser, identities
   ├─ Prisma user.findUnique() → name, email, avatarUrl, passwordHash
-  ├─ Raw SQL → subscription (tier, status, billing columns)
-  ├─ Prisma apiRequestLog.count() → usageCount
   └─ Prisma userPreference.findUnique() → preferences
       │
       ▼
   Client Components (receive serialized props)
 ```
 
-### Database Resilience
-
-The subscription query uses raw SQL instead of Prisma model queries because some environments are missing newer columns (`currentPeriodEnd`, `cancelAtPeriodEnd`). This matches the pattern established in `src/app/auth/callback/route.ts`. Queries for missing tables/columns are wrapped with `.catch()` fallbacks to ensure the page always renders.
+Note: Subscription/usage queries have been moved to the billing page data layer (`src/app/dashboard/billing/data.ts`).
 
 ## Sections
 
@@ -50,13 +46,10 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 - Verifies current password via `supabase.auth.signInWithPassword()` before updating
 - Updates via `supabase.auth.updateUser({ password })` (client-side)
 
-### 4. Subscription & Billing (`subscription-section.tsx`)
+### 4. Subscription & Billing
 
-- Displays plan name, status badge, and usage bar (`usageCount / tierLimit`)
-- Usage bar color: green (< 70%), yellow (70-89%), red (90%+)
-- Tier limits: FREE=100, STARTER=5000, PRO=50000, ENTERPRISE=unlimited
-- Shows cancellation warning banner when `cancelAtPeriodEnd` is true
-- "Change Plan" links to `/pricing`; "Manage Billing" opens Stripe portal via `POST /api/billing/portal`
+- Replaced with a simple "Go to Billing" link card that navigates to `/dashboard/billing`
+- Full subscription management (plan details, usage tracking, payment methods, invoices, Stripe portal) is now handled by the billing page
 
 ### 5. Notification Preferences (`notification-prefs.tsx`)
 
@@ -92,6 +85,5 @@ All sections follow the dashboard design system:
 | `profile-form.tsx` | Client component | Name/email/avatar editing |
 | `connected-accounts.tsx` | Client component | OAuth link/unlink |
 | `password-section.tsx` | Client component | Set/change password |
-| `subscription-section.tsx` | Client component | Plan, usage, billing portal |
 | `notification-prefs.tsx` | Client component | Preferences form |
 | `danger-zone.tsx` | Client component | Account deletion with confirmation |
