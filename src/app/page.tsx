@@ -54,6 +54,13 @@ const steps = [
     description:
       "Receive charts, tables, and analysis powered by AI in real-time.",
   },
+  {
+    number: "4",
+    icon: "share",
+    title: "Share with the world",
+    description:
+      "Post insights directly to social media with a single click.",
+  },
 ];
 
 const categories = [
@@ -72,7 +79,7 @@ export default function LandingPage() {
       <Navbar />
 
       {/* 2. Hero */}
-      <section className="relative pt-28 pb-20 lg:pt-36 lg:pb-28 overflow-hidden">
+      <section className="relative pt-28 pb-5 lg:pt-36 lg:pb-7 overflow-hidden">
         {/* Background blurs */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px] opacity-40" />
@@ -80,7 +87,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col lg:flex-row items-center lg:items-stretch gap-8">
             {/* Left column */}
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-8">
@@ -126,7 +133,7 @@ export default function LandingPage() {
             </div>
 
             {/* Right column — animated viz */}
-            <div className="flex-1 w-full max-w-lg">
+            <div className="flex-1 w-full max-w-[36.8rem] flex flex-col">
               <HeroViz />
             </div>
           </div>
@@ -134,7 +141,7 @@ export default function LandingPage() {
       </section>
 
       {/* 3. Features Grid */}
-      <section id="features" className="py-24 bg-white/50">
+      <section id="features" className="py-12 bg-white/50 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-custom-900 mb-4">
@@ -169,20 +176,20 @@ export default function LandingPage() {
       </section>
 
       {/* 4. How It Works */}
-      <section id="how-it-works" className="py-24">
+      <section id="how-it-works" className="pt-24 pb-[7.5rem] scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-custom-900 mb-4">
               How it works
             </h2>
             <p className="text-slate-custom-500">
-              From sign-up to actionable insight in under a minute.
+              From sign-up to social post in under a minute.
             </p>
           </AnimatedSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
             {/* Dashed connector line (desktop only) */}
-            <div className="hidden md:block absolute top-14 left-[20%] right-[20%] h-px border-t-2 border-dashed border-slate-custom-200 z-0" />
+            <div className="hidden lg:block absolute top-14 left-[13%] right-[13%] h-px border-t-2 border-dashed border-slate-custom-200 z-0" />
 
             {steps.map((step, i) => (
               <AnimatedSection
@@ -211,7 +218,7 @@ export default function LandingPage() {
       </section>
 
       {/* 5. Pricing Preview */}
-      <section id="pricing" className="py-24 bg-white/50">
+      <section id="pricing" className="py-12 bg-white/50 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-custom-900 mb-4">
