@@ -38,9 +38,9 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     yAxisFontSize: 12,
     xAxisFontColor: "#64748b",
     yAxisFontColor: "#64748b",
-    sourceText: "source: evjuice.net",
+    sourceText: "Powered by evjuice.net",
     sourceColor: "#6ada1b",
-    sourceFontSize: 11,
+    sourceFontSize: 18,
     barWidth: undefined,
     showValues: true,
     showGrid: true,
@@ -208,7 +208,7 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Watermark / Source</label>
                         <div>
                             <span className="text-xs font-medium text-slate-600 mb-1 block">Source Text</span>
-                            <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="source: evjuice.net" />
+                            <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Powered by evjuice.net" />
                         </div>
                         <ColorInput label="Source Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
                         <NumberInput label="Source Font Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />

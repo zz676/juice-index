@@ -39,7 +39,7 @@ type ChartStyleOptions = {
   showGrid?: boolean;
 };
 
-const DEFAULT_SOURCE_TEXT = "source: evjuice.net";
+const DEFAULT_SOURCE_TEXT = "Powered by evjuice.net";
 const MONTH_NAMES = [
   "Jan",
   "Feb",

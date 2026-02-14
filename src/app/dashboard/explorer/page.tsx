@@ -50,6 +50,76 @@ export default function DataExplorerPage() {
     null
   );
   const [showSidebar, setShowSidebar] = useState(true);
+  const [activeSection, setActiveSection] = useState<number>(1);
+  const defaultPanelWidth = 450;
+  const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
+  const isResizing = useRef(false);
+  const panelLeftOffset = useRef(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = Math.min(Math.max(e.clientX - panelLeftOffset.current, defaultPanelWidth), 700);
+      setPanelWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      if (isResizing.current) {
+        isResizing.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+  const [examplesOpen, setExamplesOpen] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const sampleQuestions: Record<string, string[]> = {
+    "Brand Deliveries": [
+      "Show Tesla monthly deliveries for 2024",
+      "Compare BYD vs Tesla deliveries by month in 2024",
+      "Top 10 EV brands by delivery volume in 2024",
+    ],
+    "Industry Sales": [
+      "CAAM NEV sales by month for 2024",
+      "CPCA NEV retail sales trend for 2024",
+      "Weekly NEV sales summary for 2024",
+    ],
+    "Market Health": [
+      "China dealer inventory factor by month 2024",
+      "China passenger vehicle inventory levels 2024",
+      "Vehicle Inventory Alert Index trend for 2024",
+    ],
+    "Battery Industry": [
+      "CATL vs BYD battery installation volume 2024",
+      "Top battery makers ranked by market share 2024",
+      "Monthly battery installation and production in 2024",
+    ],
+    "Exports": [
+      "Tesla Shanghai plant exports by month 2024",
+      "All plant exports ranked by value in 2024",
+      "BYD plant exports month over month in 2024",
+    ],
+    "Vehicle Specs": [
+      "Compare Tesla models by range and price",
+      "Top EVs by battery capacity",
+      "BYD vehicle specs with starting price and range",
+    ],
+  };
+
+  const categoryIcons: Record<string, string> = {
+    "Brand Deliveries": "local_shipping",
+    "Industry Sales": "trending_up",
+    "Market Health": "monitor_heart",
+    "Battery Industry": "battery_charging_full",
+    "Exports": "public",
+    "Vehicle Specs": "directions_car",
+  };
 
   const chartRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -482,47 +552,101 @@ export default function DataExplorerPage() {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowCustomizer((v) => !v)}
-              className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all border ${
-                showCustomizer
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-slate-200 text-slate-500 hover:text-primary hover:border-primary/50"
-              }`}
-            >
-              <span className="material-icons-round text-sm">tune</span>
-              Customize
-            </button>
             <span className="text-xs text-slate-custom-400 flex items-center gap-1">
               <span className="material-icons-round text-sm">cloud_done</span> Saved
             </span>
-            <button
-              className="px-4 py-1.5 bg-primary text-slate-custom-900 text-sm font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all flex items-center gap-2"
-              onClick={() => showToast("info", "Publish workflow will be wired next.")}
-            >
-              <span className="material-icons-round text-sm">rocket_launch</span>
-              Publish
-            </button>
           </div>
         </header>
 
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
-          <div className={`${showSidebar ? "w-full lg:w-[450px]" : "hidden lg:flex lg:w-[450px]"} bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto`}>
-            <section className="p-6 border-b border-slate-custom-200 relative group transition-all hover:bg-white">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-              <div className="flex items-center gap-2 mb-4">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-slate-custom-900 text-xs font-bold ring-2 ring-primary/20">
-                  1
-                </span>
-                <h3 className="font-bold text-sm text-slate-custom-900 uppercase tracking-wide">
-                  Ask Intelligence
-                </h3>
+          <div
+            className={`${showSidebar ? "w-full" : "hidden lg:flex"} bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto relative flex-shrink-0`}
+            style={{ width: showSidebar ? `${panelWidth}px` : undefined }}
+          >
+            {/* Resize Handle */}
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const panelEl = e.currentTarget.parentElement;
+                panelLeftOffset.current = panelEl ? panelEl.getBoundingClientRect().left : 0;
+                isResizing.current = true;
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+              }}
+              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 transition-colors z-10"
+            />
+            <section
+              onFocusCapture={() => setActiveSection(1)}
+              onClickCapture={() => setActiveSection(1)}
+              className="pt-6 px-6 pb-3 border-b border-slate-custom-200 relative group transition-all hover:bg-white"
+            >
+              <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 1 ? "bg-primary" : "bg-transparent"}`} />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 1 ? "bg-primary text-slate-custom-900 ring-primary/20" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                    1
+                  </span>
+                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 1 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                    Ask Intelligence
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setExamplesOpen((v) => !v)}
+                  className="flex items-center gap-1 text-[11px] font-medium text-slate-custom-500 hover:text-primary transition-colors"
+                >
+                  <span className="material-icons-round text-[14px]">lightbulb</span>
+                  Examples
+                  <span className="material-icons-round text-[14px] transition-transform duration-200" style={{ transform: examplesOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                    expand_more
+                  </span>
+                </button>
               </div>
               <div className="space-y-3">
+                {/* Sample Questions */}
+                {examplesOpen && (
+                  <div className="bg-white border border-slate-custom-200 rounded-lg shadow-sm p-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {Object.keys(sampleQuestions).map((category) => (
+                          <button
+                            key={category}
+                            title={category}
+                            onClick={() => setActiveCategory(activeCategory === category ? null : category)}
+                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-semibold transition-all select-none ${
+                              activeCategory === category
+                                ? "border-primary/40 bg-primary/10 text-slate-custom-900"
+                                : "border-slate-custom-100 text-slate-custom-700 hover:bg-slate-custom-50"
+                            }`}
+                          >
+                            <span className={`material-icons-round text-[14px] ${activeCategory === category ? "text-primary" : "text-slate-custom-400"}`}>{categoryIcons[category]}</span>
+                            <span className="truncate">{category}</span>
+                          </button>
+                        ))}
+                      </div>
+                      {activeCategory && sampleQuestions[activeCategory] && (
+                        <div className="mt-2 rounded-lg border border-slate-custom-100 overflow-hidden">
+                          {sampleQuestions[activeCategory].map((q) => (
+                            <button
+                              key={q}
+                              onClick={() => {
+                                setPrompt(q);
+                                setExamplesOpen(false);
+                                setActiveCategory(null);
+                              }}
+                              className="w-full text-left px-3 py-0 text-[11px] text-slate-custom-600 hover:bg-primary/5 hover:text-slate-custom-900 transition-all border-b border-slate-custom-50 last:border-b-0 flex items-start gap-2"
+                            >
+                              <span className="material-icons-round text-[12px] text-slate-custom-300 mt-px">arrow_right</span>
+                              {q}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full h-32 bg-white border border-slate-custom-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary focus:border-primary transition-all resize-none shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="w-full min-h-[2rem] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -535,36 +659,40 @@ export default function DataExplorerPage() {
                   </button>
                   <button
                     onClick={generateRunnableQuery}
-                    disabled={isGeneratingQueryPlan}
-                    className="flex items-center gap-1 text-xs font-bold text-primary hover:text-green-700 uppercase tracking-wide transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isGeneratingQueryPlan || !prompt.trim()}
+                    className="px-3 py-1.5 rounded-full bg-primary text-slate-custom-900 text-xs font-bold hover:shadow-[0_0_10px_rgba(106,218,27,0.45)] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
                   >
-                    {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}{" "}
-                    <span
-                      className={`material-icons-round text-sm ${
-                        isGeneratingQueryPlan ? "animate-spin" : ""
-                      }`}
-                    >
-                      {isGeneratingQueryPlan ? "refresh" : "auto_awesome"}
-                    </span>
+                    {isGeneratingQueryPlan && (
+                      <span className="material-icons-round text-sm animate-spin">refresh</span>
+                    )}
+                    {!isGeneratingQueryPlan && (
+                      <span className="material-icons-round text-sm">auto_awesome</span>
+                    )}
+                    {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
                   </button>
                 </div>
               </div>
             </section>
 
-            <section className="p-6 flex-1 bg-slate-custom-100/50">
+            <section
+              onFocusCapture={() => setActiveSection(2)}
+              onClickCapture={() => setActiveSection(2)}
+              className="p-6 flex-1 bg-slate-custom-100/50 relative"
+            >
+              <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 2 ? "bg-primary" : "bg-transparent"}`} />
               <div className="flex items-center gap-2 mb-4">
                 <span
-                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold border ${
-                    generatedSql
-                      ? "bg-primary text-slate-custom-900 border-primary/40"
-                      : "bg-slate-custom-200 text-slate-custom-500 border-slate-custom-300"
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${
+                    activeSection === 2
+                      ? "bg-primary text-slate-custom-900 ring-primary/20"
+                      : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"
                   }`}
                 >
                   2
                 </span>
                 <h3
-                  className={`font-bold text-sm uppercase tracking-wide ${
-                    generatedSql ? "text-slate-custom-900" : "text-slate-custom-500"
+                  className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${
+                    activeSection === 2 ? "text-slate-custom-900" : "text-slate-custom-500"
                   }`}
                 >
                   Review / Edit Query
@@ -594,8 +722,11 @@ export default function DataExplorerPage() {
                     <button
                       onClick={runGeneratedQuery}
                       disabled={isRunningQuery || !tableName || !queryJsonText.trim()}
-                      className="px-3 py-1 rounded bg-primary text-slate-custom-900 text-[10px] font-bold hover:shadow-[0_0_10px_rgba(106,218,27,0.45)] disabled:opacity-50"
+                      className="px-3 py-1 rounded bg-primary text-slate-custom-900 text-[10px] font-bold hover:shadow-[0_0_10px_rgba(106,218,27,0.45)] disabled:opacity-50 flex items-center gap-1"
                     >
+                      {isRunningQuery && (
+                        <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                      )}
                       {isRunningQuery ? "Running..." : "Run Query"}
                     </button>
                   </div>
@@ -603,26 +734,16 @@ export default function DataExplorerPage() {
                 <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
                   {analysisExplanation || "Generate a query, review/edit JSON, then run it."}
                 </div>
-                <div className="p-3 grid grid-cols-1 gap-3">
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400 mb-1">
-                      Prisma
-                    </div>
-                    <textarea
-                      value={queryJsonText}
-                      onChange={(e) => setQueryJsonText(e.target.value)}
-                      placeholder='{"where": {...}, "orderBy": [...], "take": 50}'
-                      className="w-full h-28 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
+                <div className="p-3">
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400 mb-1">
                       SQL Preview
                     </div>
                     <textarea
                       value={generatedSql || ""}
-                      readOnly
-                      className="w-full h-24 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700"
+                      onChange={(e) => setGeneratedSql(e.target.value)}
+                      placeholder="SELECT * FROM ..."
+                      className="w-full h-14 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
                     />
                   </div>
                 </div>
@@ -637,11 +758,11 @@ export default function DataExplorerPage() {
                 </h3>
               </div>
 
-              <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-6 ml-3">
+              <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-3 ml-3">
                 <div className="relative">
                   <span
                     className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
-                      generatedSql ? "bg-green-400" : "bg-slate-300"
+                      generatedSql ? "bg-green-400" : isGeneratingQueryPlan ? "bg-yellow-400 animate-pulse" : "bg-slate-300"
                     }`}
                   />
                   <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
@@ -649,12 +770,21 @@ export default function DataExplorerPage() {
                       <span className="font-mono text-slate-custom-500">
                         {tableName ? `TABLE ${tableName}` : "SQL GENERATION"}
                       </span>
-                      {generatedSql && (
-                        <span className="text-green-500 font-bold">Success</span>
+                      {isGeneratingQueryPlan && (
+                        <span className="text-yellow-500 font-bold flex items-center gap-1">
+                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                          In Progress
+                        </span>
+                      )}
+                      {!isGeneratingQueryPlan && generatedSql && (
+                        <span className="text-green-500 font-bold flex items-center gap-1">
+                          <span className="material-icons-round text-[10px]">check</span>
+                          Success
+                        </span>
                       )}
                     </div>
                     <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
-                      {generatedSql || "Waiting for query..."}
+                      {isGeneratingQueryPlan ? "Generating SQL..." : generatedSql || "Waiting for query..."}
                     </code>
                   </div>
                 </div>
@@ -662,7 +792,7 @@ export default function DataExplorerPage() {
                 <div className="relative">
                   <span
                     className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
-                      hasChartData ? "bg-green-400" : "bg-slate-300"
+                      hasChartData ? "bg-green-400" : isRunningQuery ? "bg-yellow-400 animate-pulse" : "bg-slate-300"
                     }`}
                   />
                   <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
@@ -670,7 +800,13 @@ export default function DataExplorerPage() {
                       <span className="font-mono text-slate-custom-500">
                         TRANSFORM
                       </span>
-                      {hasChartData && (
+                      {isRunningQuery && (
+                        <span className="text-yellow-500 font-bold flex items-center gap-1">
+                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                          Running
+                        </span>
+                      )}
+                      {!isRunningQuery && hasChartData && (
                         <span className="text-green-500 font-bold flex items-center gap-1">
                           <span className="material-icons-round text-[10px]">check</span>
                           Done
@@ -678,7 +814,9 @@ export default function DataExplorerPage() {
                       )}
                     </div>
                     <div className="text-xs text-slate-custom-700">
-                      {hasChartData
+                      {isRunningQuery
+                        ? "Executing query and transforming data..."
+                        : hasChartData
                         ? `Mapped ${chartData.length} points (${xField || "x"} → ${yField || "y"})`
                         : "Waiting for result rows..."}
                     </div>
@@ -690,6 +828,8 @@ export default function DataExplorerPage() {
                     className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ${
                       hasChartData
                         ? "bg-primary ring-primary/20"
+                        : isRunningQuery
+                        ? "bg-yellow-400 ring-slate-custom-50 animate-pulse"
                         : "bg-slate-300 ring-slate-custom-50"
                     }`}
                   />
@@ -733,18 +873,20 @@ export default function DataExplorerPage() {
             </section>
           </div>
 
-          <div className="flex-1 bg-slate-custom-100 p-6 overflow-y-auto flex flex-col gap-6">
+          <div className="flex-1 bg-slate-custom-100 p-3 overflow-y-auto flex flex-col gap-3">
             <section
               ref={chartRef}
+              onFocusCapture={() => setActiveSection(3)}
+              onClickCapture={() => setActiveSection(3)}
               className="bg-white rounded-2xl overflow-hidden relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200"
             >
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
-              <div className="p-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+              <div className="px-5 py-2.5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold ring-1 ring-primary/20">
+                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     3
                   </span>
-                  <h3 className="font-bold text-sm text-slate-custom-900 tracking-wide">
+                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                     Visualization &amp; Data
                   </h3>
                 </div>
@@ -765,20 +907,10 @@ export default function DataExplorerPage() {
               </div>
 
               <div
-                className="p-8 min-h-[420px]"
+                className="p-4 min-h-[420px]"
                 style={{ backgroundColor: chartConfig.backgroundColor }}
               >
-                <div className="flex justify-between items-center mb-6">
-                  <h4
-                    className="font-bold"
-                    style={{
-                      color: chartConfig.titleColor,
-                      fontSize: `${chartConfig.titleSize}px`,
-                    }}
-                  >
-                    {chartConfig.title || "Data Results"}
-                  </h4>
-
+                <div className="flex justify-between items-center mb-2.5">
                   <div className="flex bg-slate-custom-100 rounded-lg p-1 border border-slate-custom-200">
                     {([
                       { value: "bar" as const, label: "Bar", icon: "bar_chart" },
@@ -807,9 +939,20 @@ export default function DataExplorerPage() {
                       </button>
                     ))}
                   </div>
+                  <button
+                    onClick={() => setShowCustomizer((v) => !v)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all border ${
+                      showCustomizer
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-slate-200 text-slate-500 hover:text-primary hover:border-primary/50"
+                    }`}
+                  >
+                    <span className="material-icons-round text-sm">tune</span>
+                    Customize
+                  </button>
                 </div>
 
-                <div className="h-72">
+                <div className="h-[333px]">
                   {hasChartData ? (
                     <ResponsiveContainer width="100%" height="100%">
                       {chartConfig.chartType === "line" ? (
@@ -988,46 +1131,65 @@ export default function DataExplorerPage() {
                     alt="Generated chart"
                     className="w-full max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-md"
                   />
-                  <div className="flex justify-end gap-2 mt-3">
+                  <div className="flex items-center justify-between mt-3">
                     <button
-                      onClick={copyChartToClipboard}
-                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                    >
-                      <span className="material-icons-round text-sm">content_copy</span>
-                      Copy to Clipboard
-                    </button>
-                    <button
-                      onClick={downloadImage}
-                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                    >
-                      <span className="material-icons-round text-sm">image</span>
-                      Download PNG
-                    </button>
-                    <button
-                      onClick={() =>
-                        showToast("info", "Share link workflow will be wired next.")
-                      }
-                      className="px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-xs font-bold hover:bg-slate-custom-800 transition-all flex items-center gap-2 shadow-lg shadow-slate-custom-900/20"
+                      onClick={() => showToast("info", "Share link workflow will be wired next.")}
+                      className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
                     >
                       <span className="material-icons-round text-sm">share</span>
                       Share Link
                     </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={copyChartToClipboard}
+                        className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                      >
+                        <span className="material-icons-round text-sm">content_copy</span>
+                        Copy to Clipboard
+                      </button>
+                      <button
+                        onClick={downloadImage}
+                        className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                      >
+                        <span className="material-icons-round text-sm">image</span>
+                        Download PNG
+                      </button>
+                      <button
+                        className="px-4 py-1.5 bg-primary text-slate-custom-900 text-sm font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all flex items-center gap-2"
+                        onClick={() => showToast("info", "Publish workflow will be wired next.")}
+                      >
+                        <span className="material-icons-round text-sm">rocket_launch</span>
+                        Publish
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </section>
 
-            <section className="bg-white rounded-2xl overflow-hidden border border-slate-custom-200 shadow-sm">
-              <div className="p-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+            <section
+              onFocusCapture={() => setActiveSection(4)}
+              onClickCapture={() => setActiveSection(4)}
+              className="bg-white rounded-2xl overflow-hidden border border-slate-custom-200 shadow-sm"
+            >
+              <div className="px-5 py-2.5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold ring-1 ring-primary/20">
+                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     4
                   </span>
-                  <h3 className="font-bold text-sm text-slate-custom-900 uppercase tracking-wide">
+                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                     Analyst Composer
                   </h3>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={copyDraft}
+                    disabled={!postDraft}
+                    className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
+                  >
+                    <span className="material-icons-round text-sm">content_copy</span>
+                    Copy
+                  </button>
                   <button
                     onClick={generateDraft}
                     disabled={isGeneratingPost || !prompt.trim()}
@@ -1042,42 +1204,43 @@ export default function DataExplorerPage() {
                     </span>
                     {isGeneratingPost ? "Generating..." : "Generate Draft"}
                   </button>
-                  <button
-                    onClick={copyDraft}
-                    disabled={!postDraft}
-                    className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <span className="material-icons-round text-sm">content_copy</span>
-                    Copy
-                  </button>
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-3">
                 <div className="bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-600 leading-relaxed font-serif min-h-[120px] whitespace-pre-wrap">
                   {postDraft ||
                     "Generate a draft to turn your data result into a publish-ready analyst summary."}
                 </div>
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    onClick={() => showToast("info", "PNG export is available in Step 3 above.")}
-                    className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                  >
-                    <span className="material-icons-round text-sm">image</span> PNG
-                  </button>
-                  <button
-                    onClick={() => showToast("info", "PDF export will be wired next.")}
-                    className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                  >
-                    <span className="material-icons-round text-sm">description</span>
-                    PDF
-                  </button>
+                <div className="flex items-center justify-between mt-4">
                   <button
                     onClick={() => showToast("info", "Share link workflow will be wired next.")}
-                    className="px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-xs font-bold hover:bg-slate-custom-800 transition-all flex items-center gap-2 shadow-lg shadow-slate-custom-900/20"
+                    className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
                   >
                     <span className="material-icons-round text-sm">share</span>
                     Share Link
                   </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => showToast("info", "PNG export is available in Step 3 above.")}
+                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                    >
+                      <span className="material-icons-round text-sm">image</span> PNG
+                    </button>
+                    <button
+                      onClick={() => showToast("info", "PDF export will be wired next.")}
+                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                    >
+                      <span className="material-icons-round text-sm">description</span>
+                      PDF
+                    </button>
+                    <button
+                      className="px-4 py-1.5 bg-primary text-slate-custom-900 text-sm font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all flex items-center gap-2"
+                      onClick={() => showToast("info", "Publish workflow will be wired next.")}
+                    >
+                      <span className="material-icons-round text-sm">rocket_launch</span>
+                      Publish
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
