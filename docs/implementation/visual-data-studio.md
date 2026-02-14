@@ -13,7 +13,7 @@ Successfully ported all React components and pages from the legacy codebase, ada
 - **Landing Page** (`src/app/page.tsx`): Hero section, features grid, pricing preview.
 - **Pricing** (`src/app/pricing/page.tsx`): Tier comparison logic.
 - **Dashboard** (`src/app/dashboard/page.tsx`): Overview with summary cards, charts, and news feed.
-- **Data Explorer** (`src/app/dashboard/explorer/page.tsx`): 4-step workflow (Prompt -> Logic -> Viz -> Composer).
+- **Studio** (`src/app/dashboard/studio/page.tsx`): 4-step workflow (Prompt -> Logic -> Viz -> Composer).
 
 ### Infrastructure
 - **Styling**: Integrated Tailwind v4 alongside legacy CSS (scoped under `.legacy-ui`).
@@ -24,7 +24,7 @@ Successfully ported all React components and pages from the legacy codebase, ada
 Implemented the necessary API endpoints to power the frontend features, replacing mock data with real backend logic.
 
 ### Data Explorer API
-- **Endpoint**: `POST /api/dashboard/explorer/generate-chart`
+- **Endpoint**: `POST /api/dashboard/studio/generate-chart`
 - **Logic**: Uses Vercel AI SDK (`gpt-4o`) to convert natural language prompts into SQL queries.
 - **Security**: 
   - Validates SQL to ensure only `SELECT` statements are executed.
@@ -63,7 +63,7 @@ Implemented the necessary API endpoints to power the frontend features, replacin
 - `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` headers for Vercel edge caching.
 
 ### 5. Mobile Responsiveness
-- Data Explorer sidebar is collapsible on mobile via a toggle button.
+- Studio sidebar is collapsible on mobile via a toggle button.
 - Sidebar auto-collapses after query generation on small screens.
 
 ## 🚀 Next Steps (Phase 4)

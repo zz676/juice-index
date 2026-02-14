@@ -12,7 +12,7 @@ import prisma from "@/lib/prisma";
 import { rateLimitDaily } from "@/lib/ratelimit";
 import { normalizeTier, tierLimit } from "@/lib/api/tier";
 import { executeQuery, getAllowedTables } from "@/lib/query-executor";
-import { prismaFindManyToSql } from "@/lib/data-explorer/sql-preview";
+import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;

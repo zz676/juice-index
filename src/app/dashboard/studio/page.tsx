@@ -35,7 +35,7 @@ type QueryRow = Record<string, unknown>;
 
 type ToastType = "success" | "error" | "info";
 
-export default function DataExplorerPage() {
+export default function StudioPage() {
   const [mounted, setMounted] = useState(false);
   const [chartConfig, setChartConfig] =
     useState<ChartConfig>(DEFAULT_CHART_CONFIG);
@@ -215,7 +215,7 @@ export default function DataExplorerPage() {
     showToast("info", "Converting question to runnable query...");
 
     try {
-      const res = await fetch("/api/dashboard/explorer/generate-chart", {
+      const res = await fetch("/api/dashboard/studio/generate-chart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, previewOnly: true }),
@@ -317,7 +317,7 @@ export default function DataExplorerPage() {
     showToast("info", "Running query...");
 
     try {
-      const res = await fetch("/api/dashboard/explorer/generate-chart", {
+      const res = await fetch("/api/dashboard/studio/generate-chart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -363,7 +363,7 @@ export default function DataExplorerPage() {
     showToast("info", "Generating chart image...");
 
     try {
-      const res = await fetch("/api/dashboard/explorer/generate-chart", {
+      const res = await fetch("/api/dashboard/studio/generate-chart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -435,7 +435,7 @@ export default function DataExplorerPage() {
     showToast("info", "Generating analyst draft...");
 
     try {
-      const res = await fetch("/api/dashboard/explorer/generate-post", {
+      const res = await fetch("/api/dashboard/studio/generate-post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -556,7 +556,7 @@ export default function DataExplorerPage() {
               </span>
             </button>
             <h1 className="font-bold text-slate-custom-900 text-lg">
-              Market Analysis Workflow
+              AI-Powered Workflow
             </h1>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
               Draft

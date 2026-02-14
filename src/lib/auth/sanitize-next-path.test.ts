@@ -13,7 +13,7 @@ describe("sanitizeNextPath", () => {
   it("allows valid relative paths", () => {
     expect(sanitizeNextPath("/dashboard")).toBe("/dashboard");
     expect(sanitizeNextPath("/auth/reset-password")).toBe("/auth/reset-password");
-    expect(sanitizeNextPath("/dashboard/explorer")).toBe("/dashboard/explorer");
+    expect(sanitizeNextPath("/dashboard/studio")).toBe("/dashboard/studio");
   });
 
   it("rejects paths not starting with /", () => {
