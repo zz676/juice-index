@@ -3,10 +3,17 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import prisma from "@/lib/prisma";
 import { studioPostDraftLimit } from "@/lib/ratelimit";
 import { normalizeTier, type ApiTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
+import {
+  getModelById,
+  canAccessModel,
+  DEFAULT_MODEL_ID,
+  DEFAULT_TEMPERATURE,
+} from "@/lib/studio/models";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -55,7 +62,9 @@ function resolveUserTier(subscription: { tier: string; status: string } | null):
   return "FREE";
 }
 
-async function enforceRateLimit(userId: string): Promise<NextResponse | null> {
+async function enforceRateLimit(
+  userId: string
+): Promise<{ error: NextResponse } | { tier: ApiTier }> {
   const subscription = await prisma.apiSubscription.findUnique({
     where: { userId },
     select: { tier: true, status: true },
@@ -66,16 +75,23 @@ async function enforceRateLimit(userId: string): Promise<NextResponse | null> {
 
   if (!rl.success) {
     const quota = TIER_QUOTAS[tier].postDrafts;
-    return NextResponse.json(
-      {
-        error: "RATE_LIMITED",
-        message: `You've used ${quota}/${quota} AI post drafts today. ${tier === "FREE" ? "Upgrade to Pro for 20/day." : "Limit resets at midnight UTC."}`,
-      },
-      { status: 429 }
-    );
+    return {
+      error: NextResponse.json(
+        {
+          error: "RATE_LIMITED",
+          message: `You've used ${quota}/${quota} AI post drafts today. ${tier === "FREE" ? "Upgrade to Pro for 20/day." : "Limit resets at midnight UTC."}`,
+        },
+        { status: 429 }
+      ),
+    };
   }
 
-  return null;
+  return { tier };
+}
+
+function resolveModel(provider: string, providerModelId: string) {
+  if (provider === "anthropic") return anthropic(providerModelId);
+  return openai(providerModelId);
 }
 
 function summarizeResults(data: DataRow[]): string {
@@ -142,7 +158,8 @@ export async function POST(request: Request) {
     }
 
     const rateLimitRes = await enforceRateLimit(userId);
-    if (rateLimitRes) return rateLimitRes;
+    if ("error" in rateLimitRes) return rateLimitRes.error;
+    const { tier } = rateLimitRes;
 
     const body = (await request.json().catch(() => null)) as
       | Record<string, unknown>
@@ -152,6 +169,36 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "BAD_REQUEST", message: "Invalid request body" },
         { status: 400 }
+      );
+    }
+
+    // Parse model and temperature from request
+    const requestedModelId =
+      typeof body.model === "string" ? body.model : DEFAULT_MODEL_ID;
+    const temperature =
+      typeof body.temperature === "number" &&
+      body.temperature >= 0 &&
+      body.temperature <= 1
+        ? body.temperature
+        : DEFAULT_TEMPERATURE;
+
+    // Validate model exists
+    const modelDef = getModelById(requestedModelId);
+    if (!modelDef) {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: `Unknown model: ${requestedModelId}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate tier access
+    if (!canAccessModel(tier, requestedModelId)) {
+      return NextResponse.json(
+        {
+          error: "FORBIDDEN",
+          message: `Upgrade to ${modelDef.minTier} to unlock ${modelDef.displayName}.`,
+        },
+        { status: 403 }
       );
     }
 
@@ -179,10 +226,10 @@ export async function POST(request: Request) {
     }
 
     const result = await generateText({
-      model: openai("gpt-4o-mini"),
+      model: resolveModel(modelDef.provider, modelDef.providerModelId),
       prompt,
-      temperature: 0.4,
-      maxOutputTokens: 280,
+      temperature,
+      maxOutputTokens: modelDef.defaultMaxTokens,
     });
 
     const content = result.text.trim();

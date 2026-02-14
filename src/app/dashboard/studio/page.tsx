@@ -19,6 +19,14 @@ import {
   DEFAULT_CHART_CONFIG,
   type ChartConfig,
 } from "@/components/explorer/ChartCustomizer";
+import {
+  MODEL_REGISTRY,
+  DEFAULT_MODEL_ID,
+  DEFAULT_TEMPERATURE,
+  canAccessModel,
+  type ModelDefinition,
+} from "@/lib/studio/models";
+import type { ApiTier } from "@/lib/api/tier";
 
 type ChartPoint = { label: string; value: number };
 
@@ -70,6 +78,10 @@ function StudioPageInner() {
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(
     null
   );
+  const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
+  const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
+  const [userTier, setUserTier] = useState<ApiTier>("FREE");
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeSection, setActiveSection] = useState<number>(1);
   const defaultPanelWidth = 450;
@@ -150,6 +162,16 @@ function StudioPageInner() {
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
+  }, []);
+
+  // Fetch user tier on mount for model access gating
+  useEffect(() => {
+    fetch("/api/dashboard/tier")
+      .then((res) => res.json())
+      .then((data: Record<string, unknown>) => {
+        if (typeof data.tier === "string") setUserTier(data.tier as ApiTier);
+      })
+      .catch(() => {});
   }, []);
 
   // Pre-fill prompt from URL param (e.g., from brand search results)
@@ -464,6 +486,8 @@ function StudioPageInner() {
           chartTitle: chartConfig.title,
           chartType: chartConfig.chartType,
           data: rawData.slice(0, 60),
+          model: selectedModelId,
+          temperature,
         }),
       });
 
@@ -496,7 +520,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingPost(false);
     }
-  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, showToast]);
+  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, showToast]);
 
   const copyDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -1231,7 +1255,85 @@ function StudioPageInner() {
                     Analyst Composer
                   </h3>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
+                  {/* Model Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsModelDropdownOpen((v) => !v)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200"
+                    >
+                      <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                      <span className="max-w-[100px] truncate">
+                        {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
+                      </span>
+                      <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                    </button>
+                    {isModelDropdownOpen && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsModelDropdownOpen(false)}
+                        />
+                        <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
+                          {MODEL_REGISTRY.map((model: ModelDefinition) => {
+                            const accessible = canAccessModel(userTier, model.id);
+                            const isSelected = model.id === selectedModelId;
+                            return (
+                              <button
+                                key={model.id}
+                                onClick={() => {
+                                  if (accessible) {
+                                    setSelectedModelId(model.id);
+                                    setIsModelDropdownOpen(false);
+                                  } else {
+                                    showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
+                                  }
+                                }}
+                                className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
+                                  accessible
+                                    ? "hover:bg-primary/5 cursor-pointer"
+                                    : "opacity-50 cursor-not-allowed"
+                                } ${isSelected ? "bg-primary/10" : ""}`}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                    {model.displayName}
+                                  </div>
+                                  <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
+                                    {model.description}
+                                  </div>
+                                </div>
+                                {isSelected && accessible && (
+                                  <span className="material-icons-round text-sm text-primary">check</span>
+                                )}
+                                {!accessible && (
+                                  <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Temperature Slider */}
+                  <div className="flex items-center gap-1.5 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm">
+                    <span className="material-icons-round text-sm text-orange-400">thermostat</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      value={temperature}
+                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                      className="w-16 h-1 accent-primary cursor-pointer"
+                    />
+                    <span className="text-[10px] font-mono font-bold text-slate-custom-500 w-5 text-right">
+                      {temperature.toFixed(1)}
+                    </span>
+                  </div>
+
                   <button
                     onClick={copyDraft}
                     disabled={!postDraft}
