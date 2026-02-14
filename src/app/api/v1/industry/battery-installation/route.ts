@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const start = Date.now();
   const endpoint = "/api/v1/industry/battery-installation";
 
-  const auth = await authenticatePublicApi(request, { endpoint, minTier: "PRO" });
+  const auth = await authenticatePublicApi(request, { endpoint, minTier: "ENTERPRISE" });
   if (!auth.ok) return auth.res;
 
   const { ctx, headers } = auth;

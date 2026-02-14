@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DeliveryChart } from "@/components/dashboard/DeliveryChart";
+import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
 
 interface CardData {
   icon: string;
@@ -30,17 +31,23 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [feed, setFeed] = useState<DashboardFeed | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tier, setTier] = useState<string>("FREE");
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, feedRes] = await Promise.all([
+        const [statsRes, feedRes, postsRes] = await Promise.all([
           fetch("/api/dashboard/stats"),
-          fetch("/api/dashboard/feed")
+          fetch("/api/dashboard/feed"),
+          fetch("/api/dashboard/user-posts?limit=1"),
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
         if (feedRes.ok) setFeed(await feedRes.json());
+        if (postsRes.ok) {
+          const postsJson = await postsRes.json();
+          if (postsJson.tier) setTier(postsJson.tier);
+        }
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -74,6 +81,16 @@ export default function DashboardPage() {
 
   return (
     <>
+      {/* Data delay banner for Free tier */}
+      {tier === "FREE" && (
+        <div className="mb-6">
+          <UpgradeBanner
+            icon="schedule"
+            message="Data shown is delayed by 30 days and limited to 1 year of history. Upgrade to Pro for real-time data and 5 years of history."
+          />
+        </div>
+      )}
+
       {/* Top Row: 2 Stat Cards (stacked) + Delivery Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 mb-8">
         {/* Left column: stacked stat cards */}

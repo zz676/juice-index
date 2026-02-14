@@ -9,8 +9,9 @@ import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Brand, MetricType, PeriodType, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { rateLimitDaily } from "@/lib/ratelimit";
-import { normalizeTier, tierLimit } from "@/lib/api/tier";
+import { studioQueryLimit, studioChartLimit } from "@/lib/ratelimit";
+import { normalizeTier, type ApiTier } from "@/lib/api/tier";
+import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
 
@@ -137,6 +138,32 @@ const sourceAttributionPlugin: Plugin = {
   },
 };
 
+const watermarkPlugin: Plugin = {
+  id: "watermark",
+  afterDraw: (chart, _args, options) => {
+    const pluginOptions = options as { enabled?: boolean } | undefined;
+    if (!pluginOptions?.enabled) return;
+
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.font = "bold 60px Inter, Arial, sans-serif";
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Rotate and draw watermark text diagonally across the chart
+    const centerX = chart.width / 2;
+    const centerY = chart.height / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate(-Math.PI / 6);
+    ctx.fillText("Juice Index", 0, -30);
+    ctx.font = "24px Inter, Arial, sans-serif";
+    ctx.fillText("Upgrade to Pro to remove watermark", 0, 25);
+    ctx.restore();
+  },
+};
+
 function detectXField(sample: DataRow): string | null {
   if (sample.month !== undefined && sample.year !== undefined) return "month";
   if (sample.brand !== undefined) return "brand";
@@ -245,8 +272,9 @@ function renderChartConfig(params: {
   title: string;
   points: PreviewPoint[];
   style: ChartStyleOptions;
+  watermark?: boolean;
 }): ChartConfiguration {
-  const { chartType, title, points, style } = params;
+  const { chartType, title, points, style, watermark = false } = params;
   const labels = points.map((point) => point.label);
   const values = points.map((point) => point.value);
   const isHorizontal = chartType === "horizontalBar";
@@ -316,6 +344,9 @@ function renderChartConfig(params: {
               ? style.sourceFontSize
               : 12,
         },
+        watermark: {
+          enabled: watermark,
+        },
       } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
         x: {
@@ -361,7 +392,7 @@ function renderChartConfig(params: {
         },
       },
     },
-    plugins: [sourceAttributionPlugin],
+    plugins: [sourceAttributionPlugin, watermarkPlugin],
   };
 }
 
@@ -396,40 +427,47 @@ async function getAuthedSupabaseUserId(): Promise<string | null> {
   return user.id;
 }
 
-async function enforceRateLimit(userId: string): Promise<
-  | { ok: true; tier: string; limit: number }
-  | { ok: false; res: NextResponse }
-> {
+async function resolveUserTier(userId: string): Promise<ApiTier> {
   const subscription = await prisma.apiSubscription.findUnique({
     where: { userId },
     select: { tier: true, status: true },
   });
 
-  const tier =
-    subscription &&
+  return subscription &&
     (subscription.status.toLowerCase() === "active" ||
       subscription.status.toLowerCase() === "trialing")
-      ? normalizeTier(subscription.tier)
-      : "FREE";
+    ? normalizeTier(subscription.tier)
+    : "FREE";
+}
 
-  const limit = tierLimit(tier);
-  const rl = await rateLimitDaily(userId, limit, new Date());
-
+async function enforceStudioQueryLimit(userId: string, tier: ApiTier): Promise<NextResponse | null> {
+  const rl = await studioQueryLimit(userId, tier, new Date());
   if (!rl.success) {
-    return {
-      ok: false,
-      res: NextResponse.json(
-        {
-          error: "RATE_LIMITED",
-          message:
-            "You have reached your daily limit. Upgrade to Pro for unlimited access.",
-        },
-        { status: 429 }
-      ),
-    };
+    const quota = TIER_QUOTAS[tier].studioQueries;
+    return NextResponse.json(
+      {
+        error: "RATE_LIMITED",
+        message: `You've used ${quota}/${quota} AI queries today. ${tier === "FREE" ? "Upgrade to Pro for 50/day." : "Limit resets at midnight UTC."}`,
+      },
+      { status: 429 }
+    );
   }
+  return null;
+}
 
-  return { ok: true, tier, limit };
+async function enforceChartGenLimit(userId: string, tier: ApiTier): Promise<NextResponse | null> {
+  const rl = await studioChartLimit(userId, tier, new Date());
+  if (!rl.success) {
+    const quota = TIER_QUOTAS[tier].chartGen;
+    return NextResponse.json(
+      {
+        error: "RATE_LIMITED",
+        message: `You've used ${quota}/${quota} chart generations today. ${tier === "FREE" ? "Upgrade to Pro for 20/day." : "Limit resets at midnight UTC."}`,
+      },
+      { status: 429 }
+    );
+  }
+  return null;
 }
 
 async function getLiveHints() {
@@ -556,8 +594,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const limit = await enforceRateLimit(userId);
-    if (!limit.ok) return limit.res;
+    const tier = await resolveUserTier(userId);
 
     // Mode 0: Execute an explicit runnable query (from reviewed/edited query JSON)
     if (
@@ -567,6 +604,9 @@ export async function POST(req: Request) {
       typeof payload.query === "object" &&
       !Array.isArray(payload.query)
     ) {
+      const queryLimitRes = await enforceStudioQueryLimit(userId, tier);
+      if (queryLimitRes) return queryLimitRes;
+
       const table = payload.table.trim();
       const query = payload.query as Record<string, unknown>;
 
@@ -619,6 +659,9 @@ export async function POST(req: Request) {
 
     // Mode 1: Prompt -> safe query -> results
     if (typeof payload.prompt === "string") {
+      const queryLimitRes = await enforceStudioQueryLimit(userId, tier);
+      if (queryLimitRes) return queryLimitRes;
+
       const prompt = payload.prompt.trim();
 
       if (prompt.length < 3) {
@@ -724,7 +767,10 @@ export async function POST(req: Request) {
       });
     }
 
-    // Mode 2: Data -> PNG chart image
+    // Mode 2: Data -> PNG chart image (enforce chart generation limit)
+    const chartLimitRes = await enforceChartGenLimit(userId, tier);
+    if (chartLimitRes) return chartLimitRes;
+
     const pointsInput = Array.isArray(payload.previewData)
       ? payload.previewData
       : Array.isArray(payload.data)
@@ -775,11 +821,13 @@ export async function POST(req: Request) {
         : "Data Results";
 
     const style = normalizeStyleOptions(payload.chartOptions);
+    const applyWatermark = tier === "FREE";
     const config = renderChartConfig({
       chartType,
       title,
       points,
       style,
+      watermark: applyWatermark,
     });
 
     const canvas = getChartCanvas();
@@ -791,6 +839,7 @@ export async function POST(req: Request) {
       chartType,
       title,
       dataPoints: points.length,
+      watermarked: applyWatermark,
     });
   } catch (error) {
     console.error("Explorer generate-chart route error:", error);

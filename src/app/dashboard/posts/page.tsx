@@ -276,15 +276,30 @@ export default function PostsPage() {
             >
               Save Draft
             </button>
-            <button
-              onClick={() => handleCompose("publish")}
-              disabled={composeLoading}
-              className="px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-custom-800 transition-colors disabled:opacity-50"
-            >
-              Post Now
-            </button>
 
-            {/* Schedule — PRO only */}
+            {/* Post Now — PRO+ only */}
+            {isPro ? (
+              <button
+                onClick={() => handleCompose("publish")}
+                disabled={composeLoading}
+                className="px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-custom-800 transition-colors disabled:opacity-50"
+              >
+                Post Now
+              </button>
+            ) : (
+              <button
+                disabled
+                className="px-4 py-2 border border-slate-custom-200 text-slate-custom-400 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center gap-1.5"
+                title="Publishing to X requires a Pro subscription"
+              >
+                Post Now
+                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                  PRO
+                </span>
+              </button>
+            )}
+
+            {/* Schedule — PRO+ only */}
             <div className="flex items-center gap-2">
               {isPro ? (
                 <>
@@ -312,6 +327,7 @@ export default function PostsPage() {
                 <button
                   disabled
                   className="px-4 py-2 border border-slate-custom-200 text-slate-custom-400 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center gap-1.5"
+                  title="Scheduling requires a Pro subscription"
                 >
                   Schedule
                   <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">
@@ -325,6 +341,17 @@ export default function PostsPage() {
               <span className="material-icons-round text-slate-custom-400 animate-spin text-xl">sync</span>
             )}
           </div>
+
+          {/* Upgrade prompt for free users */}
+          {!isPro && (
+            <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2.5 mt-1">
+              <span className="material-icons-round text-primary text-base">lock</span>
+              <p className="text-xs text-slate-custom-600">
+                Publishing and scheduling to X requires <span className="font-semibold text-primary">Pro</span>.{" "}
+                <a href="/pricing" className="text-primary font-semibold underline hover:text-primary/80">Upgrade now</a>
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -423,14 +450,24 @@ export default function PostsPage() {
                             >
                               <span className="material-icons-round text-base">edit</span>
                             </button>
-                            <button
-                              onClick={() => handleRetry(post)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
-                              title="Post Now"
-                            >
-                              <span className="material-icons-round text-base">send</span>
-                            </button>
+                            {isPro ? (
+                              <button
+                                onClick={() => handleRetry(post)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                                title="Post Now"
+                              >
+                                <span className="material-icons-round text-base">send</span>
+                              </button>
+                            ) : (
+                              <button
+                                disabled
+                                className="p-1.5 rounded text-slate-custom-300 cursor-not-allowed"
+                                title="Upgrade to Pro to post"
+                              >
+                                <span className="material-icons-round text-base">send</span>
+                              </button>
+                            )}
                             {isPro && (
                               <button
                                 onClick={() => handleEdit(post)}

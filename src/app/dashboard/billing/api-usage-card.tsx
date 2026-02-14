@@ -1,3 +1,6 @@
+import { TIER_QUOTAS } from "@/lib/api/quotas";
+import type { ApiTier } from "@/lib/api/tier";
+
 interface ApiUsageCardProps {
   usageCount: number;
   tierLimit: number;
@@ -10,35 +13,66 @@ function getBarColor(pct: number) {
   return "bg-primary";
 }
 
+function formatLimit(value: number): string {
+  if (!Number.isFinite(value)) return "Unlimited";
+  return value.toLocaleString();
+}
+
 export default function ApiUsageCard({
   usageCount,
   tierLimit,
+  tier,
 }: ApiUsageCardProps) {
+  const quotas = TIER_QUOTAS[tier as ApiTier] ?? TIER_QUOTAS.FREE;
+
   const usagePercent =
     tierLimit === Infinity ? 0 : Math.min((usageCount / tierLimit) * 100, 100);
-  const usageLimitDisplay =
-    tierLimit === Infinity ? "Unlimited" : tierLimit.toLocaleString();
+  const usageLimitDisplay = formatLimit(tierLimit);
 
   return (
     <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
       <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
         <span className="material-icons-round text-slate-custom-400">data_usage</span>
-        <h3 className="text-base font-semibold text-slate-custom-900">API Usage</h3>
+        <h3 className="text-base font-semibold text-slate-custom-900">Usage &amp; Quotas</h3>
       </div>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-sm font-medium text-slate-custom-700">This month</p>
-          <p className="text-sm text-slate-custom-500">
-            {usageCount.toLocaleString()} / {usageLimitDisplay}
-          </p>
+      <div className="p-6 space-y-5">
+        {/* API Usage */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-sm font-medium text-slate-custom-700">API Requests (this month)</p>
+            <p className="text-sm text-slate-custom-500">
+              {usageCount.toLocaleString()} / {usageLimitDisplay}
+            </p>
+          </div>
+          <div className="w-full h-2 bg-slate-custom-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${getBarColor(usagePercent)}`}
+              style={{ width: `${usagePercent}%` }}
+            />
+          </div>
         </div>
-        <div className="w-full h-2 bg-slate-custom-100 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${getBarColor(usagePercent)}`}
-            style={{ width: `${usagePercent}%` }}
-          />
+
+        {/* Quota Summary */}
+        <div className="grid grid-cols-2 gap-3">
+          <QuotaItem label="Studio Queries / Day" value={formatLimit(quotas.studioQueries)} />
+          <QuotaItem label="Chart Generations / Day" value={formatLimit(quotas.chartGen)} />
+          <QuotaItem label="AI Post Drafts / Day" value={formatLimit(quotas.postDrafts)} />
+          <QuotaItem label="CSV Exports / Month" value={formatLimit(quotas.csvExports)} />
+          <QuotaItem label="API Keys" value={formatLimit(quotas.maxApiKeys)} />
+          <QuotaItem label="Data Delay" value={quotas.delayDays === 0 ? "Real-time" : `${quotas.delayDays} days`} />
+          <QuotaItem label="History" value={Number.isFinite(quotas.histMonths) ? `${Math.round(quotas.histMonths / 12)} years` : "Unlimited"} />
+          <QuotaItem label="Scheduled Posts" value={formatLimit(quotas.maxScheduled)} />
         </div>
       </div>
     </section>
+  );
+}
+
+function QuotaItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between bg-slate-custom-50 rounded-lg px-3 py-2">
+      <span className="text-xs text-slate-custom-500">{label}</span>
+      <span className="text-xs font-semibold text-slate-custom-800">{value}</span>
+    </div>
   );
 }

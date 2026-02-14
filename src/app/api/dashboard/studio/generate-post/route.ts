@@ -4,8 +4,9 @@ import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import prisma from "@/lib/prisma";
-import { rateLimitDaily } from "@/lib/ratelimit";
-import { normalizeTier, tierLimit } from "@/lib/api/tier";
+import { studioPostDraftLimit } from "@/lib/ratelimit";
+import { normalizeTier, type ApiTier } from "@/lib/api/tier";
+import { TIER_QUOTAS } from "@/lib/api/quotas";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -43,28 +44,32 @@ async function getAuthedSupabaseUserId(): Promise<string | null> {
   return user.id;
 }
 
+function resolveUserTier(subscription: { tier: string; status: string } | null): ApiTier {
+  if (
+    subscription &&
+    (subscription.status.toLowerCase() === "active" ||
+      subscription.status.toLowerCase() === "trialing")
+  ) {
+    return normalizeTier(subscription.tier);
+  }
+  return "FREE";
+}
+
 async function enforceRateLimit(userId: string): Promise<NextResponse | null> {
   const subscription = await prisma.apiSubscription.findUnique({
     where: { userId },
     select: { tier: true, status: true },
   });
 
-  const tier =
-    subscription &&
-    (subscription.status.toLowerCase() === "active" ||
-      subscription.status.toLowerCase() === "trialing")
-      ? normalizeTier(subscription.tier)
-      : "FREE";
-
-  const limit = tierLimit(tier);
-  const rl = await rateLimitDaily(userId, limit, new Date());
+  const tier = resolveUserTier(subscription);
+  const rl = await studioPostDraftLimit(userId, tier, new Date());
 
   if (!rl.success) {
+    const quota = TIER_QUOTAS[tier].postDrafts;
     return NextResponse.json(
       {
         error: "RATE_LIMITED",
-        message:
-          "You have reached your daily limit. Upgrade to Pro for unlimited access.",
+        message: `You've used ${quota}/${quota} AI post drafts today. ${tier === "FREE" ? "Upgrade to Pro for 20/day." : "Limit resets at midnight UTC."}`,
       },
       { status: 429 }
     );

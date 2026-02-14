@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { sha256Hex } from "@/lib/api/keys";
 import { type ApiTier, hasTier, normalizeTier } from "@/lib/api/tier";
+import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { freeCutoff, freeMaxMonthly, type YearMonth, compareYearMonth } from "@/lib/api/delay";
 import { rateLimitDaily } from "@/lib/ratelimit";
 
@@ -36,17 +37,7 @@ function parseBearer(request: NextRequest): string | null {
 }
 
 function tierLimit(tier: ApiTier): number {
-  switch (tier) {
-    case "STARTER":
-      return 1000;
-    case "PRO":
-      return 10000;
-    case "ENTERPRISE":
-      return 100000;
-    case "FREE":
-    default:
-      return 100;
-  }
+  return TIER_QUOTAS[tier].dailyApi;
 }
 
 export async function authenticatePublicApi(request: NextRequest, opts: ApiAuthOptions): Promise<
