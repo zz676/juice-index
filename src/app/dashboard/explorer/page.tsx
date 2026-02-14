@@ -646,7 +646,7 @@ export default function DataExplorerPage() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full min-h-[2rem] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="w-full min-h-[66px] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-all resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -743,7 +743,7 @@ export default function DataExplorerPage() {
                       value={generatedSql || ""}
                       onChange={(e) => setGeneratedSql(e.target.value)}
                       placeholder="SELECT * FROM ..."
-                      className="w-full h-14 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                      className="w-full h-[64px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
                     />
                   </div>
                 </div>
@@ -1207,7 +1207,7 @@ export default function DataExplorerPage() {
                 </div>
               </div>
               <div className="p-3">
-                <div className="bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-600 leading-relaxed font-serif min-h-[120px] whitespace-pre-wrap">
+                <div className="bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] whitespace-pre-wrap">
                   {postDraft ||
                     "Generate a draft to turn your data result into a publish-ready analyst summary."}
                 </div>
