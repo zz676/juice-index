@@ -5,7 +5,8 @@ import type { UserIdentity } from "@supabase/supabase-js";
 const PROVIDER_MAP: Record<string, AuthProvider> = {
   google: AuthProvider.GOOGLE,
   github: AuthProvider.GITHUB,
-  twitter: AuthProvider.TWITTER,
+  twitter: AuthProvider.X,
+  x: AuthProvider.X,
 };
 
 /**
