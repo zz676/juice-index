@@ -4,7 +4,7 @@
 
 **Goal:** Harden auth, replace mock dashboard data with real DB queries, improve Stripe webhook coverage, add caching, and polish mobile responsiveness.
 
-**Architecture:** Incremental changes across auth routes, API endpoints, and the Data Explorer UI. Each task is self-contained and independently committable. A shared `getRedirectBase()` utility avoids duplication across auth pages.
+**Architecture:** Incremental changes across auth routes, API endpoints, and the Studio UI. Each task is self-contained and independently committable. A shared `getRedirectBase()` utility avoids duplication across auth pages.
 
 **Tech Stack:** Next.js 15 App Router, Supabase Auth, Prisma 7 (PostgreSQL), Stripe webhooks, Tailwind v4, Vitest (new)
 
@@ -87,7 +87,7 @@ describe("sanitizeNextPath", () => {
   it("allows valid relative paths", () => {
     expect(sanitizeNextPath("/dashboard")).toBe("/dashboard");
     expect(sanitizeNextPath("/auth/reset-password")).toBe("/auth/reset-password");
-    expect(sanitizeNextPath("/dashboard/explorer")).toBe("/dashboard/explorer");
+    expect(sanitizeNextPath("/dashboard/studio")).toBe("/dashboard/studio");
   });
 
   it("rejects paths not starting with /", () => {
@@ -615,10 +615,10 @@ git commit -m "perf: add in-memory TTL cache and Cache-Control to dashboard stat
 
 ---
 
-### Task 9: Mobile-responsive Data Explorer layout
+### Task 9: Mobile-responsive Studio layout
 
 **Files:**
-- Modify: `src/app/dashboard/explorer/page.tsx:447-498`
+- Modify: `src/app/dashboard/studio/page.tsx:447-498`
 
 **Step 1: Add mobile toggle state**
 
@@ -676,8 +676,8 @@ Expected: Build succeeds
 **Step 6: Commit**
 
 ```bash
-git add src/app/dashboard/explorer/page.tsx
-git commit -m "ui: make Data Explorer sidebar collapsible on mobile"
+git add src/app/dashboard/studio/page.tsx
+git commit -m "ui: make Studio sidebar collapsible on mobile"
 ```
 
 ---

@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { normalizeTableName } from "@/lib/data-explorer/table-name";
+import { normalizeTableName } from "@/lib/studio/table-name";
 
 const ALLOWED_TABLES = [
   "eVMetric",

@@ -31,7 +31,7 @@ A guided, safe, and branded workflow that acts as a **force multiplier for conte
 
 The interface is designed not as a database tool, but as a **creative studio**.
 
-**Current Implementation**: `src/app/[locale]/admin/data-explorer/page.tsx`
+**Current Implementation**: `src/app/dashboard/studio/page.tsx`
 
 ### 1. The Prompt (Creative Intent)
 - **User Action**: "Show me Tesla's export trend from Shanghai for 2024."

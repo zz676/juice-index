@@ -29,7 +29,7 @@ We enforce feature limits based on the user's subscription tier, stored in `ApiS
 
 ### Rate Limiting (`src/lib/ratelimit.ts`)
 - Uses Redis (via Upstash or local) to track API usage.
-- Enforced in `src/app/api/dashboard/explorer/generate-chart/route.ts`.
+- Enforced in `src/app/api/dashboard/studio/generate-chart/route.ts`.
 
 ## Middleware & Security
 - **File**: `src/middleware.ts`
