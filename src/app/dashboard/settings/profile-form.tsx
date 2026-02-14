@@ -2,9 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import { updateProfile } from "./actions";
-import { useFormState } from "react-dom";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 const initialState = {
     message: "",
@@ -18,11 +16,11 @@ function SubmitButton() {
         <button
             type="submit"
             disabled={pending}
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center py-2 px-5 text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
         >
             {pending ? (
                 <>
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                    <span className="material-icons-round text-[16px] animate-spin mr-2">progress_activity</span>
                     Saving...
                 </>
             ) : (
@@ -32,9 +30,19 @@ function SubmitButton() {
     );
 }
 
-export default function ProfileForm({ user }: { user: any }) {
-    const [state, formAction] = useFormState(updateProfile, initialState);
+interface ProfileFormProps {
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+}
+
+export default function ProfileForm({ name, email, avatarUrl }: ProfileFormProps) {
+    const [state, formAction] = useActionState(updateProfile, initialState);
     const [showToast, setShowToast] = useState(false);
+
+    const initials = name
+        ? name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
+        : email[0]?.toUpperCase() ?? "?";
 
     useEffect(() => {
         if (state?.message) {
@@ -46,38 +54,53 @@ export default function ProfileForm({ user }: { user: any }) {
 
     return (
         <form action={formAction} className="space-y-6">
-            <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-6 sm:gap-x-6">
-                <div className="sm:col-span-3">
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700">
-                        Full Name
-                    </label>
-                    <div className="mt-1">
+            <div className="flex items-start gap-6">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                    {avatarUrl ? (
+                        <img
+                            src={avatarUrl}
+                            alt={name || "Avatar"}
+                            referrerPolicy="no-referrer"
+                            className="w-16 h-16 rounded-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-slate-custom-800 flex items-center justify-center text-white text-lg font-semibold">
+                            {initials}
+                        </div>
+                    )}
+                </div>
+
+                {/* Fields */}
+                <div className="flex-1 grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-4">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-slate-custom-700 mb-1">
+                            Full Name
+                        </label>
                         <input
                             type="text"
                             name="name"
                             id="name"
-                            defaultValue={user.name || ""}
+                            defaultValue={name}
                             autoComplete="given-name"
-                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3"
+                            className="block w-full rounded-lg border border-slate-custom-200 bg-white px-3 py-2 text-sm text-slate-custom-900 placeholder-slate-custom-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                         />
                     </div>
-                </div>
 
-                <div className="sm:col-span-3">
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-700">
-                        Email address
-                    </label>
-                    <div className="mt-1">
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-slate-custom-700 mb-1">
+                            Email
+                        </label>
                         <input
                             id="email"
                             name="email"
                             type="email"
                             disabled
-                            defaultValue={user.email}
-                            className="shadow-sm bg-slate-50 block w-full sm:text-sm border-slate-300 rounded-md py-2 px-3 text-slate-500 cursor-not-allowed"
+                            defaultValue={email}
+                            className="block w-full rounded-lg border border-slate-custom-200 bg-slate-custom-50 px-3 py-2 text-sm text-slate-custom-400 cursor-not-allowed"
                         />
+                        <p className="mt-1 text-xs text-slate-custom-400">Email cannot be changed.</p>
                     </div>
-                    <p className="mt-2 text-xs text-slate-500">Email cannot be changed.</p>
                 </div>
             </div>
 
@@ -89,16 +112,17 @@ export default function ProfileForm({ user }: { user: any }) {
             {showToast && (
                 <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
                     <div
-                        className={`rounded-lg p-4 shadow-lg border flex items-center gap-3 ${state.type === "success"
+                        className={`rounded-lg p-4 shadow-lg border flex items-center gap-3 ${
+                            state.type === "success"
                                 ? "bg-white border-green-200 text-green-800"
                                 : "bg-white border-red-200 text-red-800"
-                            }`}
+                        }`}
                     >
-                        {state.type === "success" ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                            <AlertCircle className="h-5 w-5 text-red-500" />
-                        )}
+                        <span className={`material-icons-round text-[20px] ${
+                            state.type === "success" ? "text-green-500" : "text-red-500"
+                        }`}>
+                            {state.type === "success" ? "check_circle" : "error"}
+                        </span>
                         <p className="text-sm font-medium">{state.message}</p>
                     </div>
                 </div>
