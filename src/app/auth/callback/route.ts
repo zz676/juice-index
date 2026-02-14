@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
 
 import { prisma } from '@/lib/prisma'
 import { User as SupabaseUser } from '@supabase/supabase-js'
+import { syncAccounts } from '@/lib/auth/sync-accounts'
 
 async function syncUser(user: SupabaseUser) {
     if (!user.email) return
@@ -73,4 +74,7 @@ async function syncUser(user: SupabaseUser) {
       VALUES (${subscriptionId}, ${user.id}, 'FREE', 'active', ${now}, ${now})
       ON CONFLICT ("userId") DO NOTHING
     `
+
+    // 3. Sync OAuth accounts (juice_accounts)
+    await syncAccounts(user.id, user.identities ?? [])
 }
