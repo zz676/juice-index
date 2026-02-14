@@ -5,20 +5,22 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface QueryScene {
   query: string;
-  bars: { label: string; value: number; color: string }[];
+  bars: { label: string; value: number; opacity: number }[];
   stats: { label: string; value: string; change: string }[];
 }
+
+const BAR_AREA_HEIGHT = 130; // px, for the chart area above labels
 
 const scenes: QueryScene[] = [
   {
     query: "Show Tesla monthly deliveries for 2024",
     bars: [
-      { label: "Jan", value: 72, color: "bg-primary/50" },
-      { label: "Feb", value: 45, color: "bg-primary/40" },
-      { label: "Mar", value: 88, color: "bg-primary/60" },
-      { label: "Apr", value: 65, color: "bg-primary/50" },
-      { label: "May", value: 78, color: "bg-primary/55" },
-      { label: "Jun", value: 95, color: "bg-primary" },
+      { label: "Jan", value: 72, opacity: 0.5 },
+      { label: "Feb", value: 45, opacity: 0.4 },
+      { label: "Mar", value: 88, opacity: 0.6 },
+      { label: "Apr", value: 65, opacity: 0.5 },
+      { label: "May", value: 78, opacity: 0.55 },
+      { label: "Jun", value: 95, opacity: 1 },
     ],
     stats: [
       { label: "Total Deliveries", value: "443K", change: "+12.4%" },
@@ -28,12 +30,12 @@ const scenes: QueryScene[] = [
   {
     query: "Compare BYD vs NIO insurance registrations",
     bars: [
-      { label: "BYD", value: 100, color: "bg-primary" },
-      { label: "NIO", value: 38, color: "bg-primary/50" },
-      { label: "XPEV", value: 28, color: "bg-primary/40" },
-      { label: "Li", value: 52, color: "bg-primary/60" },
-      { label: "AITO", value: 45, color: "bg-primary/55" },
-      { label: "Zeekr", value: 30, color: "bg-primary/45" },
+      { label: "BYD", value: 100, opacity: 1 },
+      { label: "NIO", value: 38, opacity: 0.5 },
+      { label: "XPEV", value: 28, opacity: 0.4 },
+      { label: "Li", value: 52, opacity: 0.6 },
+      { label: "AITO", value: 45, opacity: 0.55 },
+      { label: "Zeekr", value: 30, opacity: 0.45 },
     ],
     stats: [
       { label: "BYD Registrations", value: "312K", change: "+24.1%" },
@@ -43,12 +45,12 @@ const scenes: QueryScene[] = [
   {
     query: "LFP battery cost trend last 6 months",
     bars: [
-      { label: "Jul", value: 90, color: "bg-primary/60" },
-      { label: "Aug", value: 82, color: "bg-primary/55" },
-      { label: "Sep", value: 75, color: "bg-primary/50" },
-      { label: "Oct", value: 68, color: "bg-primary/45" },
-      { label: "Nov", value: 60, color: "bg-primary/40" },
-      { label: "Dec", value: 55, color: "bg-primary" },
+      { label: "Jul", value: 90, opacity: 0.6 },
+      { label: "Aug", value: 82, opacity: 0.55 },
+      { label: "Sep", value: 75, opacity: 0.5 },
+      { label: "Oct", value: 68, opacity: 0.45 },
+      { label: "Nov", value: 60, opacity: 0.4 },
+      { label: "Dec", value: 55, opacity: 1 },
     ],
     stats: [
       { label: "Avg $/kWh", value: "$56", change: "-18.3%" },
@@ -104,6 +106,10 @@ export default function HeroViz() {
     }
   }, [phase, advanceScene]);
 
+  const showBars =
+    phase === "chart" || phase === "stats" || phase === "hold";
+  const showStats = phase === "stats" || phase === "hold";
+
   return (
     <div className="w-full max-w-lg mx-auto lg:mx-0">
       <div className="bg-white rounded-2xl border border-slate-custom-200 shadow-xl overflow-hidden">
@@ -123,7 +129,7 @@ export default function HeroViz() {
         </div>
 
         {/* Visualization area */}
-        <div className="px-5 py-5 min-h-[220px] flex flex-col justify-end">
+        <div className="px-5 py-5 min-h-[240px] flex flex-col justify-end">
           {/* Processing shimmer */}
           <AnimatePresence>
             {phase === "processing" && (
@@ -154,34 +160,47 @@ export default function HeroViz() {
             )}
           </AnimatePresence>
 
-          {/* Bar chart */}
-          {(phase === "chart" || phase === "stats" || phase === "hold") && (
-            <div className="flex items-end gap-2 h-[140px] mb-4">
-              {scene.bars.map((bar, i) => (
-                <div
-                  key={bar.label}
-                  className="flex-1 flex flex-col items-center gap-1"
-                >
+          {/* Bar chart — use pixel heights for reliability */}
+          {showBars && (
+            <div className="mb-4">
+              <div
+                className="flex items-end gap-2"
+                style={{ height: BAR_AREA_HEIGHT }}
+              >
+                {scene.bars.map((bar, i) => (
                   <motion.div
-                    className={`w-full rounded-t-md ${bar.color}`}
+                    key={bar.label}
+                    className="flex-1 rounded-t-md"
+                    style={{
+                      backgroundColor: `rgba(106, 218, 27, ${bar.opacity})`,
+                    }}
                     initial={{ height: 0 }}
-                    animate={{ height: `${bar.value}%` }}
+                    animate={{
+                      height: (bar.value / 100) * BAR_AREA_HEIGHT,
+                    }}
                     transition={{
                       duration: 0.6,
                       delay: i * 0.08,
                       ease: [0.22, 1, 0.36, 1],
                     }}
                   />
-                  <span className="text-[10px] text-slate-custom-400 font-medium">
+                ))}
+              </div>
+              <div className="flex gap-2 mt-1.5">
+                {scene.bars.map((bar) => (
+                  <span
+                    key={bar.label}
+                    className="flex-1 text-center text-[10px] text-slate-custom-400 font-medium"
+                  >
                     {bar.label}
                   </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
           {/* Stat cards */}
-          {(phase === "stats" || phase === "hold") && (
+          {showStats && (
             <div className="flex gap-3">
               {scene.stats.map((stat, i) => (
                 <motion.div
