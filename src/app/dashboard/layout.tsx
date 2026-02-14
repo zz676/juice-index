@@ -7,6 +7,7 @@ import SearchOverlay from "@/components/dashboard/SearchOverlay";
 
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
+    { href: "/dashboard/posts", icon: "article", label: "Posts" },
     { href: "/dashboard/studio", icon: "show_chart", label: "Studio" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
@@ -229,7 +230,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 min-h-0 overflow-hidden p-8 pt-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-2">
                     {children}
                 </div>
             </main>
