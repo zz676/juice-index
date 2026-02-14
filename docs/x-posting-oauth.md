@@ -8,7 +8,7 @@ Users with a **Starter** or higher subscription can connect their own X (Twitter
 
 ### Account Sync (`juice_accounts`)
 
-When a user logs in via OAuth (Google/X/GitHub), the `syncAccounts()` helper in `src/lib/auth/sync-accounts.ts` maps Supabase identities to the `AuthProvider` enum and upserts records in the `juice_accounts` table. This is called from both:
+When a user logs in via OAuth (Google/X/GitHub), the `syncAccounts()` helper in `src/lib/auth/sync-accounts.ts` maps Supabase identity provider strings (both `"twitter"` and `"x"`) to `AuthProvider.X` and upserts records in the `juice_accounts` table. This is called from both:
 
 - `src/app/auth/callback/route.ts` (OAuth callback)
 - `src/lib/auth/sync-user.ts` (`syncUserToPrisma()` for the `/api/auth/sync` route)
