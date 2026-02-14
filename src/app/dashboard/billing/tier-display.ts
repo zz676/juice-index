@@ -1,3 +1,5 @@
+import { TIER_QUOTAS } from "@/lib/api/quotas";
+
 const tierDisplayNames: Record<string, string> = {
   FREE: "Analyst (Free)",
   STARTER: "Starter",
@@ -9,13 +11,12 @@ export function getTierDisplayName(tier: string): string {
   return tierDisplayNames[tier] ?? tier;
 }
 
-const tierLimits: Record<string, number> = {
-  FREE: 100,
-  STARTER: 5_000,
-  PRO: 50_000,
-  ENTERPRISE: Infinity,
-};
-
 export function getTierLimit(tier: string): number {
-  return tierLimits[tier] ?? 100;
+  const key = tier as keyof typeof TIER_QUOTAS;
+  return TIER_QUOTAS[key]?.monthlyApi ?? 0;
+}
+
+export function getTierDailyLimit(tier: string): number {
+  const key = tier as keyof typeof TIER_QUOTAS;
+  return TIER_QUOTAS[key]?.dailyApi ?? 0;
 }

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const start = Date.now();
   const endpoint = "/api/v1/brands/{brand}/metrics";
 
-  const auth = await authenticatePublicApi(request, { endpoint, minTier: "FREE" });
+  const auth = await authenticatePublicApi(request, { endpoint, minTier: "PRO" });
   if (!auth.ok) return auth.res;
 
   const { ctx, headers } = auth;

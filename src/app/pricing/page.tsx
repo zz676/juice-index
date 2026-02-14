@@ -3,6 +3,84 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+type FeatureRow = {
+    label: string;
+    analyst: string | boolean;
+    pro: string | boolean;
+    institutional: string | boolean;
+};
+
+type FeatureSection = {
+    heading: string;
+    rows: FeatureRow[];
+};
+
+const featureSections: FeatureSection[] = [
+    {
+        heading: "Market Coverage",
+        rows: [
+            { label: "OEM Production Numbers", analyst: "Top 10 Only", pro: true, institutional: true },
+            { label: "Startup EV Makers", analyst: false, pro: true, institutional: true },
+            { label: "Battery Supply Chain", analyst: false, pro: "Top Tier Only", institutional: true },
+            { label: "Battery Maker Rankings", analyst: false, pro: true, institutional: true },
+            { label: "Plant-level Exports", analyst: false, pro: "Aggregated", institutional: "Full Detail" },
+            { label: "Dealer Inventory Factor", analyst: false, pro: true, institutional: true },
+            { label: "VIA Index", analyst: false, pro: true, institutional: true },
+        ],
+    },
+    {
+        heading: "Data Freshness & History",
+        rows: [
+            { label: "Data Delay", analyst: "30 days", pro: "Real-time", institutional: "Real-time" },
+            { label: "Update Frequency", analyst: "Monthly", pro: "Weekly", institutional: "Daily / Real-time" },
+            { label: "Historical Data", analyst: "1 Year", pro: "5 Years", institutional: "Unlimited" },
+        ],
+    },
+    {
+        heading: "Studio (AI Query Engine)",
+        rows: [
+            { label: "AI Queries / Day", analyst: "3", pro: "50", institutional: "Unlimited" },
+            { label: "Chart Generations / Day", analyst: "1 (watermarked)", pro: "20", institutional: "Unlimited" },
+            { label: "AI Post Drafts / Day", analyst: "1", pro: "20", institutional: "Unlimited" },
+            { label: "Chart Customization", analyst: "Basic", pro: "Full", institutional: "Full" },
+            { label: "Chart PNG Export", analyst: "Watermarked", pro: "Clean", institutional: "Clean" },
+        ],
+    },
+    {
+        heading: "Posts & Publishing",
+        rows: [
+            { label: "Draft Posts", analyst: "5 max", pro: "Unlimited", institutional: "Unlimited" },
+            { label: "Publish to X", analyst: false, pro: true, institutional: true },
+            { label: "Schedule Posts", analyst: false, pro: "10 pending max", institutional: "Unlimited" },
+            { label: "X Account Connection", analyst: false, pro: "1 account", institutional: "Multiple" },
+        ],
+    },
+    {
+        heading: "Export & API Access",
+        rows: [
+            { label: "CSV Export", analyst: false, pro: "50 / month", institutional: "Unlimited" },
+            { label: "API Access", analyst: false, pro: "Limited (brands only)", institutional: "Full (all endpoints)" },
+            { label: "API Keys", analyst: "0", pro: "2", institutional: "10+" },
+            { label: "Webhook Notifications", analyst: false, pro: false, institutional: true },
+        ],
+    },
+    {
+        heading: "Account & Support",
+        rows: [
+            { label: "Seats", analyst: "1", pro: "1", institutional: "5+ (custom)" },
+            { label: "Email Digest", analyst: "Weekly", pro: "Daily", institutional: "Custom" },
+            { label: "Support", analyst: "Community", pro: "Email", institutional: "Dedicated Analyst + SLA" },
+            { label: "Custom Reports", analyst: false, pro: false, institutional: true },
+        ],
+    },
+];
+
+function CellContent({ value }: { value: string | boolean }) {
+    if (value === true) return <span className="material-icons-round text-primary text-sm">check_circle</span>;
+    if (value === false) return <span className="material-icons-round text-gray-400 text-sm">remove</span>;
+    return <span className="text-sm text-gray-900">{value}</span>;
+}
+
 export default function PricingPage() {
     const [mounted, setMounted] = useState(false);
     const [isAnnual, setIsAnnual] = useState(false);
@@ -81,7 +159,13 @@ export default function PricingPage() {
                             </p>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1" role="list">
-                            {["Weekly Market Newsletter", "Top-level Production Stats", "Public Forum Access"].map(f => (
+                            {[
+                                "Top-level Production Stats",
+                                "3 AI Queries / Day",
+                                "1 Chart / Day (Watermarked)",
+                                "30-Day Data Delay",
+                                "1-Year History",
+                            ].map(f => (
                                 <li key={f} className="flex items-start">
                                     <span className="material-icons-round text-gray-400 text-sm mt-1 mr-3">check_circle</span>
                                     <span className="text-gray-600 text-sm">{f}</span>
@@ -109,7 +193,16 @@ export default function PricingPage() {
                                 <p className="text-xs text-primary font-medium mt-1">Billed {isAnnual ? "annually ($288)" : "monthly"}</p>
                             </div>
                             <ul className="space-y-4 mb-8 flex-1" role="list">
-                                {[{ t: "Full Dashboard Access", bold: true }, "Unlimited CSV Exports", "5-Year Historical Data", "Advanced Filter Sets"].map((f, i) => {
+                                {[
+                                    { t: "Full Dashboard Access", bold: true },
+                                    "50 AI Queries / Day",
+                                    "20 Charts / Day (No Watermark)",
+                                    "Real-time Data",
+                                    "5-Year History",
+                                    "CSV Export (50/mo)",
+                                    "API Access (Brands)",
+                                    "Publish & Schedule to X",
+                                ].map((f, i) => {
                                     const text = typeof f === "string" ? f : f.t;
                                     const bold = typeof f === "object" && f.bold;
                                     return (
@@ -136,7 +229,14 @@ export default function PricingPage() {
                             </p>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1" role="list">
-                            {["Full API Access", "Multi-seat Licenses", "Dedicated Analyst Support", "Custom Report Generation"].map(f => (
+                            {[
+                                "Full API Access (All Endpoints)",
+                                "Unlimited AI Queries & Charts",
+                                "Multi-seat Licenses (5+)",
+                                "Dedicated Analyst Support + SLA",
+                                "Custom Report Generation",
+                                "Webhook Notifications",
+                            ].map(f => (
                                 <li key={f} className="flex items-start">
                                     <span className="material-icons-round text-gray-400 text-sm mt-1 mr-3">check_circle</span>
                                     <span className="text-gray-600 text-sm">{f}</span>
@@ -165,51 +265,21 @@ export default function PricingPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                <tr className="bg-gray-50/50"><td className="p-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={4}>Market Coverage</td></tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">OEM Production Numbers</td>
-                                    <td className="p-4 text-center text-sm text-gray-500">Top 10 Only</td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                </tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">Startup EV Makers</td>
-                                    <td className="p-4 text-center text-gray-400"><span className="material-icons-round text-sm">remove</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                </tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">Battery Supply Chain</td>
-                                    <td className="p-4 text-center text-gray-400"><span className="material-icons-round text-sm">remove</span></td>
-                                    <td className="p-4 text-center text-sm text-gray-900">Top Tier Only</td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                </tr>
-                                <tr className="bg-gray-50/50"><td className="p-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={4}>Data Granularity</td></tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">Update Frequency</td>
-                                    <td className="p-4 text-center text-sm text-gray-500">Monthly</td>
-                                    <td className="p-4 text-center text-sm text-gray-900">Weekly</td>
-                                    <td className="p-4 text-center text-sm text-gray-900">Daily / Real-time</td>
-                                </tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">Historical Data</td>
-                                    <td className="p-4 text-center text-sm text-gray-500">1 Year</td>
-                                    <td className="p-4 text-center text-sm text-gray-900">5 Years</td>
-                                    <td className="p-4 text-center text-sm text-gray-900">Unlimited</td>
-                                </tr>
-                                <tr className="bg-gray-50/50"><td className="p-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={4}>Export &amp; Access</td></tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">CSV Export</td>
-                                    <td className="p-4 text-center text-gray-400"><span className="material-icons-round text-sm">remove</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                </tr>
-                                <tr>
-                                    <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">API Access</td>
-                                    <td className="p-4 text-center text-gray-400"><span className="material-icons-round text-sm">remove</span></td>
-                                    <td className="p-4 text-center text-gray-400"><span className="material-icons-round text-sm">remove</span></td>
-                                    <td className="p-4 text-center text-primary"><span className="material-icons-round text-sm">check_circle</span></td>
-                                </tr>
+                                {featureSections.map((section) => (
+                                    <>
+                                        <tr key={section.heading} className="bg-gray-50/50">
+                                            <td className="p-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={4}>{section.heading}</td>
+                                        </tr>
+                                        {section.rows.map((row) => (
+                                            <tr key={row.label}>
+                                                <td className="p-4 px-6 text-sm font-medium text-gray-900 sticky left-0 bg-white">{row.label}</td>
+                                                <td className="p-4 text-center"><CellContent value={row.analyst} /></td>
+                                                <td className="p-4 text-center"><CellContent value={row.pro} /></td>
+                                                <td className="p-4 text-center"><CellContent value={row.institutional} /></td>
+                                            </tr>
+                                        ))}
+                                    </>
+                                ))}
                             </tbody>
                         </table>
                     </div>
@@ -224,6 +294,8 @@ export default function PricingPage() {
                         { q: "What payment methods do you accept?", a: "We accept all major credit cards (Visa, Mastercard, Amex) for Pro plans. For Institutional plans, we can also support wire transfers and purchase orders." },
                         { q: "Can I cancel my subscription anytime?", a: "Yes, you can cancel your subscription at any time. Your access will remain active until the end of your current billing period." },
                         { q: "Do you offer academic discounts?", a: "Yes! We offer special pricing for students and university researchers. Please contact us with your .edu email address for more information." },
+                        { q: "What does 'Limited API access' mean on Pro?", a: "Pro API access covers the /brands endpoints for programmatic access to brand-level delivery data. Industry-wide datasets (battery, CPCA production, dealer inventory, etc.) require an Institutional plan." },
+                        { q: "Can I remove the watermark on Free charts?", a: "Chart exports on the free tier include a Juice Index watermark. Upgrading to Pro removes the watermark and gives you 20 clean chart exports per day." },
                     ].map(({ q, a }) => (
                         <details key={q} className="group bg-white rounded-lg p-6 [&_summary::-webkit-details-marker]:hidden border border-gray-100">
                             <summary className="flex items-center justify-between cursor-pointer text-gray-900 font-medium">
@@ -269,7 +341,7 @@ export default function PricingPage() {
                         </div>
                     </div>
                     <div className="mt-12 border-t border-gray-100 pt-8 flex justify-between items-center">
-                        <p className="text-xs text-gray-400">© 2024 Juice Index. All rights reserved.</p>
+                        <p className="text-xs text-gray-400">&copy; 2024 Juice Index. All rights reserved.</p>
                         <div className="flex space-x-4">
                             <Link href="#" className="text-gray-400 hover:text-gray-500"><span className="material-icons-round text-xl">public</span></Link>
                             <Link href="#" className="text-gray-400 hover:text-gray-500"><span className="material-icons-round text-xl">code</span></Link>

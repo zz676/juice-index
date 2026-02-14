@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { UserPostStatus } from "@prisma/client";
+import { normalizeTier, hasTier } from "@/lib/api/tier";
+import { TIER_QUOTAS } from "@/lib/api/quotas";
 
 export const runtime = "nodejs";
 
@@ -37,12 +39,17 @@ export async function GET(request: NextRequest) {
     }),
   ]);
 
-  const isPro = subscription?.tier === "PRO";
+  const userTier = normalizeTier(subscription?.tier);
+  const canPublish = hasTier(userTier, "PRO");
+  const canSchedule = hasTier(userTier, "PRO");
 
   return NextResponse.json({
     posts,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    isPro,
+    isPro: canPublish,
+    tier: userTier,
+    canPublish,
+    canSchedule,
   });
 }
 
@@ -79,14 +86,29 @@ export async function POST(request: NextRequest) {
   let postStatus: UserPostStatus = UserPostStatus.DRAFT;
   let scheduledDate: Date | null = null;
 
-  if (action === "schedule") {
-    const subscription = await prisma.apiSubscription.findUnique({
-      where: { userId: user.id },
-      select: { tier: true },
-    });
-    if (subscription?.tier !== "PRO") {
+  // Resolve user tier once for all checks
+  const subscription = await prisma.apiSubscription.findUnique({
+    where: { userId: user.id },
+    select: { tier: true },
+  });
+  const userTier = normalizeTier(subscription?.tier);
+  const quotas = TIER_QUOTAS[userTier];
+
+  if (action === "publish") {
+    // FREE tier cannot publish to X
+    if (!hasTier(userTier, "PRO")) {
       return NextResponse.json(
-        { error: "FORBIDDEN", message: "Scheduling requires a PRO subscription" },
+        { error: "FORBIDDEN", message: "Publishing to X requires a Pro subscription. Upgrade to Pro to post." },
+        { status: 403 }
+      );
+    }
+    // Queued for immediate publishing by cron
+    postStatus = UserPostStatus.SCHEDULED;
+    scheduledDate = null;
+  } else if (action === "schedule") {
+    if (!hasTier(userTier, "PRO")) {
+      return NextResponse.json(
+        { error: "FORBIDDEN", message: "Scheduling requires a Pro subscription" },
         { status: 403 }
       );
     }
@@ -103,11 +125,34 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Enforce max pending scheduled posts
+    if (Number.isFinite(quotas.maxScheduled)) {
+      const pendingCount = await prisma.userPost.count({
+        where: { userId: user.id, status: UserPostStatus.SCHEDULED },
+      });
+      if (pendingCount >= quotas.maxScheduled) {
+        return NextResponse.json(
+          { error: "QUOTA_EXCEEDED", message: `You can have at most ${quotas.maxScheduled} pending scheduled posts. Delete or publish some first.` },
+          { status: 403 }
+        );
+      }
+    }
+
     postStatus = UserPostStatus.SCHEDULED;
-  } else if (action === "publish") {
-    // Queued for immediate publishing by cron
-    postStatus = UserPostStatus.SCHEDULED;
-    scheduledDate = null;
+  }
+
+  // Enforce max stored drafts for FREE tier
+  if (action === "draft" && Number.isFinite(quotas.maxDrafts)) {
+    const draftCount = await prisma.userPost.count({
+      where: { userId: user.id, status: UserPostStatus.DRAFT },
+    });
+    if (draftCount >= quotas.maxDrafts) {
+      return NextResponse.json(
+        { error: "QUOTA_EXCEEDED", message: `You can store at most ${quotas.maxDrafts} drafts. Delete some to create new ones, or upgrade to Pro for unlimited drafts.` },
+        { status: 403 }
+      );
+    }
   }
 
   const post = await prisma.userPost.create({
