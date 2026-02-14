@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 
 type FeatureRow = {
     label: string;
@@ -266,8 +266,8 @@ export default function PricingPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {featureSections.map((section) => (
-                                    <>
-                                        <tr key={section.heading} className="bg-gray-50/50">
+                                    <Fragment key={section.heading}>
+                                        <tr className="bg-gray-50/50">
                                             <td className="p-4 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider" colSpan={4}>{section.heading}</td>
                                         </tr>
                                         {section.rows.map((row) => (
@@ -278,7 +278,7 @@ export default function PricingPage() {
                                                 <td className="p-4 text-center"><CellContent value={row.institutional} /></td>
                                             </tr>
                                         ))}
-                                    </>
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>
