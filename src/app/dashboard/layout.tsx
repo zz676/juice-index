@@ -20,6 +20,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [collapsed, setCollapsed] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+            if (!authUser) return;
+            const meta = authUser.user_metadata ?? {};
+            setUser({
+                name: meta.full_name || meta.name || "",
+                email: authUser.email ?? "",
+                avatarUrl: meta.avatar_url || meta.picture || null,
+            });
+        });
+    }, [supabase]);
+
+    const displayName = user?.name || user?.email || "";
+    const initials = user?.name
+        ? user.name.split(" ").map((p: string) => p[0]).join("").toUpperCase().slice(0, 2)
+        : (user?.email?.[0]?.toUpperCase() ?? "?");
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -140,14 +158,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                             className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-3 w-full"} py-2 mt-1 rounded-xl hover:bg-slate-custom-50 transition-all cursor-pointer`}
                             title="Account menu"
                         >
-                            <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                                AC
-                            </div>
+                            {user?.avatarUrl ? (
+                                <img
+                                    src={user.avatarUrl}
+                                    alt={displayName || "Avatar"}
+                                    referrerPolicy="no-referrer"
+                                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                    {initials}
+                                </div>
+                            )}
                             {!collapsed && (
                                 <>
                                     <div className="flex-1 min-w-0 text-left">
-                                        <p className="text-sm font-semibold text-slate-custom-900 truncate">Alex Chen</p>
-                                        <p className="text-xs text-slate-custom-500 truncate">Senior Analyst</p>
+                                        <p className="text-sm font-semibold text-slate-custom-900 truncate">{displayName}</p>
+                                        <p className="text-xs text-slate-custom-500 truncate">{user?.email || ""}</p>
                                     </div>
                                     <span className="material-icons-round text-[16px] text-slate-custom-400">
                                         {profileOpen ? "expand_more" : "expand_less"}
@@ -160,8 +187,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         {profileOpen && (
                             <div className={`absolute ${collapsed ? "left-full ml-2" : "left-0 right-0 mx-1"} bottom-full mb-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-1 z-50`}>
                                 <div className="px-4 py-3 border-b border-slate-custom-100">
-                                    <p className="text-sm font-semibold text-slate-custom-900">Alex Chen</p>
-                                    <p className="text-xs text-slate-custom-500">alex@juiceindex.com</p>
+                                    <p className="text-sm font-semibold text-slate-custom-900">{displayName}</p>
+                                    <p className="text-xs text-slate-custom-500">{user?.email || ""}</p>
                                 </div>
                                 <Link
                                     href="/dashboard/settings"
