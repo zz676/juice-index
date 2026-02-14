@@ -17,7 +17,7 @@ export default function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-[4.6rem] backdrop-blur-md bg-background-light/80 border-b border-slate-custom-200/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full pt-1">
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
@@ -28,7 +28,7 @@ export default function Navbar() {
               height={62}
               className=""
             />
-            <span className="text-lg tracking-tight">
+            <span className="text-xl tracking-tight">
               <span className="font-extrabold text-primary">Juice</span>{" "}
               <span className="font-bold text-slate-custom-900">Index</span>
             </span>
@@ -40,7 +40,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-custom-500 hover:text-slate-custom-900 transition-colors"
+                className="text-[15px] font-medium text-slate-custom-600 hover:text-primary transition-colors"
               >
                 {link.label}
               </Link>
@@ -51,13 +51,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/login?mode=password&intent=signin"
-              className="text-sm font-medium text-slate-custom-600 hover:text-slate-custom-900 transition-colors"
+              className="text-[15px] font-medium text-slate-custom-600 hover:text-slate-custom-900 transition-colors"
             >
               Log in
             </Link>
             <Link
               href="/login?mode=magic&intent=signup"
-              className="inline-flex items-center justify-center px-5 py-2 text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-colors"
+              className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white hover:bg-primary-dark transition-colors"
             >
               Get Started
             </Link>
@@ -108,7 +108,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-lg font-medium text-slate-custom-700 hover:text-slate-custom-900 py-3 border-b border-slate-custom-100 transition-colors"
+                  className="text-lg font-medium text-slate-custom-700 hover:text-primary py-3 border-b border-slate-custom-100 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -124,7 +124,7 @@ export default function Navbar() {
                 <Link
                   href="/login?mode=magic&intent=signup"
                   onClick={() => setMobileOpen(false)}
-                  className="text-center py-3 text-sm font-semibold bg-slate-custom-900 text-white rounded-full hover:bg-slate-custom-800 transition-colors"
+                  className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full hover:bg-primary-dark transition-colors"
                 >
                   Get Started
                 </Link>
