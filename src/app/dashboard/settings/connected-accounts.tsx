@@ -14,6 +14,15 @@ interface Identity {
 interface ConnectedAccountsProps {
     identities: Identity[];
     hasPassword: boolean;
+    xAccount: {
+        username: string;
+        displayName: string | null;
+        avatarUrl: string | null;
+    } | null;
+    tier: string;
+    hasXLoginIdentity: boolean;
+    xConnected?: boolean;
+    xError?: string | null;
 }
 
 const providers = [
@@ -42,13 +51,34 @@ const providers = [
     },
 ];
 
-export default function ConnectedAccounts({ identities, hasPassword }: ConnectedAccountsProps) {
+const xErrorMessages: Record<string, string> = {
+    not_authenticated: "You must be logged in to connect an X account.",
+    invalid_request: "Invalid OAuth request. Please try again.",
+    invalid_state: "OAuth state validation failed. Please try again.",
+    state_mismatch: "OAuth state mismatch. Please try again.",
+    token_exchange_failed: "Failed to connect your X account. Please try again.",
+    access_denied: "You denied access to your X account.",
+};
+
+export default function ConnectedAccounts({
+    identities,
+    hasPassword,
+    xAccount,
+    tier,
+    hasXLoginIdentity,
+    xConnected,
+    xError,
+}: ConnectedAccountsProps) {
     const supabase = useMemo(() => createClient(), []);
     const router = useRouter();
     const [loading, setLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [xDisconnecting, setXDisconnecting] = useState(false);
+    const [xDisconnected, setXDisconnected] = useState(false);
 
     const canUnlink = identities.length > 1 || hasPassword;
+    const isFree = tier === "FREE";
+    const showXPosting = xAccount && !xDisconnected;
 
     async function handleLink(provider: "google" | "twitter") {
         setLoading(provider);
@@ -84,6 +114,21 @@ export default function ConnectedAccounts({ identities, hasPassword }: Connected
         }
     }
 
+    async function handleXDisconnect() {
+        if (!confirm("Disconnect your X posting account? You won't be able to publish posts until you reconnect.")) {
+            return;
+        }
+        setXDisconnecting(true);
+        try {
+            const res = await fetch("/api/x/disconnect", { method: "POST" });
+            if (res.ok) setXDisconnected(true);
+        } catch {
+            // Silently fail — user can retry
+        } finally {
+            setXDisconnecting(false);
+        }
+    }
+
     return (
         <div className="space-y-4">
             {providers.map((p) => {
@@ -91,45 +136,120 @@ export default function ConnectedAccounts({ identities, hasPassword }: Connected
                 const isLoading = loading === p.id;
 
                 return (
-                    <div
-                        key={p.id}
-                        className="flex items-center justify-between py-3 px-4 rounded-lg border border-slate-custom-100 bg-slate-custom-50/50"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0">{p.icon}</div>
-                            <div>
-                                <p className="text-sm font-medium text-slate-custom-900">{p.name}</p>
-                                <p className="text-xs text-slate-custom-500">
-                                    {linked ? linked.email || linked.name || "Connected" : "Not connected"}
-                                </p>
+                    <div key={p.id}>
+                        <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-slate-custom-100 bg-slate-custom-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">{p.icon}</div>
+                                <div>
+                                    <p className="text-sm font-medium text-slate-custom-900">{p.name}</p>
+                                    <p className="text-xs text-slate-custom-500">
+                                        {linked ? linked.email || linked.name || "Connected" : "Not connected"}
+                                    </p>
+                                </div>
                             </div>
+
+                            {linked ? (
+                                <button
+                                    onClick={() => handleUnlink(linked.provider, linked.identity_id)}
+                                    disabled={!canUnlink || isLoading}
+                                    title={!canUnlink ? "Set a password before unlinking your only login method" : undefined}
+                                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-custom-200 text-slate-custom-600 hover:bg-slate-custom-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {isLoading ? (
+                                        <span className="material-icons-round text-[14px] animate-spin">progress_activity</span>
+                                    ) : (
+                                        "Unlink"
+                                    )}
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => handleLink(p.id as "google" | "twitter")}
+                                    disabled={isLoading}
+                                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                                >
+                                    {isLoading ? (
+                                        <span className="material-icons-round text-[14px] animate-spin">progress_activity</span>
+                                    ) : (
+                                        "Connect"
+                                    )}
+                                </button>
+                            )}
                         </div>
 
-                        {linked ? (
-                            <button
-                                onClick={() => handleUnlink(linked.provider, linked.identity_id)}
-                                disabled={!canUnlink || isLoading}
-                                title={!canUnlink ? "Set a password before unlinking your only login method" : undefined}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-custom-200 text-slate-custom-600 hover:bg-slate-custom-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                {isLoading ? (
-                                    <span className="material-icons-round text-[14px] animate-spin">progress_activity</span>
-                                ) : (
-                                    "Unlink"
+                        {/* X Posting sub-section */}
+                        {p.id === "twitter" && (
+                            <div className="ml-8 mt-2 pl-4 border-l-2 border-slate-custom-100 space-y-2">
+                                {xConnected && (
+                                    <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                        <span className="material-icons-round text-green-600 text-sm">check_circle</span>
+                                        <p className="text-xs text-green-700">X posting account connected successfully.</p>
+                                    </div>
                                 )}
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => handleLink(p.id as "google" | "twitter")}
-                                disabled={isLoading}
-                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                            >
-                                {isLoading ? (
-                                    <span className="material-icons-round text-[14px] animate-spin">progress_activity</span>
-                                ) : (
-                                    "Connect"
+                                {xError && (
+                                    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                        <span className="material-icons-round text-red-500 text-sm">error</span>
+                                        <p className="text-xs text-red-700">
+                                            {xErrorMessages[xError] || `Failed to connect X account: ${xError}`}
+                                        </p>
+                                    </div>
                                 )}
-                            </button>
+                                {xDisconnected && (
+                                    <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                                        <span className="material-icons-round text-yellow-600 text-sm">info</span>
+                                        <p className="text-xs text-yellow-700">X posting account disconnected.</p>
+                                    </div>
+                                )}
+
+                                {showXPosting ? (
+                                    <div className="flex items-center justify-between py-2">
+                                        <div className="flex items-center gap-2.5">
+                                            {xAccount.avatarUrl ? (
+                                                <img src={xAccount.avatarUrl} alt={xAccount.username} className="w-7 h-7 rounded-full" />
+                                            ) : (
+                                                <div className="w-7 h-7 rounded-full bg-slate-custom-200 flex items-center justify-center">
+                                                    <span className="material-icons-round text-slate-custom-400 text-sm">person</span>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-xs font-medium text-slate-custom-900">
+                                                    Posting as @{xAccount.username}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleXDisconnect}
+                                            disabled={xDisconnecting}
+                                            className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                        >
+                                            {xDisconnecting ? "..." : "Disconnect"}
+                                        </button>
+                                    </div>
+                                ) : isFree ? (
+                                    <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+                                        <span className="material-icons-round text-primary text-sm">lock</span>
+                                        <p className="text-xs text-slate-custom-600">
+                                            Posting requires <span className="font-semibold text-primary">Starter</span> or higher.{" "}
+                                            <a href="/dashboard/billing" className="text-primary font-semibold underline hover:text-primary/80">
+                                                Upgrade
+                                            </a>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between py-2">
+                                        <p className="text-xs text-slate-custom-500">
+                                            {hasXLoginIdentity
+                                                ? "Enable posting with your X account in one click."
+                                                : "Connect X for posting to publish from your dashboard."}
+                                        </p>
+                                        <a
+                                            href="/api/x/authorize"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-colors flex-shrink-0"
+                                        >
+                                            Enable Posting
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </div>
                 );

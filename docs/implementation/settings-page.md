@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides five sections covering profile management, security, preferences, and account deletion. Full billing management lives at `/dashboard/billing` (see [billing-page.md](billing-page.md)), accessible via the "Subscription & Billing" sidebar nav item.
+The `/dashboard/settings` page is a full-featured account management page for authenticated users. It provides four card sections covering profile management, connected accounts (including X posting), security, preferences, and account deletion. Full billing management lives at `/dashboard/billing` (see [billing-page.md](billing-page.md)), accessible via the "Subscription & Billing" sidebar nav item.
 
 ## Architecture
 
@@ -39,6 +39,12 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 - **Link:** `supabase.auth.linkIdentity()` with redirect to `/auth/callback?next=/dashboard/settings`
 - **Unlink:** `supabase.auth.unlinkIdentity()` then `router.refresh()`
 - **Guard:** Unlink disabled when it's the only identity and no password is set
+- **X Posting sub-section:** Nested below the X login row (indented with left border). Shows posting account status:
+  - Connected: displays avatar, `@username`, and "Disconnect" button
+  - Eligible tier, not connected: shows "Enable Posting" button (with nudge text if user signed in via X)
+  - FREE tier: shows upgrade prompt with link to billing
+  - Handles `?x_connected=true` and `?x_error=` search params for success/error banners
+- The standalone `x-posting-account.tsx` component is no longer used in the page layout (functionality merged here)
 
 ### 3. Password & Security (`password-section.tsx`)
 
@@ -66,9 +72,9 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 
 The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 gap-6`):
 
-- **Left column:** Profile, Connected Accounts, Password & Security (identity & security group)
-- **Right column:** Notification Preferences (`lg:row-span-3`, spans all 3 left-column rows)
-- **Row 4:** Password & Security (left), Danger Zone (right)
+- **Left column:** Profile, Connected Accounts (with X posting)
+- **Right column:** Notification Preferences (`lg:row-span-2`, spans both left-column rows)
+- **Row 3:** Password & Security (left), Danger Zone (right)
 
 At viewport widths below `lg` (1024px), all sections stack into a single column. Grid rows auto-resize when expandable sections (Password & Security, Danger Zone) are toggled.
 
@@ -89,7 +95,8 @@ All sections follow the dashboard design system:
 | `page.tsx` | Server component | Data fetching, section layout |
 | `actions.ts` | Server actions | `updateProfile`, `updatePreferences`, `deleteAccount` |
 | `profile-form.tsx` | Client component | Name/email/avatar editing |
-| `connected-accounts.tsx` | Client component | OAuth link/unlink |
+| `connected-accounts.tsx` | Client component | OAuth link/unlink + X posting |
+| `x-posting-account.tsx` | Client component | Legacy standalone X posting (functionality merged into connected-accounts) |
 | `password-section.tsx` | Client component | Set/change password |
 | `notification-prefs.tsx` | Client component | Preferences form |
 | `danger-zone.tsx` | Client component | Account deletion with confirmation |

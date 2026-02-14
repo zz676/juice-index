@@ -1,16 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import ProfileForm from "./profile-form";
 import ConnectedAccounts from "./connected-accounts";
 import PasswordSection from "./password-section";
 import NotificationPrefs from "./notification-prefs";
 import DangerZone from "./danger-zone";
-import XPostingAccount from "./x-posting-account";
 import { normalizeTier } from "@/lib/api/tier";
 
-export default async function SettingsPage() {
+interface SettingsPageProps {
+    searchParams: Promise<{ x_connected?: string; x_error?: string }>;
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
@@ -39,6 +41,7 @@ export default async function SettingsPage() {
     const hasXLoginIdentity = (authUser.identities ?? []).some(
         (i) => i.provider === "twitter" || i.provider === "x"
     );
+    const params = await searchParams;
 
     if (!user) {
         return <div>User not found. Please re-login.</div>;
@@ -80,7 +83,7 @@ export default async function SettingsPage() {
                 </section>
 
                 {/* Notification Preferences */}
-                <section className="lg:row-span-3 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="lg:row-span-2 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">notifications</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
@@ -106,22 +109,15 @@ export default async function SettingsPage() {
                         <h3 className="text-base font-semibold text-slate-custom-900">Connected Accounts</h3>
                     </div>
                     <div className="p-6">
-                        <ConnectedAccounts identities={identities} hasPassword={hasPassword} />
-                    </div>
-                </section>
-
-                {/* X Posting Account */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <svg className="w-5 h-5 text-slate-custom-400" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                        </svg>
-                        <h3 className="text-base font-semibold text-slate-custom-900">X Posting Account</h3>
-                    </div>
-                    <div className="p-6">
-                        <Suspense fallback={<div className="h-12 bg-slate-custom-50 rounded animate-pulse" />}>
-                            <XPostingAccount xAccount={xAccount} tier={tier} hasXLoginIdentity={hasXLoginIdentity} />
-                        </Suspense>
+                        <ConnectedAccounts
+                            identities={identities}
+                            hasPassword={hasPassword}
+                            xAccount={xAccount}
+                            tier={tier}
+                            hasXLoginIdentity={hasXLoginIdentity}
+                            xConnected={params.x_connected === "true"}
+                            xError={params.x_error}
+                        />
                     </div>
                 </section>
 
