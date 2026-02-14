@@ -66,6 +66,16 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 - "Delete Account" expands to inline confirmation requiring email input
 - `deleteAccount` server action: cancels Stripe subscription, deletes API logs/keys/subscription, deletes user (cascading), removes Supabase auth user, redirects to `/login`
 
+## Layout
+
+The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 gap-6`):
+
+- **Left column:** Profile, Connected Accounts, Password & Security (identity & security group)
+- **Right column:** Notification Preferences (`lg:row-span-3`, spans all 3 left-column rows)
+- **Full-width bottom:** Subscription & Billing (`lg:col-span-2`), Danger Zone (`lg:col-span-2`)
+
+At viewport widths below `lg` (1024px), all sections stack into a single column. Grid rows auto-resize when expandable sections (Password & Security, Danger Zone) are toggled.
+
 ## Styling
 
 All sections follow the dashboard design system:
@@ -74,7 +84,7 @@ All sections follow the dashboard design system:
 - Inputs: `rounded-lg border-slate-custom-200` with `focus:ring-primary/50`
 - Buttons: `bg-primary text-white rounded-lg hover:bg-primary/90`
 - Icons: Material Icons Round (not Lucide)
-- Page container: `max-w-3xl mx-auto`
+- Page container: full-width with `py-8 px-4 sm:px-6 lg:px-8`
 
 ## Files
 
