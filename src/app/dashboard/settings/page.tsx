@@ -137,7 +137,7 @@ export default async function SettingsPage() {
                 </section>
 
                 {/* Danger Zone */}
-                <section className="lg:col-span-2 bg-white rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-white rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-red-200 flex items-center gap-3">
                         <span className="material-icons-round text-red-400">warning</span>
                         <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>

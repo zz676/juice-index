@@ -67,7 +67,7 @@ The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 g
 
 - **Left column:** Profile, Connected Accounts, Password & Security (identity & security group)
 - **Right column:** Notification Preferences (`lg:row-span-3`, spans all 3 left-column rows)
-- **Full-width bottom:** Danger Zone (`lg:col-span-2`)
+- **Row 4:** Password & Security (left), Danger Zone (right)
 
 At viewport widths below `lg` (1024px), all sections stack into a single column. Grid rows auto-resize when expandable sections (Password & Security, Danger Zone) are toggled.
 
