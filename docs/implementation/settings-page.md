@@ -34,6 +34,7 @@ Note: Subscription/usage queries have been moved to the billing page data layer 
 ### 2. Connected Accounts (`connected-accounts.tsx`)
 
 - Shows Google and X (Twitter) OAuth providers
+- X provider matching accepts both `"twitter"` and `"x"` identity provider values (Supabase may return either)
 - Linked accounts display connected email; unlinked show "Not connected"
 - **Link:** `supabase.auth.linkIdentity()` with redirect to `/auth/callback?next=/dashboard/settings`
 - **Unlink:** `supabase.auth.unlinkIdentity()` then `router.refresh()`
