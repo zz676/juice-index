@@ -10,7 +10,7 @@ const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
     { href: "/dashboard/posts", icon: "article", label: "Posts" },
     { href: "/dashboard/studio", icon: "show_chart", label: "Studio" },
-    { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
+    { href: "/dashboard/billing", icon: "credit_card", label: "Subscription & Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];
 

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Suspense } from "react";
 import ProfileForm from "./profile-form";
 import ConnectedAccounts from "./connected-accounts";
@@ -134,26 +133,6 @@ export default async function SettingsPage() {
                     </div>
                     <div className="p-6">
                         <PasswordSection hasPassword={hasPassword} email={user.email} />
-                    </div>
-                </section>
-
-                {/* Subscription & Billing */}
-                <section className="lg:col-span-2 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">credit_card</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Subscription & Billing</h3>
-                    </div>
-                    <div className="p-6">
-                        <p className="text-sm text-slate-custom-500 mb-3">
-                            View and manage your plan, usage, payment method, and invoices.
-                        </p>
-                        <Link
-                            href="/dashboard/billing"
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-                        >
-                            Go to Billing
-                            <span className="material-icons-round text-[16px]">arrow_forward</span>
-                        </Link>
                     </div>
                 </section>
 
