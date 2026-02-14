@@ -10,9 +10,10 @@ interface XPostingAccountProps {
     avatarUrl: string | null;
   } | null;
   tier: string;
+  hasXLoginIdentity?: boolean;
 }
 
-export default function XPostingAccount({ xAccount, tier }: XPostingAccountProps) {
+export default function XPostingAccount({ xAccount, tier, hasXLoginIdentity }: XPostingAccountProps) {
   const searchParams = useSearchParams();
   const xConnected = searchParams.get("x_connected") === "true";
   const xError = searchParams.get("x_error");
@@ -129,6 +130,11 @@ export default function XPostingAccount({ xAccount, tier }: XPostingAccountProps
           <p className="text-sm text-slate-custom-500">
             Connect your X account to publish posts directly from your dashboard.
           </p>
+          {hasXLoginIdentity && (
+            <p className="text-sm font-medium text-blue-700">
+              You&apos;re already signed in with X — connect it for posting in one click.
+            </p>
+          )}
           <a
             href="/api/x/authorize"
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-colors"

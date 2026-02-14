@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
-import { UserPostStatus } from "@prisma/client";
+import { UserPostStatus, AuthProvider } from "@prisma/client";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     where.content = { contains: search, mode: "insensitive" };
   }
 
-  const [posts, total, subscription, xAccount] = await Promise.all([
+  const [posts, total, subscription, xAccount, xLoginAccount] = await Promise.all([
     prisma.userPost.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -39,6 +39,10 @@ export async function GET(request: NextRequest) {
     }),
     prisma.xAccount.findUnique({
       where: { userId: user.id },
+      select: { id: true },
+    }),
+    prisma.account.findFirst({
+      where: { userId: user.id, provider: AuthProvider.X },
       select: { id: true },
     }),
   ]);
@@ -55,6 +59,7 @@ export async function GET(request: NextRequest) {
     canPublish,
     canSchedule,
     hasXAccount: !!xAccount,
+    hasXLoginIdentity: !!xLoginAccount,
   });
 }
 
