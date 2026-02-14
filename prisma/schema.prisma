@@ -458,6 +458,7 @@ model User {
   XAccount          XAccount?
   subscriptions     ApiSubscription[]
   apiKeys           ApiKey[]
+  userPosts         UserPost[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1602,6 +1603,36 @@ model ApiSubscription {
 
   User                 User      @relation(fields: [userId], references: [id])
   @@map("juice_api_subscriptions")
+}
+
+/// User-authored posts for publishing to X (Twitter).
+model UserPost {
+  id           String         @id @default(cuid())
+  userId       String
+  content      String
+  status       UserPostStatus @default(DRAFT)
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  tweetId      String?
+  tweetUrl     String?
+  lastError    String?
+  attempts     Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, scheduledFor])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("juice_user_posts")
+}
+
+enum UserPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)

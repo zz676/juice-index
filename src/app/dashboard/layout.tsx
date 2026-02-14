@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
+    { href: "/dashboard/posts", icon: "article", label: "Posts" },
     { href: "/dashboard/explorer", icon: "show_chart", label: "Data Explorer" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
@@ -231,7 +232,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 min-h-0 overflow-hidden p-8 pt-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-2">
                     {children}
                 </div>
             </main>
