@@ -13,7 +13,6 @@ The sidebar in `src/app/dashboard/layout.tsx` displays the authenticated user's 
 Located at `/dashboard/settings`.
 - **Profile Updates**: Uses a Server Action (`updateProfile`) to securely modify user data.
 - **Subscription View**: Displays current tier (`FREE`, `PRO`, `ENTERPRISE`) and status.
-- **API Keys Link**: Direct access to key management.
 
 ## Subscription Tiers
 We enforce feature limits based on the user's subscription tier, stored in `ApiSubscription`.
