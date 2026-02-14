@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+import type { User } from "@supabase/supabase-js";
 
 const tiers = [
   {
@@ -53,6 +56,35 @@ const tiers = [
 
 export default function PricingToggle() {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+      setUser(authUser);
+    });
+  }, []);
+
+  async function handleCheckout() {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: "pro",
+          interval: isAnnual ? "year" : "month",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }
 
   return (
     <div>
@@ -140,16 +172,36 @@ export default function PricingToggle() {
                 </li>
               ))}
             </ul>
-            <Link
-              href={tier.ctaHref}
-              className={`block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors ${
-                tier.highlight
-                  ? "bg-slate-custom-900 text-white hover:bg-slate-custom-800"
-                  : "bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 border border-slate-custom-200"
-              }`}
-            >
-              {tier.cta}
-            </Link>
+            {/* Analyst: logged-in → dashboard, logged-out → signup */}
+            {tier.name === "Analyst" && user ? (
+              <Link
+                href="/dashboard"
+                className="block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 border border-slate-custom-200"
+              >
+                Go to Dashboard
+              </Link>
+            ) : /* Pro: logged-in → direct checkout, logged-out → signup */
+            tier.name === "Pro" && user ? (
+              <button
+                type="button"
+                onClick={handleCheckout}
+                disabled={checkoutLoading}
+                className="block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors bg-slate-custom-900 text-white hover:bg-slate-custom-800 disabled:opacity-60"
+              >
+                {checkoutLoading ? "Redirecting…" : tier.cta}
+              </button>
+            ) : (
+              <Link
+                href={tier.ctaHref}
+                className={`block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors ${
+                  tier.highlight
+                    ? "bg-slate-custom-900 text-white hover:bg-slate-custom-800"
+                    : "bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 border border-slate-custom-200"
+                }`}
+              >
+                {tier.cta}
+              </Link>
+            )}
           </div>
         ))}
       </div>

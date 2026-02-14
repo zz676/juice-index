@@ -130,13 +130,24 @@ All cards follow the Settings page design system:
 
 ## Plan-Aware Redirect Flow
 
-When a user clicks "Get Started" on the landing page pricing section (`/#pricing`), the `?plan=` parameter is preserved through the full auth flow:
+The pricing CTA behavior on the landing page (`/#pricing`) depends on authentication state. The `PricingToggle` component (`src/components/landing/PricingToggle.tsx`) detects the logged-in user via Supabase client auth and renders different CTAs per tier:
 
-1. **Logged-in user**: Middleware (`src/lib/supabase/middleware.ts`) redirects `/login?plan=pro` → `/dashboard/billing?plan=pro`
-2. **New user (OAuth/magic link)**: Login page passes `?next=/dashboard/billing?plan=pro` to the auth callback, which redirects after authentication
-3. **New user (password)**: Login page redirects directly to `/dashboard/billing?plan=pro` after successful sign-in
+### Logged-in users
 
-The billing page then renders the `UpgradePrompt` component at the top, allowing the user to complete checkout via Stripe.
+- **Analyst (free):** "Go to Dashboard" links to `/dashboard`
+- **Pro:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "pro", interval }` and redirects to the returned Stripe checkout URL. A loading spinner ("Redirecting...") is shown while the request is in flight.
+- **Institutional:** "Contact Sales" mailto link (unchanged)
+
+### Logged-out users
+
+- **Analyst:** "Start Free" links to `/login?mode=magic&intent=signup`
+- **Pro:** "Get Started" links to `/login?mode=magic&intent=signup&plan=pro`
+- **Institutional:** "Contact Sales" mailto link (unchanged)
+
+For logged-out users clicking "Get Started", the `?plan=` parameter is preserved through the full auth flow:
+
+1. Login page passes `?next=/dashboard/billing?plan=pro` to the auth callback, which redirects after authentication
+2. The billing page renders the `UpgradePrompt` component at the top, allowing the user to complete checkout via Stripe
 
 Note: The standalone `/pricing` page has been retired and now returns a 308 permanent redirect to `/#pricing`. All dashboard-context upgrade links point to `/dashboard/billing` directly.
 
