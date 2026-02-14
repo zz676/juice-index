@@ -46,20 +46,35 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             >
                 {/* Top: Logo + Toggle */}
                 <div className={`flex items-center ${collapsed ? "justify-center px-0" : "justify-between px-6"} h-20 flex-shrink-0`}>
-                    <button
-                        onClick={() => setCollapsed((v) => !v)}
-                        className={`flex items-center ${collapsed ? "" : "gap-3"} cursor-pointer`}
-                        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                    >
-                        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(106,218,27,0.4)] hover:shadow-[0_0_20px_rgba(106,218,27,0.6)] transition-all flex-shrink-0">
-                            J
-                        </div>
-                        {!collapsed && (
+                    {collapsed ? (
+                        <button
+                            onClick={() => setCollapsed(false)}
+                            className="flex items-center"
+                            title="Expand sidebar"
+                        >
+                            <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
+                        </button>
+                    ) : (
+                        <Link href="/dashboard" className="flex items-center gap-3">
+                            <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
                             <h1 className="text-xl font-bold tracking-tight text-slate-custom-900 whitespace-nowrap">
                                 Juice Index
                             </h1>
-                        )}
-                    </button>
+                        </Link>
+                    )}
+                    {!collapsed && (
+                        <button
+                            onClick={() => setCollapsed(true)}
+                            className="p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
+                            title="Collapse sidebar"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="3" width="16" height="14" rx="2" />
+                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
+                                <path d="M12 8l-2 2 2 2" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
 
                 {/* Nav Items */}
@@ -190,7 +205,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-hidden p-8 pt-2">
+                <div className="flex-1 min-h-0 overflow-hidden p-8 pt-2">
                     {children}
                 </div>
             </main>
