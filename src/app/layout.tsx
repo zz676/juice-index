@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Juice Index — EV Market Data API",
+  title: "Juice Index — China EV Market Intelligence",
   description:
-    "Real-time electric vehicle metrics, delivery data, and market analytics for developers.",
+    "AI-powered data intelligence on China's electric vehicle market. Production, insurance registrations, battery supply chain, and market analytics updated daily.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
