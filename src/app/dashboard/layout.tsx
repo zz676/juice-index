@@ -135,7 +135,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                             <h3 className="text-white font-semibold text-sm mb-1 relative z-10">Juice Pro</h3>
                             <p className="text-xs text-slate-custom-300 mb-2.5 relative z-10">Access real-time insurance data.</p>
                             <Link
-                                href="/pricing"
+                                href="/dashboard/billing"
                                 className="block w-full py-1.5 bg-primary text-slate-custom-900 font-semibold text-xs rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all relative z-10"
                             >
                                 Upgrade
@@ -143,7 +143,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </div>
                     ) : (
                         <Link
-                            href="/pricing"
+                            href="/dashboard/billing"
                             title="Upgrade to Pro"
                             className="w-10 h-10 rounded-xl flex items-center justify-center text-primary bg-slate-custom-900 hover:shadow-[0_0_12px_rgba(106,218,27,0.4)] transition-all mb-2"
                         >

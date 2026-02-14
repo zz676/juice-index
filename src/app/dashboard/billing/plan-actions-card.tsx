@@ -42,7 +42,7 @@ export default function PlanActionsCard({
       <div className="p-6">
         <div className="flex items-center gap-3">
           <Link
-            href="/pricing"
+            href="/#pricing"
             className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
           >
             Change Plan

@@ -64,7 +64,7 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 
 ### 6. Plan Actions (`plan-actions-card.tsx`) — Client Component
 - Icon: `tune`
-- "Change Plan" → links to `/pricing`
+- "Change Plan" → links to `/#pricing` (the landing page pricing section; standalone `/pricing` page was retired)
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
 - Error display banner
 
@@ -130,7 +130,7 @@ All cards follow the Settings page design system:
 
 ## Plan-Aware Redirect Flow
 
-When a user clicks "Get Started with Pro" on the pricing page (`/pricing`), the `?plan=` parameter is preserved through the full auth flow:
+When a user clicks "Get Started" on the landing page pricing section (`/#pricing`), the `?plan=` parameter is preserved through the full auth flow:
 
 1. **Logged-in user**: Middleware (`src/lib/supabase/middleware.ts`) redirects `/login?plan=pro` → `/dashboard/billing?plan=pro`
 2. **New user (OAuth/magic link)**: Login page passes `?next=/dashboard/billing?plan=pro` to the auth callback, which redirects after authentication
@@ -138,9 +138,11 @@ When a user clicks "Get Started with Pro" on the pricing page (`/pricing`), the 
 
 The billing page then renders the `UpgradePrompt` component at the top, allowing the user to complete checkout via Stripe.
 
+Note: The standalone `/pricing` page has been retired and now returns a 308 permanent redirect to `/#pricing`. All dashboard-context upgrade links point to `/dashboard/billing` directly.
+
 ## Related
 
 - Settings page now has a "Go to Billing" link instead of inline subscription management (see [settings-page.md](settings-page.md))
 - Stripe portal API: `src/app/api/billing/portal/route.ts`
 - Stripe client: `src/lib/stripe.ts`
-- Pricing page: `src/app/pricing/page.tsx` — links to `/login?plan=pro` and `/login?plan=starter`
+- Pricing page: `src/app/pricing/page.tsx` — permanent redirect (308) to `/#pricing`
