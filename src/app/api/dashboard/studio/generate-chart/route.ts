@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { ChartConfiguration, Plugin, ChartType as JsChartType } from "chart.js";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
@@ -14,6 +15,7 @@ import { normalizeTier, type ApiTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
+import { getModelById, canAccessModel, DEFAULT_MODEL_ID } from "@/lib/studio/models";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -514,7 +516,7 @@ async function getLiveHints() {
   }
 }
 
-async function generateStructuredQuery(prompt: string) {
+async function generateStructuredQuery(prompt: string, modelId?: string) {
   const tables = getAllowedTables();
   const hints = await getLiveHints();
 
@@ -527,8 +529,13 @@ async function generateStructuredQuery(prompt: string) {
     )
     .join("\n\n");
 
+  const modelDef = getModelById(modelId ?? DEFAULT_MODEL_ID) ?? getModelById(DEFAULT_MODEL_ID)!;
+  const aiModel = modelDef.provider === "anthropic"
+    ? anthropic(modelDef.providerModelId)
+    : openai(modelDef.providerModelId);
+
   const { object } = await generateObject({
-    model: openai("gpt-4o-mini"),
+    model: aiModel,
     schema: QUERY_RESPONSE_SCHEMA,
     system: `You convert natural language EV market questions into safe Prisma findMany queries.
 
@@ -663,6 +670,14 @@ export async function POST(req: Request) {
       if (queryLimitRes) return queryLimitRes;
 
       const prompt = payload.prompt.trim();
+      const requestedModelId = typeof payload.modelId === "string" ? payload.modelId : undefined;
+
+      if (requestedModelId && !canAccessModel(tier, requestedModelId)) {
+        return NextResponse.json(
+          { error: "FORBIDDEN", message: "Your plan does not include access to this model. Please upgrade." },
+          { status: 403 }
+        );
+      }
 
       if (prompt.length < 3) {
         return NextResponse.json(
@@ -684,7 +699,7 @@ export async function POST(req: Request) {
 
       let generated;
       try {
-        generated = await generateStructuredQuery(prompt);
+        generated = await generateStructuredQuery(prompt, requestedModelId);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "LLM request failed";
