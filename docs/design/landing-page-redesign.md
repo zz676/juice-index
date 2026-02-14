@@ -52,6 +52,22 @@ Full redesign of the landing page (`src/app/page.tsx`) from a monolithic client 
 | Navbar "J" square | `next/image` with `logo.png` |
 | Layout metadata "for developers" | Updated to reflect Data Explorer product |
 
+## HeroViz Implementation Notes
+
+The `HeroViz` component cycles through 3 query scenes with a 5-phase animation loop:
+
+1. **Typing** — Typewriter effect types the query string (~2.5s)
+2. **Processing** — Animated dot shimmer (~0.5s)
+3. **Chart** — Bar chart bars grow from zero with staggered timing (~1.5s)
+4. **Stats** — Stat cards pop in with spring animation (~0.8s)
+5. **Hold** — Displays complete visualization (3s), then loops to next scene
+
+### Bar chart rendering approach
+
+Bar heights use **pixel values** computed from a `BAR_AREA_HEIGHT` constant (130px), not CSS percentages. This avoids a CSS layout issue where percentage heights don't resolve inside flex items without explicit heights. The container uses `items-end` to align bars at the bottom.
+
+Bar colors use **inline `rgba()` styles** (`rgba(106, 218, 27, opacity)`) rather than Tailwind opacity modifier classes. This ensures colors render reliably regardless of JIT compilation behavior with non-standard opacity values.
+
 ## Files
 
 ### New
