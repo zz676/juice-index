@@ -59,7 +59,7 @@ const steps = [
     icon: "share",
     title: "Share with the world",
     description:
-      "Post insights directly to social media with a single click.",
+      "Share or schedule posts to X with a single click.",
   },
 ];
 
