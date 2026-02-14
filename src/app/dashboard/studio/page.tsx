@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ResponsiveContainer,
   BarChart,
@@ -36,6 +37,15 @@ type QueryRow = Record<string, unknown>;
 type ToastType = "success" | "error" | "info";
 
 export default function StudioPage() {
+  return (
+    <Suspense>
+      <StudioPageInner />
+    </Suspense>
+  );
+}
+
+function StudioPageInner() {
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [chartConfig, setChartConfig] =
     useState<ChartConfig>(DEFAULT_CHART_CONFIG);
@@ -140,6 +150,16 @@ export default function StudioPage() {
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
+  }, []);
+
+  // Pre-fill prompt from URL param (e.g., from brand search results)
+  useEffect(() => {
+    const urlPrompt = searchParams.get("prompt");
+    if (urlPrompt && !prompt) {
+      setPrompt(urlPrompt);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showToast = useCallback((type: ToastType, message: string) => {

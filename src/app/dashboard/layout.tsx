@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
+import SearchOverlay from "@/components/dashboard/SearchOverlay";
 
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
@@ -213,16 +214,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {/* Top Header */}
-                <header className="h-16 flex items-center justify-between px-8 bg-background-light z-10 sticky top-0">
-                    <div className="relative w-96 group">
-                        <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-custom-400 group-focus-within:text-primary transition-colors">search</span>
-                        <input
-                            className="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-custom-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all shadow-sm placeholder-slate-custom-400 text-slate-custom-700"
-                            placeholder="Search tickers, reports, or news..."
-                            type="text"
-                        />
+                <header className="h-16 flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="pointer-events-auto">
+                            <SearchOverlay />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="ml-auto flex items-center gap-4">
                         <button className="w-10 h-10 rounded-full bg-white border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all shadow-sm relative">
                             <span className="material-icons-round">notifications_none</span>
                             <span className="absolute top-2 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-white"></span>
