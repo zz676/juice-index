@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     where.content = { contains: search, mode: "insensitive" };
   }
 
-  const [posts, total, subscription] = await Promise.all([
+  const [posts, total, subscription, xAccount] = await Promise.all([
     prisma.userPost.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -36,6 +36,10 @@ export async function GET(request: NextRequest) {
     prisma.apiSubscription.findUnique({
       where: { userId: user.id },
       select: { tier: true },
+    }),
+    prisma.xAccount.findUnique({
+      where: { userId: user.id },
+      select: { id: true },
     }),
   ]);
 
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
     tier: userTier,
     canPublish,
     canSchedule,
+    hasXAccount: !!xAccount,
   });
 }
 

@@ -14,10 +14,10 @@ export async function refreshTokenIfNeeded(
     return xAccount.accessToken;
   }
 
-  const clientId = process.env.X_CLIENT_ID;
-  const clientSecret = process.env.X_CLIENT_SECRET;
+  const clientId = process.env.X_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.X_OAUTH_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error("X_CLIENT_ID and X_CLIENT_SECRET must be configured");
+    throw new Error("X_OAUTH_CLIENT_ID and X_OAUTH_CLIENT_SECRET must be configured");
   }
 
   const res = await fetch("https://api.x.com/2/oauth2/token", {

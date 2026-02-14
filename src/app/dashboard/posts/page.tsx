@@ -32,6 +32,7 @@ export default function PostsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const [isPro, setIsPro] = useState(false);
+  const [hasXAccount, setHasXAccount] = useState(true);
 
   // Compose state
   const [composeOpen, setComposeOpen] = useState(false);
@@ -55,6 +56,7 @@ export default function PostsPage() {
         setPosts(json.posts);
         setPagination(json.pagination);
         setIsPro(json.isPro);
+        setHasXAccount(json.hasXAccount ?? true);
       }
     } catch (error) {
       console.error("Failed to fetch posts", error);
@@ -235,6 +237,23 @@ export default function PostsPage() {
           </button>
         </div>
       </div>
+
+      {/* X Account Warning */}
+      {isPro && !hasXAccount && (
+        <div className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">
+          <span className="material-icons-round text-yellow-600 text-xl">warning</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-yellow-800">No X account connected</p>
+            <p className="text-xs text-yellow-700 mt-0.5">
+              Connect an X account in{" "}
+              <a href="/dashboard/settings" className="font-semibold underline hover:text-yellow-900">
+                Settings
+              </a>{" "}
+              before you can publish posts.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Compose Panel */}
       {composeOpen && (

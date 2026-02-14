@@ -1,5 +1,6 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import prisma from "@/lib/prisma";
+import { syncAccounts } from "@/lib/auth/sync-accounts";
 
 export async function syncUserToPrisma(supabaseUser: SupabaseUser) {
   const email = supabaseUser.email;
@@ -17,7 +18,7 @@ export async function syncUserToPrisma(supabaseUser: SupabaseUser) {
     supabaseUser.user_metadata?.picture;
 
   // Role is only set on create. Do not overwrite role on update.
-  return prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { id: supabaseUser.id },
     update: {
       email,
@@ -37,4 +38,9 @@ export async function syncUserToPrisma(supabaseUser: SupabaseUser) {
       updatedAt: new Date(),
     },
   });
+
+  // Sync OAuth accounts (juice_accounts)
+  await syncAccounts(supabaseUser.id, supabaseUser.identities ?? []);
+
+  return user;
 }

@@ -2,11 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import ProfileForm from "./profile-form";
 import ConnectedAccounts from "./connected-accounts";
 import PasswordSection from "./password-section";
 import NotificationPrefs from "./notification-prefs";
 import DangerZone from "./danger-zone";
+import XPostingAccount from "./x-posting-account";
+import { normalizeTier } from "@/lib/api/tier";
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -16,14 +19,24 @@ export default async function SettingsPage() {
         redirect("/login");
     }
 
-    const [user, preferences] = await Promise.all([
+    const [user, preferences, xAccount, subscription] = await Promise.all([
         prisma.user.findUnique({
             where: { id: authUser.id },
         }),
         prisma.userPreference.findUnique({
             where: { userId: authUser.id },
         }),
+        prisma.xAccount.findUnique({
+            where: { userId: authUser.id },
+            select: { username: true, displayName: true, avatarUrl: true },
+        }),
+        prisma.apiSubscription.findUnique({
+            where: { userId: authUser.id },
+            select: { tier: true },
+        }),
     ]);
+
+    const tier = normalizeTier(subscription?.tier);
 
     if (!user) {
         return <div>User not found. Please re-login.</div>;
@@ -92,6 +105,21 @@ export default async function SettingsPage() {
                     </div>
                     <div className="p-6">
                         <ConnectedAccounts identities={identities} hasPassword={hasPassword} />
+                    </div>
+                </section>
+
+                {/* X Posting Account */}
+                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
+                        <svg className="w-5 h-5 text-slate-custom-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                        <h3 className="text-base font-semibold text-slate-custom-900">X Posting Account</h3>
+                    </div>
+                    <div className="p-6">
+                        <Suspense fallback={<div className="h-12 bg-slate-custom-50 rounded animate-pulse" />}>
+                            <XPostingAccount xAccount={xAccount} tier={tier} />
+                        </Suspense>
                     </div>
                 </section>
 
