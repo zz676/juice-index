@@ -456,6 +456,7 @@ model User {
   Session           Session[]
   UserPreference    UserPreference?
   XAccount          XAccount?
+  Notification      Notification[]
   subscriptions     ApiSubscription[]
   apiKeys           ApiKey[]
   userPosts         UserPost[]
@@ -1633,6 +1634,29 @@ enum UserPostStatus {
   PUBLISHING
   PUBLISHED
   FAILED
+}
+
+enum NotificationType {
+  DIGEST_READY
+  ALERT
+  WELCOME
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  User      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, read])
+  @@map("juice_notifications")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)
