@@ -92,12 +92,22 @@ The page handles checkout redirect parameters:
 | PRO | 50,000 |
 | ENTERPRISE | Unlimited |
 
+## Layout
+
+The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 gap-6`):
+
+- **Row 1:** Current Plan | Payment Method
+- **Row 2:** API Usage | Next Billing
+- **Full-width:** Invoice History (`lg:col-span-2`), Plan Actions (`lg:col-span-2`)
+
+Success/canceled banners sit above the grid and are unaffected by the grid layout. At viewport widths below `lg` (1024px), all cards stack into a single column.
+
 ## Styling
 
 All cards follow the Settings page design system:
 - Cards: `bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]`
 - Section headers: Material Icons Round + semibold title with bottom border
-- Page container: `max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto`
+- Page container: full-width with `py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto`
 - Buttons: `bg-primary text-white rounded-lg hover:bg-primary/90`
 - Icons: Material Icons Round
 

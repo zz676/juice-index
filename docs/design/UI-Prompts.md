@@ -27,7 +27,7 @@ Use these prompts with AI UI generation tools to create high-fidelity designs fo
 > - **Subheadline**: "Real-time tracking of Nio, XPeng, BYD, and Tesla. Production numbers, insurance registrations, and market share analysis." (Slate 600).
 > - **Primary CTA**: "Start Free Trial" (Solid Electric Lime button, rounded-full, shadow-lg).
 > - **Secondary CTA**: "Explore Data" (White button with Slate border).
-> - **Visual**: A tilted, floating 3D mockup of the "Market Analysis Workflow" UI (clean white card with lime accents).
+> - **Visual**: A tilted, floating 3D mockup of the "AI-Powered Workflow" UI (clean white card with lime accents).
 >
 > **Feature Grid**:
 > - 3-column grid of clean white cards with thin slate borders.
@@ -57,10 +57,10 @@ Use these prompts with AI UI generation tools to create high-fidelity designs fo
 
 ---
 
-## 3. Market Analysis Workflow (Data Explorer)
+## 3. AI-Powered Workflow (Data Explorer)
 
 **Prompt:**
-> Design a specialized "Market Analysis Workflow" interface for generating charts from questions.
+> Design a specialized "AI-Powered Workflow" interface for generating charts from questions.
 >
 > **Layout**: 
 > - **Left Column (Inputs)**: Stacked cards for "Ask" and "Logic".

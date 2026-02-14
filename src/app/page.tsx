@@ -124,10 +124,10 @@ export default function LandingPage() {
                   </span>
                 </Link>
                 <Link
-                  href="/dashboard/explorer"
+                  href="/dashboard/studio"
                   className="inline-flex items-center justify-center px-7 py-3.5 text-sm font-semibold rounded-full text-slate-custom-700 border border-slate-custom-200 hover:border-slate-custom-300 hover:bg-slate-custom-50 transition-all"
                 >
-                  Try the Explorer
+                  Try the Studio
                 </Link>
               </div>
             </div>
@@ -307,10 +307,10 @@ export default function LandingPage() {
                 </span>
               </Link>
               <Link
-                href="/dashboard/explorer"
+                href="/dashboard/studio"
                 className="inline-flex items-center justify-center px-8 py-4 text-sm font-semibold rounded-full text-slate-custom-700 border border-slate-custom-200 hover:border-slate-custom-300 hover:bg-slate-custom-50 transition-all"
               >
-                Try the Explorer
+                Try the Studio
               </Link>
             </div>
             <p className="mt-6 text-sm text-slate-custom-400">
@@ -349,10 +349,10 @@ export default function LandingPage() {
               <ul className="space-y-2.5 text-sm text-slate-custom-500">
                 <li>
                   <Link
-                    href="/dashboard/explorer"
+                    href="/dashboard/studio"
                     className="hover:text-slate-custom-900 transition-colors"
                   >
-                    Data Explorer
+                    Studio
                   </Link>
                 </li>
                 <li>

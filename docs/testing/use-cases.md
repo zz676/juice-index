@@ -9,7 +9,7 @@ Use cases describe specific user interactions and expected outcomes, serving as 
 **Goal**: View EV sales trend for a specific brand.
 **Preconditions**: User is logged in, has active Pro subscription.
 **Steps**:
-1. User navigates to `/dashboard/explorer`.
+1. User navigates to `/dashboard/studio`.
 2. User enters prompt: "Show me BYD sales trend for 2024".
 3. System processes prompt via LLM -> SQL.
 4. System executes SQL against `Shared Data Tables` (e.g., `CpcaNevRetail`).
@@ -23,7 +23,7 @@ Use cases describe specific user interactions and expected outcomes, serving as 
 **Goal**: Receive meaningful error feedback.
 **Preconditions**: User is logged in.
 **Steps**:
-1. User navigates to `/dashboard/explorer`.
+1. User navigates to `/dashboard/studio`.
 2. User enters nonsense query: "Show me the price of tea in China".
 3. System attempts to generate SQL.
 4. System determines query is irrelevant to available schema.
@@ -34,7 +34,7 @@ Use cases describe specific user interactions and expected outcomes, serving as 
 **Goal**: Attempt to use advanced features restricted to Pro.
 **Preconditions**: User is logged in, free tier (0 credits remaining).
 **Steps**:
-1. User navigates to `/dashboard/explorer`.
+1. User navigates to `/dashboard/studio`.
 2. User enters query.
 3. System checks API usage limits (Rate Limiting).
 4. System detects limit reached.

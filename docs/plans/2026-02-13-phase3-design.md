@@ -50,9 +50,9 @@ Phase 3 hardens the application for production deployment on Vercel. Work is ord
 - Add `Cache-Control` headers for Vercel edge caching (e.g., `s-maxage=300, stale-while-revalidate=600`).
 - Add simple in-memory TTL cache (5 min) to avoid repeated DB queries within the same serverless instance.
 
-## P4: Data Explorer Mobile Polish
+## P4: Studio Mobile Polish
 
-### Responsive Layout (`src/app/dashboard/explorer/page.tsx`)
+### Responsive Layout (`src/app/dashboard/studio/page.tsx`)
 - Left panel (450px fixed) doesn't stack on mobile.
 - Make the `lg:w-[450px]` panel full-width on small screens with a collapsible toggle.
 - Ensure chart area remains usable at narrow widths.

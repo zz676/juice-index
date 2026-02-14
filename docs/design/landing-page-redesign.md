@@ -36,7 +36,7 @@ Full redesign of the landing page (`src/app/page.tsx`) from a monolithic client 
 
 - **Aesthetic**: Modern SaaS (Linear/Vercel/Stripe style) — light, airy, generous whitespace
 - **Audience**: Broad (investors, strategists, researchers)
-- **Core product**: Data Explorer (AI-powered querying), not raw API
+- **Core product**: Studio (AI-powered querying), not raw API
 - **Social proof**: Removed entirely (was fake placeholder)
 - **Hero visual**: Animated data visualization showing live query demo with typewriter effect
 
@@ -50,7 +50,7 @@ Full redesign of the landing page (`src/app/page.tsx`) from a monolithic client 
 | CTA email form (non-functional) | Replaced with Link buttons to signup |
 | Social proof section | Removed entirely |
 | Navbar "J" square | `next/image` with `logo.png` |
-| Layout metadata "for developers" | Updated to reflect Data Explorer product |
+| Layout metadata "for developers" | Updated to reflect Studio product |
 
 ## HeroViz Implementation Notes
 

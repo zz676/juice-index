@@ -41,7 +41,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     : { paymentMethod: null, invoices: [], upcomingInvoice: null };
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-custom-900">Billing</h1>
         <p className="mt-1 text-sm text-slate-custom-500">
@@ -71,7 +71,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CurrentPlanCard
           tier={tier}
           status={subscription?.status ?? "active"}
@@ -80,15 +80,15 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           currentPeriodEnd={subscription?.currentPeriodEnd ?? null}
         />
 
+        <PaymentMethodCard
+          paymentMethod={stripeData.paymentMethod}
+          isPaidUser={isPaidUser}
+        />
+
         <ApiUsageCard
           usageCount={usageCount}
           tierLimit={tierLimit}
           tier={tier}
-        />
-
-        <PaymentMethodCard
-          paymentMethod={stripeData.paymentMethod}
-          isPaidUser={isPaidUser}
         />
 
         <NextBillingCard
@@ -98,12 +98,16 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           isPaidUser={isPaidUser}
         />
 
-        <InvoiceHistoryCard
-          invoices={stripeData.invoices}
-          isPaidUser={isPaidUser}
-        />
+        <div className="lg:col-span-2">
+          <InvoiceHistoryCard
+            invoices={stripeData.invoices}
+            isPaidUser={isPaidUser}
+          />
+        </div>
 
-        <PlanActionsCard isPaidUser={isPaidUser} tier={tier} />
+        <div className="lg:col-span-2">
+          <PlanActionsCard isPaidUser={isPaidUser} tier={tier} />
+        </div>
       </div>
     </div>
   );

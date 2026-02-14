@@ -40,7 +40,7 @@ export default async function SettingsPage() {
     const hasPassword = !!user.passwordHash;
 
     return (
-        <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+        <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-custom-900">Account Settings</h1>
                 <p className="mt-1 text-sm text-slate-custom-500">
@@ -48,7 +48,7 @@ export default async function SettingsPage() {
                 </p>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Profile */}
                 <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
@@ -60,6 +60,26 @@ export default async function SettingsPage() {
                             name={user.name ?? ""}
                             email={user.email}
                             avatarUrl={user.avatarUrl ?? null}
+                        />
+                    </div>
+                </section>
+
+                {/* Notification Preferences */}
+                <section className="lg:row-span-3 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
+                        <span className="material-icons-round text-slate-custom-400">notifications</span>
+                        <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
+                    </div>
+                    <div className="p-6">
+                        <NotificationPrefs
+                            preferences={preferences ? {
+                                language: preferences.language,
+                                digestFrequency: preferences.digestFrequency,
+                                alertsEnabled: preferences.alertsEnabled,
+                                alertThreshold: preferences.alertThreshold,
+                                brands: preferences.brands,
+                                topics: preferences.topics,
+                            } : null}
                         />
                     </div>
                 </section>
@@ -87,7 +107,7 @@ export default async function SettingsPage() {
                 </section>
 
                 {/* Subscription & Billing */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="lg:col-span-2 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">credit_card</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Subscription & Billing</h3>
@@ -106,28 +126,8 @@ export default async function SettingsPage() {
                     </div>
                 </section>
 
-                {/* Notification Preferences */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">notifications</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
-                    </div>
-                    <div className="p-6">
-                        <NotificationPrefs
-                            preferences={preferences ? {
-                                language: preferences.language,
-                                digestFrequency: preferences.digestFrequency,
-                                alertsEnabled: preferences.alertsEnabled,
-                                alertThreshold: preferences.alertThreshold,
-                                brands: preferences.brands,
-                                topics: preferences.topics,
-                            } : null}
-                        />
-                    </div>
-                </section>
-
                 {/* Danger Zone */}
-                <section className="bg-white rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="lg:col-span-2 bg-white rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-red-200 flex items-center gap-3">
                         <span className="material-icons-round text-red-400">warning</span>
                         <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>
