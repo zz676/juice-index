@@ -7,7 +7,6 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
     { href: "/dashboard/studio", icon: "show_chart", label: "Studio" },
-    { href: "/dashboard/keys", icon: "vpn_key", label: "API Keys" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];

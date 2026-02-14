@@ -371,14 +371,6 @@ export default function LandingPage() {
                     API Docs
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/dashboard/keys"
-                    className="hover:text-slate-custom-900 transition-colors"
-                  >
-                    API Keys
-                  </Link>
-                </li>
               </ul>
             </div>
             <div>
