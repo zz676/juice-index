@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import SearchOverlay from "@/components/dashboard/SearchOverlay";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
@@ -223,10 +224,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </div>
                     </div>
                     <div className="ml-auto flex items-center gap-4">
-                        <button className="w-10 h-10 rounded-full bg-white border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all shadow-sm relative">
-                            <span className="material-icons-round">notifications_none</span>
-                            <span className="absolute top-2 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-white"></span>
-                        </button>
+                        <NotificationBell />
                     </div>
                 </header>
 
