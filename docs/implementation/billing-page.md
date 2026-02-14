@@ -40,6 +40,7 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
+- Header includes a right-aligned "Change Plan" link (`/#pricing`) for quick access
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -64,9 +65,10 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 
 ### 6. Plan Actions (`plan-actions-card.tsx`) — Client Component
 - Icon: `tune`
-- "Change Plan" → links to `/#pricing` (the landing page pricing section; standalone `/pricing` page was retired)
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
+- Hidden entirely for free users (returns `null` when `!isPaidUser`)
 - Error display banner
+- Note: "Change Plan" was moved to the Current Plan card header for better discoverability
 
 ## Query Parameters
 
