@@ -26,6 +26,7 @@ Juice Index uses a 4-tier system for gating features and enforcing quotas. The c
 | Stored draft posts | 5 | 20 | Unlimited | Unlimited |
 | Pending scheduled posts | 0 | 5 | 10 | Unlimited |
 | CSV exports/month | 0 | 10 | 50 | Unlimited |
+| Weekly publishes | 0 | 1 | 10 | Unlimited |
 | Data delay (days) | 30 | 0 | 0 | 0 |
 | Historical data (months) | 12 | 36 | 60 | Unlimited |
 | Seats | 1 | 1 | 1 | 5+ |
@@ -50,6 +51,8 @@ Separate rate limit functions with distinct Redis key prefixes:
 - `studioChartLimit()` — chart generation (`studio:chart:{userId}:{date}`)
 - `studioPostDraftLimit()` — post drafts (`studio:post:{userId}:{date}`)
 - `csvExportMonthlyLimit()` — CSV exports (`csv:{userId}:{yearMonth}`)
+- `weeklyPublishLimit()` — X publishes (`publish:{userId}:{isoWeek}`)
+- `getWeeklyPublishUsage()` — read-only publish usage (no increment)
 
 ### API Endpoint Tiers
 
@@ -73,7 +76,7 @@ The backend validates model access at `POST /api/dashboard/studio/generate-post`
 
 ### Feature Gates
 
-- **X posting/scheduling**: Requires PRO+ (FREE tier blocked)
+- **X posting/scheduling**: Requires STARTER+ (FREE tier blocked); weekly publish quota enforced
 - **Chart watermark**: FREE tier charts have "Juice Index" watermark overlay
 - **CSV export**: FREE tier blocked, PRO limited to 50/month
 - **API keys**: FREE gets 0, PRO gets 2, ENTERPRISE gets 10

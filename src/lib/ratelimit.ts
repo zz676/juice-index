@@ -174,6 +174,91 @@ export async function csvExportMonthlyLimit(
   return { success: count <= limit, limit, remaining, reset: 0 };
 }
 
+/**
+ * Returns the ISO week key for a given date, e.g. "2026W07".
+ */
+function isoWeekKey(now: Date): string {
+  // Compute ISO week number. Thursday of the current week determines the year.
+  const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  // Set to nearest Thursday: current date + 4 - current day (Mon=1..Sun=7)
+  const day = tmp.getUTCDay() || 7; // Convert Sun=0 to 7
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${tmp.getUTCFullYear()}W${String(weekNo).padStart(2, "0")}`;
+}
+
+/**
+ * Returns the epoch seconds of the next Monday 00:00 UTC after `now`.
+ */
+function nextMondayUtcEpochSeconds(now: Date): number {
+  const tmp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const day = tmp.getUTCDay() || 7; // Mon=1..Sun=7
+  const daysUntilMonday = day === 1 ? 7 : 8 - day; // always next Monday
+  tmp.setUTCDate(tmp.getUTCDate() + daysUntilMonday);
+  return Math.floor(tmp.getTime() / 1000);
+}
+
+/**
+ * Weekly rate limiter for publish actions. Increments counter and checks limit.
+ */
+export async function weeklyPublishLimit(
+  userId: string,
+  tier: ApiTier,
+  now: Date
+): Promise<RateLimitResult> {
+  const limit = TIER_QUOTAS[tier].weeklyPublishes;
+  const reset = nextMondayUtcEpochSeconds(now);
+
+  if (!Number.isFinite(limit)) {
+    return { success: true, limit: Infinity, remaining: Infinity, reset };
+  }
+  if (limit === 0) {
+    return { success: false, limit: 0, remaining: 0, reset };
+  }
+
+  try {
+    const wk = isoWeekKey(now);
+    const key = `publish:${userId}:${wk}`;
+    const secondsUntilReset = Math.max(1, reset - Math.floor(now.getTime() / 1000));
+    const count = await upstashIncr(key);
+    if (count === 1) {
+      await upstashExpire(key, secondsUntilReset);
+    }
+    const remaining = Math.max(0, limit - count);
+    return { success: count <= limit, limit, remaining, reset };
+  } catch (err) {
+    console.warn("Weekly publish rate limit check failed, allowing request:", err);
+    return { success: true, limit, remaining: limit, reset };
+  }
+}
+
+/**
+ * Read-only getter for current weekly publish usage (does not increment).
+ */
+export async function getWeeklyPublishUsage(
+  userId: string,
+  tier: ApiTier
+): Promise<{ used: number; limit: number; reset: number }> {
+  const limit = TIER_QUOTAS[tier].weeklyPublishes;
+  const now = new Date();
+  const reset = nextMondayUtcEpochSeconds(now);
+
+  if (!Number.isFinite(limit)) {
+    return { used: 0, limit: Infinity, reset };
+  }
+
+  try {
+    const wk = isoWeekKey(now);
+    const key = `publish:${userId}:${wk}`;
+    const used = await upstashGet(key);
+    return { used, limit, reset };
+  } catch (err) {
+    console.warn("Failed to fetch weekly publish usage, returning zeros:", err);
+    return { used: 0, limit, reset };
+  }
+}
+
 export type StudioUsage = {
   queryUsed: number;
   queryLimit: number;
