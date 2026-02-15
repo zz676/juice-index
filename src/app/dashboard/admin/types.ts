@@ -1,7 +1,13 @@
+export interface DailyCount {
+  date: string;
+  count: number;
+}
+
 export interface RevenueMetrics {
   subscribersByTier: { tier: string; count: number }[];
   cancelPendingCount: number;
   newSubsThisMonth: number;
+  dailySubTrend: DailyCount[];
 }
 
 export interface MRRData {
@@ -15,6 +21,7 @@ export interface UserMetrics {
   newLast30d: number;
   activeUsersLast7d: number;
   usersByTier: { tier: string; count: number }[];
+  dailySignupTrend: DailyCount[];
 }
 
 export interface AIModelUsage {
@@ -51,6 +58,7 @@ export interface APIActivityMetrics {
   errorRate: number;
   topEndpoints: TopEndpoint[];
   requestsByTier: { tier: string; count: number }[];
+  dailyRequestTrend: DailyCount[];
 }
 
 export interface WebhookHealthMetrics {

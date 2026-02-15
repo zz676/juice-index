@@ -7,6 +7,7 @@ import type {
   AIUsageMetrics,
   AIModelUsage,
   DailyCostTrend,
+  DailyCount,
   APIActivityMetrics,
   TopEndpoint,
   WebhookHealthMetrics,
@@ -15,7 +16,7 @@ import type {
 // ── Revenue ───────────────────────────────────────────────────────────────────
 
 export async function getRevenueMetrics(): Promise<RevenueMetrics> {
-  const [tierRows, cancelPendingRows, newSubRows] = await Promise.all([
+  const [tierRows, cancelPendingRows, newSubRows, subTrendRows] = await Promise.all([
     prisma.$queryRaw<{ tier: string; count: bigint }[]>`
       SELECT "tier", COUNT(*)::bigint AS "count"
       FROM "public"."juice_api_subscriptions"
@@ -36,7 +37,20 @@ export async function getRevenueMetrics(): Promise<RevenueMetrics> {
       WHERE "createdAt" >= date_trunc('month', CURRENT_DATE)
         AND "status" IN ('active', 'trialing')
     `.catch(() => [{ count: 0n }]),
+
+    prisma.$queryRaw<{ date: Date; count: bigint }[]>`
+      SELECT DATE("createdAt") AS "date", COUNT(*)::bigint AS "count"
+      FROM "public"."juice_api_subscriptions"
+      WHERE "createdAt" >= NOW() - INTERVAL '30 days'
+      GROUP BY DATE("createdAt")
+      ORDER BY "date" ASC
+    `.catch(() => [] as { date: Date; count: bigint }[]),
   ]);
+
+  const dailySubTrend: DailyCount[] = subTrendRows.map((r) => ({
+    date: r.date instanceof Date ? r.date.toISOString().split("T")[0] : String(r.date),
+    count: Number(r.count),
+  }));
 
   return {
     subscribersByTier: tierRows.map((r) => ({
@@ -45,6 +59,7 @@ export async function getRevenueMetrics(): Promise<RevenueMetrics> {
     })),
     cancelPendingCount: Number(cancelPendingRows[0]?.count ?? 0),
     newSubsThisMonth: Number(newSubRows[0]?.count ?? 0),
+    dailySubTrend,
   };
 }
 
@@ -92,7 +107,7 @@ export async function getMRR(): Promise<MRRData> {
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function getUserMetrics(): Promise<UserMetrics> {
-  const [totalRows, new7dRows, new30dRows, activeRows, tierRows] =
+  const [totalRows, new7dRows, new30dRows, activeRows, tierRows, signupTrendRows] =
     await Promise.all([
       prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(*)::bigint AS "count" FROM "public"."juice_users"
@@ -122,7 +137,20 @@ export async function getUserMetrics(): Promise<UserMetrics> {
         GROUP BY COALESCE(s."tier", 'FREE')
         ORDER BY "count" DESC
       `.catch(() => [] as { tier: string; count: bigint }[]),
+
+      prisma.$queryRaw<{ date: Date; count: bigint }[]>`
+        SELECT DATE("createdAt") AS "date", COUNT(*)::bigint AS "count"
+        FROM "public"."juice_users"
+        WHERE "createdAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE("createdAt")
+        ORDER BY "date" ASC
+      `.catch(() => [] as { date: Date; count: bigint }[]),
     ]);
+
+  const dailySignupTrend: DailyCount[] = signupTrendRows.map((r) => ({
+    date: r.date instanceof Date ? r.date.toISOString().split("T")[0] : String(r.date),
+    count: Number(r.count),
+  }));
 
   return {
     totalUsers: Number(totalRows[0]?.count ?? 0),
@@ -133,6 +161,7 @@ export async function getUserMetrics(): Promise<UserMetrics> {
       tier: r.tier,
       count: Number(r.count),
     })),
+    dailySignupTrend,
   };
 }
 
@@ -262,7 +291,7 @@ export async function getWebhookHealthMetrics(): Promise<WebhookHealthMetrics> {
 // ── API Activity ──────────────────────────────────────────────────────────────
 
 export async function getAPIActivityMetrics(): Promise<APIActivityMetrics> {
-  const [todayRows, weekRows, monthRows, perfRows, topRows, tierRows] =
+  const [todayRows, weekRows, monthRows, perfRows, topRows, tierRows, requestTrendRows] =
     await Promise.all([
       prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(*)::bigint AS "count"
@@ -309,11 +338,24 @@ export async function getAPIActivityMetrics(): Promise<APIActivityMetrics> {
         GROUP BY COALESCE("tierAtRequest", 'FREE')
         ORDER BY "count" DESC
       `.catch(() => [] as { tier: string; count: bigint }[]),
+
+      prisma.$queryRaw<{ date: Date; count: bigint }[]>`
+        SELECT DATE("createdAt") AS "date", COUNT(*)::bigint AS "count"
+        FROM "public"."juice_api_request_logs"
+        WHERE "createdAt" >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE("createdAt")
+        ORDER BY "date" ASC
+      `.catch(() => [] as { date: Date; count: bigint }[]),
     ]);
 
   const topEndpoints: TopEndpoint[] = topRows.map((r) => ({
     endpoint: r.endpoint,
     method: r.method,
+    count: Number(r.count),
+  }));
+
+  const dailyRequestTrend: DailyCount[] = requestTrendRows.map((r) => ({
+    date: r.date instanceof Date ? r.date.toISOString().split("T")[0] : String(r.date),
     count: Number(r.count),
   }));
 
@@ -328,5 +370,6 @@ export async function getAPIActivityMetrics(): Promise<APIActivityMetrics> {
       tier: r.tier,
       count: Number(r.count),
     })),
+    dailyRequestTrend,
   };
 }
