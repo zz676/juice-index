@@ -154,8 +154,8 @@ function StudioPageInner() {
       "Weekly NEV sales summary for 2024",
     ],
     "Market Health": [
-      "China dealer inventory factor by month 2024",
-      "China passenger vehicle inventory levels 2024",
+      "Dealer inventory factor by month 2024",
+      "Passenger vehicle inventory levels 2024",
       "Vehicle Inventory Alert Index trend for 2024",
     ],
     "Battery Industry": [
