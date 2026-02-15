@@ -48,7 +48,13 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
-- Header includes a right-aligned upgrade button: FREE users see "Upgrade" (→ `/#pricing`), STARTER users see "Upgrade to Pro" (→ `/dashboard/billing?plan=pro`). Hidden for PRO and ENTERPRISE users.
+- Now a **client component** to support inline downgrade confirmation
+- Header buttons are tier-aware:
+  - FREE: "Upgrade" → `/#pricing`
+  - STARTER: "Upgrade to Pro" → `/dashboard/billing?plan=pro`
+  - PRO: "Downgrade to Starter" → inline confirmation with `POST /api/billing/switch-plan`
+  - ENTERPRISE: no button
+- Downgrade uses Stripe subscription update with proration (prorated credit for unused time)
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -76,7 +82,7 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
 - Hidden entirely for free users (returns `null` when `!isPaidUser`)
 - Error display banner
-- Note: Upgrade button was moved to the Current Plan card header for better discoverability. Pro users use "Manage Billing" to cancel.
+- Note: Plan change actions were moved to the Current Plan card header. Pro users can downgrade inline or use "Manage Billing" to cancel.
 
 ## Query Parameters
 
@@ -168,5 +174,6 @@ Note: The standalone `/pricing` page has been retired and now returns a 308 perm
 
 - Settings page now has a "Go to Billing" link instead of inline subscription management (see [settings-page.md](settings-page.md))
 - Stripe portal API: `src/app/api/billing/portal/route.ts`
+- Plan switch API: `src/app/api/billing/switch-plan/route.ts` — updates Stripe subscription price with proration
 - Stripe client: `src/lib/stripe.ts`
 - Pricing page: `src/app/pricing/page.tsx` — permanent redirect (308) to `/#pricing`
