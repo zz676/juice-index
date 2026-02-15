@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import {
-  AreaChart,
+  ComposedChart,
   Area,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,11 +24,41 @@ type TabId = (typeof tabs)[number]["id"];
 
 type KpiId = "arr" | "users" | "ai-cost" | "api-requests";
 
-const kpiConfig: Record<KpiId, { label: string; color: string; valueKey: string; formatValue: (v: number) => string }> = {
-  arr: { label: "ARR — Daily New Subscriptions (30d)", color: "#22c55e", valueKey: "count", formatValue: (v) => fmt(v) },
-  users: { label: "Total Users — Daily Signups (30d)", color: "#3b82f6", valueKey: "count", formatValue: (v) => fmt(v) },
-  "ai-cost": { label: "AI Cost — Daily Spend (30d)", color: "#f59e0b", valueKey: "cost", formatValue: (v) => fmtUSD(v) },
-  "api-requests": { label: "API Requests — Daily Count (30d)", color: "#8b5cf6", valueKey: "count", formatValue: (v) => fmt(v) },
+const kpiConfig: Record<KpiId, {
+  cumulativeLabel: string;
+  dailyLabel: string;
+  color: string;
+  formatCumulative: (v: number) => string;
+  formatDaily: (v: number) => string;
+}> = {
+  arr: {
+    cumulativeLabel: "Cumulative Subs",
+    dailyLabel: "Daily New Subs",
+    color: "#22c55e",
+    formatCumulative: fmt,
+    formatDaily: fmt,
+  },
+  users: {
+    cumulativeLabel: "Cumulative Signups",
+    dailyLabel: "Daily Signups",
+    color: "#3b82f6",
+    formatCumulative: fmt,
+    formatDaily: fmt,
+  },
+  "ai-cost": {
+    cumulativeLabel: "Cumulative Spend",
+    dailyLabel: "Daily Spend",
+    color: "#f59e0b",
+    formatCumulative: fmtUSD,
+    formatDaily: fmtUSD,
+  },
+  "api-requests": {
+    cumulativeLabel: "Cumulative Requests",
+    dailyLabel: "Daily Requests",
+    color: "#8b5cf6",
+    formatCumulative: fmt,
+    formatDaily: fmt,
+  },
 };
 
 function fmt(n: number): string {
@@ -67,11 +98,19 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
 
   const totalAICost30d = data.aiUsage.dailyCostTrend.reduce((s, d) => s + d.cost, 0);
 
-  const chartData: Record<KpiId, { date: string; value: number }[]> = {
-    arr: data.revenue.dailySubTrend.map((d) => ({ date: d.date, value: d.count })),
-    users: data.users.dailySignupTrend.map((d) => ({ date: d.date, value: d.count })),
-    "ai-cost": data.aiUsage.dailyCostTrend.map((d) => ({ date: d.date, value: d.cost })),
-    "api-requests": data.apiActivity.dailyRequestTrend.map((d) => ({ date: d.date, value: d.count })),
+  function withCumulative(raw: { date: string; value: number }[]) {
+    let sum = 0;
+    return raw.map((d) => {
+      sum += d.value;
+      return { date: d.date, daily: d.value, cumulative: sum };
+    });
+  }
+
+  const chartData: Record<KpiId, { date: string; daily: number; cumulative: number }[]> = {
+    arr: withCumulative(data.revenue.dailySubTrend.map((d) => ({ date: d.date, value: d.count }))),
+    users: withCumulative(data.users.dailySignupTrend.map((d) => ({ date: d.date, value: d.count }))),
+    "ai-cost": withCumulative(data.aiUsage.dailyCostTrend.map((d) => ({ date: d.date, value: d.cost }))),
+    "api-requests": withCumulative(data.apiActivity.dailyRequestTrend.map((d) => ({ date: d.date, value: d.count }))),
   };
 
   return (
@@ -114,7 +153,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
           <div className="bg-white rounded-xl border border-slate-custom-200 p-5 relative">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-custom-900">
-                {kpiConfig[activeKpi].label}
+                {kpiConfig[activeKpi].cumulativeLabel} — {kpiConfig[activeKpi].dailyLabel} (30d)
               </h3>
               <button
                 onClick={() => setActiveKpi(null)}
@@ -127,9 +166,9 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
               <p className="text-sm text-slate-custom-500 py-8 text-center">No trend data available for the last 30 days.</p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={chartData[activeKpi]} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                <ComposedChart data={chartData[activeKpi]} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
                   <defs>
-                    <linearGradient id={`gradient-${activeKpi}`} x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={`gradient-cumulative-${activeKpi}`} x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={kpiConfig[activeKpi].color} stopOpacity={0.3} />
                       <stop offset="95%" stopColor={kpiConfig[activeKpi].color} stopOpacity={0.02} />
                     </linearGradient>
@@ -146,11 +185,23 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                     axisLine={{ stroke: "#e2e8f0" }}
                   />
                   <YAxis
+                    yAxisId="left"
                     tick={{ fontSize: 11, fill: "#64748b" }}
-                    tickFormatter={(v: number) => kpiConfig[activeKpi].formatValue(v)}
+                    tickFormatter={(v: number) => kpiConfig[activeKpi].formatCumulative(v)}
                     tickLine={false}
                     axisLine={false}
                     width={70}
+                    label={{ value: kpiConfig[activeKpi].cumulativeLabel, angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "#64748b" }, offset: -4 }}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    tickFormatter={(v: number) => kpiConfig[activeKpi].formatDaily(v)}
+                    tickLine={false}
+                    axisLine={false}
+                    width={70}
+                    label={{ value: kpiConfig[activeKpi].dailyLabel, angle: 90, position: "insideRight", style: { fontSize: 11, fill: "#64748b" }, offset: -4 }}
                   />
                   <Tooltip
                     contentStyle={{
@@ -163,16 +214,29 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                       const d = new Date(String(v) + "T00:00:00");
                       return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
                     }}
-                    formatter={(value) => [kpiConfig[activeKpi].formatValue(Number(value ?? 0)), "Value"]}
+                    formatter={(value, name) => {
+                      const cfg = kpiConfig[activeKpi];
+                      const v = Number(value ?? 0);
+                      if (name === "cumulative") return [cfg.formatCumulative(v), cfg.cumulativeLabel];
+                      return [cfg.formatDaily(v), cfg.dailyLabel];
+                    }}
                   />
                   <Area
+                    yAxisId="left"
                     type="monotone"
-                    dataKey="value"
+                    dataKey="cumulative"
                     stroke={kpiConfig[activeKpi].color}
                     strokeWidth={2}
-                    fill={`url(#gradient-${activeKpi})`}
+                    fill={`url(#gradient-cumulative-${activeKpi})`}
                   />
-                </AreaChart>
+                  <Bar
+                    yAxisId="right"
+                    dataKey="daily"
+                    fill={kpiConfig[activeKpi].color}
+                    opacity={0.35}
+                    radius={[2, 2, 0, 0]}
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             )}
           </div>

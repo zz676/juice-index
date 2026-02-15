@@ -43,22 +43,29 @@ The admin dashboard displays four categories of metrics, organized into tabs:
 
 ## KPI Trend Charts
 
-The four KPI cards at the top of the dashboard (ARR, Total Users, AI Cost 30d, API Requests 30d) are clickable. Clicking a card reveals a 30-day trend area chart below the cards row.
+The four KPI cards at the top of the dashboard (ARR, Total Users, AI Cost 30d, API Requests 30d) are clickable. Clicking a card reveals a 30-day dual-axis trend chart below the cards row.
 
 **Behavior:**
 - Click a KPI card to expand its trend chart. Click the same card again (or the close button) to collapse it.
 - Only one chart is visible at a time — clicking a different card switches to that chart.
 - Active cards show a colored border and a rotated chevron indicator.
 
-**Data sources:**
-| KPI | Chart shows | Source table |
-|-----|-----------|--------------|
-| ARR | Daily new subscriptions | `juice_api_subscriptions` |
-| Total Users | Daily new signups | `juice_users` |
-| AI Cost (30d) | Daily AI spend | `juice_ai_usage` (pre-existing `dailyCostTrend`) |
-| API Requests (30d) | Daily request count | `juice_api_request_logs` |
+**Dual Y-Axis Design:**
 
-Each KPI uses a distinct color: green (ARR), blue (Users), amber (AI Cost), violet (API Requests). The chart is rendered with `recharts` `AreaChart` with a gradient fill.
+Each chart displays two data series sharing one X-axis (date):
+
+- **Left Y-axis (Area chart)**: Cumulative running total — computed client-side as a running sum of the daily values. Shown as a gradient-filled area.
+- **Right Y-axis (Bar chart)**: Daily values — shown as semi-transparent bars overlaid on the area chart.
+- **Tooltip**: Displays both the cumulative and daily values for the hovered date.
+
+| KPI | Left Y-axis (Cumulative) | Right Y-axis (Daily) | Source table |
+|-----|--------------------------|---------------------|--------------|
+| ARR | Cumulative New Subs | Daily New Subs | `juice_api_subscriptions` |
+| Total Users | Cumulative Signups | Daily Signups | `juice_users` |
+| AI Cost (30d) | Cumulative Spend | Daily Spend | `juice_ai_usage` (pre-existing `dailyCostTrend`) |
+| API Requests (30d) | Cumulative Requests | Daily Requests | `juice_api_request_logs` |
+
+Each KPI uses a distinct color: green (ARR), blue (Users), amber (AI Cost), violet (API Requests). The chart is rendered with `recharts` `ComposedChart` combining `Area` and `Bar` components with dual `YAxis` elements.
 
 ## Architecture
 
