@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/landing/Navbar";
@@ -230,7 +231,9 @@ export default function LandingPage() {
           </AnimatedSection>
 
           <AnimatedSection delay={0.1}>
-            <PricingToggle />
+            <Suspense>
+              <PricingToggle />
+            </Suspense>
           </AnimatedSection>
         </div>
       </section>

@@ -48,13 +48,8 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
-- Now a **client component** to support inline downgrade confirmation
-- Header buttons are tier-aware:
-  - FREE: "Upgrade" → `/#pricing`
-  - STARTER: "Upgrade to Pro" → `/dashboard/billing?plan=pro`
-  - PRO: "Downgrade to Starter" → inline confirmation with `POST /api/billing/switch-plan`
-  - ENTERPRISE: no button
-- Downgrade uses Stripe subscription update with proration (prorated credit for unused time)
+- **Server component** with a universal "Change Plan" button for all tiers
+- "Change Plan" navigates to `/?current={tier}#pricing`, which loads the landing page pricing section with the user's current plan visually marked
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -82,7 +77,7 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
 - Hidden entirely for free users (returns `null` when `!isPaidUser`)
 - Error display banner
-- Note: Plan change actions were moved to the Current Plan card header. Pro users can downgrade inline or use "Manage Billing" to cancel.
+- Note: Plan changes are handled via the pricing page. The Current Plan card has a "Change Plan" link that navigates to the pricing section with the current plan marked. Pro users can also use "Manage Billing" to access Stripe portal for cancellation.
 
 ## Query Parameters
 
@@ -136,7 +131,7 @@ All cards follow the Settings page design system:
 | `types.ts` | Types | SubscriptionData, PaymentMethodInfo, InvoiceInfo, UpcomingInvoiceInfo |
 | `tier-display.ts` | Utility | Tier display names and API limits |
 | `data.ts` | Data layer | getSubscription, getUsageCount, getStripeData |
-| `current-plan-card.tsx` | Server component | Plan name, status, period |
+| `current-plan-card.tsx` | Server component | Plan name, status, period, "Change Plan" link |
 | `api-usage-card.tsx` | Server component | Usage progress bar |
 | `payment-method-card.tsx` | Server component | Card on file |
 | `next-billing-card.tsx` | Server component | Upcoming charge info |
@@ -147,13 +142,23 @@ All cards follow the Settings page design system:
 
 ## Plan-Aware Redirect Flow
 
-The pricing CTA behavior on the landing page (`/#pricing`) depends on authentication state. The `PricingToggle` component (`src/components/landing/PricingToggle.tsx`) detects the logged-in user via Supabase client auth and renders different CTAs per tier:
+The pricing CTA behavior on the landing page (`/#pricing`) depends on authentication state and current plan context. The `PricingToggle` component (`src/components/landing/PricingToggle.tsx`) detects the logged-in user via Supabase client auth and renders different CTAs per tier.
+
+### Current Plan Marking
+
+When a user navigates from the billing page "Change Plan" link, the URL includes `?current={tier}#pricing`. The `PricingToggle` component:
+
+1. Reads the `?current=` search param via `useSearchParams()` (wrapped in `<Suspense>` on the landing page)
+2. For logged-in users, also fetches the tier via `GET /api/dashboard/tier` (takes priority over URL param)
+3. Highlights the current plan card with a primary border, "Current Plan" badge, and disabled CTA button
+4. Shows "Upgrade" / "Downgrade" labels on other plan CTAs relative to the current plan
+5. Falls back to the default "Recommended" badge on Pro when no current plan context exists
 
 ### Logged-in users
 
-- **Analyst (free):** "Go to Dashboard" links to `/dashboard`
-- **Starter:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "starter", interval }` and redirects to the Stripe checkout URL.
-- **Pro:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "pro", interval }` and redirects to the Stripe checkout URL. A loading spinner ("Redirecting...") is shown while the request is in flight.
+- **Current plan:** Disabled "Current Plan" button (gray, no action)
+- **Higher tier:** "Upgrade" triggers `POST /api/billing/checkout` for Starter/Pro, or shows mailto for Institutional
+- **Lower tier:** "Downgrade" label — Analyst links to `/dashboard`, paid plans trigger checkout
 - **Institutional:** "Contact Sales" mailto link (unchanged)
 
 ### Logged-out users
