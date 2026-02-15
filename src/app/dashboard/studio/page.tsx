@@ -116,6 +116,7 @@ function StudioPageInner() {
   const panelLeftOffset = useRef(0);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
   const [publishInfo, setPublishInfo] = useState<PublishInfo | null>(null);
   const [isLoadingPublishInfo, setIsLoadingPublishInfo] = useState(false);
 
@@ -744,6 +745,42 @@ function StudioPageInner() {
       );
     } finally {
       setIsPublishing(false);
+    }
+  }, [postDraft, showToast, fetchPublishInfo]);
+
+  const handleConfirmSchedule = useCallback(async (scheduledFor: string) => {
+    if (!postDraft) return;
+    setIsScheduling(true);
+    try {
+      const res = await fetch("/api/dashboard/user-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: postDraft, action: "schedule", scheduledFor }),
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) {
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            "Failed to schedule post"
+        );
+      }
+      const formatted = new Date(scheduledFor).toLocaleString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      showToast("success", `Post scheduled for ${formatted}!`);
+      setShowPublishModal(false);
+      fetchPublishInfo();
+    } catch (err) {
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Failed to schedule post"
+      );
+    } finally {
+      setIsScheduling(false);
     }
   }, [postDraft, showToast, fetchPublishInfo]);
 
@@ -1887,7 +1924,9 @@ function StudioPageInner() {
         open={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         onConfirm={handleConfirmPublish}
+        onSchedule={handleConfirmSchedule}
         isPublishing={isPublishing}
+        isScheduling={isScheduling}
         isLoading={isLoadingPublishInfo}
         info={publishInfo}
         postDraft={postDraft}

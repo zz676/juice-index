@@ -42,11 +42,31 @@ export async function PATCH(
     );
   }
 
-  if (post.status !== UserPostStatus.DRAFT && post.status !== UserPostStatus.FAILED) {
+  if (
+    post.status !== UserPostStatus.DRAFT &&
+    post.status !== UserPostStatus.FAILED &&
+    post.status !== UserPostStatus.SCHEDULED
+  ) {
     return NextResponse.json(
-      { error: "BAD_REQUEST", message: "Only DRAFT or FAILED posts can be edited" },
+      { error: "BAD_REQUEST", message: "Only DRAFT, FAILED, or SCHEDULED posts can be edited" },
       { status: 400 }
     );
+  }
+
+  // SCHEDULED posts can only be rescheduled or cancelled back to draft
+  if (post.status === UserPostStatus.SCHEDULED) {
+    let bodyPeek: { action?: string };
+    try {
+      bodyPeek = await request.clone().json();
+    } catch {
+      bodyPeek = {};
+    }
+    if (bodyPeek.action && bodyPeek.action !== "schedule" && bodyPeek.action !== "draft") {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: "SCHEDULED posts can only be rescheduled or cancelled to draft" },
+        { status: 400 }
+      );
+    }
   }
 
   let body: { content?: string; action?: string; scheduledFor?: string };
