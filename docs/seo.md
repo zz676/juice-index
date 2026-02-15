@@ -45,3 +45,17 @@ Tests for robots and sitemap live in `src/app/__tests__/`:
 - `sitemap.test.ts` — verifies page entries, priorities, and dashboard exclusion
 
 Run: `npx vitest run src/app/__tests__/`
+
+## Global EV Rebrand
+
+The site was rebranded from "China EV" to global "EV" market intelligence. All user-facing marketing text was updated:
+
+- Landing page hero, features, coverage, CTA, footer
+- OpenAPI spec summaries
+- Studio sample query strings
+
+**Intentionally unchanged:**
+- Brand entity names (e.g., "Tesla China") — these are actual data entities
+- Database table names (e.g., `ChinaPassengerInventory`) — these are schema references
+- Seed notification messages referencing real events
+- Chinese language option in notification preferences
