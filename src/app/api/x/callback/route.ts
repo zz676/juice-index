@@ -6,6 +6,7 @@ import {
   exchangeCodeForTokens,
   fetchXUserProfile,
 } from "@/lib/x/oauth";
+import { encryptToken } from "@/lib/crypto";
 
 export const runtime = "nodejs";
 
@@ -71,6 +72,10 @@ export async function GET(request: NextRequest) {
 
     const profile = await fetchXUserProfile(tokens.accessToken);
 
+    // Encrypt tokens before storing
+    const encAccessToken = encryptToken(tokens.accessToken);
+    const encRefreshToken = encryptToken(tokens.refreshToken);
+
     // Upsert XAccount record
     await prisma.xAccount.upsert({
       where: { userId: user.id },
@@ -79,8 +84,8 @@ export async function GET(request: NextRequest) {
         username: profile.username,
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: encAccessToken,
+        refreshToken: encRefreshToken,
         tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
       },
       create: {
@@ -89,8 +94,8 @@ export async function GET(request: NextRequest) {
         username: profile.username,
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: encAccessToken,
+        refreshToken: encRefreshToken,
         tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
       },
     });

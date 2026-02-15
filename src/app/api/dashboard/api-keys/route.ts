@@ -64,6 +64,8 @@ export async function POST() {
     select: { id: true, keyPrefix: true, createdAt: true },
   });
 
+  console.info("[AUDIT] API key created", { userId: user.id, keyId: apiKey.id, prefix: pfx });
+
   // Return the full secret only once — it cannot be recovered later
   return NextResponse.json({ key: { ...apiKey, secret } }, { status: 201 });
 }

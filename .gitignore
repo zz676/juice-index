@@ -22,3 +22,9 @@ npm-debug.log*
 
 # vercel
 .vercel
+
+# worktrees
+.worktrees/
+
+# playwright
+.playwright-mcp/
