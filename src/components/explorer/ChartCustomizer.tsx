@@ -21,6 +21,10 @@ export interface ChartConfig {
     sourceColor: string;
     sourceFontSize: number;
     barWidth: number | undefined;
+    paddingTop: number;
+    paddingBottom: number;
+    paddingLeft: number;
+    paddingRight: number;
     showValues: boolean;
     showGrid: boolean;
 }
@@ -42,6 +46,10 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     sourceColor: "#6ada1b",
     sourceFontSize: 18,
     barWidth: undefined,
+    paddingTop: 20,
+    paddingBottom: 44,
+    paddingLeft: 24,
+    paddingRight: 28,
     showValues: true,
     showGrid: true,
 };
@@ -146,6 +154,15 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                         <div>
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Title</label>
                             <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Chart title..." />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Padding</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <NumberInput label="Top" value={config.paddingTop} onChange={(v) => update({ paddingTop: v ?? 20 })} min={0} max={100} />
+                                <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 44 })} min={0} max={100} />
+                                <NumberInput label="Left" value={config.paddingLeft} onChange={(v) => update({ paddingLeft: v ?? 24 })} min={0} max={100} />
+                                <NumberInput label="Right" value={config.paddingRight} onChange={(v) => update({ paddingRight: v ?? 28 })} min={0} max={100} />
+                            </div>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-slate-600">Show Values</span>
