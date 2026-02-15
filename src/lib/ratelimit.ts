@@ -88,8 +88,8 @@ export async function rateLimitDaily(identifier: string, limit: number, now: Dat
     const remaining = Math.max(0, limit - count);
     return { success: count <= limit, limit, remaining, reset };
   } catch (err) {
-    console.warn("Rate limit check failed, allowing request:", err);
-    return { success: true, limit, remaining: limit, reset };
+    console.error("Rate limit check failed (fail-closed), blocking request:", err);
+    return { success: false, limit, remaining: 0, reset };
   }
 }
 
@@ -125,8 +125,8 @@ async function rateLimitDailyPrefixed(
     const remaining = Math.max(0, limit - count);
     return { success: count <= limit, limit, remaining, reset };
   } catch (err) {
-    console.warn(`Rate limit check failed (${prefix}), allowing request:`, err);
-    return { success: true, limit, remaining: limit, reset };
+    console.error(`Rate limit check failed (${prefix}), fail-closed — blocking request:`, err);
+    return { success: false, limit, remaining: 0, reset };
   }
 }
 
@@ -302,8 +302,8 @@ export async function weeklyPublishLimit(
     const remaining = Math.max(0, limit - count);
     return { success: count <= limit, limit, remaining, reset };
   } catch (err) {
-    console.warn("Weekly publish rate limit check failed, allowing request:", err);
-    return { success: true, limit, remaining: limit, reset };
+    console.error("Weekly publish rate limit check failed (fail-closed), blocking request:", err);
+    return { success: false, limit, remaining: 0, reset };
   }
 }
 

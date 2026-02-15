@@ -254,7 +254,7 @@ export async function POST(request: Request) {
       maxOutputTokens: modelDef.defaultMaxTokens,
     });
 
-    const content = result.text.trim();
+    let content = result.text.trim();
     if (!content) {
       return NextResponse.json(
         { error: "GENERATION_FAILED", message: "No draft content generated" },
@@ -262,13 +262,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize LLM output: strip anything that looks like credentials or SQL
+    content = content.replace(
+      /(sk_live_|sk_test_|whsec_|SUPABASE_|DATABASE_URL|OPENAI_API_KEY|Bearer\s+[A-Za-z0-9_\-]{20,})\S*/gi,
+      "[REDACTED]",
+    );
+
     return NextResponse.json({ content });
   } catch (error) {
     console.error("Explorer generate-post route error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to generate post";
     return NextResponse.json(
-      { error: "INTERNAL", message },
+      { error: "INTERNAL", message: "Failed to generate post" },
       { status: 500 }
     );
   }
