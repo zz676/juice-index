@@ -105,7 +105,7 @@ While the user sees a "Studio," the backend ensures safety and performance.
 The Customize panel (`/src/components/explorer/ChartCustomizer.tsx`) provides real-time control over chart appearance, organized into four tabs:
 
 - **Type tab**: Chart type selector (Bar/Line/H-Bar), Show Values toggle, Show Grid toggle, Bar Width, X/Y-Axis thickness, and Padding (top/bottom/left/right, default 20px each).
-- **Colors tab**: Preset palettes (Lime/Dark/Blue/Gold), Background, Bar/Line color, Font color, and Axis Line colors (X-Axis, Y-Axis).
+- **Colors tab**: Preset palettes (Lime/Dark/Blue/Gold), Background, Bar/Line color, Font color, and Axis Line colors (X-Axis, Y-Axis). Axis line colors and thickness are applied to both the in-browser Recharts preview and the server-rendered chart image.
 - **Text tab**: Title text and font family, Title color and size, Axis font family, X/Y-Axis font sizes and colors.
 - **Source tab**: Source text, font family, color, and font size.
 

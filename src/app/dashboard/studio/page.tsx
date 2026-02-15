@@ -1216,6 +1216,8 @@ function StudioPageInner() {
                               fill: chartConfig.xAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
                           />
                           <YAxis
                             tick={{
@@ -1223,6 +1225,8 @@ function StudioPageInner() {
                               fill: chartConfig.yAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
                           />
                           <Tooltip />
                           <Line
@@ -1250,6 +1254,8 @@ function StudioPageInner() {
                               fill: chartConfig.xAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
                           />
                           <YAxis
                             type="category"
@@ -1260,6 +1266,8 @@ function StudioPageInner() {
                               fill: chartConfig.yAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
                           />
                           <Tooltip />
                           <Bar
@@ -1293,6 +1301,8 @@ function StudioPageInner() {
                               fill: chartConfig.xAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
                           />
                           <YAxis
                             tick={{
@@ -1300,6 +1310,8 @@ function StudioPageInner() {
                               fill: chartConfig.yAxisFontColor,
                               fontFamily: chartConfig.axisFont,
                             }}
+                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
                           />
                           <Tooltip />
                           <Bar
@@ -1387,7 +1399,7 @@ function StudioPageInner() {
 
               {chartImage && (
                 <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
-                  <div className="flex items-center mb-3">
+                  <div className="flex items-center">
                     {/* Left: label */}
                     <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
                       <span className="material-icons-round text-sm text-primary">
