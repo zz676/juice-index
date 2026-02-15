@@ -35,19 +35,19 @@ describe("rate limit helpers", () => {
     vi.unstubAllGlobals();
   });
 
-  describe("missing env vars", () => {
-    it("throws when UPSTASH_REDIS_REST_URL is missing", async () => {
+  describe("missing env vars (fail-closed)", () => {
+    it("returns success=false when UPSTASH_REDIS_REST_URL is missing", async () => {
       vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
-      await expect(studioQueryLimit(USER_ID, "FREE", NOW)).rejects.toThrow(
-        "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN"
-      );
+      const result = await studioQueryLimit(USER_ID, "FREE", NOW);
+      expect(result.success).toBe(false);
+      expect(result.remaining).toBe(0);
     });
 
-    it("throws when UPSTASH_REDIS_REST_TOKEN is missing", async () => {
+    it("returns success=false when UPSTASH_REDIS_REST_TOKEN is missing", async () => {
       vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
-      await expect(studioQueryLimit(USER_ID, "FREE", NOW)).rejects.toThrow(
-        "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN"
-      );
+      const result = await studioQueryLimit(USER_ID, "FREE", NOW);
+      expect(result.success).toBe(false);
+      expect(result.remaining).toBe(0);
     });
   });
 

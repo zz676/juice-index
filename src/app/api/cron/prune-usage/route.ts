@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "UNAUTHORIZED", code: "UNAUTHORIZED", message: "Unauthorized" }, { status: 401 });
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
   const result = await prisma.aIUsage.deleteMany({

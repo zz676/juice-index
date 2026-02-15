@@ -105,26 +105,50 @@ While the user sees a "Studio," the backend ensures safety and performance.
 The Customize panel (`/src/components/explorer/ChartCustomizer.tsx`) provides real-time control over chart appearance, organized into four tabs:
 
 - **Type tab**: Chart type selector (Bar/Line/H-Bar), Show Values toggle, Show Grid toggle, Bar Width, X/Y-Axis thickness, and Padding (top/bottom/left/right, default 20px each).
-- **Colors tab**: Preset palettes (Lime/Dark/Blue/Gold), Background, Bar/Line color, Font color, and Axis Line colors (X-Axis, Y-Axis).
+- **Colors tab**: Preset palettes (Lime/Dark/Blue/Gold), Background, Bar/Line color, Font color, and Axis Line colors (X-Axis, Y-Axis). Axis line colors and thickness are applied to both the in-browser Recharts preview and the server-rendered chart image.
 - **Text tab**: Title text and font family, Title color and size, Axis font family, X/Y-Axis font sizes and colors.
 - **Source tab**: Source text, font family, color, and font size.
 
 Available fonts: Inter, Arial, Helvetica, Georgia, Times New Roman, Courier New, Verdana, Trebuchet MS.
 
 ### 5. Export Options
-- **Copy Image**: Copies the generated chart image to clipboard.
-- **PNG Download**: Downloads the chart as a PNG file.
-- **PDF Download**: Converts the chart image to a PDF using `jspdf` (dynamically imported). The PDF is sized to match the image dimensions and orientation.
+- **Copy Image**: Copies the generated chart image to clipboard (icon-only button with green tooltip).
+- **PNG Download**: Downloads the chart as a PNG file (icon-only button with green tooltip).
+- **PDF Download**: Converts the chart image to a PDF using `jspdf` (dynamically imported). The PDF is sized to match the image dimensions and orientation. Available in the post composer section.
 
-### 6. Post Composer (Step 4)
-- **Copy Post**: Copies the AI-generated post draft text.
+### 6. Image Viewer
+The Generated Image section includes interactive viewing controls:
+- **Zoom In / Zoom Out**: Buttons to adjust zoom level (50%–500%), with percentage display.
+- **Mouse Wheel Zoom**: Scroll to zoom in/out directly on the image.
+- **Pan / Drag**: Toggle hand-drag mode to pan around zoomed images.
+- **Reset View**: Resets zoom to 100% and centers the image.
+- **Delete Image**: Removes the generated image (icon-only with green tooltip).
+
+### 7. Share Link
+- Encodes the full chart state (prompt, SQL, data, chart config, post draft) into a compressed URL parameter using `lz-string`.
+- **Delta encoding**: Only non-default `ChartConfig` values are stored, keeping URLs short.
+- **URL length guard**: Shows an error if the encoded URL exceeds 8000 characters.
+- **7-day soft expiration**: Links older than 7 days show a warning but still load.
+- **Decode on mount**: When the page loads with a `?s=` parameter, all state is reconstructed and the URL is cleaned via `history.replaceState`.
+- Implementation: `/src/lib/studio/share.ts` (encode/decode functions).
+
+### 8. Post Composer (Step 4)
+- **Share**: Copies a share link encoding the full chart state (icon-only with "Copy Chart Link" tooltip).
+- **Copy Post**: Copies the AI-generated post draft text (icon-only with "Copy Post" tooltip).
 - **Attach Image checkbox**: Lets users choose whether to include the chart image when publishing to X.
-- **Publish**: Disabled until a draft is generated.
+- **Publish**: Gradient green CTA button, disabled until a draft is generated.
 
-### 7. Rate Limiting & Quotas
+### 9. Rate Limiting & Quotas
 - Rate limit checks fail open — if Upstash Redis is unreachable, requests are allowed through with a console warning.
 - When the daily query quota is exhausted, the Generate Query button is replaced with an info message and the Run Query button is disabled.
-- Toasts are displayed as fixed-position centered overlays.
+- Toasts are displayed in the header row alongside "AI-Powered Workflow", centered.
+
+### 10. UI Polish
+- All action buttons use green (`text-primary` / `text-green-600`) font colors with green glow effects.
+- Custom green CSS tooltips (`text-primary`, `border-green-200`) replace native title attributes throughout.
+- "Generate Image" and "Generate Draft" buttons use a bordered container style with green glow (`shadow-[0_0_8px_rgba(22,163,74,0.15)]`).
+- "Customize" button matches the same bordered green-glow style.
+- Custom SVG icon for "Generate Image" (image frame with sparkles).
 
 ### 8. Mobile Responsiveness
 - **Collapsible Sidebar**: On screens below the `lg` breakpoint, a toggle button shows/hides the left input panel.

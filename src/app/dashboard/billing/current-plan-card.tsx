@@ -53,7 +53,7 @@ export default function CurrentPlanCard({
         <span className="material-icons-round text-slate-custom-400">workspace_premium</span>
         <h3 className="text-base font-semibold text-slate-custom-900">Current Plan</h3>
         <Link
-          href="/#pricing"
+          href={`/?current=${tier.toLowerCase()}#pricing`}
           className="ml-auto inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
         >
           Change Plan

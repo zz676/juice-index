@@ -3,19 +3,13 @@ import prisma from "@/lib/prisma";
 import { UserPostStatus } from "@prisma/client";
 import { postTweet } from "@/lib/x/post-tweet";
 import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers
-    .get("authorization")
-    ?.replace(/^Bearer\s+/i, "");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json(
-      { error: "UNAUTHORIZED", message: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+  const authError = verifyCronAuth(request);
+  if (authError) return authError;
 
   const now = new Date();
 

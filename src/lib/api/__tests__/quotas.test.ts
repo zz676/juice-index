@@ -4,7 +4,9 @@ import type { ApiTier } from "../tier";
 
 const ALL_TIERS: ApiTier[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
 
-const REQUIRED_FIELDS: (keyof TierQuota)[] = [
+type NumericTierField = "dailyApi" | "monthlyApi" | "maxApiKeys" | "studioQueries" | "chartGen" | "postDrafts" | "maxDrafts" | "maxScheduled" | "csvExports" | "delayDays" | "histMonths" | "seats" | "xAccounts";
+
+const REQUIRED_NUMERIC_FIELDS: NumericTierField[] = [
   "dailyApi",
   "monthlyApi",
   "maxApiKeys",
@@ -20,6 +22,11 @@ const REQUIRED_FIELDS: (keyof TierQuota)[] = [
   "xAccounts",
 ];
 
+const REQUIRED_OBJECT_FIELDS: (keyof TierQuota)[] = [
+  "studioQueriesByModel",
+  "postDraftsByModel",
+];
+
 describe("TIER_QUOTAS", () => {
   it("has all 4 tiers defined", () => {
     expect(Object.keys(TIER_QUOTAS).sort()).toEqual(
@@ -28,12 +35,23 @@ describe("TIER_QUOTAS", () => {
   });
 
   it.each(ALL_TIERS)(
-    "%s has all 13 required fields",
+    "%s has all required numeric fields",
     (tier) => {
       const quota = TIER_QUOTAS[tier];
-      for (const field of REQUIRED_FIELDS) {
+      for (const field of REQUIRED_NUMERIC_FIELDS) {
         expect(quota).toHaveProperty(field);
         expect(typeof quota[field]).toBe("number");
+      }
+    }
+  );
+
+  it.each(ALL_TIERS)(
+    "%s has all required per-model quota fields",
+    (tier) => {
+      const quota = TIER_QUOTAS[tier];
+      for (const field of REQUIRED_OBJECT_FIELDS) {
+        expect(quota).toHaveProperty(field);
+        expect(typeof quota[field]).toBe("object");
       }
     }
   );
@@ -63,8 +81,8 @@ describe("TIER_QUOTAS", () => {
   describe("tier hierarchy (FREE ≤ STARTER ≤ PRO ≤ ENTERPRISE)", () => {
     // delayDays is an inverse metric — higher is more restrictive, so we
     // check it separately with a reversed comparison.
-    const INVERSE_FIELDS: (keyof TierQuota)[] = ["delayDays"];
-    const ASCENDING_FIELDS = REQUIRED_FIELDS.filter(
+    const INVERSE_FIELDS: NumericTierField[] = ["delayDays"];
+    const ASCENDING_FIELDS = REQUIRED_NUMERIC_FIELDS.filter(
       (f) => !INVERSE_FIELDS.includes(f)
     );
 

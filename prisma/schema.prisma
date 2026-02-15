@@ -6,6 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Tracks processed Stripe webhook events for idempotency.
+model StripeWebhookEvent {
+  /// Stripe event ID (e.g. evt_xxx).
+  id          String   @id
+  /// Event type (e.g. customer.subscription.updated).
+  eventType   String
+  /// Timestamp when the event was processed.
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+  @@map("juice_stripe_webhook_events")
+}
+
 /// Tracks AI usage metrics, costs, and outcomes for text and image generation.
 model AIUsage {
   /// Primary identifier for the record.

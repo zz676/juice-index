@@ -5,9 +5,9 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import prisma from "@/lib/prisma";
-import { studioPostDraftLimit } from "@/lib/ratelimit";
+import { enforceStudioPostDraftLimits } from "@/lib/ratelimit";
 import { normalizeTier, type ApiTier } from "@/lib/api/tier";
-import { TIER_QUOTAS } from "@/lib/api/quotas";
+import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import {
   getModelById,
   canAccessModel,
@@ -63,7 +63,8 @@ function resolveUserTier(subscription: { tier: string; status: string } | null):
 }
 
 async function enforceRateLimit(
-  userId: string
+  userId: string,
+  modelId: string,
 ): Promise<{ error: NextResponse } | { tier: ApiTier }> {
   const subscription = await prisma.apiSubscription.findUnique({
     where: { userId },
@@ -71,15 +72,46 @@ async function enforceRateLimit(
   });
 
   const tier = resolveUserTier(subscription);
-  const rl = await studioPostDraftLimit(userId, tier, new Date());
 
-  if (!rl.success) {
-    const quota = TIER_QUOTAS[tier].postDrafts;
+  // Check tier-based model access first (no Redis call)
+  if (!canAccessModel(tier, modelId)) {
+    const modelDef = getModelById(modelId);
+    return {
+      error: NextResponse.json(
+        {
+          error: "FORBIDDEN",
+          message: `Upgrade to ${modelDef?.minTier ?? "PRO"} to unlock ${modelDef?.displayName ?? modelId}.`,
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  const result = await enforceStudioPostDraftLimits(userId, tier, modelId, new Date());
+
+  if (!result.success) {
+    if (result.failedOn === "global") {
+      const quota = TIER_QUOTAS[tier].postDrafts;
+      return {
+        error: NextResponse.json(
+          {
+            error: "RATE_LIMITED",
+            message: `You've used ${quota}/${quota} AI post drafts today. ${tier === "FREE" ? "Upgrade for more drafts." : "Limit resets at midnight UTC."}`,
+          },
+          { status: 429 }
+        ),
+      };
+    }
+    // Per-model limit hit
+    const modelDef = getModelById(modelId);
+    const modelLimit = getModelQuota(tier, modelId, "postDraftsByModel");
     return {
       error: NextResponse.json(
         {
           error: "RATE_LIMITED",
-          message: `You've used ${quota}/${quota} AI post drafts today. ${tier === "FREE" ? "Upgrade to Pro for 20/day." : "Limit resets at midnight UTC."}`,
+          message: `You've reached your daily ${modelDef?.displayName ?? modelId} draft limit (${modelLimit}). Try a different model or wait until midnight UTC.`,
+          modelLimited: true,
+          modelId,
         },
         { status: 429 }
       ),
@@ -157,10 +189,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const rateLimitRes = await enforceRateLimit(userId);
-    if ("error" in rateLimitRes) return rateLimitRes.error;
-    const { tier } = rateLimitRes;
-
     const body = (await request.json().catch(() => null)) as
       | Record<string, unknown>
       | null;
@@ -191,16 +219,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate tier access
-    if (!canAccessModel(tier, requestedModelId)) {
-      return NextResponse.json(
-        {
-          error: "FORBIDDEN",
-          message: `Upgrade to ${modelDef.minTier} to unlock ${modelDef.displayName}.`,
-        },
-        { status: 403 }
-      );
-    }
+    // Enforce rate limits (checks tier access + global + per-model limits)
+    const rateLimitRes = await enforceRateLimit(userId, requestedModelId);
+    if ("error" in rateLimitRes) return rateLimitRes.error;
+    const { tier } = rateLimitRes;
 
     const prompt =
       typeof body.prompt === "string" && body.prompt.trim().length > 0
@@ -232,7 +254,7 @@ export async function POST(request: Request) {
       maxOutputTokens: modelDef.defaultMaxTokens,
     });
 
-    const content = result.text.trim();
+    let content = result.text.trim();
     if (!content) {
       return NextResponse.json(
         { error: "GENERATION_FAILED", message: "No draft content generated" },
@@ -240,13 +262,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize LLM output: strip anything that looks like credentials or SQL
+    content = content.replace(
+      /(sk_live_|sk_test_|whsec_|SUPABASE_|DATABASE_URL|OPENAI_API_KEY|Bearer\s+[A-Za-z0-9_\-]{20,})\S*/gi,
+      "[REDACTED]",
+    );
+
     return NextResponse.json({ content });
   } catch (error) {
     console.error("Explorer generate-post route error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to generate post";
     return NextResponse.json(
-      { error: "INTERNAL", message },
+      { error: "INTERNAL", message: "Failed to generate post" },
       { status: 500 }
     );
   }

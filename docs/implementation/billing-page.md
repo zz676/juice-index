@@ -6,7 +6,7 @@ The `/dashboard/billing` page is the single source of truth for all billing and 
 
 ## Architecture
 
-**Server Component** (`page.tsx`) handles auth, data fetching, and composes six card components. Only one card (`PlanActionsCard`) is a client component — the rest are server components.
+**Server Component** (`page.tsx`) handles auth, data fetching, and composes six card components. Only two cards are client components (`PlanActionsCard`, `SuccessRefresh`) — the rest are server components.
 
 ### Data Flow
 
@@ -35,12 +35,21 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 
 `getStripeData()` uses `Promise.allSettled` so that a failure in one Stripe call (e.g., upcoming invoice for a canceled subscription) doesn't prevent the other data from rendering.
 
+### Payment Method Fallback
+
+Stripe Checkout does not always set a `default_payment_method` on the customer. `getStripeData()` first checks the customer's default payment method, then falls back to listing the customer's payment methods directly (`stripe.paymentMethods.list`).
+
+### Post-Checkout Refresh
+
+After a successful checkout, the Stripe webhook may not have updated the database by the time the billing page loads. The `SuccessRefresh` client component polls every 2 seconds (up to 10 attempts) using `router.refresh()` until the tier updates from FREE.
+
 ## Cards
 
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
-- Header includes a right-aligned "Change Plan" link (`/#pricing`) for quick access
+- **Server component** with a universal "Change Plan" button for all tiers
+- "Change Plan" navigates to `/?current={tier}#pricing`, which loads the landing page pricing section with the user's current plan visually marked
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -68,7 +77,7 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
 - Hidden entirely for free users (returns `null` when `!isPaidUser`)
 - Error display banner
-- Note: "Change Plan" was moved to the Current Plan card header for better discoverability
+- Note: Plan changes are handled via the pricing page. The Current Plan card has a "Change Plan" link that navigates to the pricing section with the current plan marked. Pro users can also use "Manage Billing" to access Stripe portal for cancellation.
 
 ## Query Parameters
 
@@ -122,27 +131,40 @@ All cards follow the Settings page design system:
 | `types.ts` | Types | SubscriptionData, PaymentMethodInfo, InvoiceInfo, UpcomingInvoiceInfo |
 | `tier-display.ts` | Utility | Tier display names and API limits |
 | `data.ts` | Data layer | getSubscription, getUsageCount, getStripeData |
-| `current-plan-card.tsx` | Server component | Plan name, status, period |
+| `current-plan-card.tsx` | Server component | Plan name, status, period, "Change Plan" link |
 | `api-usage-card.tsx` | Server component | Usage progress bar |
 | `payment-method-card.tsx` | Server component | Card on file |
 | `next-billing-card.tsx` | Server component | Upcoming charge info |
 | `invoice-history-card.tsx` | Server component | Invoice table with PDF links |
 | `plan-actions-card.tsx` | Client component | Change plan + Stripe portal |
 | `upgrade-prompt.tsx` | Client component | Upgrade CTA shown when `?plan=` is present |
+| `success-refresh.tsx` | Client component | Polls and refreshes page after successful checkout until tier updates |
 
 ## Plan-Aware Redirect Flow
 
-The pricing CTA behavior on the landing page (`/#pricing`) depends on authentication state. The `PricingToggle` component (`src/components/landing/PricingToggle.tsx`) detects the logged-in user via Supabase client auth and renders different CTAs per tier:
+The pricing CTA behavior on the landing page (`/#pricing`) depends on authentication state and current plan context. The `PricingToggle` component (`src/components/landing/PricingToggle.tsx`) detects the logged-in user via Supabase client auth and renders different CTAs per tier.
+
+### Current Plan Marking
+
+When a user navigates from the billing page "Change Plan" link, the URL includes `?current={tier}#pricing`. The `PricingToggle` component:
+
+1. Reads the `?current=` search param via `useSearchParams()` (wrapped in `<Suspense>` on the landing page)
+2. For logged-in users, also fetches the tier via `GET /api/dashboard/tier` (takes priority over URL param)
+3. Highlights the current plan card with a primary border, "Current Plan" badge, and disabled CTA button
+4. Shows "Upgrade" / "Downgrade" labels on other plan CTAs relative to the current plan
+5. Falls back to the default "Recommended" badge on Pro when no current plan context exists
 
 ### Logged-in users
 
-- **Analyst (free):** "Go to Dashboard" links to `/dashboard`
-- **Pro:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "pro", interval }` and redirects to the returned Stripe checkout URL. A loading spinner ("Redirecting...") is shown while the request is in flight.
+- **Current plan:** Disabled "Current Plan" button (gray, no action)
+- **Higher tier:** "Upgrade" triggers `POST /api/billing/checkout` for Starter/Pro, or shows mailto for Institutional
+- **Lower tier:** "Downgrade" label — Analyst links to `/dashboard`, paid plans trigger checkout
 - **Institutional:** "Contact Sales" mailto link (unchanged)
 
 ### Logged-out users
 
 - **Analyst:** "Start Free" links to `/login?mode=magic&intent=signup`
+- **Starter:** "Get Started" links to `/login?mode=magic&intent=signup&plan=starter`
 - **Pro:** "Get Started" links to `/login?mode=magic&intent=signup&plan=pro`
 - **Institutional:** "Contact Sales" mailto link (unchanged)
 
@@ -157,5 +179,6 @@ Note: The standalone `/pricing` page has been retired and now returns a 308 perm
 
 - Settings page now has a "Go to Billing" link instead of inline subscription management (see [settings-page.md](settings-page.md))
 - Stripe portal API: `src/app/api/billing/portal/route.ts`
+- Plan switch API: `src/app/api/billing/switch-plan/route.ts` — updates Stripe subscription price with proration
 - Stripe client: `src/lib/stripe.ts`
 - Pricing page: `src/app/pricing/page.tsx` — permanent redirect (308) to `/#pricing`

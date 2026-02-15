@@ -2,7 +2,7 @@
 
 ## Feature Summary
 
-Users can compose, manage, and publish their own posts to X (Twitter) directly from the dashboard. Pro-tier users gain access to scheduling posts for future publication. This is separate from the automated `Post` pipeline — user-authored content lives in the `UserPost` model.
+Users can compose, manage, and publish their own posts to X (Twitter) directly from the dashboard. Starter-tier and above users can publish and schedule posts. This is separate from the automated `Post` pipeline — user-authored content lives in the `UserPost` model.
 
 ## Data Model
 
@@ -55,8 +55,8 @@ Create a new post.
 **Body:** `{ content: string, action: "draft" | "publish" | "schedule", scheduledFor?: string }`
 
 - `draft` — saves as DRAFT
-- `publish` — sets status to SCHEDULED with `scheduledFor: null` (cron picks up immediately)
-- `schedule` — PRO only, sets SCHEDULED with future `scheduledFor`
+- `publish` — sets status to SCHEDULED with `scheduledFor: null` (cron picks up immediately); enforces weekly publish quota (returns 429 if exceeded)
+- `schedule` — STARTER+ only, sets SCHEDULED with future `scheduledFor`
 
 ### `GET /api/dashboard/user-posts/[id]`
 
@@ -108,7 +108,7 @@ Refreshes an expired OAuth 2.0 token via `POST https://api.x.com/2/oauth2/token`
 ### Posts Page (`/dashboard/posts`)
 
 - **Compose Panel** — collapsible card with textarea (280-char counter), Save Draft / Post Now / Schedule buttons
-- **PRO gating** — Schedule button disabled with "PRO" badge for free users; date/time pickers shown for PRO users
+- **Tier gating** — Schedule button disabled for free users; date/time pickers shown for STARTER+ users
 - **Status Tabs** — All, Draft, Scheduled, Published, Failed (each with count)
 - **Posts Table** — Content, Status, Date, Actions columns with context-appropriate actions per status
 - **Pagination** — Standard prev/next with page numbers
@@ -123,6 +123,37 @@ Refreshes an expired OAuth 2.0 token via `POST https://api.x.com/2/oauth2/token`
 ### StatusBadge
 
 Extended with styles for: DRAFT (slate), SCHEDULED (purple), PUBLISHING (blue), FAILED (red).
+
+### `GET /api/dashboard/studio/publish-info`
+
+Lightweight preflight endpoint called when the Studio publish modal opens. Returns tier, X account status, and weekly publish quota usage.
+
+**Response:** `{ tier, canPublish, hasXAccount, xUsername, xDisplayName, xAvatarUrl, publishUsed, publishLimit, publishReset }`
+
+## Weekly Publish Quota
+
+Publishing to X is rate-limited per week (ISO week, resets Monday UTC):
+
+| Tier | Weekly Publishes |
+|------|-----------------|
+| FREE | 0 (disabled) |
+| STARTER | 1 |
+| PRO | 10 |
+| ENTERPRISE | Unlimited |
+
+Enforced in `POST /api/dashboard/user-posts` (action=publish). Returns 429 if quota exceeded. The quota counter uses Upstash Redis with key pattern `publish:{userId}:{isoWeek}`.
+
+## Studio Publish Modal
+
+The Studio page (`/dashboard/studio`) includes a publish confirmation modal that:
+
+1. Shows X account connection status (green if connected, yellow warning if not)
+2. Displays weekly publish quota as a progress bar
+3. Previews the post content with character count
+4. Offers an "Attach chart image" toggle when a chart image exists
+5. Disables the Confirm button if: no X account, quota exhausted, or FREE tier
+
+For FREE tier users, the Publish button renders as disabled with a lock icon and shows an upgrade toast on click.
 
 ## Auth Guard
 
@@ -142,7 +173,9 @@ Extended with styles for: DRAFT (slate), SCHEDULED (purple), PUBLISHING (blue), 
 | `src/app/api/dashboard/user-posts/route.ts` | GET (list) + POST (create) |
 | `src/app/api/dashboard/user-posts/[id]/route.ts` | GET + PATCH + DELETE |
 | `src/app/api/dashboard/user-posts/[id]/cancel/route.ts` | POST cancel |
+| `src/app/api/dashboard/studio/publish-info/route.ts` | Publish preflight info |
 | `src/app/api/cron/publish-user-posts/route.ts` | Cron publisher |
 | `src/components/dashboard/StatusBadge.tsx` | Status badge styles |
 | `src/components/dashboard/CompactPostTable.tsx` | Dashboard widget |
+| `src/app/dashboard/studio/publish-modal.tsx` | Studio publish confirmation modal |
 | `src/app/dashboard/posts/page.tsx` | Full posts page |
