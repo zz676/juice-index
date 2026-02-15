@@ -126,7 +126,7 @@ Extended with styles for: DRAFT (slate), SCHEDULED (purple), PUBLISHING (blue), 
 
 ### `GET /api/dashboard/studio/publish-info`
 
-Lightweight preflight endpoint called when the Studio publish modal opens. Returns tier, X account status, and weekly publish quota usage.
+Lightweight preflight endpoint called on Studio page mount (to enable early X account pre-check) and again when the publish modal opens (to refresh quota data). Returns tier, X account status, and weekly publish quota usage.
 
 **Response:** `{ tier, canPublish, hasXAccount, xUsername, xDisplayName, xAvatarUrl, publishUsed, publishLimit, publishReset }`
 
@@ -152,6 +152,20 @@ The Studio page (`/dashboard/studio`) includes a publish confirmation modal that
 3. Previews the post content with character count
 4. Offers an "Attach chart image" toggle when a chart image exists
 5. Disables the Confirm button if: no X account, quota exhausted, or FREE tier
+
+### X Account Pre-check
+
+The publish info endpoint is fetched on page mount so that `hasXAccount` is available early. When the user clicks the Publish button, if `hasXAccount` is `false`, a toast ("X account not connected. Connect in Settings to publish.") is shown and the modal does not open. This avoids the user entering the publish flow only to discover they can't publish.
+
+### Save Draft on Cancel
+
+When the user dismisses the publish modal (via Cancel button, close X, or backdrop click), an inline confirmation prompt replaces the action bar with three options:
+
+- **Don't Save** — closes the modal without saving
+- **Save Draft** — saves the current post draft via `POST /api/dashboard/user-posts` with `action: "draft"`, shows a success/error toast, then closes the modal
+- **Go Back** — dismisses the prompt and returns to the normal modal view
+
+The prompt state resets automatically when the modal closes.
 
 For FREE tier users, the Publish button renders as disabled with a lock icon and shows an upgrade toast on click.
 

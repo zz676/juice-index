@@ -18,6 +18,7 @@ export type PublishInfo = {
 interface PublishModalProps {
   open: boolean;
   onClose: () => void;
+  onSaveDraft: () => void;
   onConfirm: () => void;
   onSchedule: (scheduledFor: string) => void;
   isPublishing: boolean;
@@ -33,6 +34,7 @@ interface PublishModalProps {
 export default function PublishModal({
   open,
   onClose,
+  onSaveDraft,
   onConfirm,
   onSchedule,
   isPublishing,
@@ -48,14 +50,20 @@ export default function PublishModal({
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [scheduleError, setScheduleError] = useState("");
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
 
-  // Reset schedule state when modal closes
+  const handleDismiss = () => {
+    setShowSavePrompt(true);
+  };
+
+  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setScheduleMode(false);
       setScheduleDate("");
       setScheduleTime("");
       setScheduleError("");
+      setShowSavePrompt(false);
     }
   }, [open]);
 
@@ -111,7 +119,7 @@ export default function PublishModal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={onClose}
+          onClick={handleDismiss}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -130,7 +138,7 @@ export default function PublishModal({
                 Publish to X
               </h3>
               <button
-                onClick={onClose}
+                onClick={handleDismiss}
                 className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
               >
                 <span className="material-icons-round text-lg">close</span>
@@ -328,61 +336,108 @@ export default function PublishModal({
 
             {/* Actions */}
             {!isLoading && info && (
-              <div className="px-5 py-3 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-end gap-2">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-100 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (scheduleMode) {
-                      handleScheduleConfirm();
-                    } else {
-                      setScheduleMode(true);
-                    }
-                  }}
-                  disabled={!canConfirm}
-                  className="px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-                >
-                  {isScheduling ? (
-                    <>
-                      <span className="material-icons-round text-sm animate-spin">
-                        refresh
-                      </span>
-                      Scheduling...
-                    </>
+              <div className="px-5 py-3 border-t border-slate-custom-100 bg-slate-custom-50/50">
+                <AnimatePresence mode="wait">
+                  {showSavePrompt ? (
+                    <motion.div
+                      key="save-prompt"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <p className="text-xs text-slate-custom-500">
+                        Save your draft before closing?
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={onClose}
+                          className="px-3 py-1.5 text-xs font-medium text-slate-custom-500 border border-slate-custom-200 rounded-full hover:bg-slate-custom-100 transition-colors"
+                        >
+                          Don&apos;t Save
+                        </button>
+                        <button
+                          onClick={onSaveDraft}
+                          className="px-3 py-1.5 bg-primary text-slate-custom-900 text-xs font-bold rounded-full hover:bg-primary/90 transition-colors flex items-center gap-1"
+                        >
+                          <span className="material-icons-round text-sm">save</span>
+                          Save Draft
+                        </button>
+                        <button
+                          onClick={() => setShowSavePrompt(false)}
+                          className="px-3 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-100 transition-colors"
+                        >
+                          Go Back
+                        </button>
+                      </div>
+                    </motion.div>
                   ) : (
-                    <>
-                      <span className="material-icons-round text-sm">
-                        schedule
-                      </span>
-                      {scheduleMode ? "Confirm Schedule" : "Schedule For Later"}
-                    </>
+                    <motion.div
+                      key="actions"
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex items-center justify-end gap-2"
+                    >
+                      <button
+                        onClick={handleDismiss}
+                        className="px-4 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-100 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (scheduleMode) {
+                            handleScheduleConfirm();
+                          } else {
+                            setScheduleMode(true);
+                          }
+                        }}
+                        disabled={!canConfirm}
+                        className="px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                      >
+                        {isScheduling ? (
+                          <>
+                            <span className="material-icons-round text-sm animate-spin">
+                              refresh
+                            </span>
+                            Scheduling...
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-icons-round text-sm">
+                              schedule
+                            </span>
+                            {scheduleMode ? "Confirm Schedule" : "Schedule For Later"}
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={onConfirm}
+                        disabled={!canConfirm}
+                        className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                      >
+                        {isPublishing ? (
+                          <>
+                            <span className="material-icons-round text-sm animate-spin">
+                              refresh
+                            </span>
+                            Publishing...
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-icons-round text-sm">
+                              send
+                            </span>
+                            Publish Now
+                          </>
+                        )}
+                      </button>
+                    </motion.div>
                   )}
-                </button>
-                <button
-                  onClick={onConfirm}
-                  disabled={!canConfirm}
-                  className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-                >
-                  {isPublishing ? (
-                    <>
-                      <span className="material-icons-round text-sm animate-spin">
-                        refresh
-                      </span>
-                      Publishing...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-icons-round text-sm">
-                        send
-                      </span>
-                      Publish Now
-                    </>
-                  )}
-                </button>
+                </AnimatePresence>
               </div>
             )}
           </motion.div>
