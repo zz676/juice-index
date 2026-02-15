@@ -804,19 +804,6 @@ function StudioPageInner() {
 
   return (
     <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
-      {toast && (
-        <div
-          className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-8 py-4 rounded-xl border text-sm font-medium shadow-lg transition-all ${
-            toast.type === "success"
-              ? "border-primary bg-primary text-green-900"
-              : toast.type === "error"
-              ? "border-red-300 bg-red-200 text-red-700"
-              : "border-slate-200 bg-white text-slate-700"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
 
         <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 relative">
