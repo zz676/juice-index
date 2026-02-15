@@ -220,6 +220,12 @@ function StudioPageInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const showToast = useCallback((type: ToastType, message: string) => {
+    setToast({ type, message });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3200);
+  }, []);
+
   const fetchUsage = useCallback(() => {
     fetch("/api/dashboard/studio/usage")
       .then((res) => res.json())
@@ -237,7 +243,20 @@ function StudioPageInner() {
       .catch(() => {});
   }, []);
 
-  // Fetch user tier and usage on mount
+  const fetchPublishInfo = useCallback(async () => {
+    setIsLoadingPublishInfo(true);
+    try {
+      const res = await fetch("/api/dashboard/studio/publish-info");
+      const data = (await res.json()) as PublishInfo;
+      setPublishInfo(data);
+    } catch {
+      showToast("error", "Failed to load publish info.");
+    } finally {
+      setIsLoadingPublishInfo(false);
+    }
+  }, [showToast]);
+
+  // Fetch user tier, usage, and publish info on mount
   useEffect(() => {
     fetch("/api/dashboard/tier")
       .then((res) => res.json())
@@ -246,7 +265,8 @@ function StudioPageInner() {
       })
       .catch(() => {});
     fetchUsage();
-  }, [fetchUsage]);
+    fetchPublishInfo();
+  }, [fetchUsage, fetchPublishInfo]);
 
   // Pre-fill prompt from URL param (e.g., from brand search results)
   useEffect(() => {
@@ -256,12 +276,6 @@ function StudioPageInner() {
     }
     // Only run on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const showToast = useCallback((type: ToastType, message: string) => {
-    setToast({ type, message });
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3200);
   }, []);
 
   const applyQueryExecutionResult = useCallback(
@@ -696,27 +710,18 @@ function StudioPageInner() {
     );
   }, [prompt, queryJsonText, generatedSql, tableName, xField, yField, rawData, chartData, chartConfig, postDraft, showToast]);
 
-  const fetchPublishInfo = useCallback(async () => {
-    setIsLoadingPublishInfo(true);
-    try {
-      const res = await fetch("/api/dashboard/studio/publish-info");
-      const data = (await res.json()) as PublishInfo;
-      setPublishInfo(data);
-    } catch {
-      showToast("error", "Failed to load publish info.");
-    } finally {
-      setIsLoadingPublishInfo(false);
-    }
-  }, [showToast]);
-
   const handlePublishClick = useCallback(() => {
     if (userTier === "FREE") {
       showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.");
       return;
     }
+    if (publishInfo && !publishInfo.hasXAccount) {
+      showToast("error", "X account not connected. Connect in Settings to publish.");
+      return;
+    }
     setShowPublishModal(true);
     fetchPublishInfo();
-  }, [userTier, showToast, fetchPublishInfo]);
+  }, [userTier, publishInfo, showToast, fetchPublishInfo]);
 
   const handleConfirmPublish = useCallback(async () => {
     if (!postDraft) return;
@@ -747,6 +752,28 @@ function StudioPageInner() {
       setIsPublishing(false);
     }
   }, [postDraft, showToast, fetchPublishInfo]);
+
+  const handleSaveDraft = useCallback(async () => {
+    if (!postDraft) return;
+    try {
+      const res = await fetch("/api/dashboard/user-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: postDraft, action: "draft" }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as Record<string, unknown>;
+        throw new Error(
+          (typeof data.message === "string" && data.message) || "Failed to save draft"
+        );
+      }
+      showToast("success", "Draft saved!");
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setShowPublishModal(false);
+    }
+  }, [postDraft, showToast]);
 
   const handleConfirmSchedule = useCallback(async (scheduledFor: string) => {
     if (!postDraft) return;
@@ -1910,6 +1937,7 @@ function StudioPageInner() {
       <PublishModal
         open={showPublishModal}
         onClose={() => setShowPublishModal(false)}
+        onSaveDraft={handleSaveDraft}
         onConfirm={handleConfirmPublish}
         onSchedule={handleConfirmSchedule}
         isPublishing={isPublishing}
