@@ -1287,7 +1287,7 @@ function StudioPageInner() {
                   <img
                     src={chartImage}
                     alt="Generated chart"
-                    className="w-full max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-md"
+                    className="w-full max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)]"
                   />
                   <div className="flex items-center justify-between mt-3">
                     <button
