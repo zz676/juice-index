@@ -10,6 +10,7 @@ import NextBillingCard from "./next-billing-card";
 import InvoiceHistoryCard from "./invoice-history-card";
 import PlanActionsCard from "./plan-actions-card";
 import UpgradePrompt from "./upgrade-prompt";
+import SuccessRefresh from "./success-refresh";
 
 interface BillingPageProps {
   searchParams: Promise<{ success?: string; canceled?: string; plan?: string }>;
@@ -57,14 +58,17 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
       {/* Checkout success/canceled banners */}
       {params.success === "1" && (
-        <div className="mb-6 flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-          <span className="material-icons-round text-[18px] text-green-600 mt-0.5">
-            check_circle
-          </span>
-          <p className="text-sm text-green-700">
-            Your subscription has been activated. Welcome aboard!
-          </p>
-        </div>
+        <>
+          <SuccessRefresh currentTier={tier} />
+          <div className="mb-6 flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <span className="material-icons-round text-[18px] text-green-600 mt-0.5">
+              check_circle
+            </span>
+            <p className="text-sm text-green-700">
+              Your subscription has been activated. Welcome aboard!
+            </p>
+          </div>
+        </>
       )}
       {params.canceled === "1" && (
         <div className="mb-6 flex items-start gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3">

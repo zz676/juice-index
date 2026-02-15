@@ -9,7 +9,7 @@ Juice Index uses a 4-tier system for gating features and enforcing quotas. The c
 | Tier | Display Name | Visibility | Price |
 |------|-------------|------------|-------|
 | FREE | Analyst (Free) | Public | $0/mo |
-| STARTER | Starter | Internal only (academic, partner, trial) | N/A |
+| STARTER | Starter | Public | $9.99/mo ($7/mo annual) |
 | PRO | Pro | Public | $29/mo ($24/mo annual) |
 | ENTERPRISE | Institutional | Public | Custom |
 
@@ -26,7 +26,7 @@ Juice Index uses a 4-tier system for gating features and enforcing quotas. The c
 | Stored draft posts | 5 | 20 | Unlimited | Unlimited |
 | Pending scheduled posts | 0 | 5 | 10 | Unlimited |
 | CSV exports/month | 0 | 10 | 50 | Unlimited |
-| Weekly publishes | 0 | 1 | 10 | Unlimited |
+| Weekly publishes | 1 | 10 | 10 | Unlimited |
 | Data delay (days) | 30 | 0 | 0 | 0 |
 | Historical data (months) | 12 | 36 | 60 | Unlimited |
 | Seats | 1 | 1 | 1 | 5+ |
@@ -53,6 +53,7 @@ Separate rate limit functions with distinct Redis key prefixes:
 - `csvExportMonthlyLimit()` — CSV exports (`csv:{userId}:{yearMonth}`)
 - `weeklyPublishLimit()` — X publishes (`publish:{userId}:{isoWeek}`)
 - `getWeeklyPublishUsage()` — read-only publish usage (no increment)
+- `getStudioUsage()` — aggregated usage including publish count (returned via `/api/dashboard/studio/usage`)
 
 ### API Endpoint Tiers
 
