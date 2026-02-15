@@ -37,8 +37,8 @@ const tiers: TierDef[] = [
   {
     name: "Starter",
     plan: "starter",
-    monthlyPrice: 9.99,
-    annualPrice: 7,
+    monthlyPrice: 19.99,
+    annualPrice: 16.99,
     description: "For analysts getting started",
     features: [
       "Dashboard Access",
@@ -53,8 +53,8 @@ const tiers: TierDef[] = [
   {
     name: "Pro",
     plan: "pro",
-    monthlyPrice: 29,
-    annualPrice: 24,
+    monthlyPrice: 49.99,
+    annualPrice: 44.99,
     description: "Deep dives for investors",
     features: [
       "Full Dashboard Access",

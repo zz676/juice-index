@@ -9,8 +9,8 @@ Juice Index uses a 4-tier system for gating features and enforcing quotas. The c
 | Tier | Display Name | Visibility | Price |
 |------|-------------|------------|-------|
 | FREE | Analyst (Free) | Public | $0/mo |
-| STARTER | Starter | Public | $9.99/mo ($7/mo annual) |
-| PRO | Pro | Public | $29/mo ($24/mo annual) |
+| STARTER | Starter | Public | $19.99/mo ($16.99/mo annual) |
+| PRO | Pro | Public | $49.99/mo ($44.99/mo annual) |
 | ENTERPRISE | Institutional | Public | Custom |
 
 ## Quota Summary
