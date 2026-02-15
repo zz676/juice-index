@@ -12,7 +12,7 @@ const features = [
     icon: "factory",
     title: "Production Data",
     description:
-      "Track factory output across 50+ OEMs including BYD, Tesla China, and NIO. Monitor capacity utilization in real-time.",
+      "Track factory output across 50+ OEMs including BYD, Tesla, and NIO. Monitor capacity utilization in real-time.",
   },
   {
     icon: "verified",
@@ -136,14 +136,14 @@ export default function LandingPage() {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-custom-900 tracking-tight leading-[1.1] mb-6">
                 Ask anything about{" "}
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-custom-800 via-slate-custom-600 to-slate-custom-800">
-                  China&apos;s EV market
+                  the EV market
                 </span>
               </h1>
 
               <p className="text-lg text-slate-custom-500 max-w-xl mb-10 leading-relaxed mx-auto lg:mx-0">
                 AI-powered data intelligence on production, insurance
                 registrations, and supply chain dynamics for the world&apos;s
-                fastest-growing auto sector.
+                fastest-growing industry.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -182,7 +182,7 @@ export default function LandingPage() {
             </h2>
             <p className="text-slate-custom-500">
               Our platform aggregates millions of data points daily to give you
-              the most accurate picture of the Chinese EV ecosystem.
+              the most accurate picture of the global EV ecosystem.
             </p>
           </AnimatedSection>
 
@@ -278,7 +278,7 @@ export default function LandingPage() {
               Comprehensive coverage
             </h2>
             <p className="text-slate-custom-400 max-w-xl mx-auto">
-              The most granular dataset on China&apos;s electric vehicle market.
+              The most granular dataset on the global electric vehicle market.
             </p>
           </AnimatedSection>
 
@@ -328,7 +328,7 @@ export default function LandingPage() {
               Ready to see the data?
             </h2>
             <p className="text-lg text-slate-custom-500 mb-10 max-w-xl mx-auto">
-              Join analysts and investors tracking the Chinese EV revolution
+              Join analysts and investors tracking the global EV revolution
               with Juice Index.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -373,7 +373,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-sm text-slate-custom-500 leading-relaxed">
-                Providing clarity in the world&apos;s most complex automotive
+                Providing clarity in the world&apos;s most dynamic automotive
                 market.
               </p>
             </div>
