@@ -48,7 +48,7 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
-- Header includes a right-aligned "Change Plan" link (`/#pricing`) for quick access
+- Header includes a right-aligned upgrade button: FREE users see "Upgrade" (→ `/#pricing`), STARTER users see "Upgrade to Pro" (→ `/dashboard/billing?plan=pro`). Hidden for PRO and ENTERPRISE users.
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -76,7 +76,7 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 - "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
 - Hidden entirely for free users (returns `null` when `!isPaidUser`)
 - Error display banner
-- Note: "Change Plan" was moved to the Current Plan card header for better discoverability
+- Note: Upgrade button was moved to the Current Plan card header for better discoverability. Pro users use "Manage Billing" to cancel.
 
 ## Query Parameters
 

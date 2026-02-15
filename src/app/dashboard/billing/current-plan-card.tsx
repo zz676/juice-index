@@ -52,12 +52,14 @@ export default function CurrentPlanCard({
       <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
         <span className="material-icons-round text-slate-custom-400">workspace_premium</span>
         <h3 className="text-base font-semibold text-slate-custom-900">Current Plan</h3>
-        <Link
-          href="/#pricing"
-          className="ml-auto inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
-        >
-          Change Plan
-        </Link>
+        {(tier === "FREE" || tier === "STARTER") && (
+          <Link
+            href={tier === "FREE" ? "/#pricing" : "/dashboard/billing?plan=pro"}
+            className="ml-auto inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+          >
+            {tier === "FREE" ? "Upgrade" : "Upgrade to Pro"}
+          </Link>
+        )}
       </div>
       <div className="p-6">
         <div className="flex items-center justify-between">
