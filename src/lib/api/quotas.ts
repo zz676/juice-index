@@ -10,6 +10,7 @@ export type TierQuota = {
   maxDrafts: number;
   maxScheduled: number;
   csvExports: number;
+  weeklyPublishes: number;
   delayDays: number;
   histMonths: number;
   seats: number;
@@ -27,6 +28,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     maxDrafts: 50,
     maxScheduled: 50,
     csvExports: 50,
+    weeklyPublishes: 0,
     delayDays: 0,
     histMonths: 60,
     seats: 1,
@@ -42,6 +44,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     maxDrafts: 100,
     maxScheduled: 100,
     csvExports: 100,
+    weeklyPublishes: 1,
     delayDays: 0,
     histMonths: 60,
     seats: 1,
@@ -57,6 +60,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     maxDrafts: Infinity,
     maxScheduled: 10,
     csvExports: 50,
+    weeklyPublishes: 10,
     delayDays: 0,
     histMonths: 60,
     seats: 1,
@@ -72,6 +76,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     maxDrafts: Infinity,
     maxScheduled: Infinity,
     csvExports: Infinity,
+    weeklyPublishes: Infinity,
     delayDays: 0,
     histMonths: Infinity,
     seats: 5,

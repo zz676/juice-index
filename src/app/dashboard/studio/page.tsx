@@ -29,6 +29,7 @@ import {
 import type { ApiTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
+import PublishModal, { type PublishInfo } from "./publish-modal";
 
 type ChartPoint = { label: string; value: number };
 
@@ -102,6 +103,10 @@ function StudioPageInner() {
   const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
   const isResizing = useRef(false);
   const panelLeftOffset = useRef(0);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishInfo, setPublishInfo] = useState<PublishInfo | null>(null);
+  const [isLoadingPublishInfo, setIsLoadingPublishInfo] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -672,6 +677,58 @@ function StudioPageInner() {
       () => showToast("error", "Failed to copy link.")
     );
   }, [prompt, queryJsonText, generatedSql, tableName, xField, yField, rawData, chartData, chartConfig, postDraft, showToast]);
+
+  const fetchPublishInfo = useCallback(async () => {
+    setIsLoadingPublishInfo(true);
+    try {
+      const res = await fetch("/api/dashboard/studio/publish-info");
+      const data = (await res.json()) as PublishInfo;
+      setPublishInfo(data);
+    } catch {
+      showToast("error", "Failed to load publish info.");
+    } finally {
+      setIsLoadingPublishInfo(false);
+    }
+  }, [showToast]);
+
+  const handlePublishClick = useCallback(() => {
+    if (userTier === "FREE") {
+      showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.");
+      return;
+    }
+    setShowPublishModal(true);
+    fetchPublishInfo();
+  }, [userTier, showToast, fetchPublishInfo]);
+
+  const handleConfirmPublish = useCallback(async () => {
+    if (!postDraft) return;
+    setIsPublishing(true);
+    try {
+      const res = await fetch("/api/dashboard/user-posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: postDraft, action: "publish" }),
+      });
+      const data = (await res.json()) as Record<string, unknown>;
+      if (!res.ok) {
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            "Failed to publish"
+        );
+      }
+      showToast("success", "Post published to X!");
+      setShowPublishModal(false);
+      // Refresh publish info so quota display updates
+      fetchPublishInfo();
+    } catch (err) {
+      showToast(
+        "error",
+        err instanceof Error ? err.message : "Failed to publish"
+      );
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [postDraft, showToast, fetchPublishInfo]);
 
   if (!mounted) return null;
 
@@ -1668,14 +1725,24 @@ function StudioPageInner() {
                       <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
                     </label>
                     <div className="relative group">
-                      <button
-                        className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-                        disabled={!postDraft}
-                        onClick={() => showToast("info", "Publish workflow will be wired next.")}
-                      >
-                        <span className="material-icons-round text-sm">rocket_launch</span>
-                        Publish
-                      </button>
+                      {userTier === "FREE" ? (
+                        <button
+                          className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-xs font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
+                          onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
+                        >
+                          <span className="material-icons-round text-sm">lock</span>
+                          Publish
+                        </button>
+                      ) : (
+                        <button
+                          className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                          disabled={!postDraft}
+                          onClick={handlePublishClick}
+                        >
+                          <span className="material-icons-round text-sm">rocket_launch</span>
+                          Publish
+                        </button>
+                      )}
                       <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
                     </div>
                   </div>
@@ -1692,6 +1759,19 @@ function StudioPageInner() {
           />
         </div>
       </div>
+
+      <PublishModal
+        open={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        onConfirm={handleConfirmPublish}
+        isPublishing={isPublishing}
+        isLoading={isLoadingPublishInfo}
+        info={publishInfo}
+        postDraft={postDraft}
+        attachImage={attachImage}
+        onAttachImageChange={setAttachImage}
+        chartImage={chartImage}
+      />
     </div>
   );
 }

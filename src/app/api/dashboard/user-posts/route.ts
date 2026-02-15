@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { UserPostStatus, AuthProvider } from "@prisma/client";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
+import { weeklyPublishLimit, getWeeklyPublishUsage } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -48,8 +49,10 @@ export async function GET(request: NextRequest) {
   ]);
 
   const userTier = normalizeTier(subscription?.tier);
-  const canPublish = hasTier(userTier, "PRO");
-  const canSchedule = hasTier(userTier, "PRO");
+  const canPublish = hasTier(userTier, "STARTER");
+  const canSchedule = hasTier(userTier, "STARTER");
+
+  const publishUsage = await getWeeklyPublishUsage(user.id, userTier);
 
   return NextResponse.json({
     posts,
@@ -60,6 +63,9 @@ export async function GET(request: NextRequest) {
     canSchedule,
     hasXAccount: !!xAccount,
     hasXLoginIdentity: !!xLoginAccount,
+    publishUsed: publishUsage.used,
+    publishLimit: publishUsage.limit,
+    publishReset: publishUsage.reset,
   });
 }
 
@@ -106,19 +112,27 @@ export async function POST(request: NextRequest) {
 
   if (action === "publish") {
     // FREE tier cannot publish to X
-    if (!hasTier(userTier, "PRO")) {
+    if (!hasTier(userTier, "STARTER")) {
       return NextResponse.json(
-        { error: "FORBIDDEN", message: "Publishing to X requires a Pro subscription. Upgrade to Pro to post." },
+        { error: "FORBIDDEN", message: "Publishing to X requires a Starter subscription or higher. Upgrade to publish." },
         { status: 403 }
+      );
+    }
+    // Check weekly publish quota
+    const rl = await weeklyPublishLimit(user.id, userTier, new Date());
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "QUOTA_EXCEEDED", message: `Weekly publish limit reached (${rl.limit}/${rl.limit}). Resets next Monday.` },
+        { status: 429 }
       );
     }
     // Queued for immediate publishing by cron
     postStatus = UserPostStatus.SCHEDULED;
     scheduledDate = null;
   } else if (action === "schedule") {
-    if (!hasTier(userTier, "PRO")) {
+    if (!hasTier(userTier, "STARTER")) {
       return NextResponse.json(
-        { error: "FORBIDDEN", message: "Scheduling requires a Pro subscription" },
+        { error: "FORBIDDEN", message: "Scheduling requires a Starter subscription or higher" },
         { status: 403 }
       );
     }
