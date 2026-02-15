@@ -27,7 +27,6 @@ import {
   type ModelDefinition,
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
-import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
 import PublishModal, { type PublishInfo } from "./publish-modal";
 
@@ -97,9 +96,13 @@ function StudioPageInner() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeSection, setActiveSection] = useState<number>(1);
   const [queryUsageCount, setQueryUsageCount] = useState(0);
+  const [queryLimitCount, setQueryLimitCount] = useState(Infinity);
   const [composerUsageCount, setComposerUsageCount] = useState(0);
+  const [draftLimitCount, setDraftLimitCount] = useState(Infinity);
   const [chartUsageCount, setChartUsageCount] = useState(0);
+  const [chartLimitCount, setChartLimitCount] = useState(Infinity);
   const [publishUsageCount, setPublishUsageCount] = useState(0);
+  const [publishLimitCount, setPublishLimitCount] = useState(Infinity);
   const [modelUsage, setModelUsage] = useState<Array<{
     modelId: string;
     queryUsed: number;
@@ -221,9 +224,13 @@ function StudioPageInner() {
       .then((res) => res.json())
       .then((data: Record<string, unknown>) => {
         if (typeof data.queryUsed === "number") setQueryUsageCount(data.queryUsed);
+        if (typeof data.queryLimit === "number") setQueryLimitCount(data.queryLimit);
         if (typeof data.draftUsed === "number") setComposerUsageCount(data.draftUsed);
+        if (typeof data.draftLimit === "number") setDraftLimitCount(data.draftLimit);
         if (typeof data.chartUsed === "number") setChartUsageCount(data.chartUsed);
+        if (typeof data.chartLimit === "number") setChartLimitCount(data.chartLimit);
         if (typeof data.publishUsed === "number") setPublishUsageCount(data.publishUsed);
+        if (typeof data.publishLimit === "number") setPublishLimitCount(data.publishLimit);
         if (Array.isArray(data.modelUsage)) setModelUsage(data.modelUsage as typeof modelUsage);
       })
       .catch(() => {});
@@ -743,9 +750,9 @@ function StudioPageInner() {
   if (!mounted) return null;
 
   const hasChartData = chartData.length > 0;
-  const queryQuotaExhausted = queryUsageCount >= TIER_QUOTAS[userTier].studioQueries;
-  const chartQuotaExhausted = chartUsageCount >= TIER_QUOTAS[userTier].chartGen;
-  const draftQuotaExhausted = composerUsageCount >= TIER_QUOTAS[userTier].postDrafts;
+  const queryQuotaExhausted = queryUsageCount >= queryLimitCount;
+  const chartQuotaExhausted = chartUsageCount >= chartLimitCount;
+  const draftQuotaExhausted = composerUsageCount >= draftLimitCount;
 
   const selectedQueryModelExhausted = (() => {
     const mu = modelUsage.find((u) => u.modelId === queryModelId);
@@ -967,7 +974,7 @@ function StudioPageInner() {
                     )}
                     </div>
                     <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
-                      {queryUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].studioQueries) ? TIER_QUOTAS[userTier].studioQueries : "\u221E"} queries
+                      {queryUsageCount}/{Number.isFinite(queryLimitCount) ? queryLimitCount : "\u221E"} queries
                       {(() => {
                         const mu = modelUsage.find((u) => u.modelId === queryModelId);
                         if (!mu || !Number.isFinite(mu.queryLimit)) return null;
@@ -992,7 +999,7 @@ function StudioPageInner() {
                     {queryQuotaExhausted && (
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
-                        Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                        Daily query limit reached ({queryLimitCount}/{queryLimitCount})
                       </span>
                     )}
                     {selectedQueryModelExhausted && !queryQuotaExhausted && (
@@ -1059,7 +1066,7 @@ function StudioPageInner() {
                     {queryQuotaExhausted && (
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
-                        Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                        Daily query limit reached ({queryLimitCount}/{queryLimitCount})
                       </span>
                     )}
                   </div>
@@ -1488,7 +1495,7 @@ function StudioPageInner() {
                 <div className="flex flex-col items-end gap-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-mono text-slate-custom-400">
-                      {chartUsageCount}/{TIER_QUOTAS[userTier].chartGen}
+                      {chartUsageCount}/{chartLimitCount}
                     </span>
                     <button
                       onClick={generateChartImage}
@@ -1512,7 +1519,7 @@ function StudioPageInner() {
                   {chartQuotaExhausted && (
                     <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                       <span className="material-icons-round text-xs">info</span>
-                      Daily chart limit reached ({TIER_QUOTAS[userTier].chartGen}/{TIER_QUOTAS[userTier].chartGen})
+                      Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
                     </span>
                   )}
                 </div>
@@ -1728,7 +1735,7 @@ function StudioPageInner() {
                     )}
                     </div>
                     <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
-                      {composerUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].postDrafts) ? TIER_QUOTAS[userTier].postDrafts : "\u221E"} drafts
+                      {composerUsageCount}/{Number.isFinite(draftLimitCount) ? draftLimitCount : "\u221E"} drafts
                       {(() => {
                         const mu = modelUsage.find((u) => u.modelId === selectedModelId);
                         if (!mu || !Number.isFinite(mu.draftLimit)) return null;
@@ -1772,7 +1779,7 @@ function StudioPageInner() {
                     {draftQuotaExhausted && (
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
-                        Daily draft limit reached ({TIER_QUOTAS[userTier].postDrafts}/{TIER_QUOTAS[userTier].postDrafts})
+                        Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
                       </span>
                     )}
                     {selectedComposerModelExhausted && !draftQuotaExhausted && (
@@ -1824,7 +1831,7 @@ function StudioPageInner() {
                     </label>
                     {userTier !== "FREE" && (
                       <span className="text-[10px] font-medium text-slate-custom-400">
-                        {publishUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].weeklyPublishes) ? TIER_QUOTAS[userTier].weeklyPublishes : "\u221E"} this week
+                        {publishUsageCount}/{Number.isFinite(publishLimitCount) ? publishLimitCount : "\u221E"} this week
                       </span>
                     )}
                     <div className="relative group">
