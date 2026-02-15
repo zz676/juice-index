@@ -25,7 +25,12 @@ interface DashboardFeed {
   catalysts: Array<{ month: string; day: string; title: string; desc: string; tags: string[]; highlight?: string }>;
 }
 
-const KEEP_LABELS = ["NEV Monthly Retail", "NEV Monthly Production"];
+const DASHBOARD_CARD_LABELS = [
+  "NEV Monthly Retail",
+  "NEV Monthly Production",
+  "Leading OEM",
+  "Weekly Retail Sales",
+];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -57,23 +62,22 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const filteredCards = stats?.cards.filter((c) => KEEP_LABELS.includes(c.label)) ?? [];
+  const filteredCards = DASHBOARD_CARD_LABELS
+    .map((label) => stats?.cards.find((c) => c.label === label))
+    .filter((c): c is CardData => c !== undefined);
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-8">
-        {/* Top row: 2 stat cards + chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-          <div className="space-y-6">
-            <div className="h-32 bg-slate-custom-100 rounded-lg"></div>
-            <div className="h-32 bg-slate-custom-100 rounded-lg"></div>
-          </div>
-          <div className="h-[280px] bg-slate-custom-100 rounded-lg"></div>
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-[120px] bg-slate-custom-100 rounded-lg" />
+          ))}
         </div>
-        {/* News + Catalysts */}
+        <div className="h-[420px] bg-slate-custom-100 rounded-lg" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-64 bg-slate-custom-100 rounded-lg"></div>
-          <div className="h-64 bg-slate-custom-100 rounded-lg"></div>
+          <div className="h-64 bg-slate-custom-100 rounded-lg" />
+          <div className="h-64 bg-slate-custom-100 rounded-lg" />
         </div>
       </div>
     );
@@ -91,16 +95,15 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Top Row: 2 Stat Cards (stacked) + Delivery Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 mb-8">
-        {/* Left column: stacked stat cards */}
-        <div className="flex flex-col gap-6">
-          {filteredCards.map((card, i) => (
-            <StatCard key={i} {...card} />
-          ))}
-        </div>
+      {/* 4 Stat Cards in equal-width row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {filteredCards.map((card, i) => (
+          <StatCard key={i} {...card} />
+        ))}
+      </div>
 
-        {/* Right column: Delivery chart */}
+      {/* Delivery Chart: full width */}
+      <div className="mb-8">
         <DeliveryChart />
       </div>
 
