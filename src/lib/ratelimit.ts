@@ -1,6 +1,7 @@
 import { nextUtcMidnightEpochSeconds } from "@/lib/api/delay";
-import { TIER_QUOTAS } from "@/lib/api/quotas";
+import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import type { ApiTier } from "@/lib/api/tier";
+import { MODEL_REGISTRY } from "@/lib/studio/models";
 
 export type RateLimitResult = {
   success: boolean;
@@ -141,6 +142,79 @@ export function studioPostDraftLimit(userId: string, tier: ApiTier, now: Date): 
   return rateLimitDailyPrefixed("studio:post", userId, TIER_QUOTAS[tier].postDrafts, now);
 }
 
+export function studioModelQueryLimit(
+  userId: string,
+  tier: ApiTier,
+  modelId: string,
+  now: Date,
+): Promise<RateLimitResult> {
+  const limit = getModelQuota(tier, modelId, "studioQueriesByModel");
+  return rateLimitDailyPrefixed(`studio:query:model:${modelId}`, userId, limit, now);
+}
+
+export function studioModelPostDraftLimit(
+  userId: string,
+  tier: ApiTier,
+  modelId: string,
+  now: Date,
+): Promise<RateLimitResult> {
+  const limit = getModelQuota(tier, modelId, "postDraftsByModel");
+  return rateLimitDailyPrefixed(`studio:post:model:${modelId}`, userId, limit, now);
+}
+
+export type CompositeRateLimitResult = {
+  globalResult: RateLimitResult;
+  modelResult: RateLimitResult;
+  success: boolean;
+  failedOn: "global" | "model" | null;
+};
+
+/**
+ * Checks both global studio query limit and per-model sub-limit.
+ * Both must pass for success. Global is checked first.
+ */
+export async function enforceStudioQueryLimits(
+  userId: string,
+  tier: ApiTier,
+  modelId: string,
+  now: Date,
+): Promise<CompositeRateLimitResult> {
+  const globalResult = await studioQueryLimit(userId, tier, now);
+  if (!globalResult.success) {
+    return { globalResult, modelResult: globalResult, success: false, failedOn: "global" };
+  }
+  const modelResult = await studioModelQueryLimit(userId, tier, modelId, now);
+  return {
+    globalResult,
+    modelResult,
+    success: modelResult.success,
+    failedOn: modelResult.success ? null : "model",
+  };
+}
+
+/**
+ * Checks both global post draft limit and per-model sub-limit.
+ * Both must pass for success. Global is checked first.
+ */
+export async function enforceStudioPostDraftLimits(
+  userId: string,
+  tier: ApiTier,
+  modelId: string,
+  now: Date,
+): Promise<CompositeRateLimitResult> {
+  const globalResult = await studioPostDraftLimit(userId, tier, now);
+  if (!globalResult.success) {
+    return { globalResult, modelResult: globalResult, success: false, failedOn: "global" };
+  }
+  const modelResult = await studioModelPostDraftLimit(userId, tier, modelId, now);
+  return {
+    globalResult,
+    modelResult,
+    success: modelResult.success,
+    failedOn: modelResult.success ? null : "model",
+  };
+}
+
 /**
  * Monthly rate limiter for CSV exports. Uses year-month as the key window.
  */
@@ -259,6 +333,14 @@ export async function getWeeklyPublishUsage(
   }
 }
 
+export type ModelUsageEntry = {
+  modelId: string;
+  queryUsed: number;
+  queryLimit: number;
+  draftUsed: number;
+  draftLimit: number;
+};
+
 export type StudioUsage = {
   queryUsed: number;
   queryLimit: number;
@@ -268,9 +350,19 @@ export type StudioUsage = {
   chartLimit: number;
   publishUsed: number;
   publishLimit: number;
+  modelUsage: ModelUsageEntry[];
 };
 
 export async function getStudioUsage(userId: string, tier: ApiTier): Promise<StudioUsage> {
+  const modelIds = MODEL_REGISTRY.map((m) => m.id);
+  const emptyModelUsage: ModelUsageEntry[] = modelIds.map((id) => ({
+    modelId: id,
+    queryUsed: 0,
+    queryLimit: getModelQuota(tier, id, "studioQueriesByModel"),
+    draftUsed: 0,
+    draftLimit: getModelQuota(tier, id, "postDraftsByModel"),
+  }));
+
   try {
     const now = new Date();
     const y = now.getUTCFullYear();
@@ -279,12 +371,28 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
     const dateKey = `${y}${m}${d}`;
 
     const wk = isoWeekKey(now);
-    const [queryUsed, draftUsed, chartUsed, publishUsed] = await Promise.all([
+
+    // Fetch global counters + per-model counters in parallel
+    const results = await Promise.all([
       upstashGet(`studio:query:${userId}:${dateKey}`),
       upstashGet(`studio:post:${userId}:${dateKey}`),
       upstashGet(`studio:chart:${userId}:${dateKey}`),
       upstashGet(`publish:${userId}:${wk}`),
+      ...modelIds.map((id) => upstashGet(`studio:query:model:${id}:${userId}:${dateKey}`)),
+      ...modelIds.map((id) => upstashGet(`studio:post:model:${id}:${userId}:${dateKey}`)),
     ]);
+
+    const [queryUsed, draftUsed, chartUsed, publishUsed] = results;
+    const modelQueryCounts = results.slice(4, 4 + modelIds.length);
+    const modelDraftCounts = results.slice(4 + modelIds.length);
+
+    const modelUsage: ModelUsageEntry[] = modelIds.map((id, i) => ({
+      modelId: id,
+      queryUsed: modelQueryCounts[i] ?? 0,
+      queryLimit: getModelQuota(tier, id, "studioQueriesByModel"),
+      draftUsed: modelDraftCounts[i] ?? 0,
+      draftLimit: getModelQuota(tier, id, "postDraftsByModel"),
+    }));
 
     return {
       queryUsed,
@@ -295,6 +403,7 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
       chartLimit: TIER_QUOTAS[tier].chartGen,
       publishUsed,
       publishLimit: TIER_QUOTAS[tier].weeklyPublishes,
+      modelUsage,
     };
   } catch (err) {
     console.warn("Failed to fetch studio usage, returning zeros:", err);
@@ -307,6 +416,7 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
       chartLimit: TIER_QUOTAS[tier].chartGen,
       publishUsed: 0,
       publishLimit: TIER_QUOTAS[tier].weeklyPublishes,
+      modelUsage: emptyModelUsage,
     };
   }
 }

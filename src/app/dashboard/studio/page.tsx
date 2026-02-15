@@ -100,6 +100,13 @@ function StudioPageInner() {
   const [composerUsageCount, setComposerUsageCount] = useState(0);
   const [chartUsageCount, setChartUsageCount] = useState(0);
   const [publishUsageCount, setPublishUsageCount] = useState(0);
+  const [modelUsage, setModelUsage] = useState<Array<{
+    modelId: string;
+    queryUsed: number;
+    queryLimit: number;
+    draftUsed: number;
+    draftLimit: number;
+  }>>([]);
   const defaultPanelWidth = 450;
   const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
   const isResizing = useRef(false);
@@ -217,6 +224,7 @@ function StudioPageInner() {
         if (typeof data.draftUsed === "number") setComposerUsageCount(data.draftUsed);
         if (typeof data.chartUsed === "number") setChartUsageCount(data.chartUsed);
         if (typeof data.publishUsed === "number") setPublishUsageCount(data.publishUsed);
+        if (Array.isArray(data.modelUsage)) setModelUsage(data.modelUsage as typeof modelUsage);
       })
       .catch(() => {});
   }, []);
@@ -739,6 +747,17 @@ function StudioPageInner() {
   const chartQuotaExhausted = chartUsageCount >= TIER_QUOTAS[userTier].chartGen;
   const draftQuotaExhausted = composerUsageCount >= TIER_QUOTAS[userTier].postDrafts;
 
+  const selectedQueryModelExhausted = (() => {
+    const mu = modelUsage.find((u) => u.modelId === queryModelId);
+    if (!mu || !Number.isFinite(mu.queryLimit)) return false;
+    return mu.queryUsed >= mu.queryLimit;
+  })();
+  const selectedComposerModelExhausted = (() => {
+    const mu = modelUsage.find((u) => u.modelId === selectedModelId);
+    if (!mu || !Number.isFinite(mu.draftLimit)) return false;
+    return mu.draftUsed >= mu.draftLimit;
+  })();
+
   return (
     <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
@@ -894,26 +913,41 @@ function StudioPageInner() {
                           {MODEL_REGISTRY.map((model: ModelDefinition) => {
                             const accessible = canAccessModel(userTier, model.id);
                             const isSelected = model.id === queryModelId;
+                            const mu = modelUsage.find((u) => u.modelId === model.id);
+                            const modelExhausted = accessible && mu && Number.isFinite(mu.queryLimit) && mu.queryUsed >= mu.queryLimit;
                             return (
                               <button
                                 key={model.id}
                                 onClick={() => {
-                                  if (accessible) {
+                                  if (accessible && !modelExhausted) {
                                     setQueryModelId(model.id);
                                     setIsQueryModelDropdownOpen(false);
+                                  } else if (modelExhausted) {
+                                    showToast("info", `${model.displayName} daily limit reached. Try another model.`);
                                   } else {
                                     showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
                                   }
                                 }}
                                 className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
-                                  accessible
+                                  accessible && !modelExhausted
                                     ? "hover:bg-primary/5 cursor-pointer"
                                     : "opacity-50 cursor-not-allowed"
                                 } ${isSelected ? "bg-primary/10" : ""}`}
                               >
                                 <div className="flex-1 min-w-0">
-                                  <div className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
-                                    {model.displayName}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                      {model.displayName}
+                                    </span>
+                                    {accessible && mu && (
+                                      <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                        modelExhausted
+                                          ? "bg-red-100 text-red-600"
+                                          : "bg-slate-custom-100 text-slate-custom-500"
+                                      }`}>
+                                        {Number.isFinite(mu.queryLimit) ? `${mu.queryUsed}/${mu.queryLimit}` : "Unlimited"}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
                                     {model.description}
@@ -933,13 +967,18 @@ function StudioPageInner() {
                     )}
                     </div>
                     <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
-                      {queryUsageCount}/{TIER_QUOTAS[userTier].studioQueries} queries
+                      {queryUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].studioQueries) ? TIER_QUOTAS[userTier].studioQueries : "\u221E"} queries
+                      {(() => {
+                        const mu = modelUsage.find((u) => u.modelId === queryModelId);
+                        if (!mu || !Number.isFinite(mu.queryLimit)) return null;
+                        return ` \u00B7 ${mu.queryUsed}/${mu.queryLimit} ${MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName ?? queryModelId}`;
+                      })()}
                     </span>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <button
                       onClick={generateRunnableQuery}
-                      disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted}
+                      disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted || selectedQueryModelExhausted}
                       className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                     >
                       {isGeneratingQueryPlan && (
@@ -954,6 +993,12 @@ function StudioPageInner() {
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
                         Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                      </span>
+                    )}
+                    {selectedQueryModelExhausted && !queryQuotaExhausted && (
+                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-xs">info</span>
+                        {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName} limit reached. Try another model.
                       </span>
                     )}
                   </div>
@@ -1629,26 +1674,41 @@ function StudioPageInner() {
                           {MODEL_REGISTRY.map((model: ModelDefinition) => {
                             const accessible = canAccessModel(userTier, model.id);
                             const isSelected = model.id === selectedModelId;
+                            const mu = modelUsage.find((u) => u.modelId === model.id);
+                            const modelExhausted = accessible && mu && Number.isFinite(mu.draftLimit) && mu.draftUsed >= mu.draftLimit;
                             return (
                               <button
                                 key={model.id}
                                 onClick={() => {
-                                  if (accessible) {
+                                  if (accessible && !modelExhausted) {
                                     setSelectedModelId(model.id);
                                     setIsModelDropdownOpen(false);
+                                  } else if (modelExhausted) {
+                                    showToast("info", `${model.displayName} daily draft limit reached. Try another model.`);
                                   } else {
                                     showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
                                   }
                                 }}
                                 className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
-                                  accessible
+                                  accessible && !modelExhausted
                                     ? "hover:bg-primary/5 cursor-pointer"
                                     : "opacity-50 cursor-not-allowed"
                                 } ${isSelected ? "bg-primary/10" : ""}`}
                               >
                                 <div className="flex-1 min-w-0">
-                                  <div className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
-                                    {model.displayName}
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                      {model.displayName}
+                                    </span>
+                                    {accessible && mu && (
+                                      <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                        modelExhausted
+                                          ? "bg-red-100 text-red-600"
+                                          : "bg-slate-custom-100 text-slate-custom-500"
+                                      }`}>
+                                        {Number.isFinite(mu.draftLimit) ? `${mu.draftUsed}/${mu.draftLimit}` : "Unlimited"}
+                                      </span>
+                                    )}
                                   </div>
                                   <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
                                     {model.description}
@@ -1668,7 +1728,12 @@ function StudioPageInner() {
                     )}
                     </div>
                     <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
-                      {composerUsageCount}/{TIER_QUOTAS[userTier].postDrafts} drafts
+                      {composerUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].postDrafts) ? TIER_QUOTAS[userTier].postDrafts : "\u221E"} drafts
+                      {(() => {
+                        const mu = modelUsage.find((u) => u.modelId === selectedModelId);
+                        if (!mu || !Number.isFinite(mu.draftLimit)) return null;
+                        return ` \u00B7 ${mu.draftUsed}/${mu.draftLimit} ${MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? selectedModelId}`;
+                      })()}
                     </span>
                   </div>
 
@@ -1692,7 +1757,7 @@ function StudioPageInner() {
                   <div className="flex flex-col items-end gap-1">
                     <button
                       onClick={generateDraft}
-                      disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted}
+                      disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
                       className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                     >
                       <span
@@ -1708,6 +1773,12 @@ function StudioPageInner() {
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
                         Daily draft limit reached ({TIER_QUOTAS[userTier].postDrafts}/{TIER_QUOTAS[userTier].postDrafts})
+                      </span>
+                    )}
+                    {selectedComposerModelExhausted && !draftQuotaExhausted && (
+                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-xs">info</span>
+                        {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName} limit reached. Try another model.
                       </span>
                     )}
                   </div>

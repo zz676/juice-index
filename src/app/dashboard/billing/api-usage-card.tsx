@@ -1,5 +1,6 @@
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import type { ApiTier } from "@/lib/api/tier";
+import { MODEL_REGISTRY } from "@/lib/studio/models";
 
 interface ApiUsageCardProps {
   usageCount: number;
@@ -28,6 +29,8 @@ export default function ApiUsageCard({
   const usagePercent =
     tierLimit === Infinity ? 0 : Math.min((usageCount / tierLimit) * 100, 100);
   const usageLimitDisplay = formatLimit(tierLimit);
+
+  const modelQuotaEntries = Object.entries(quotas.studioQueriesByModel);
 
   return (
     <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
@@ -63,6 +66,29 @@ export default function ApiUsageCard({
           <QuotaItem label="History" value={Number.isFinite(quotas.histMonths) ? `${Math.round(quotas.histMonths / 12)} years` : "Unlimited"} />
           <QuotaItem label="Scheduled Posts" value={formatLimit(quotas.maxScheduled)} />
         </div>
+
+        {/* Per-Model Quota Breakdown */}
+        {modelQuotaEntries.length > 0 && (
+          <div className="pt-4 border-t border-slate-custom-100">
+            <h4 className="text-xs font-semibold text-slate-custom-700 mb-2">AI Model Limits (per day)</h4>
+            <div className="space-y-1">
+              {modelQuotaEntries.map(([modelId, queryLimit]) => {
+                const draftLimit = quotas.postDraftsByModel[modelId] ?? 0;
+                const modelDef = MODEL_REGISTRY.find((m) => m.id === modelId);
+                return (
+                  <div key={modelId} className="flex items-center justify-between bg-slate-custom-50 rounded-lg px-3 py-1.5">
+                    <span className="text-xs text-slate-custom-500">
+                      {modelDef?.displayName ?? modelId}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-custom-800">
+                      {formatLimit(queryLimit)} queries / {formatLimit(draftLimit)} drafts
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
