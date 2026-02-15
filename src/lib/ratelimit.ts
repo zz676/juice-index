@@ -266,6 +266,8 @@ export type StudioUsage = {
   draftLimit: number;
   chartUsed: number;
   chartLimit: number;
+  publishUsed: number;
+  publishLimit: number;
 };
 
 export async function getStudioUsage(userId: string, tier: ApiTier): Promise<StudioUsage> {
@@ -276,10 +278,12 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
     const d = String(now.getUTCDate()).padStart(2, "0");
     const dateKey = `${y}${m}${d}`;
 
-    const [queryUsed, draftUsed, chartUsed] = await Promise.all([
+    const wk = isoWeekKey(now);
+    const [queryUsed, draftUsed, chartUsed, publishUsed] = await Promise.all([
       upstashGet(`studio:query:${userId}:${dateKey}`),
       upstashGet(`studio:post:${userId}:${dateKey}`),
       upstashGet(`studio:chart:${userId}:${dateKey}`),
+      upstashGet(`publish:${userId}:${wk}`),
     ]);
 
     return {
@@ -289,6 +293,8 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
       draftLimit: TIER_QUOTAS[tier].postDrafts,
       chartUsed,
       chartLimit: TIER_QUOTAS[tier].chartGen,
+      publishUsed,
+      publishLimit: TIER_QUOTAS[tier].weeklyPublishes,
     };
   } catch (err) {
     console.warn("Failed to fetch studio usage, returning zeros:", err);
@@ -299,6 +305,8 @@ export async function getStudioUsage(userId: string, tier: ApiTier): Promise<Stu
       draftLimit: TIER_QUOTAS[tier].postDrafts,
       chartUsed: 0,
       chartLimit: TIER_QUOTAS[tier].chartGen,
+      publishUsed: 0,
+      publishLimit: TIER_QUOTAS[tier].weeklyPublishes,
     };
   }
 }

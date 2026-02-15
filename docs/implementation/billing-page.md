@@ -6,7 +6,7 @@ The `/dashboard/billing` page is the single source of truth for all billing and 
 
 ## Architecture
 
-**Server Component** (`page.tsx`) handles auth, data fetching, and composes six card components. Only one card (`PlanActionsCard`) is a client component — the rest are server components.
+**Server Component** (`page.tsx`) handles auth, data fetching, and composes six card components. Only two cards are client components (`PlanActionsCard`, `SuccessRefresh`) — the rest are server components.
 
 ### Data Flow
 
@@ -34,6 +34,14 @@ The subscription query uses raw SQL instead of Prisma model queries because some
 ### Stripe Resilience
 
 `getStripeData()` uses `Promise.allSettled` so that a failure in one Stripe call (e.g., upcoming invoice for a canceled subscription) doesn't prevent the other data from rendering.
+
+### Payment Method Fallback
+
+Stripe Checkout does not always set a `default_payment_method` on the customer. `getStripeData()` first checks the customer's default payment method, then falls back to listing the customer's payment methods directly (`stripe.paymentMethods.list`).
+
+### Post-Checkout Refresh
+
+After a successful checkout, the Stripe webhook may not have updated the database by the time the billing page loads. The `SuccessRefresh` client component polls every 2 seconds (up to 10 attempts) using `router.refresh()` until the tier updates from FREE.
 
 ## Cards
 
@@ -129,6 +137,7 @@ All cards follow the Settings page design system:
 | `invoice-history-card.tsx` | Server component | Invoice table with PDF links |
 | `plan-actions-card.tsx` | Client component | Change plan + Stripe portal |
 | `upgrade-prompt.tsx` | Client component | Upgrade CTA shown when `?plan=` is present |
+| `success-refresh.tsx` | Client component | Polls and refreshes page after successful checkout until tier updates |
 
 ## Plan-Aware Redirect Flow
 
@@ -137,12 +146,14 @@ The pricing CTA behavior on the landing page (`/#pricing`) depends on authentica
 ### Logged-in users
 
 - **Analyst (free):** "Go to Dashboard" links to `/dashboard`
-- **Pro:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "pro", interval }` and redirects to the returned Stripe checkout URL. A loading spinner ("Redirecting...") is shown while the request is in flight.
+- **Starter:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "starter", interval }` and redirects to the Stripe checkout URL.
+- **Pro:** "Get Started" triggers a direct `POST /api/billing/checkout` call with `{ plan: "pro", interval }` and redirects to the Stripe checkout URL. A loading spinner ("Redirecting...") is shown while the request is in flight.
 - **Institutional:** "Contact Sales" mailto link (unchanged)
 
 ### Logged-out users
 
 - **Analyst:** "Start Free" links to `/login?mode=magic&intent=signup`
+- **Starter:** "Get Started" links to `/login?mode=magic&intent=signup&plan=starter`
 - **Pro:** "Get Started" links to `/login?mode=magic&intent=signup&plan=pro`
 - **Institutional:** "Contact Sales" mailto link (unchanged)
 

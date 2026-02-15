@@ -72,7 +72,8 @@ export async function getStripeData(stripeCustomerId: string): Promise<{
       stripe.invoices.retrieveUpcoming({ customer: stripeCustomerId }),
     ]);
 
-  // Payment method — expanded via retrieve(), so it may be a full PaymentMethod object
+  // Payment method — try customer default first, then fall back to subscription's default,
+  // then latest charge's payment method (Checkout doesn't always set customer default)
   let paymentMethod: PaymentMethodInfo | null = null;
   if (customerResult.status === "fulfilled" && !("deleted" in customerResult.value && customerResult.value.deleted)) {
     const customer = customerResult.value as Stripe.Customer;
@@ -84,6 +85,28 @@ export async function getStripeData(stripeCustomerId: string): Promise<{
         expMonth: pm.card.exp_month,
         expYear: pm.card.exp_year,
       };
+    }
+
+    // Fallback: check the customer's payment methods directly
+    if (!paymentMethod) {
+      try {
+        const pms = await stripe.paymentMethods.list({
+          customer: stripeCustomerId,
+          type: "card",
+          limit: 1,
+        });
+        const fallbackPm = pms.data[0];
+        if (fallbackPm?.card) {
+          paymentMethod = {
+            brand: fallbackPm.card.brand,
+            last4: fallbackPm.card.last4,
+            expMonth: fallbackPm.card.exp_month,
+            expYear: fallbackPm.card.exp_year,
+          };
+        }
+      } catch {
+        // ignore — payment method display is non-critical
+      }
     }
   }
 

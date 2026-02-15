@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
     cancel_url: `${appUrl}/dashboard/billing?canceled=1`,
     client_reference_id: user.id,
     customer_email: user.email || undefined,
+    payment_method_collection: "always",
+    saved_payment_method_options: {
+      payment_method_save: "enabled",
+    },
     subscription_data: {
       metadata: {
         userId: user.id,

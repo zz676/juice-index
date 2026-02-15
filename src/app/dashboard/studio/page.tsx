@@ -99,6 +99,7 @@ function StudioPageInner() {
   const [queryUsageCount, setQueryUsageCount] = useState(0);
   const [composerUsageCount, setComposerUsageCount] = useState(0);
   const [chartUsageCount, setChartUsageCount] = useState(0);
+  const [publishUsageCount, setPublishUsageCount] = useState(0);
   const defaultPanelWidth = 450;
   const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
   const isResizing = useRef(false);
@@ -215,6 +216,7 @@ function StudioPageInner() {
         if (typeof data.queryUsed === "number") setQueryUsageCount(data.queryUsed);
         if (typeof data.draftUsed === "number") setComposerUsageCount(data.draftUsed);
         if (typeof data.chartUsed === "number") setChartUsageCount(data.chartUsed);
+        if (typeof data.publishUsed === "number") setPublishUsageCount(data.publishUsed);
       })
       .catch(() => {});
   }, []);
@@ -1724,6 +1726,11 @@ function StudioPageInner() {
                       />
                       <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
                     </label>
+                    {userTier !== "FREE" && (
+                      <span className="text-[10px] font-medium text-slate-custom-400">
+                        {publishUsageCount}/{Number.isFinite(TIER_QUOTAS[userTier].weeklyPublishes) ? TIER_QUOTAS[userTier].weeklyPublishes : "\u221E"} this week
+                      </span>
+                    )}
                     <div className="relative group">
                       {userTier === "FREE" ? (
                         <button

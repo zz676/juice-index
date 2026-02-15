@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
+    const [tier, setTier] = useState<string>("FREE");
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -34,6 +35,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 avatarUrl: meta.avatar_url || meta.picture || null,
             });
         });
+        fetch("/api/dashboard/tier")
+            .then((r) => r.json())
+            .then((d) => { if (d.tier) setTier(d.tier); })
+            .catch(() => {});
     }, [supabase]);
 
     const displayName = user?.name || user?.email || "";
@@ -128,8 +133,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                 {/* Bottom Section */}
                 <div className={`flex flex-col ${collapsed ? "items-center px-2" : "px-4"} pb-4 gap-2`}>
-                    {/* Pro Upgrade */}
-                    {!collapsed ? (
+                    {/* Pro Upgrade — hidden for paid users */}
+                    {tier === "FREE" && (!collapsed ? (
                         <div className="bg-slate-custom-900 rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer mx-1 mb-2">
                             <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all"></div>
                             <h3 className="text-white font-semibold text-sm mb-1 relative z-10">Juice Pro</h3>
@@ -149,7 +154,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         >
                             <span className="material-icons-round text-[18px]">star</span>
                         </Link>
-                    )}
+                    ))}
 
                     {/* Divider */}
                     <div className={`border-t border-slate-custom-200 ${collapsed ? "w-8" : "mx-1"}`}></div>

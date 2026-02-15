@@ -6,7 +6,20 @@ import { createClient } from "@/lib/supabase/client";
 
 import type { User } from "@supabase/supabase-js";
 
-const tiers = [
+type TierDef = {
+  name: string;
+  plan?: "starter" | "pro"; // maps to checkout plan param
+  monthlyPrice: number | null;
+  annualPrice: number | null;
+  description: string;
+  features: string[];
+  cta: string;
+  ctaHref: string;
+  highlight: boolean;
+  badge?: string;
+};
+
+const tiers: TierDef[] = [
   {
     name: "Analyst",
     monthlyPrice: 0,
@@ -22,7 +35,24 @@ const tiers = [
     highlight: false,
   },
   {
+    name: "Starter",
+    plan: "starter",
+    monthlyPrice: 9.99,
+    annualPrice: 7,
+    description: "For analysts getting started",
+    features: [
+      "Dashboard Access",
+      "10 CSV Exports/mo",
+      "3-Year Historical Data",
+      "10 Studio Queries/day",
+    ],
+    cta: "Get Started",
+    ctaHref: "/login?mode=magic&intent=signup&plan=starter",
+    highlight: false,
+  },
+  {
     name: "Pro",
+    plan: "pro",
     monthlyPrice: 29,
     annualPrice: 24,
     description: "Deep dives for investors",
@@ -57,7 +87,7 @@ const tiers = [
 export default function PricingToggle() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutLoadingPlan, setCheckoutLoadingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,14 +96,14 @@ export default function PricingToggle() {
     });
   }, []);
 
-  async function handleCheckout() {
-    setCheckoutLoading(true);
+  async function handleCheckout(plan: "starter" | "pro") {
+    setCheckoutLoadingPlan(plan);
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: "pro",
+          plan,
           interval: isAnnual ? "year" : "month",
         }),
       });
@@ -82,7 +112,7 @@ export default function PricingToggle() {
         window.location.href = data.url;
       }
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoadingPlan(null);
     }
   }
 
@@ -120,7 +150,7 @@ export default function PricingToggle() {
       </div>
 
       {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
         {tiers.map((tier) => (
           <div
             key={tier.name}
@@ -180,15 +210,19 @@ export default function PricingToggle() {
               >
                 Go to Dashboard
               </Link>
-            ) : /* Pro: logged-in → direct checkout, logged-out → signup */
-            tier.name === "Pro" && user ? (
+            ) : /* Paid plans: logged-in → direct checkout, logged-out → signup */
+            tier.plan && user ? (
               <button
                 type="button"
-                onClick={handleCheckout}
-                disabled={checkoutLoading}
-                className="block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors bg-slate-custom-900 text-white hover:bg-slate-custom-800 disabled:opacity-60"
+                onClick={() => handleCheckout(tier.plan!)}
+                disabled={checkoutLoadingPlan === tier.plan}
+                className={`block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors disabled:opacity-60 ${
+                  tier.highlight
+                    ? "bg-slate-custom-900 text-white hover:bg-slate-custom-800"
+                    : "bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 border border-slate-custom-200"
+                }`}
               >
-                {checkoutLoading ? "Redirecting…" : tier.cta}
+                {checkoutLoadingPlan === tier.plan ? "Redirecting\u2026" : tier.cta}
               </button>
             ) : (
               <Link
