@@ -7,6 +7,7 @@ import {
   canAccessModel,
 } from "../models";
 import type { ApiTier } from "@/lib/api/tier";
+import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 
 const REQUIRED_MODEL_FIELDS = [
   "id",
@@ -73,15 +74,15 @@ describe("canAccessModel", () => {
       expect(canAccessModel("FREE", "gpt-4o-mini")).toBe(true);
     });
 
-    it("cannot access gpt-4o (PRO model)", () => {
+    it("cannot access gpt-4o (STARTER model)", () => {
       expect(canAccessModel("FREE", "gpt-4o")).toBe(false);
     });
 
-    it("cannot access claude-3-5-sonnet (PRO model)", () => {
+    it("cannot access claude-3-5-sonnet (STARTER model)", () => {
       expect(canAccessModel("FREE", "claude-3-5-sonnet")).toBe(false);
     });
 
-    it("cannot access claude-opus-4 (ENTERPRISE model)", () => {
+    it("cannot access claude-opus-4 (PRO model)", () => {
       expect(canAccessModel("FREE", "claude-opus-4")).toBe(false);
     });
 
@@ -90,21 +91,39 @@ describe("canAccessModel", () => {
     });
   });
 
+  describe("STARTER tier", () => {
+    it("can access gpt-4o-mini (FREE model)", () => {
+      expect(canAccessModel("STARTER", "gpt-4o-mini")).toBe(true);
+    });
+
+    it("can access gpt-4o (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "gpt-4o")).toBe(true);
+    });
+
+    it("can access claude-3-5-sonnet (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "claude-3-5-sonnet")).toBe(true);
+    });
+
+    it("cannot access claude-opus-4 (PRO model)", () => {
+      expect(canAccessModel("STARTER", "claude-opus-4")).toBe(false);
+    });
+  });
+
   describe("PRO tier", () => {
     it("can access gpt-4o-mini (FREE model)", () => {
       expect(canAccessModel("PRO", "gpt-4o-mini")).toBe(true);
     });
 
-    it("can access gpt-4o (PRO model)", () => {
+    it("can access gpt-4o (STARTER model)", () => {
       expect(canAccessModel("PRO", "gpt-4o")).toBe(true);
     });
 
-    it("can access claude-3-5-sonnet (PRO model)", () => {
+    it("can access claude-3-5-sonnet (STARTER model)", () => {
       expect(canAccessModel("PRO", "claude-3-5-sonnet")).toBe(true);
     });
 
-    it("cannot access claude-opus-4 (ENTERPRISE model)", () => {
-      expect(canAccessModel("PRO", "claude-opus-4")).toBe(false);
+    it("can access claude-opus-4 (PRO model)", () => {
+      expect(canAccessModel("PRO", "claude-opus-4")).toBe(true);
     });
   });
 
@@ -136,5 +155,54 @@ describe("canAccessModel", () => {
         }
       }
     );
+  });
+});
+
+describe("per-model quotas", () => {
+  const TIERS: ApiTier[] = ["FREE", "STARTER", "PRO", "ENTERPRISE"];
+
+  it("every tier has studioQueriesByModel and postDraftsByModel", () => {
+    for (const tier of TIERS) {
+      expect(TIER_QUOTAS[tier]).toHaveProperty("studioQueriesByModel");
+      expect(TIER_QUOTAS[tier]).toHaveProperty("postDraftsByModel");
+      expect(typeof TIER_QUOTAS[tier].studioQueriesByModel).toBe("object");
+      expect(typeof TIER_QUOTAS[tier].postDraftsByModel).toBe("object");
+    }
+  });
+
+  it("STARTER studioQueries global cap is 15", () => {
+    expect(TIER_QUOTAS.STARTER.studioQueries).toBe(15);
+  });
+
+  it("per-model query limits do not exceed global cap", () => {
+    for (const tier of TIERS) {
+      const globalCap = TIER_QUOTAS[tier].studioQueries;
+      for (const [, limit] of Object.entries(TIER_QUOTAS[tier].studioQueriesByModel)) {
+        expect(limit).toBeLessThanOrEqual(globalCap);
+      }
+    }
+  });
+
+  it("per-model draft limits do not exceed global cap", () => {
+    for (const tier of TIERS) {
+      const globalCap = TIER_QUOTAS[tier].postDrafts;
+      for (const [, limit] of Object.entries(TIER_QUOTAS[tier].postDraftsByModel)) {
+        expect(limit).toBeLessThanOrEqual(globalCap);
+      }
+    }
+  });
+
+  it("getModelQuota returns 0 for inaccessible models", () => {
+    expect(getModelQuota("FREE", "gpt-4o", "studioQueriesByModel")).toBe(0);
+    expect(getModelQuota("FREE", "claude-opus-4", "postDraftsByModel")).toBe(0);
+    expect(getModelQuota("STARTER", "claude-opus-4", "studioQueriesByModel")).toBe(0);
+  });
+
+  it("getModelQuota returns correct values for accessible models", () => {
+    expect(getModelQuota("FREE", "gpt-4o-mini", "studioQueriesByModel")).toBe(3);
+    expect(getModelQuota("STARTER", "gpt-4o", "studioQueriesByModel")).toBe(5);
+    expect(getModelQuota("PRO", "claude-opus-4", "studioQueriesByModel")).toBe(10);
+    expect(getModelQuota("PRO", "claude-opus-4", "postDraftsByModel")).toBe(5);
+    expect(getModelQuota("ENTERPRISE", "claude-opus-4", "studioQueriesByModel")).toBe(Infinity);
   });
 });

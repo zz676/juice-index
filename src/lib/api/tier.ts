@@ -23,4 +23,4 @@ export function tierLimit(tier: ApiTier): number {
   return TIER_QUOTAS[tier].dailyApi;
 }
 
-export { TIER_QUOTAS, getQuota, type TierQuota } from "./quotas";
+export { TIER_QUOTAS, getQuota, getModelQuota, type TierQuota, type ModelQuotas } from "./quotas";
