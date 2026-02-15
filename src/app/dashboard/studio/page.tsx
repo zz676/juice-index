@@ -1155,7 +1155,7 @@ function StudioPageInner() {
                             dataKey="value"
                             fill={chartConfig.barColor}
                             radius={[0, 6, 6, 0]}
-                            barSize={chartConfig.barWidth}
+                            barSize={chartConfig.barWidth ?? 28}
                           >
                             {chartConfig.showValues && (
                               <LabelList
@@ -1193,7 +1193,7 @@ function StudioPageInner() {
                             dataKey="value"
                             fill={chartConfig.barColor}
                             radius={[6, 6, 0, 0]}
-                            barSize={chartConfig.barWidth}
+                            barSize={chartConfig.barWidth ?? 28}
                           >
                             {chartConfig.showValues && (
                               <LabelList
@@ -1215,7 +1215,7 @@ function StudioPageInner() {
                             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                             <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} />
                             <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                            <Bar dataKey="value" fill="#6ada1b" radius={[6, 6, 0, 0]} barSize={32} />
+                            <Bar dataKey="value" fill="#6ada1b" radius={[6, 6, 0, 0]} barSize={28} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

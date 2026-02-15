@@ -395,7 +395,7 @@ function renderChartConfig(params: {
           pointRadius: chartType === "line" ? 4 : 0,
           pointHoverRadius: chartType === "line" ? 6 : 0,
           tension: chartType === "line" ? 0.22 : undefined,
-          barThickness: style.barWidth && style.barWidth > 0 ? style.barWidth : undefined,
+          barThickness: style.barWidth && style.barWidth > 0 ? style.barWidth : 28,
         },
       ],
     },
