@@ -17,6 +17,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
     "@ai-sdk/openai": "^3.0.26",
+    "@napi-rs/canvas": "^0.1.92",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@supabase/ssr": "^0.8.0",
@@ -26,7 +27,6 @@
     "@upstash/redis": "^1.36.2",
     "ai": "^6.0.79",
     "chart.js": "^4.5.1",
-    "chartjs-node-canvas": "^5.0.0",
     "chartjs-plugin-datalabels": "^2.2.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.34.0",
