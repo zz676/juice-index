@@ -41,6 +41,10 @@ type ChartStyleOptions = {
   sourceColor?: string;
   sourceFontSize?: number;
   barWidth?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
   showValues?: boolean;
   showGrid?: boolean;
 };
@@ -353,6 +357,10 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
       typeof obj.sourceColor === "string" ? obj.sourceColor : undefined,
     sourceFontSize: asNumber(obj.sourceFontSize),
     barWidth: asNumber(obj.barWidth),
+    paddingTop: asNumber(obj.paddingTop),
+    paddingBottom: asNumber(obj.paddingBottom),
+    paddingLeft: asNumber(obj.paddingLeft),
+    paddingRight: asNumber(obj.paddingRight),
     showValues:
       typeof obj.showValues === "boolean" ? obj.showValues : undefined,
     showGrid: typeof obj.showGrid === "boolean" ? obj.showGrid : undefined,
@@ -480,10 +488,10 @@ function renderChartConfig(params: {
       },
       layout: {
         padding: {
-          top: 20,
-          right: 28,
-          bottom: 44,
-          left: isHorizontal ? 36 : 24,
+          top: style.paddingTop ?? 20,
+          right: style.paddingRight ?? 28,
+          bottom: style.paddingBottom ?? 44,
+          left: style.paddingLeft ?? (isHorizontal ? 36 : 24),
         },
       },
     },

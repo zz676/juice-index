@@ -1097,7 +1097,7 @@ function StudioPageInner() {
                       {chartConfig.chartType === "line" ? (
                         <LineChart
                           data={chartData}
-                          margin={{ top: 10, right: 20, bottom: 20, left: 20 }}
+                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
                             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
@@ -1129,7 +1129,7 @@ function StudioPageInner() {
                         <BarChart
                           data={chartData}
                           layout="vertical"
-                          margin={{ top: 10, right: 20, bottom: 20, left: 40 }}
+                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
                             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
@@ -1170,7 +1170,7 @@ function StudioPageInner() {
                       ) : (
                         <BarChart
                           data={chartData}
-                          margin={{ top: 10, right: 20, bottom: 20, left: 20 }}
+                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
                             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
