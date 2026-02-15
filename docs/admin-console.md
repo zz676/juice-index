@@ -41,6 +41,25 @@ The admin dashboard displays four categories of metrics, organized into tabs:
 - **Top 10 endpoints**: Most-called endpoints in the last 30 days.
 - **Requests by tier**: API usage breakdown by subscription tier.
 
+## KPI Trend Charts
+
+The four KPI cards at the top of the dashboard (ARR, Total Users, AI Cost 30d, API Requests 30d) are clickable. Clicking a card reveals a 30-day trend area chart below the cards row.
+
+**Behavior:**
+- Click a KPI card to expand its trend chart. Click the same card again (or the close button) to collapse it.
+- Only one chart is visible at a time — clicking a different card switches to that chart.
+- Active cards show a colored border and a rotated chevron indicator.
+
+**Data sources:**
+| KPI | Chart shows | Source table |
+|-----|-----------|--------------|
+| ARR | Daily new subscriptions | `juice_api_subscriptions` |
+| Total Users | Daily new signups | `juice_users` |
+| AI Cost (30d) | Daily AI spend | `juice_ai_usage` (pre-existing `dailyCostTrend`) |
+| API Requests (30d) | Daily request count | `juice_api_request_logs` |
+
+Each KPI uses a distinct color: green (ARR), blue (Users), amber (AI Cost), violet (API Requests). The chart is rendered with `recharts` `AreaChart` with a gradient fill.
+
 ## Architecture
 
 | File | Purpose |

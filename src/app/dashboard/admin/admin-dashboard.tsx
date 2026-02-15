@@ -1,6 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import type { AdminMetrics } from "./types";
 
 const tabs = [
@@ -11,6 +20,15 @@ const tabs = [
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
+
+type KpiId = "arr" | "users" | "ai-cost" | "api-requests";
+
+const kpiConfig: Record<KpiId, { label: string; color: string; valueKey: string; formatValue: (v: number) => string }> = {
+  arr: { label: "ARR — Daily New Subscriptions (30d)", color: "#22c55e", valueKey: "count", formatValue: (v) => fmt(v) },
+  users: { label: "Total Users — Daily Signups (30d)", color: "#3b82f6", valueKey: "count", formatValue: (v) => fmt(v) },
+  "ai-cost": { label: "AI Cost — Daily Spend (30d)", color: "#f59e0b", valueKey: "cost", formatValue: (v) => fmtUSD(v) },
+  "api-requests": { label: "API Requests — Daily Count (30d)", color: "#8b5cf6", valueKey: "count", formatValue: (v) => fmt(v) },
+};
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US");
@@ -28,6 +46,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
   const [activeTab, setActiveTab] = useState<TabId>("revenue");
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState(metrics);
+  const [activeKpi, setActiveKpi] = useState<KpiId | null>(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -42,7 +61,18 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
     }
   };
 
+  const toggleKpi = (id: KpiId) => {
+    setActiveKpi((prev) => (prev === id ? null : id));
+  };
+
   const totalAICost30d = data.aiUsage.dailyCostTrend.reduce((s, d) => s + d.cost, 0);
+
+  const chartData: Record<KpiId, { date: string; value: number }[]> = {
+    arr: data.revenue.dailySubTrend.map((d) => ({ date: d.date, value: d.count })),
+    users: data.users.dailySignupTrend.map((d) => ({ date: d.date, value: d.count })),
+    "ai-cost": data.aiUsage.dailyCostTrend.map((d) => ({ date: d.date, value: d.cost })),
+    "api-requests": data.apiActivity.dailyRequestTrend.map((d) => ({ date: d.date, value: d.count })),
+  };
 
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
@@ -67,12 +97,90 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <KPICard icon="trending_up" label="ARR" value={fmtUSD(data.mrr.arr)} />
-        <KPICard icon="group" label="Total Users" value={fmt(data.users.totalUsers)} />
-        <KPICard icon="smart_toy" label="AI Cost (30d)" value={fmtUSD(totalAICost30d)} />
-        <KPICard icon="api" label="API Requests (30d)" value={fmt(data.apiActivity.requestsThisMonth)} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-0">
+        <KPICard icon="trending_up" label="ARR" value={fmtUSD(data.mrr.arr)} kpiId="arr" activeKpi={activeKpi} onToggle={toggleKpi} color={kpiConfig.arr.color} />
+        <KPICard icon="group" label="Total Users" value={fmt(data.users.totalUsers)} kpiId="users" activeKpi={activeKpi} onToggle={toggleKpi} color={kpiConfig.users.color} />
+        <KPICard icon="smart_toy" label="AI Cost (30d)" value={fmtUSD(totalAICost30d)} kpiId="ai-cost" activeKpi={activeKpi} onToggle={toggleKpi} color={kpiConfig["ai-cost"].color} />
+        <KPICard icon="api" label="API Requests (30d)" value={fmt(data.apiActivity.requestsThisMonth)} kpiId="api-requests" activeKpi={activeKpi} onToggle={toggleKpi} color={kpiConfig["api-requests"].color} />
       </div>
+
+      {/* KPI Trend Chart Panel */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          activeKpi ? "max-h-[400px] opacity-100 mb-8 mt-4" : "max-h-0 opacity-0 mb-0 mt-0"
+        }`}
+      >
+        {activeKpi && (
+          <div className="bg-white rounded-xl border border-slate-custom-200 p-5 relative">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-slate-custom-900">
+                {kpiConfig[activeKpi].label}
+              </h3>
+              <button
+                onClick={() => setActiveKpi(null)}
+                className="p-1 rounded-lg hover:bg-slate-custom-100 transition-colors text-slate-custom-400 hover:text-slate-custom-600"
+              >
+                <span className="material-icons-round text-[20px]">close</span>
+              </button>
+            </div>
+            {chartData[activeKpi].length === 0 ? (
+              <p className="text-sm text-slate-custom-500 py-8 text-center">No trend data available for the last 30 days.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={chartData[activeKpi]} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id={`gradient-${activeKpi}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={kpiConfig[activeKpi].color} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={kpiConfig[activeKpi].color} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    tickFormatter={(v: string) => {
+                      const d = new Date(v + "T00:00:00");
+                      return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                    }}
+                    tickLine={false}
+                    axisLine={{ stroke: "#e2e8f0" }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#64748b" }}
+                    tickFormatter={(v: number) => kpiConfig[activeKpi].formatValue(v)}
+                    tickLine={false}
+                    axisLine={false}
+                    width={70}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#fff",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    labelFormatter={(v) => {
+                      const d = new Date(String(v) + "T00:00:00");
+                      return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                    }}
+                    formatter={(value) => [kpiConfig[activeKpi].formatValue(Number(value ?? 0)), "Value"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={kpiConfig[activeKpi].color}
+                    strokeWidth={2}
+                    fill={`url(#gradient-${activeKpi})`}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Spacer when chart is closed */}
+      {!activeKpi && <div className="mb-8" />}
 
       {/* Tab Navigation */}
       <div className="border-b border-slate-custom-200 mb-6">
@@ -105,15 +213,47 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
-function KPICard({ icon, label, value }: { icon: string; label: string; value: string }) {
+function KPICard({
+  icon,
+  label,
+  value,
+  kpiId,
+  activeKpi,
+  onToggle,
+  color,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+  kpiId: KpiId;
+  activeKpi: KpiId | null;
+  onToggle: (id: KpiId) => void;
+  color: string;
+}) {
+  const isActive = activeKpi === kpiId;
   return (
-    <div className="bg-white rounded-xl border border-slate-custom-200 p-5">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="material-icons-round text-[20px] text-primary">{icon}</span>
-        <span className="text-sm font-medium text-slate-custom-500">{label}</span>
+    <button
+      onClick={() => onToggle(kpiId)}
+      className={`text-left bg-white rounded-xl border-2 p-5 transition-all hover:shadow-sm ${
+        isActive ? "border-current shadow-sm" : "border-slate-custom-200 hover:border-slate-custom-300"
+      }`}
+      style={isActive ? { borderColor: color } : undefined}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <span className="material-icons-round text-[20px] text-primary">{icon}</span>
+          <span className="text-sm font-medium text-slate-custom-500">{label}</span>
+        </div>
+        <span
+          className={`material-icons-round text-[16px] transition-transform duration-200 ${
+            isActive ? "rotate-180 text-slate-custom-700" : "text-slate-custom-300"
+          }`}
+        >
+          expand_more
+        </span>
       </div>
       <p className="text-2xl font-bold text-slate-custom-900">{value}</p>
-    </div>
+    </button>
   );
 }
 
