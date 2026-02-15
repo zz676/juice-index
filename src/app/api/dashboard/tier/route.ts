@@ -34,13 +34,19 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      return NextResponse.json({ tier: "FREE" }, { status: 200 });
+      return NextResponse.json({ tier: "FREE", role: "USER" }, { status: 200 });
     }
 
-    const subscription = await prisma.apiSubscription.findUnique({
-      where: { userId: user.id },
-      select: { tier: true, status: true },
-    });
+    const [subscription, dbUser] = await Promise.all([
+      prisma.apiSubscription.findUnique({
+        where: { userId: user.id },
+        select: { tier: true, status: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { role: true },
+      }),
+    ]);
 
     let tier = "FREE";
     if (
@@ -52,7 +58,7 @@ export async function GET() {
     }
 
     return NextResponse.json(
-      { tier },
+      { tier, role: dbUser?.role ?? "USER" },
       {
         status: 200,
         headers: { "Cache-Control": "private, max-age=60" },
@@ -60,7 +66,7 @@ export async function GET() {
     );
   } catch {
     return NextResponse.json(
-      { tier: "FREE", error: "INTERNAL" },
+      { tier: "FREE", role: "USER", error: "INTERNAL" },
       { status: 500 }
     );
   }
