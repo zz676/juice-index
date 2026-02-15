@@ -11,6 +11,7 @@ interface UserPostItem {
   publishedAt: string | null;
   tweetUrl: string | null;
   lastError: string | null;
+  attempts?: number;
   createdAt: string;
 }
 
@@ -22,6 +23,56 @@ interface Pagination {
 }
 
 const STATUS_TABS = ["All", "DRAFT", "SCHEDULED", "PUBLISHED", "FAILED"];
+
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const absDiffMs = Math.abs(diffMs);
+  const isFuture = diffMs > 0;
+
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+  if (absDiffMs < 60_000) return rtf.format(isFuture ? 1 : -1, "minute");
+  if (absDiffMs < 3_600_000) {
+    const mins = Math.round(diffMs / 60_000);
+    return rtf.format(mins, "minute");
+  }
+  if (absDiffMs < 86_400_000) {
+    const hours = Math.round(diffMs / 3_600_000);
+    return rtf.format(hours, "hour");
+  }
+  const days = Math.round(diffMs / 86_400_000);
+  return rtf.format(days, "day");
+}
+
+const EMPTY_STATES: Record<string, { icon: string; title: string; description: string }> = {
+  All: {
+    icon: "edit_note",
+    title: "No posts yet",
+    description: "Compose your first post above.",
+  },
+  DRAFT: {
+    icon: "draft",
+    title: "No drafts",
+    description: "Create posts in Juice AI Studio or compose one here.",
+  },
+  SCHEDULED: {
+    icon: "schedule",
+    title: "No scheduled posts",
+    description: "Schedule posts to publish automatically.",
+  },
+  PUBLISHED: {
+    icon: "check_circle",
+    title: "No published posts yet",
+    description: "Publish your first post to X!",
+  },
+  FAILED: {
+    icon: "celebration",
+    title: "No failed posts",
+    description: "Everything is working!",
+  },
+};
 
 export default function PostsPage() {
   const [posts, setPosts] = useState<UserPostItem[]>([]);
@@ -43,6 +94,15 @@ export default function PostsPage() {
   const [scheduleTime, setScheduleTime] = useState("");
   const [composeLoading, setComposeLoading] = useState(false);
   const [composeError, setComposeError] = useState("");
+
+  // Expanded row state
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Reschedule state
+  const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleError, setRescheduleError] = useState("");
 
   const fetchPosts = useCallback(async (page = 1) => {
     setLoading(true);
@@ -68,31 +128,37 @@ export default function PostsPage() {
   }, [activeTab, search]);
 
   // Fetch status counts
-  useEffect(() => {
-    async function fetchCounts() {
-      try {
-        const counts: Record<string, number> = {};
-        const statuses = ["DRAFT", "SCHEDULED", "PUBLISHED", "FAILED"];
-        const responses = await Promise.all(
-          statuses.map((s) => fetch(`/api/dashboard/user-posts?status=${s}&limit=1`))
-        );
-        for (let i = 0; i < statuses.length; i++) {
-          if (responses[i].ok) {
-            const json = await responses[i].json();
-            counts[statuses[i]] = json.pagination.total;
-          }
+  const fetchCounts = useCallback(async () => {
+    try {
+      const counts: Record<string, number> = {};
+      const statuses = ["DRAFT", "SCHEDULED", "PUBLISHED", "FAILED"];
+      const responses = await Promise.all(
+        statuses.map((s) => fetch(`/api/dashboard/user-posts?status=${s}&limit=1`))
+      );
+      for (let i = 0; i < statuses.length; i++) {
+        if (responses[i].ok) {
+          const json = await responses[i].json();
+          counts[statuses[i]] = json.pagination.total;
         }
-        setStatusCounts(counts);
-      } catch {
-        // Counts are non-critical
       }
+      setStatusCounts(counts);
+    } catch {
+      // Counts are non-critical
     }
-    fetchCounts();
   }, []);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  const refreshAll = useCallback((page?: number) => {
+    fetchPosts(page ?? pagination.page);
+    fetchCounts();
+  }, [fetchPosts, fetchCounts, pagination.page]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +211,7 @@ export default function PostsPage() {
       if (res.ok) {
         resetCompose();
         setComposeOpen(false);
-        fetchPosts(pagination.page);
+        refreshAll();
       } else {
         const json = await res.json();
         setComposeError(json.message || "Failed to save post");
@@ -168,7 +234,7 @@ export default function PostsPage() {
     setActionLoading(postId);
     try {
       const res = await fetch(`/api/dashboard/user-posts/${postId}`, { method: "DELETE" });
-      if (res.ok) fetchPosts(pagination.page);
+      if (res.ok) refreshAll();
     } catch (error) {
       console.error("Failed to delete post", error);
     } finally {
@@ -180,7 +246,7 @@ export default function PostsPage() {
     setActionLoading(postId);
     try {
       const res = await fetch(`/api/dashboard/user-posts/${postId}/cancel`, { method: "POST" });
-      if (res.ok) fetchPosts(pagination.page);
+      if (res.ok) refreshAll();
     } catch (error) {
       console.error("Failed to cancel post", error);
     } finally {
@@ -196,7 +262,7 @@ export default function PostsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "publish" }),
       });
-      if (res.ok) fetchPosts(pagination.page);
+      if (res.ok) refreshAll();
     } catch (error) {
       console.error("Failed to retry post", error);
     } finally {
@@ -204,8 +270,46 @@ export default function PostsPage() {
     }
   };
 
+  const handleReschedule = async (postId: string) => {
+    setRescheduleError("");
+    if (!rescheduleDate || !rescheduleTime) {
+      setRescheduleError("Please select both a date and time.");
+      return;
+    }
+    const scheduledDate = new Date(`${rescheduleDate}T${rescheduleTime}`);
+    if (isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+      setRescheduleError("Scheduled time must be in the future.");
+      return;
+    }
+
+    setActionLoading(postId);
+    try {
+      const res = await fetch(`/api/dashboard/user-posts/${postId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "schedule", scheduledFor: scheduledDate.toISOString() }),
+      });
+      if (res.ok) {
+        setRescheduleId(null);
+        setRescheduleDate("");
+        setRescheduleTime("");
+        refreshAll();
+      } else {
+        const json = await res.json();
+        setRescheduleError(json.message || "Failed to reschedule");
+      }
+    } catch {
+      setRescheduleError("Failed to reschedule");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const charCount = composeContent.length;
   const charColor = charCount > 260 ? (charCount > 280 ? "text-red-600" : "text-yellow-600") : "text-slate-custom-400";
+
+  const totalCount = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+  const failedCount = statusCounts["FAILED"] || 0;
 
   return (
     <div className="space-y-6">
@@ -238,6 +342,40 @@ export default function PostsPage() {
             Compose
           </button>
         </div>
+      </div>
+
+      {/* Summary Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-custom-200 px-4 py-3">
+          <span className="material-icons-round text-xl text-slate-custom-400">description</span>
+          <div>
+            <p className="text-lg font-bold text-slate-custom-900">{totalCount}</p>
+            <p className="text-[11px] text-slate-custom-500 font-medium">Total</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white rounded-lg border border-purple-200 px-4 py-3">
+          <span className="material-icons-round text-xl text-purple-500">schedule</span>
+          <div>
+            <p className="text-lg font-bold text-purple-700">{statusCounts["SCHEDULED"] || 0}</p>
+            <p className="text-[11px] text-purple-500 font-medium">Scheduled</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 bg-white rounded-lg border border-green-200 px-4 py-3">
+          <span className="material-icons-round text-xl text-green-500">check_circle</span>
+          <div>
+            <p className="text-lg font-bold text-green-700">{statusCounts["PUBLISHED"] || 0}</p>
+            <p className="text-[11px] text-green-500 font-medium">Published</p>
+          </div>
+        </div>
+        {failedCount > 0 && (
+          <div className="flex items-center gap-3 bg-white rounded-lg border border-red-200 px-4 py-3">
+            <span className="material-icons-round text-xl text-red-500">error</span>
+            <div>
+              <p className="text-lg font-bold text-red-700">{failedCount}</p>
+              <p className="text-[11px] text-red-500 font-medium">Failed</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* X Account Warning */}
@@ -394,7 +532,7 @@ export default function PostsPage() {
       <div className="flex gap-2 border-b border-slate-custom-200 pb-px">
         {STATUS_TABS.map((tab) => {
           const count = tab === "All"
-            ? Object.values(statusCounts).reduce((a, b) => a + b, 0)
+            ? totalCount
             : statusCounts[tab] || 0;
           return (
             <button
@@ -426,13 +564,18 @@ export default function PostsPage() {
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <div className="p-16 text-center">
-            <span className="material-icons-round text-5xl text-slate-custom-300 mb-3">edit_note</span>
-            <p className="text-slate-custom-500 font-medium">No posts yet</p>
-            <p className="text-sm text-slate-custom-400 mt-1">
-              {search ? "Try adjusting your search query" : "Compose your first post above."}
-            </p>
-          </div>
+          (() => {
+            const empty = search
+              ? { icon: "search_off", title: "No results", description: "Try adjusting your search query." }
+              : EMPTY_STATES[activeTab] || EMPTY_STATES.All;
+            return (
+              <div className="p-16 text-center">
+                <span className="material-icons-round text-5xl text-slate-custom-300 mb-3">{empty.icon}</span>
+                <p className="text-slate-custom-500 font-medium">{empty.title}</p>
+                <p className="text-sm text-slate-custom-400 mt-1">{empty.description}</p>
+              </div>
+            );
+          })()
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -441,160 +584,290 @@ export default function PostsPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Content</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Date</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">X Post</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-custom-50">
-                {posts.map((post) => (
-                  <tr key={post.id} className="hover:bg-slate-custom-50/50 transition-colors">
-                    <td className="px-4 py-3 max-w-md">
-                      <p className="text-sm font-medium text-slate-custom-800 truncate">
-                        {post.content}
-                      </p>
-                      {post.status === "FAILED" && post.lastError && (
-                        <p className="text-xs text-red-500 truncate mt-0.5">
-                          {post.lastError}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={post.status} />
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-custom-500 whitespace-nowrap">
-                      {post.status === "SCHEDULED" && post.scheduledFor ? (
-                        <span title="Scheduled for">
-                          {new Date(post.scheduledFor).toLocaleString()}
-                        </span>
-                      ) : post.status === "PUBLISHED" && post.publishedAt ? (
-                        <span title="Published at">
-                          {new Date(post.publishedAt).toLocaleString()}
-                        </span>
-                      ) : (
-                        new Date(post.createdAt).toLocaleDateString()
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* DRAFT actions */}
-                        {post.status === "DRAFT" && (
-                          <>
-                            <button
-                              onClick={() => handleEdit(post)}
-                              className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
-                              title="Edit"
-                            >
-                              <span className="material-icons-round text-base">edit</span>
-                            </button>
-                            {isPro ? (
-                              <button
-                                onClick={() => handleRetry(post)}
-                                disabled={actionLoading === post.id}
-                                className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
-                                title="Post Now"
-                              >
-                                <span className="material-icons-round text-base">send</span>
-                              </button>
-                            ) : (
-                              <button
-                                disabled
-                                className="p-1.5 rounded text-slate-custom-300 cursor-not-allowed"
-                                title="Upgrade to Pro to post"
-                              >
-                                <span className="material-icons-round text-base">send</span>
-                              </button>
-                            )}
-                            {isPro && (
-                              <button
-                                onClick={() => handleEdit(post)}
-                                className="p-1.5 rounded hover:bg-purple-50 text-slate-custom-400 hover:text-purple-600 transition-colors"
-                                title="Schedule"
-                              >
-                                <span className="material-icons-round text-base">schedule</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDelete(post.id)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                              title="Delete"
-                            >
-                              <span className="material-icons-round text-base">delete_outline</span>
-                            </button>
-                          </>
-                        )}
+                {posts.map((post) => {
+                  const isExpanded = expandedId === post.id;
+                  return (
+                    <tr key={post.id} className="hover:bg-slate-custom-50/50 transition-colors group">
+                      {/* Content */}
+                      <td className="px-4 py-3 max-w-md">
+                        <div
+                          className="cursor-pointer"
+                          onClick={() => setExpandedId(isExpanded ? null : post.id)}
+                        >
+                          <div className="flex items-start gap-1.5">
+                            <span className="material-icons-round text-xs text-slate-custom-300 mt-1 transition-transform shrink-0" style={{ transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)" }}>
+                              chevron_right
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              {isExpanded ? (
+                                <p className="text-sm font-medium text-slate-custom-800 whitespace-pre-wrap break-words">
+                                  {post.content}
+                                </p>
+                              ) : (
+                                <p className="text-sm font-medium text-slate-custom-800 truncate">
+                                  {post.content}
+                                </p>
+                              )}
+                              <span className="text-[10px] text-slate-custom-400 font-medium">
+                                {post.content.length}/280
+                              </span>
+                            </div>
+                          </div>
 
-                        {/* SCHEDULED actions */}
-                        {post.status === "SCHEDULED" && (
-                          <>
-                            <button
-                              onClick={() => handleCancel(post.id)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-yellow-50 text-slate-custom-400 hover:text-yellow-600 transition-colors disabled:opacity-50"
-                              title="Cancel"
-                            >
-                              <span className="material-icons-round text-base">cancel</span>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(post.id)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                              title="Delete"
-                            >
-                              <span className="material-icons-round text-base">delete_outline</span>
-                            </button>
-                          </>
-                        )}
+                          {/* Expanded details */}
+                          {isExpanded && (
+                            <div className="mt-2 ml-5 space-y-1 text-xs text-slate-custom-500">
+                              <p>Created: {new Date(post.createdAt).toLocaleString()}</p>
+                              {post.scheduledFor && (
+                                <p>Scheduled for: {new Date(post.scheduledFor).toLocaleString()}</p>
+                              )}
+                              {post.publishedAt && (
+                                <p>Published: {new Date(post.publishedAt).toLocaleString()}</p>
+                              )}
+                              {post.status === "FAILED" && post.lastError && (
+                                <div className="mt-1 p-2 rounded bg-red-50 border border-red-100">
+                                  <p className="text-red-600 font-medium">Error: {post.lastError}</p>
+                                  {post.attempts !== undefined && post.attempts > 0 && (
+                                    <p className="text-red-500 mt-0.5">Attempts: {post.attempts}</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
-                        {/* PUBLISHING — spinner only */}
-                        {post.status === "PUBLISHING" && (
-                          <span className="material-icons-round text-slate-custom-400 animate-spin text-base">sync</span>
-                        )}
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <StatusBadge status={post.status} />
+                      </td>
 
-                        {/* PUBLISHED actions */}
-                        {post.status === "PUBLISHED" && post.tweetUrl && (
+                      {/* Date */}
+                      <td className="px-4 py-3 text-xs text-slate-custom-500 whitespace-nowrap">
+                        {post.status === "SCHEDULED" && post.scheduledFor ? (
+                          <div className="flex items-center gap-1">
+                            <span className="material-icons-round text-purple-400 text-sm">schedule</span>
+                            <div>
+                              <p className="font-medium text-slate-custom-700">
+                                {new Date(post.scheduledFor).toLocaleString()}
+                              </p>
+                              <p className="text-[10px] text-purple-500">
+                                ({formatRelativeTime(post.scheduledFor)})
+                              </p>
+                            </div>
+                          </div>
+                        ) : post.status === "PUBLISHED" && post.publishedAt ? (
+                          <div className="flex items-center gap-1">
+                            <span className="material-icons-round text-green-400 text-sm">check_circle</span>
+                            <div>
+                              <p className="font-medium text-slate-custom-700">
+                                {new Date(post.publishedAt).toLocaleString()}
+                              </p>
+                              <p className="text-[10px] text-green-500">
+                                ({formatRelativeTime(post.publishedAt)})
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                        )}
+                      </td>
+
+                      {/* X Post link */}
+                      <td className="px-4 py-3 text-center">
+                        {post.status === "PUBLISHED" && post.tweetUrl ? (
                           <a
                             href={post.tweetUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
+                            className="inline-flex items-center gap-1 text-slate-custom-500 hover:text-slate-custom-800 transition-colors"
                             title="View on X"
                           >
-                            <span className="material-icons-round text-base">open_in_new</span>
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                            <span className="material-icons-round text-sm">open_in_new</span>
                           </a>
+                        ) : (
+                          <span className="text-slate-custom-300">&mdash;</span>
                         )}
+                      </td>
 
-                        {/* FAILED actions */}
-                        {post.status === "FAILED" && (
-                          <>
-                            <button
-                              onClick={() => handleRetry(post)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
-                              title="Retry"
-                            >
-                              <span className="material-icons-round text-base">refresh</span>
-                            </button>
-                            <button
-                              onClick={() => handleEdit(post)}
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* DRAFT actions */}
+                          {post.status === "DRAFT" && (
+                            <>
+                              <button
+                                onClick={() => handleEdit(post)}
+                                className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
+                                title="Edit"
+                              >
+                                <span className="material-icons-round text-base">edit</span>
+                              </button>
+                              {isPro ? (
+                                <button
+                                  onClick={() => handleRetry(post)}
+                                  disabled={actionLoading === post.id}
+                                  className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                                  title="Post Now"
+                                >
+                                  <span className="material-icons-round text-base">send</span>
+                                </button>
+                              ) : (
+                                <button
+                                  disabled
+                                  className="p-1.5 rounded text-slate-custom-300 cursor-not-allowed"
+                                  title="Upgrade to Pro to post"
+                                >
+                                  <span className="material-icons-round text-base">send</span>
+                                </button>
+                              )}
+                              {isPro && (
+                                <button
+                                  onClick={() => handleEdit(post)}
+                                  className="p-1.5 rounded hover:bg-purple-50 text-slate-custom-400 hover:text-purple-600 transition-colors"
+                                  title="Schedule"
+                                >
+                                  <span className="material-icons-round text-base">schedule</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete(post.id)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <span className="material-icons-round text-base">delete_outline</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* SCHEDULED actions */}
+                          {post.status === "SCHEDULED" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  if (rescheduleId === post.id) {
+                                    setRescheduleId(null);
+                                  } else {
+                                    setRescheduleId(post.id);
+                                    setRescheduleDate("");
+                                    setRescheduleTime("");
+                                    setRescheduleError("");
+                                  }
+                                }}
+                                className="p-1.5 rounded hover:bg-purple-50 text-slate-custom-400 hover:text-purple-600 transition-colors"
+                                title="Reschedule"
+                              >
+                                <span className="material-icons-round text-base">schedule</span>
+                              </button>
+                              <button
+                                onClick={() => handleCancel(post.id)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-yellow-50 text-slate-custom-400 hover:text-yellow-600 transition-colors disabled:opacity-50"
+                                title="Cancel"
+                              >
+                                <span className="material-icons-round text-base">cancel</span>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(post.id)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <span className="material-icons-round text-base">delete_outline</span>
+                              </button>
+                            </>
+                          )}
+
+                          {/* PUBLISHING — spinner only */}
+                          {post.status === "PUBLISHING" && (
+                            <span className="material-icons-round text-slate-custom-400 animate-spin text-base">sync</span>
+                          )}
+
+                          {/* PUBLISHED actions */}
+                          {post.status === "PUBLISHED" && post.tweetUrl && (
+                            <a
+                              href={post.tweetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
-                              title="Edit"
+                              title="View on X"
                             >
-                              <span className="material-icons-round text-base">edit</span>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(post.id)}
-                              disabled={actionLoading === post.id}
-                              className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
-                              title="Delete"
-                            >
-                              <span className="material-icons-round text-base">delete_outline</span>
-                            </button>
-                          </>
+                              <span className="material-icons-round text-base">open_in_new</span>
+                            </a>
+                          )}
+
+                          {/* FAILED actions */}
+                          {post.status === "FAILED" && (
+                            <>
+                              <button
+                                onClick={() => handleRetry(post)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-green-50 text-slate-custom-400 hover:text-green-600 transition-colors disabled:opacity-50"
+                                title="Retry"
+                              >
+                                <span className="material-icons-round text-base">refresh</span>
+                              </button>
+                              <button
+                                onClick={() => handleEdit(post)}
+                                className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
+                                title="Edit"
+                              >
+                                <span className="material-icons-round text-base">edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDelete(post.id)}
+                                disabled={actionLoading === post.id}
+                                className="p-1.5 rounded hover:bg-red-50 text-slate-custom-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                title="Delete"
+                              >
+                                <span className="material-icons-round text-base">delete_outline</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Inline Reschedule Row */}
+                        {rescheduleId === post.id && post.status === "SCHEDULED" && (
+                          <div className="mt-2 p-2 rounded-lg border border-purple-200 bg-purple-50/50 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="date"
+                                value={rescheduleDate}
+                                onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleError(""); }}
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                              />
+                              <input
+                                type="time"
+                                value={rescheduleTime}
+                                onChange={(e) => { setRescheduleTime(e.target.value); setRescheduleError(""); }}
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                              />
+                              <button
+                                onClick={() => handleReschedule(post.id)}
+                                disabled={actionLoading === post.id}
+                                className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded hover:bg-purple-700 transition-colors disabled:opacity-50"
+                              >
+                                Confirm
+                              </button>
+                            </div>
+                            {rescheduleError && (
+                              <p className="text-xs text-red-500">{rescheduleError}</p>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

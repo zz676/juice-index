@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type PublishInfo = {
@@ -18,7 +19,9 @@ interface PublishModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onSchedule: (scheduledFor: string) => void;
   isPublishing: boolean;
+  isScheduling: boolean;
   isLoading: boolean;
   info: PublishInfo | null;
   postDraft: string;
@@ -31,7 +34,9 @@ export default function PublishModal({
   open,
   onClose,
   onConfirm,
+  onSchedule,
   isPublishing,
+  isScheduling,
   isLoading,
   info,
   postDraft,
@@ -39,6 +44,21 @@ export default function PublishModal({
   onAttachImageChange,
   chartImage,
 }: PublishModalProps) {
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleError, setScheduleError] = useState("");
+
+  // Reset schedule state when modal closes
+  useEffect(() => {
+    if (!open) {
+      setScheduleMode(false);
+      setScheduleDate("");
+      setScheduleTime("");
+      setScheduleError("");
+    }
+  }, [open]);
+
   const quotaExhausted =
     info !== null &&
     Number.isFinite(info.publishLimit) &&
@@ -48,7 +68,8 @@ export default function PublishModal({
     info.canPublish &&
     info.hasXAccount &&
     !quotaExhausted &&
-    !isPublishing;
+    !isPublishing &&
+    !isScheduling;
 
   const formatLimit = (limit: number) =>
     Number.isFinite(limit) ? String(limit) : "Unlimited";
@@ -62,6 +83,24 @@ export default function PublishModal({
         day: "numeric",
       })
     : null;
+
+  const handleScheduleConfirm = () => {
+    setScheduleError("");
+    if (!scheduleDate || !scheduleTime) {
+      setScheduleError("Please select both a date and time.");
+      return;
+    }
+    const scheduledDate = new Date(`${scheduleDate}T${scheduleTime}`);
+    if (isNaN(scheduledDate.getTime())) {
+      setScheduleError("Invalid date or time.");
+      return;
+    }
+    if (scheduledDate <= new Date()) {
+      setScheduleError("Scheduled time must be in the future.");
+      return;
+    }
+    onSchedule(scheduledDate.toISOString());
+  };
 
   return (
     <AnimatePresence>
@@ -225,6 +264,51 @@ export default function PublishModal({
                   </div>
                 </div>
 
+                {/* Schedule Date/Time Picker */}
+                <AnimatePresence>
+                  {scheduleMode && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-3 rounded-lg border border-purple-200 bg-purple-50/50 space-y-3">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-purple-500 block">
+                          Schedule Date & Time
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="date"
+                            value={scheduleDate}
+                            onChange={(e) => {
+                              setScheduleDate(e.target.value);
+                              setScheduleError("");
+                            }}
+                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-white"
+                          />
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => {
+                              setScheduleTime(e.target.value);
+                              setScheduleError("");
+                            }}
+                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-white"
+                          />
+                        </div>
+                        {scheduleError && (
+                          <p className="text-xs text-red-500 flex items-center gap-1">
+                            <span className="material-icons-round text-xs">error</span>
+                            {scheduleError}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Attach Image */}
                 {chartImage && (
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -244,12 +328,39 @@ export default function PublishModal({
 
             {/* Actions */}
             {!isLoading && info && (
-              <div className="px-5 py-3 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-end gap-3">
+              <div className="px-5 py-3 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-end gap-2">
                 <button
                   onClick={onClose}
                   className="px-4 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-full hover:bg-slate-custom-100 transition-colors"
                 >
                   Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (scheduleMode) {
+                      handleScheduleConfirm();
+                    } else {
+                      setScheduleMode(true);
+                    }
+                  }}
+                  disabled={!canConfirm}
+                  className="px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-full hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                >
+                  {isScheduling ? (
+                    <>
+                      <span className="material-icons-round text-sm animate-spin">
+                        refresh
+                      </span>
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons-round text-sm">
+                        schedule
+                      </span>
+                      {scheduleMode ? "Confirm Schedule" : "Schedule For Later"}
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={onConfirm}
@@ -268,7 +379,7 @@ export default function PublishModal({
                       <span className="material-icons-round text-sm">
                         send
                       </span>
-                      Confirm Publish
+                      Publish Now
                     </>
                   )}
                 </button>
