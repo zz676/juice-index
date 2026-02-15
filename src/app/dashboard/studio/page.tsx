@@ -1029,27 +1029,21 @@ function StudioPageInner() {
                     Visualization &amp; Data
                   </h3>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
-                  <span className="flex items-center gap-1 px-2 py-1">
-                    <span className="material-icons-round text-sm text-primary">
-                      table_rows
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
+                    <span className="flex items-center gap-1 px-2 py-1">
+                      <span className="material-icons-round text-sm text-primary">
+                        table_rows
+                      </span>
+                      {rowCount || chartData.length} rows
                     </span>
-                    {rowCount || chartData.length} rows
-                  </span>
-                  <span className="flex items-center gap-1 px-2 py-1">
-                    <span className="material-icons-round text-sm text-primary">
-                      timer
+                    <span className="flex items-center gap-1 px-2 py-1">
+                      <span className="material-icons-round text-sm text-primary">
+                        timer
+                      </span>
+                      {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
                     </span>
-                    {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className="px-4 min-h-[370px]"
-                style={{ backgroundColor: chartConfig.backgroundColor }}
-              >
-                <div className="flex justify-between items-center">
+                  </div>
                   <div className="flex bg-slate-custom-100 rounded-md p-0.5 border border-slate-custom-200">
                     {([
                       { value: "bar" as const, label: "Bar", icon: "bar_chart" },
@@ -1080,7 +1074,7 @@ function StudioPageInner() {
                   </div>
                   <button
                     onClick={() => setShowCustomizer((v) => !v)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all ${
+                    className={`px-2 py-1 text-xs font-bold rounded-full flex items-center gap-1 transition-all ${
                       showCustomizer
                         ? "bg-primary/10 text-primary"
                         : "text-slate-500 hover:text-primary"
@@ -1090,6 +1084,23 @@ function StudioPageInner() {
                     Customize
                   </button>
                 </div>
+              </div>
+
+              <div
+                className="px-4 min-h-[370px]"
+                style={{ backgroundColor: chartConfig.backgroundColor }}
+              >
+                {chartConfig.title && (
+                  <h4
+                    className="text-center font-bold pt-3 pb-1"
+                    style={{
+                      color: chartConfig.titleColor,
+                      fontSize: `${chartConfig.titleSize}px`,
+                    }}
+                  >
+                    {chartConfig.title}
+                  </h4>
+                )}
 
                 <div className="h-[320px]">
                   {hasChartData ? (
