@@ -217,7 +217,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {/* Top Header */}
-                <header className="h-16 flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
+                <header className="h-[51px] flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />
@@ -229,7 +229,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-2">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-2 pb-0">
                     {children}
                 </div>
             </main>

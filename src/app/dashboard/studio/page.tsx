@@ -76,6 +76,7 @@ function StudioPageInner() {
   const [analysisExplanation, setAnalysisExplanation] = useState("");
   const [postDraft, setPostDraft] = useState("");
   const [isGeneratingPost, setIsGeneratingPost] = useState(false);
+  const [attachImage, setAttachImage] = useState(true);
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(
     null
   );
@@ -438,16 +439,23 @@ function StudioPageInner() {
             fontColor: chartConfig.fontColor,
             titleColor: chartConfig.titleColor,
             titleSize: chartConfig.titleSize,
+            titleFont: chartConfig.titleFont,
             xAxisFontSize: chartConfig.xAxisFontSize,
             yAxisFontSize: chartConfig.yAxisFontSize,
             xAxisFontColor: chartConfig.xAxisFontColor,
             yAxisFontColor: chartConfig.yAxisFontColor,
+            axisFont: chartConfig.axisFont,
             sourceText: chartConfig.sourceText,
             sourceColor: chartConfig.sourceColor,
             sourceFontSize: chartConfig.sourceFontSize,
+            sourceFont: chartConfig.sourceFont,
             barWidth: chartConfig.barWidth,
             showValues: chartConfig.showValues,
             showGrid: chartConfig.showGrid,
+            xAxisLineColor: chartConfig.xAxisLineColor,
+            yAxisLineColor: chartConfig.yAxisLineColor,
+            xAxisLineWidth: chartConfig.xAxisLineWidth,
+            yAxisLineWidth: chartConfig.yAxisLineWidth,
           },
         }),
       });
@@ -590,26 +598,44 @@ function StudioPageInner() {
     showToast("success", "Download started!");
   }, [chartImage, chartConfig.title, showToast]);
 
+  const downloadPdf = useCallback(async () => {
+    if (!chartImage) return;
+    const { jsPDF } = await import("jspdf");
+
+    const img = new Image();
+    img.src = chartImage;
+    await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+
+    const imgWidth = img.naturalWidth;
+    const imgHeight = img.naturalHeight;
+    const landscape = imgWidth > imgHeight;
+    const pdf = new jsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "px", format: [imgWidth, imgHeight] });
+    pdf.addImage(chartImage, "PNG", 0, 0, imgWidth, imgHeight);
+    pdf.save(`chart-${chartConfig.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "data"}.pdf`);
+    showToast("success", "PDF download started!");
+  }, [chartImage, chartConfig.title, showToast]);
+
   if (!mounted) return null;
 
   const hasChartData = chartData.length > 0;
+  const queryQuotaExhausted = queryUsageCount >= TIER_QUOTAS[userTier].studioQueries;
 
   return (
     <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
+      {toast && (
+        <div
+          className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-8 py-4 rounded-xl border text-sm font-medium shadow-lg transition-all ${
+            toast.type === "success"
+              ? "border-primary bg-primary text-green-900"
+              : toast.type === "error"
+              ? "border-red-300 bg-red-200 text-red-700"
+              : "border-slate-200 bg-white text-slate-700"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {toast && (
-          <div
-            className={`absolute top-4 right-4 z-50 px-4 py-2 rounded-lg border text-xs font-medium shadow-lg transition-all ${
-              toast.type === "success"
-                ? "border-primary/50 bg-primary/10 text-green-800"
-                : toast.type === "error"
-                ? "border-red-300 bg-red-50 text-red-700"
-                : "border-slate-200 bg-white text-slate-700"
-            }`}
-          >
-            {toast.message}
-          </div>
-        )}
 
         <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10">
           <div className="flex items-center gap-4">
@@ -635,7 +661,7 @@ function StudioPageInner() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col lg:flex-row">
           <div
             className={`${showSidebar ? "w-full" : "hidden lg:flex"} bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto relative flex-shrink-0`}
             style={{ width: showSidebar ? `${panelWidth}px` : undefined }}
@@ -791,19 +817,26 @@ function StudioPageInner() {
                       {queryUsageCount}/{TIER_QUOTAS[userTier].studioQueries} queries
                     </span>
                   </div>
-                  <button
-                    onClick={generateRunnableQuery}
-                    disabled={isGeneratingQueryPlan || !prompt.trim()}
-                    className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
-                  >
-                    {isGeneratingQueryPlan && (
-                      <span className="material-icons-round text-xs animate-spin">refresh</span>
-                    )}
-                    {!isGeneratingQueryPlan && (
-                      <span className="material-icons-round text-xs">auto_awesome</span>
-                    )}
-                    {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
-                  </button>
+                  {queryQuotaExhausted ? (
+                    <span className="text-sm text-amber-600 font-medium flex items-center gap-1">
+                      <span className="material-icons-round text-base">info</span>
+                      Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                    </span>
+                  ) : (
+                    <button
+                      onClick={generateRunnableQuery}
+                      disabled={isGeneratingQueryPlan || !prompt.trim()}
+                      className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
+                    >
+                      {isGeneratingQueryPlan && (
+                        <span className="material-icons-round text-xs animate-spin">refresh</span>
+                      )}
+                      {!isGeneratingQueryPlan && (
+                        <span className="material-icons-round text-xs">auto_awesome</span>
+                      )}
+                      {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
+                    </button>
+                  )}
                 </div>
               </div>
             </section>
@@ -848,7 +881,7 @@ function StudioPageInner() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={runGeneratedQuery}
-                      disabled={isRunningQuery || !tableName || !queryJsonText.trim()}
+                      disabled={isRunningQuery || !tableName || !queryJsonText.trim() || queryQuotaExhausted}
                       className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                     >
                       {isRunningQuery ? (
@@ -888,13 +921,29 @@ function StudioPageInner() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-4 opacity-70">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
-                  2.5
-                </span>
-                <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
-                  Logic Process
-                </h3>
+              <div className="flex items-center justify-between mb-4 opacity-70">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
+                    2.5
+                  </span>
+                  <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
+                    Logic Process
+                  </h3>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
+                  <span className="flex items-center gap-1 px-2 py-1">
+                    <span className="material-icons-round text-sm text-primary">
+                      table_rows
+                    </span>
+                    {rowCount || chartData.length} rows
+                  </span>
+                  <span className="flex items-center gap-1 px-2 py-1">
+                    <span className="material-icons-round text-sm text-primary">
+                      timer
+                    </span>
+                    {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
+                  </span>
+                </div>
               </div>
 
               <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-3 ml-3">
@@ -1012,7 +1061,7 @@ function StudioPageInner() {
             </section>
           </div>
 
-          <div className="flex-1 min-h-0 bg-slate-custom-100 p-3 pr-6 overflow-y-auto flex flex-col gap-3">
+          <div className="flex-1 h-full min-h-0 bg-slate-custom-100 p-3 pr-6 overflow-y-auto flex flex-col gap-3">
             <section
               ref={chartRef}
               onFocusCapture={() => setActiveSection(3)}
@@ -1020,7 +1069,7 @@ function StudioPageInner() {
               className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
             >
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
-              <div className="px-5 py-2.5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+              <div className="px-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
                   <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     3
@@ -1030,20 +1079,6 @@ function StudioPageInner() {
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
-                    <span className="flex items-center gap-1 px-2 py-1">
-                      <span className="material-icons-round text-sm text-primary">
-                        table_rows
-                      </span>
-                      {rowCount || chartData.length} rows
-                    </span>
-                    <span className="flex items-center gap-1 px-2 py-1">
-                      <span className="material-icons-round text-sm text-primary">
-                        timer
-                      </span>
-                      {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
-                    </span>
-                  </div>
                   <div className="flex bg-slate-custom-100 rounded-md p-0.5 border border-slate-custom-200">
                     {([
                       { value: "bar" as const, label: "Bar", icon: "bar_chart" },
@@ -1096,6 +1131,7 @@ function StudioPageInner() {
                     style={{
                       color: chartConfig.titleColor,
                       fontSize: `${chartConfig.titleSize}px`,
+                      fontFamily: chartConfig.titleFont,
                     }}
                   >
                     {chartConfig.title}
@@ -1118,12 +1154,14 @@ function StudioPageInner() {
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
                               fill: chartConfig.xAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <YAxis
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
                               fill: chartConfig.yAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <Tooltip />
@@ -1150,6 +1188,7 @@ function StudioPageInner() {
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
                               fill: chartConfig.xAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <YAxis
@@ -1159,6 +1198,7 @@ function StudioPageInner() {
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
                               fill: chartConfig.yAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <Tooltip />
@@ -1191,12 +1231,14 @@ function StudioPageInner() {
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
                               fill: chartConfig.xAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <YAxis
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
                               fill: chartConfig.yAxisFontColor,
+                              fontFamily: chartConfig.axisFont,
                             }}
                           />
                           <Tooltip />
@@ -1245,6 +1287,7 @@ function StudioPageInner() {
                     style={{
                       color: chartConfig.sourceColor,
                       fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
+                      fontFamily: chartConfig.sourceFont,
                     }}
                   >
                     {chartConfig.sourceText}
@@ -1279,7 +1322,7 @@ function StudioPageInner() {
               </div>
 
               {chartImage && (
-                <div className="px-5 py-4 border-t border-slate-custom-100 bg-white">
+                <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1">
                       <span className="material-icons-round text-sm text-primary">
@@ -1287,12 +1330,35 @@ function StudioPageInner() {
                       </span>
                       Generated Image
                     </span>
-                    <button
-                      onClick={() => setChartImage(null)}
-                      className="text-xs text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
-                    >
-                      <span className="material-icons-round text-sm">close</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={copyChartToClipboard}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                      >
+                        <span className="material-icons-round text-xs">content_copy</span>
+                        Copy Image
+                      </button>
+                      <button
+                        onClick={downloadImage}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                      >
+                        <span className="material-icons-round text-xs">download</span>
+                        PNG
+                      </button>
+                      <button
+                        onClick={downloadPdf}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                      >
+                        <span className="material-icons-round text-xs">description</span>
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => setChartImage(null)}
+                        className="text-xs text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
+                      >
+                        <span className="material-icons-round text-sm">close</span>
+                      </button>
+                    </div>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -1300,38 +1366,6 @@ function StudioPageInner() {
                     alt="Generated chart"
                     className="w-full max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)]"
                   />
-                  <div className="flex items-center justify-between mt-3">
-                    <button
-                      onClick={() => showToast("info", "Share link workflow will be wired next.")}
-                      className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
-                    >
-                      <span className="material-icons-round text-sm">share</span>
-                      Share Link
-                    </button>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={copyChartToClipboard}
-                        className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary hover:shadow-sm transition-all duration-200 flex items-center gap-2"
-                      >
-                        <span className="material-icons-round text-sm">content_copy</span>
-                        Copy to Clipboard
-                      </button>
-                      <button
-                        onClick={downloadImage}
-                        className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary hover:shadow-sm transition-all duration-200 flex items-center gap-2"
-                      >
-                        <span className="material-icons-round text-sm">image</span>
-                        Download PNG
-                      </button>
-                      <button
-                        className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-sm font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-2"
-                        onClick={() => showToast("info", "Publish workflow will be wired next.")}
-                      >
-                        <span className="material-icons-round text-sm">rocket_launch</span>
-                        Publish
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
             </section>
@@ -1339,9 +1373,9 @@ function StudioPageInner() {
             <section
               onFocusCapture={() => setActiveSection(4)}
               onClickCapture={() => setActiveSection(4)}
-              className="bg-white rounded-2xl overflow-hidden border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="bg-white rounded-2xl overflow-auto border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="px-5 py-2.5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+              <div className="px-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
                   <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     4
@@ -1470,25 +1504,30 @@ function StudioPageInner() {
                       className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
                     >
                       <span className="material-icons-round text-sm">content_copy</span>
-                      Copy
+                      Copy Post
                     </button>
                   </div>
                   <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={attachImage}
+                        onChange={(e) => setAttachImage(e.target.checked)}
+                        className="w-3.5 h-3.5 accent-primary cursor-pointer"
+                      />
+                      <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
+                    </label>
                     <button
-                      onClick={() => showToast("info", "PNG export is available in Step 3 above.")}
-                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all duration-200 flex items-center gap-1"
+                      onClick={downloadPdf}
+                      disabled={!chartImage}
+                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                     >
-                      <span className="material-icons-round text-xs">image</span> PNG
+                      <span className="material-icons-round text-[10px]">description</span>
+                      <span className="italic">PDF</span>
                     </button>
                     <button
-                      onClick={() => showToast("info", "PDF export will be wired next.")}
-                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all duration-200 flex items-center gap-1"
-                    >
-                      <span className="material-icons-round text-xs">description</span>
-                      PDF
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-1"
+                      className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
+                      disabled={!postDraft}
                       onClick={() => showToast("info", "Publish workflow will be wired next.")}
                     >
                       <span className="material-icons-round text-xs">rocket_launch</span>

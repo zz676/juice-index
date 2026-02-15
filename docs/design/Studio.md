@@ -101,7 +101,32 @@ While the user sees a "Studio," the backend ensures safety and performance.
 - **Server-Side Rendering**: Generates identical PNGs regardless of the user's device.
 - **Brand Consistency**: Fonts, colors, and margins are hardcoded to brand guidelines.
 
-### 5. Mobile Responsiveness
+### 4. Chart Customizer
+The Customize panel (`/src/components/explorer/ChartCustomizer.tsx`) provides real-time control over chart appearance, organized into four tabs:
+
+- **Type tab**: Chart type selector (Bar/Line/H-Bar), Show Values toggle, Show Grid toggle, Bar Width, X/Y-Axis thickness, and Padding (top/bottom/left/right, default 20px each).
+- **Colors tab**: Preset palettes (Lime/Dark/Blue/Gold), Background, Bar/Line color, Font color, and Axis Line colors (X-Axis, Y-Axis).
+- **Text tab**: Title text and font family, Title color and size, Axis font family, X/Y-Axis font sizes and colors.
+- **Source tab**: Source text, font family, color, and font size.
+
+Available fonts: Inter, Arial, Helvetica, Georgia, Times New Roman, Courier New, Verdana, Trebuchet MS.
+
+### 5. Export Options
+- **Copy Image**: Copies the generated chart image to clipboard.
+- **PNG Download**: Downloads the chart as a PNG file.
+- **PDF Download**: Converts the chart image to a PDF using `jspdf` (dynamically imported). The PDF is sized to match the image dimensions and orientation.
+
+### 6. Post Composer (Step 4)
+- **Copy Post**: Copies the AI-generated post draft text.
+- **Attach Image checkbox**: Lets users choose whether to include the chart image when publishing to X.
+- **Publish**: Disabled until a draft is generated.
+
+### 7. Rate Limiting & Quotas
+- Rate limit checks fail open — if Upstash Redis is unreachable, requests are allowed through with a console warning.
+- When the daily query quota is exhausted, the Generate Query button is replaced with an info message and the Run Query button is disabled.
+- Toasts are displayed as fixed-position centered overlays.
+
+### 8. Mobile Responsiveness
 - **Collapsible Sidebar**: On screens below the `lg` breakpoint, a toggle button shows/hides the left input panel.
 - **Auto-collapse**: After generating a query on mobile, the sidebar collapses automatically to maximize chart/data visibility.
 - **Desktop Unaffected**: The 450px sidebar remains always visible on `lg+` screens.
