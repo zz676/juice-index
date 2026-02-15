@@ -109,7 +109,11 @@ const EV_KEYWORDS = [
 Chart.register(...registerables, ChartDataLabels);
 
 async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> {
-  const canvas = createCanvas(1200, 675);
+  const width = 1200;
+  const height = 675;
+  const radius = 24;
+
+  const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   // Disable animation for synchronous server-side rendering
@@ -120,7 +124,27 @@ async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> 
   // Chart.js accepts canvas-compatible objects
   new Chart(ctx as unknown as CanvasRenderingContext2D, config);
 
-  return canvas.toBuffer("image/png");
+  // Apply rounded corners by compositing onto a new canvas with a clip mask
+  const out = createCanvas(width, height);
+  const outCtx = out.getContext("2d");
+
+  outCtx.beginPath();
+  outCtx.moveTo(radius, 0);
+  outCtx.lineTo(width - radius, 0);
+  outCtx.quadraticCurveTo(width, 0, width, radius);
+  outCtx.lineTo(width, height - radius);
+  outCtx.quadraticCurveTo(width, height, width - radius, height);
+  outCtx.lineTo(radius, height);
+  outCtx.quadraticCurveTo(0, height, 0, height - radius);
+  outCtx.lineTo(0, radius);
+  outCtx.quadraticCurveTo(0, 0, radius, 0);
+  outCtx.closePath();
+  outCtx.clip();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  outCtx.drawImage(canvas as any, 0, 0);
+
+  return out.toBuffer("image/png");
 }
 
 const backgroundColorPlugin: Plugin = {
@@ -183,21 +207,34 @@ const watermarkPlugin: Plugin = {
     if (!pluginOptions?.enabled) return;
 
     const ctx = chart.ctx;
-    const centerX = chart.width / 2;
-    const centerY = chart.height / 2;
+    const w = chart.width;
+    const h = chart.height;
 
-    // Draw diagonal repeating watermark
+    // Tile diagonal watermark text across the entire image
     ctx.save();
-    ctx.globalAlpha = 0.10;
-    ctx.font = "bold 48px Inter, Arial, sans-serif";
+    ctx.globalAlpha = 0.08;
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.translate(centerX, centerY);
-    ctx.rotate(-Math.PI / 6);
-    ctx.fillText("juiceindex.io", 0, -20);
-    ctx.font = "20px Inter, Arial, sans-serif";
-    ctx.fillText("Upgrade to Pro to remove watermark", 0, 20);
+
+    const angle = -Math.PI / 6;
+    // Spacing between watermark tiles
+    const spacingX = 420;
+    const spacingY = 200;
+    // Expand bounds to cover corners after rotation
+    const diag = Math.sqrt(w * w + h * h);
+
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(angle);
+
+    for (let y = -diag; y < diag; y += spacingY) {
+      for (let x = -diag; x < diag; x += spacingX) {
+        ctx.font = "bold 32px Inter, Arial, sans-serif";
+        ctx.fillText("juiceindex.io", x, y);
+        ctx.font = "14px Inter, Arial, sans-serif";
+        ctx.fillText("Upgrade to Pro", x, y + 28);
+      }
+    }
     ctx.restore();
 
     // Draw logo + url in bottom-left corner
@@ -206,15 +243,15 @@ const watermarkPlugin: Plugin = {
     const logo = preloadedLogo;
     const logoSize = 20;
     const padding = 16;
-    const y = chart.height - padding - logoSize / 2;
+    const logoY = h - padding - logoSize / 2;
     if (logo) {
-      ctx.drawImage(logo as unknown as CanvasImageSource, padding, y - logoSize / 2, logoSize, logoSize);
+      ctx.drawImage(logo as unknown as CanvasImageSource, padding, logoY - logoSize / 2, logoSize, logoSize);
     }
     ctx.font = "bold 13px Inter, Arial, sans-serif";
     ctx.fillStyle = "#000000";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("juiceindex.io", padding + (logo ? logoSize + 6 : 0), y);
+    ctx.fillText("juiceindex.io", padding + (logo ? logoSize + 6 : 0), logoY);
     ctx.restore();
   },
 };
