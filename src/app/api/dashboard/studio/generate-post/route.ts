@@ -7,6 +7,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import prisma from "@/lib/prisma";
 import { enforceStudioPostDraftLimits } from "@/lib/ratelimit";
 import { normalizeTier, type ApiTier } from "@/lib/api/tier";
+import { getXCharLimit } from "@/lib/x/char-limits";
 import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import {
   getModelById,
@@ -150,12 +151,14 @@ function buildPrompt(input: {
   chartTitle?: string;
   chartType?: string;
   data?: DataRow[];
+  charLimit?: number;
 }): string {
   const question = input.question?.trim() || "(not provided)";
   const sql = input.sql?.trim() || "(not provided)";
   const chartTitle = input.chartTitle?.trim() || "Data Results";
   const chartType = input.chartType?.trim() || "bar";
   const dataSummary = summarizeResults(Array.isArray(input.data) ? input.data : []);
+  const charLimit = input.charLimit ?? 280;
 
   return `You are an EV market analyst writing a concise social post.
 
@@ -177,7 +180,7 @@ Write one short post (2-4 sentences) with:
 2. one concrete number or trend,
 3. one implication for the EV market.
 
-Keep tone factual and publish-ready. No hashtags. No markdown.`;
+Your response MUST be under ${charLimit} characters. Keep tone factual and publish-ready. No hashtags. No markdown.`;
 }
 
 export async function POST(request: Request) {
@@ -226,6 +229,13 @@ export async function POST(request: Request) {
     if ("error" in rateLimitRes) return rateLimitRes.error;
     const { tier } = rateLimitRes;
 
+    // Fetch xAccount to determine character limit for the prompt
+    const xAccount = await prisma.xAccount.findUnique({
+      where: { userId },
+      select: { isXPremium: true },
+    });
+    const charLimit = getXCharLimit(xAccount?.isXPremium ?? false);
+
     const prompt =
       typeof body.prompt === "string" && body.prompt.trim().length > 0
         ? body.prompt.trim()
@@ -240,6 +250,7 @@ export async function POST(request: Request) {
             data: Array.isArray(body.data)
               ? (body.data as DataRow[])
               : undefined,
+            charLimit,
           });
 
     if (prompt.length < 20) {

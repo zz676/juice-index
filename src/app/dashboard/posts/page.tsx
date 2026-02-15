@@ -85,6 +85,7 @@ export default function PostsPage() {
   const [isPro, setIsPro] = useState(false);
   const [hasXAccount, setHasXAccount] = useState(true);
   const [hasXLoginIdentity, setHasXLoginIdentity] = useState(false);
+  const [charLimit, setCharLimit] = useState(280);
 
   // Compose state
   const [composeOpen, setComposeOpen] = useState(false);
@@ -119,6 +120,7 @@ export default function PostsPage() {
         setIsPro(json.isPro);
         setHasXAccount(json.hasXAccount ?? true);
         setHasXLoginIdentity(json.hasXLoginIdentity ?? false);
+        if (json.charLimit) setCharLimit(json.charLimit);
       }
     } catch (error) {
       console.error("Failed to fetch posts", error);
@@ -178,8 +180,8 @@ export default function PostsPage() {
       setComposeError("Content is required");
       return;
     }
-    if (composeContent.length > 280) {
-      setComposeError("Content must be 280 characters or less");
+    if (composeContent.length > charLimit) {
+      setComposeError(`Content must be ${charLimit.toLocaleString()} characters or less`);
       return;
     }
 
@@ -306,7 +308,7 @@ export default function PostsPage() {
   };
 
   const charCount = composeContent.length;
-  const charColor = charCount > 260 ? (charCount > 280 ? "text-red-600" : "text-yellow-600") : "text-slate-custom-400";
+  const charColor = charCount > charLimit ? "text-red-600" : charCount > charLimit * 0.9 ? "text-yellow-600" : "text-slate-custom-400";
 
   const totalCount = Object.values(statusCounts).reduce((a, b) => a + b, 0);
   const failedCount = statusCounts["FAILED"] || 0;
@@ -433,7 +435,7 @@ export default function PostsPage() {
               className="w-full px-4 py-3 bg-slate-custom-50 border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
             />
             <span className={`absolute bottom-3 right-3 text-xs font-medium ${charColor}`}>
-              {charCount}/280
+              {charCount}/{charLimit.toLocaleString()}
             </span>
           </div>
 
@@ -614,7 +616,7 @@ export default function PostsPage() {
                                 </p>
                               )}
                               <span className="text-[10px] text-slate-custom-400 font-medium">
-                                {post.content.length}/280
+                                {post.content.length}/{charLimit.toLocaleString()}
                               </span>
                             </div>
                           </div>

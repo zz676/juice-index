@@ -725,6 +725,11 @@ function StudioPageInner() {
 
   const handleConfirmPublish = useCallback(async () => {
     if (!postDraft) return;
+    const limit = publishInfo?.charLimit ?? 280;
+    if (postDraft.length > limit) {
+      showToast("error", `Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
+      return;
+    }
     setIsPublishing(true);
     try {
       const res = await fetch("/api/dashboard/user-posts", {
@@ -751,7 +756,7 @@ function StudioPageInner() {
     } finally {
       setIsPublishing(false);
     }
-  }, [postDraft, showToast, fetchPublishInfo]);
+  }, [postDraft, publishInfo, showToast, fetchPublishInfo]);
 
   const handleSaveDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -777,6 +782,11 @@ function StudioPageInner() {
 
   const handleConfirmSchedule = useCallback(async (scheduledFor: string) => {
     if (!postDraft) return;
+    const limit = publishInfo?.charLimit ?? 280;
+    if (postDraft.length > limit) {
+      showToast("error", `Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
+      return;
+    }
     setIsScheduling(true);
     try {
       const res = await fetch("/api/dashboard/user-posts", {
@@ -809,7 +819,7 @@ function StudioPageInner() {
     } finally {
       setIsScheduling(false);
     }
-  }, [postDraft, showToast, fetchPublishInfo]);
+  }, [postDraft, publishInfo, showToast, fetchPublishInfo]);
 
   if (!mounted) return null;
 
@@ -1856,10 +1866,22 @@ function StudioPageInner() {
                 </div>
               </div>
               <div className="p-3">
-                <div className="bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] whitespace-pre-wrap">
-                  {postDraft ||
-                    "Generate a draft to turn your data result into a publish-ready analyst summary."}
-                </div>
+                <textarea
+                  value={postDraft}
+                  onChange={(e) => setPostDraft(e.target.value)}
+                  placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
+                  className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                />
+                {postDraft && (() => {
+                  const limit = publishInfo?.charLimit ?? 280;
+                  const len = postDraft.length;
+                  const color = len > limit ? "text-red-600" : len > limit * 0.9 ? "text-yellow-600" : "text-slate-custom-400";
+                  return (
+                    <p className={`text-[10px] font-medium mt-1 text-right ${color}`}>
+                      {len.toLocaleString()}/{limit.toLocaleString()}
+                    </p>
+                  );
+                })()}
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-3">
                     <div className="relative group">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { toggleXPremium } from "./actions";
 
 interface Identity {
     provider: string;
@@ -18,6 +19,7 @@ interface ConnectedAccountsProps {
         username: string;
         displayName: string | null;
         avatarUrl: string | null;
+        isXPremium: boolean;
     } | null;
     tier: string;
     hasXLoginIdentity: boolean;
@@ -75,6 +77,8 @@ export default function ConnectedAccounts({
     const [error, setError] = useState<string | null>(null);
     const [xDisconnecting, setXDisconnecting] = useState(false);
     const [xDisconnected, setXDisconnected] = useState(false);
+    const [xPremium, setXPremium] = useState(xAccount?.isXPremium ?? false);
+    const [isPremiumToggling, startPremiumTransition] = useTransition();
 
     const canUnlink = identities.length > 1 || hasPassword;
     const isFree = tier === "FREE";
@@ -201,6 +205,7 @@ export default function ConnectedAccounts({
                                 )}
 
                                 {showXPosting ? (
+                                    <>
                                     <div className="flex items-center justify-between py-2">
                                         <div className="flex items-center gap-2.5">
                                             {xAccount.avatarUrl ? (
@@ -224,6 +229,45 @@ export default function ConnectedAccounts({
                                             {xDisconnecting ? "..." : "Disconnect"}
                                         </button>
                                     </div>
+                                    <div className="flex items-center justify-between py-2 border-t border-slate-custom-100 mt-1 pt-2">
+                                        <div>
+                                            <p className="text-xs font-medium text-slate-custom-900 flex items-center gap-1.5">
+                                                X Premium
+                                                {xPremium && (
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700">
+                                                        Active
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <p className="text-[10px] text-slate-custom-500 mt-0.5">
+                                                Enable for 25,000 character limit
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-checked={xPremium}
+                                            disabled={isPremiumToggling}
+                                            onClick={() => {
+                                                startPremiumTransition(async () => {
+                                                    const result = await toggleXPremium();
+                                                    if (result.type === "success" && "isXPremium" in result) {
+                                                        setXPremium(result.isXPremium as boolean);
+                                                    }
+                                                });
+                                            }}
+                                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${
+                                                xPremium ? "bg-blue-600" : "bg-slate-custom-300"
+                                            }`}
+                                        >
+                                            <span
+                                                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                                    xPremium ? "translate-x-4.5" : "translate-x-0.5"
+                                                }`}
+                                            />
+                                        </button>
+                                    </div>
+                                    </>
                                 ) : isFree ? (
                                     <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                                         <span className="material-icons-round text-primary text-sm">lock</span>

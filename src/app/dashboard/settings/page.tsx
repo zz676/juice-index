@@ -29,7 +29,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         }),
         prisma.xAccount.findUnique({
             where: { userId: authUser.id },
-            select: { username: true, displayName: true, avatarUrl: true },
+            select: { username: true, displayName: true, avatarUrl: true, isXPremium: true },
         }),
         prisma.apiSubscription.findUnique({
             where: { userId: authUser.id },
