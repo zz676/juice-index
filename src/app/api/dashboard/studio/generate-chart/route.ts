@@ -18,7 +18,7 @@ import { normalizeTier, type ApiTier } from "@/lib/api/tier";
 import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
-import { getModelById, canAccessModel, DEFAULT_MODEL_ID } from "@/lib/studio/models";
+import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -981,15 +981,17 @@ export async function POST(req: Request) {
         generated = aiResult.object;
 
         // Log successful AI usage
+        const inTok = aiResult.usage.inputTokens ?? 0;
+        const outTok = aiResult.usage.outputTokens ?? 0;
         await prisma.aIUsage.create({
           data: {
             type: "text",
             model: aiResult.modelId,
-            cost: 0,
+            cost: estimateCost(aiResult.modelId, inTok, outTok),
             success: true,
             source: "studio-query",
-            inputTokens: aiResult.usage.inputTokens ?? 0,
-            outputTokens: aiResult.usage.outputTokens ?? 0,
+            inputTokens: inTok,
+            outputTokens: outTok,
             durationMs: aiResult.durationMs,
           },
         }).catch(() => {});

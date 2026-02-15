@@ -63,3 +63,19 @@ export function canAccessModel(tier: ApiTier, modelId: string): boolean {
   if (!model) return false;
   return hasTier(tier, model.minTier);
 }
+
+/** Per-token pricing in USD (input / output per token). */
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  "gpt-4o-mini":       { input: 0.15  / 1_000_000, output: 0.60  / 1_000_000 },
+  "gpt-4o":            { input: 2.50  / 1_000_000, output: 10.00 / 1_000_000 },
+  "claude-3-5-sonnet": { input: 3.00  / 1_000_000, output: 15.00 / 1_000_000 },
+  "claude-opus-4":     { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
+};
+
+const DEFAULT_PRICING = { input: 1.00 / 1_000_000, output: 3.00 / 1_000_000 };
+
+/** Estimate cost in USD from model ID and token counts. */
+export function estimateCost(modelId: string, inputTokens: number, outputTokens: number): number {
+  const p = MODEL_PRICING[modelId] ?? DEFAULT_PRICING;
+  return inputTokens * p.input + outputTokens * p.output;
+}
