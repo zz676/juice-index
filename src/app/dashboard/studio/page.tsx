@@ -1050,7 +1050,7 @@ function StudioPageInner() {
                 style={{ backgroundColor: chartConfig.backgroundColor }}
               >
                 <div className="flex justify-between items-center">
-                  <div className="flex bg-slate-custom-100 rounded-lg p-1 border border-slate-custom-200">
+                  <div className="flex bg-slate-custom-100 rounded-md p-0.5 border border-slate-custom-200">
                     {([
                       { value: "bar" as const, label: "Bar", icon: "bar_chart" },
                       { value: "line" as const, label: "Line", icon: "show_chart" },
@@ -1065,13 +1065,13 @@ function StudioPageInner() {
                         onClick={() =>
                           setChartConfig((c) => ({ ...c, chartType: ct.value }))
                         }
-                        className={`px-3 py-1 rounded-md text-xs font-medium flex items-center gap-1 transition-colors ${
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors ${
                           chartConfig.chartType === ct.value
                             ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
                             : "text-slate-custom-500 hover:text-slate-custom-900"
                         }`}
                       >
-                        <span className="material-icons-round text-sm">
+                        <span className="material-icons-round text-xs">
                           {ct.icon}
                         </span>
                         {ct.label}
