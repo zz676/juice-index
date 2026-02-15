@@ -734,6 +734,8 @@ function StudioPageInner() {
 
   const hasChartData = chartData.length > 0;
   const queryQuotaExhausted = queryUsageCount >= TIER_QUOTAS[userTier].studioQueries;
+  const chartQuotaExhausted = chartUsageCount >= TIER_QUOTAS[userTier].chartGen;
+  const draftQuotaExhausted = composerUsageCount >= TIER_QUOTAS[userTier].postDrafts;
 
   return (
     <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
@@ -932,15 +934,10 @@ function StudioPageInner() {
                       {queryUsageCount}/{TIER_QUOTAS[userTier].studioQueries} queries
                     </span>
                   </div>
-                  {queryQuotaExhausted ? (
-                    <span className="text-sm text-amber-600 font-medium flex items-center gap-1">
-                      <span className="material-icons-round text-base">info</span>
-                      Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
-                    </span>
-                  ) : (
+                  <div className="flex flex-col items-end gap-1">
                     <button
                       onClick={generateRunnableQuery}
-                      disabled={isGeneratingQueryPlan || !prompt.trim()}
+                      disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted}
                       className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                     >
                       {isGeneratingQueryPlan && (
@@ -951,7 +948,13 @@ function StudioPageInner() {
                       )}
                       {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
                     </button>
-                  )}
+                    {queryQuotaExhausted && (
+                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-xs">info</span>
+                        Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -993,7 +996,7 @@ function StudioPageInner() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end gap-1">
                     <button
                       onClick={runGeneratedQuery}
                       disabled={isRunningQuery || !tableName || !queryJsonText.trim() || queryQuotaExhausted}
@@ -1006,6 +1009,12 @@ function StudioPageInner() {
                       )}
                       {isRunningQuery ? "Running..." : "Run Query"}
                     </button>
+                    {queryQuotaExhausted && (
+                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-xs">info</span>
+                        Daily query limit reached ({TIER_QUOTAS[userTier].studioQueries}/{TIER_QUOTAS[userTier].studioQueries})
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
@@ -1429,13 +1438,14 @@ function StudioPageInner() {
                   <span className="material-icons-round text-sm">info</span>
                   Generate a high-res image for export
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-slate-custom-400">
-                    {chartUsageCount}/{TIER_QUOTAS[userTier].chartGen}
-                  </span>
-                  <button
-                    onClick={generateChartImage}
-                    disabled={isGeneratingImage || !hasChartData}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-slate-custom-400">
+                      {chartUsageCount}/{TIER_QUOTAS[userTier].chartGen}
+                    </span>
+                    <button
+                      onClick={generateChartImage}
+                      disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
                     className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                 >
                   {isGeneratingImage ? (
@@ -1449,8 +1459,15 @@ function StudioPageInner() {
                       <path d="M1.5 3l0.4 0.9L3 4.3l-1.1 0.4L1.5 5.6l-0.4-0.9L0 4.3l1.1-0.4Z" fill="currentColor" stroke="none" />
                     </svg>
                   )}
-                    {isGeneratingImage ? "Generating..." : "Generate Image"}
-                  </button>
+                      {isGeneratingImage ? "Generating..." : "Generate Image"}
+                    </button>
+                  </div>
+                  {chartQuotaExhausted && (
+                    <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                      <span className="material-icons-round text-xs">info</span>
+                      Daily chart limit reached ({TIER_QUOTAS[userTier].chartGen}/{TIER_QUOTAS[userTier].chartGen})
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1670,20 +1687,28 @@ function StudioPageInner() {
                     </span>
                   </div>
 
-                  <button
-                    onClick={generateDraft}
-                    disabled={isGeneratingPost || !prompt.trim()}
-                    className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
-                  >
-                    <span
-                      className={`material-icons-round text-sm ${
-                        isGeneratingPost ? "animate-spin" : ""
-                      }`}
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={generateDraft}
+                      disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted}
+                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                     >
-                      {isGeneratingPost ? "refresh" : "auto_awesome"}
-                    </span>
-                    {isGeneratingPost ? "Generating..." : "Generate Draft"}
-                  </button>
+                      <span
+                        className={`material-icons-round text-sm ${
+                          isGeneratingPost ? "animate-spin" : ""
+                        }`}
+                      >
+                        {isGeneratingPost ? "refresh" : "auto_awesome"}
+                      </span>
+                      {isGeneratingPost ? "Generating..." : "Generate Draft"}
+                    </button>
+                    {draftQuotaExhausted && (
+                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-xs">info</span>
+                        Daily draft limit reached ({TIER_QUOTAS[userTier].postDrafts}/{TIER_QUOTAS[userTier].postDrafts})
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="p-3">
