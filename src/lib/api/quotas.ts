@@ -56,7 +56,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     csvExports: 10,
     weeklyPublishes: 10,
     delayDays: 0,
-    histMonths: 36,
+    histMonths: 60,
     seats: 1,
     xAccounts: 1,
     studioQueriesByModel: {
