@@ -8,9 +8,9 @@ import NotificationBell from "@/components/dashboard/NotificationBell";
 
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
-    { href: "/dashboard/posts", icon: "article", label: "Posts" },
-    { href: "/dashboard/studio", icon: "show_chart", label: "Studio" },
+    { href: "/dashboard/studio", icon: "auto_awesome", label: "Juice AI" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Subscription & Billing" },
+    { href: "/dashboard/posts", icon: "article", label: "Posts" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];
 
@@ -133,7 +133,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <div className="bg-slate-custom-900 rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer mx-1 mb-2">
                             <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all"></div>
                             <h3 className="text-white font-semibold text-sm mb-1 relative z-10">Juice Pro</h3>
-                            <p className="text-xs text-slate-custom-300 mb-2.5 relative z-10">Access real-time insurance data.</p>
+                            <p className="text-xs text-slate-custom-300 mb-2.5 relative z-10">Unlock AI-powered EV market intelligence.</p>
                             <Link
                                 href="/dashboard/billing"
                                 className="block w-full py-1.5 bg-primary text-slate-custom-900 font-semibold text-xs rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all relative z-10"

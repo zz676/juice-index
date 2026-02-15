@@ -81,7 +81,17 @@ All new components live in `src/components/dashboard/`:
 
 ## Sidebar Navigation
 
-Added "Posts" nav item (icon: `article`) between Overview and Data Explorer.
+Nav items in order:
+
+| Item | Icon | Path |
+|------|------|------|
+| Overview | `dashboard` | `/dashboard` |
+| Juice AI | `auto_awesome` | `/dashboard/studio` |
+| Subscription & Billing | `credit_card` | `/dashboard/billing` |
+| Posts | `article` | `/dashboard/posts` |
+| Settings | `settings` | `/dashboard/settings` |
+
+The Juice Pro upgrade card tagline reads: "Unlock AI-powered EV market intelligence."
 
 ## Clickable News Items
 
