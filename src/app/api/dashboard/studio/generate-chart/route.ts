@@ -108,13 +108,9 @@ const EV_KEYWORDS = [
 // Register Chart.js components once at module level
 Chart.register(...registerables, ChartDataLabels);
 
-async function renderChartToBuffer(config: ChartConfiguration, backgroundColor?: string): Promise<Buffer> {
+async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> {
   const canvas = createCanvas(1200, 675);
   const ctx = canvas.getContext("2d");
-
-  // Fill background with the user's chosen color (defaults to white)
-  ctx.fillStyle = backgroundColor || "#ffffff";
-  ctx.fillRect(0, 0, 1200, 675);
 
   // Disable animation for synchronous server-side rendering
   config.options = config.options || {};
@@ -126,6 +122,19 @@ async function renderChartToBuffer(config: ChartConfiguration, backgroundColor?:
 
   return canvas.toBuffer("image/png");
 }
+
+const backgroundColorPlugin: Plugin = {
+  id: "backgroundColorFill",
+  beforeDraw: (chart, _args, options) => {
+    const pluginOptions = options as { color?: string } | undefined;
+    const color = pluginOptions?.color || "#ffffff";
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.restore();
+  },
+};
 
 const sourceAttributionPlugin: Plugin = {
   id: "sourceAttribution",
@@ -382,6 +391,9 @@ function renderChartConfig(params: {
               : "";
           },
         },
+        backgroundColorFill: {
+          color: style.backgroundColor || "#ffffff",
+        },
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
           color: style.sourceColor || "#65a30d",
@@ -438,7 +450,7 @@ function renderChartConfig(params: {
         },
       },
     },
-    plugins: [sourceAttributionPlugin, watermarkPlugin],
+    plugins: [backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
   };
 }
 
@@ -990,7 +1002,7 @@ export async function POST(req: Request) {
 
     // Pre-load logo for the watermark plugin (sync hook needs it ready)
     preloadedLogo = await getLogoImage();
-    const imageBuffer = await renderChartToBuffer(config, style.backgroundColor);
+    const imageBuffer = await renderChartToBuffer(config);
 
     return NextResponse.json({
       mode: "chart",
