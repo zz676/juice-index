@@ -2,7 +2,7 @@
 
 ## Overview
 
-Juice Index uses a 4-tier system for gating features and enforcing quotas. The centralized configuration lives in `/src/lib/api/quotas.ts` as the single source of truth for all tier limits.
+Juice Index uses a 4-tier system for gating features and enforcing quotas. The centralized configuration lives in `/src/lib/api/quotas.ts` as the single source of truth for all tier limits. The studio page sources all quota limits (global and per-model) from the `/api/dashboard/studio/usage` endpoint to avoid stale-tier display issues.
 
 ## Tiers
 
@@ -58,11 +58,15 @@ Each AI model has its own daily sub-limit within the global cap. Both the global
 
 ### Centralized Config (`/src/lib/api/quotas.ts`)
 
-All tier quotas are defined in `TIER_QUOTAS` object. Other files import from this module:
+All tier quotas are defined in `TIER_QUOTAS` object. Server-side files import from this module:
 
 - `/src/lib/api/tier.ts` — re-exports `TIER_QUOTAS` and uses it for `tierLimit()`
 - `/src/lib/api/auth.ts` — uses `TIER_QUOTAS` for API rate limiting
+- `/src/lib/ratelimit.ts` — uses `TIER_QUOTAS` in `getStudioUsage()` to compute limits
 - `/src/app/dashboard/billing/tier-display.ts` — uses `TIER_QUOTAS` for display limits
+- `/src/app/dashboard/billing/api-usage-card.tsx` — uses `TIER_QUOTAS` for per-model quota display
+
+The studio page (`/src/app/dashboard/studio/page.tsx`) does **not** import `TIER_QUOTAS`. It reads all limits from the `/api/dashboard/studio/usage` response to avoid stale data from the cached `/api/dashboard/tier` endpoint (`max-age=60`).
 
 The `TierQuota` type includes:
 - `studioQueriesByModel: Record<string, number>` — per-model query sub-limits
@@ -91,7 +95,7 @@ Separate rate limit functions with distinct Redis key prefixes:
 
 **Read-only:**
 - `getWeeklyPublishUsage()` — read-only publish usage (no increment)
-- `getStudioUsage()` — aggregated usage including per-model breakdown (returned via `/api/dashboard/studio/usage`)
+- `getStudioUsage()` — aggregated usage + limits including per-model breakdown (returned via `/api/dashboard/studio/usage`); single source of truth for the studio UI
 
 ### API Endpoint Tiers
 
@@ -102,12 +106,14 @@ Separate rate limit functions with distinct Redis key prefixes:
 
 The Studio Analyst Composer (Step 4) supports multiple AI models gated by tier. Model definitions live in `/src/lib/studio/models.ts`.
 
-| Model | Provider | Min Tier | Description |
-|-------|----------|----------|-------------|
-| GPT-4o Mini | OpenAI | FREE | Fast & affordable |
-| GPT-4o | OpenAI | STARTER | Best reasoning from OpenAI |
-| Claude 3.5 Sonnet | Anthropic | STARTER | Balanced speed & quality |
-| Claude Opus 4 | Anthropic | PRO | Most capable model |
+| Model | Provider | Min Tier | API Pricing (per MTok) | Description |
+|-------|----------|----------|------------------------|-------------|
+| GPT-4o Mini | OpenAI | FREE | $0.15 in / $0.60 out | Fast & affordable |
+| GPT-4o | OpenAI | STARTER | $2.50 in / $10.00 out | Best reasoning from OpenAI |
+| Claude 3.5 Sonnet | Anthropic | STARTER | $3.00 in / $15.00 out | Balanced speed & quality |
+| Claude Opus 4 | Anthropic | PRO | $15.00 in / $75.00 out | Most capable model |
+
+*Pricing reflects provider API costs (OpenAI / Anthropic) as of early 2025. These are the costs Juice Index pays per request — end users are not billed per token.*
 
 Users can also adjust the temperature (0.0–1.0) for generation creativity. The model dropdown shows all models but locks those above the user's tier with a lock icon. Exhausted models (per-model quota reached) are also disabled with a usage indicator.
 
