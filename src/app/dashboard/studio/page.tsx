@@ -27,6 +27,7 @@ import {
   type ModelDefinition,
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
+import { TIER_QUOTAS } from "@/lib/api/quotas";
 
 type ChartPoint = { label: string; value: number };
 
@@ -86,6 +87,9 @@ function StudioPageInner() {
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [activeSection, setActiveSection] = useState<number>(1);
+  const [queryUsageCount, setQueryUsageCount] = useState(0);
+  const [composerUsageCount, setComposerUsageCount] = useState(0);
+  const [chartUsageCount, setChartUsageCount] = useState(0);
   const defaultPanelWidth = 450;
   const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
   const isResizing = useRef(false);
@@ -166,7 +170,18 @@ function StudioPageInner() {
     };
   }, []);
 
-  // Fetch user tier on mount for model access gating
+  const fetchUsage = useCallback(() => {
+    fetch("/api/dashboard/studio/usage")
+      .then((res) => res.json())
+      .then((data: Record<string, unknown>) => {
+        if (typeof data.queryUsed === "number") setQueryUsageCount(data.queryUsed);
+        if (typeof data.draftUsed === "number") setComposerUsageCount(data.draftUsed);
+        if (typeof data.chartUsed === "number") setChartUsageCount(data.chartUsed);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch user tier and usage on mount
   useEffect(() => {
     fetch("/api/dashboard/tier")
       .then((res) => res.json())
@@ -174,7 +189,8 @@ function StudioPageInner() {
         if (typeof data.tier === "string") setUserTier(data.tier as ApiTier);
       })
       .catch(() => {});
-  }, []);
+    fetchUsage();
+  }, [fetchUsage]);
 
   // Pre-fill prompt from URL param (e.g., from brand search results)
   useEffect(() => {
@@ -323,6 +339,7 @@ function StudioPageInner() {
       }));
 
       showToast("success", "Runnable query generated. Review and click Run Query.");
+      fetchUsage();
 
       // On mobile, collapse sidebar to show results
       if (window.innerWidth < 1024) setShowSidebar(false);
@@ -386,6 +403,7 @@ function StudioPageInner() {
       }
 
       applyQueryExecutionResult(data);
+      fetchUsage();
     } catch (err) {
       console.error(err);
       showToast(
@@ -457,6 +475,7 @@ function StudioPageInner() {
       }
 
       setChartImage(image);
+      fetchUsage();
       showToast("success", "Chart image ready!");
     } catch (err) {
       console.error(err);
@@ -467,7 +486,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingImage(false);
     }
-  }, [chartConfig, chartData, showToast]);
+  }, [chartConfig, chartData, showToast, fetchUsage]);
 
   const generateDraft = useCallback(async () => {
     if (!prompt.trim()) {
@@ -512,6 +531,7 @@ function StudioPageInner() {
       }
 
       setPostDraft(content);
+      fetchUsage();
       showToast("success", "Draft generated.");
     } catch (err) {
       console.error(err);
@@ -522,7 +542,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingPost(false);
     }
-  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, showToast]);
+  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, showToast, fetchUsage]);
 
   const copyDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -707,15 +727,16 @@ function StudioPageInner() {
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsQueryModelDropdownOpen((v) => !v)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200"
-                    >
-                      <span className="material-icons-round text-sm text-primary">smart_toy</span>
-                      <span className="max-w-[100px] truncate">
-                        {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName ?? "GPT-4o Mini"}
-                      </span>
+                  <div className="flex flex-col">
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsQueryModelDropdownOpen((v) => !v)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                      >
+                        <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                        <span className="max-w-[100px] truncate">
+                          {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName ?? "GPT-4o Mini"}
+                        </span>
                       <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
                     </button>
                     {isQueryModelDropdownOpen && (
@@ -765,17 +786,21 @@ function StudioPageInner() {
                         </div>
                       </>
                     )}
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
+                      {queryUsageCount}/{TIER_QUOTAS[userTier].studioQueries} queries
+                    </span>
                   </div>
                   <button
                     onClick={generateRunnableQuery}
                     disabled={isGeneratingQueryPlan || !prompt.trim()}
-                    className="px-3 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                   >
                     {isGeneratingQueryPlan && (
-                      <span className="material-icons-round text-sm animate-spin">refresh</span>
+                      <span className="material-icons-round text-xs animate-spin">refresh</span>
                     )}
                     {!isGeneratingQueryPlan && (
-                      <span className="material-icons-round text-sm">auto_awesome</span>
+                      <span className="material-icons-round text-xs">auto_awesome</span>
                     )}
                     {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
                   </button>
@@ -824,12 +849,12 @@ function StudioPageInner() {
                     <button
                       onClick={runGeneratedQuery}
                       disabled={isRunningQuery || !tableName || !queryJsonText.trim()}
-                      className="px-3 py-2 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[12px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                      className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                     >
                       {isRunningQuery ? (
-                        <span className="material-icons-round text-[12px] animate-spin">refresh</span>
+                        <span className="material-icons-round text-[10px] animate-spin">refresh</span>
                       ) : (
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z" /></svg>
+                        <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z" /></svg>
                       )}
                       {isRunningQuery ? "Running..." : "Run Query"}
                     </button>
@@ -987,12 +1012,12 @@ function StudioPageInner() {
             </section>
           </div>
 
-          <div className="flex-1 min-h-0 bg-slate-custom-100 p-3 overflow-y-auto flex flex-col gap-3">
+          <div className="flex-1 min-h-0 bg-slate-custom-100 p-3 pr-6 overflow-y-auto flex flex-col gap-3">
             <section
               ref={chartRef}
               onFocusCapture={() => setActiveSection(3)}
               onClickCapture={() => setActiveSection(3)}
-              className="bg-white rounded-2xl overflow-hidden relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
+              className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
             >
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
               <div className="px-5 py-2.5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1005,13 +1030,13 @@ function StudioPageInner() {
                   </h3>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
-                  <span className="flex items-center gap-1 bg-white border border-slate-custom-200 px-2 py-1 rounded shadow-sm">
+                  <span className="flex items-center gap-1 px-2 py-1">
                     <span className="material-icons-round text-sm text-primary">
                       table_rows
                     </span>
                     {rowCount || chartData.length} rows
                   </span>
-                  <span className="flex items-center gap-1 bg-white border border-slate-custom-200 px-2 py-1 rounded shadow-sm">
+                  <span className="flex items-center gap-1 px-2 py-1">
                     <span className="material-icons-round text-sm text-primary">
                       timer
                     </span>
@@ -1021,7 +1046,7 @@ function StudioPageInner() {
               </div>
 
               <div
-                className="px-4 min-h-[390px]"
+                className="px-4 min-h-[370px]"
                 style={{ backgroundColor: chartConfig.backgroundColor }}
               >
                 <div className="flex justify-between items-center">
@@ -1055,10 +1080,10 @@ function StudioPageInner() {
                   </div>
                   <button
                     onClick={() => setShowCustomizer((v) => !v)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all border ${
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all ${
                       showCustomizer
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-slate-200 text-slate-500 hover:text-primary hover:border-primary/50"
+                        ? "bg-primary/10 text-primary"
+                        : "text-slate-500 hover:text-primary"
                     }`}
                   >
                     <span className="material-icons-round text-sm">tune</span>
@@ -1066,7 +1091,7 @@ function StudioPageInner() {
                   </button>
                 </div>
 
-                <div className="h-[330px]">
+                <div className="h-[320px]">
                   {hasChartData ? (
                     <ResponsiveContainer width="100%" height="100%">
                       {chartConfig.chartType === "line" ? (
@@ -1208,7 +1233,7 @@ function StudioPageInner() {
                     className="text-right italic -mt-3"
                     style={{
                       color: chartConfig.sourceColor,
-                      fontSize: `${chartConfig.sourceFontSize}px`,
+                      fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
                     }}
                   >
                     {chartConfig.sourceText}
@@ -1216,25 +1241,30 @@ function StudioPageInner() {
                 )}
               </div>
 
-              <div className="px-5 py-3 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
+              <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-slate-custom-500">
                   <span className="material-icons-round text-sm">info</span>
                   Generate a high-res image for export
                 </div>
-                <button
-                  onClick={generateChartImage}
-                  disabled={isGeneratingImage || !hasChartData}
-                  className="px-4 py-1.5 bg-primary text-slate-custom-900 text-xs font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all flex items-center gap-1.5 disabled:opacity-50"
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-slate-custom-400">
+                    {chartUsageCount}/{TIER_QUOTAS[userTier].chartGen}
+                  </span>
+                  <button
+                    onClick={generateChartImage}
+                    disabled={isGeneratingImage || !hasChartData}
+                    className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
                 >
                   <span
-                    className={`material-icons-round text-sm ${
+                    className={`material-icons-round text-xs ${
                       isGeneratingImage ? "animate-spin" : ""
                     }`}
                   >
                     {isGeneratingImage ? "refresh" : "image"}
                   </span>
-                  {isGeneratingImage ? "Generating..." : "Generate Image"}
-                </button>
+                    {isGeneratingImage ? "Generating..." : "Generate Image"}
+                  </button>
+                </div>
               </div>
 
               {chartImage && (
@@ -1311,17 +1341,18 @@ function StudioPageInner() {
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Model Dropdown */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsModelDropdownOpen((v) => !v)}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200"
-                    >
-                      <span className="material-icons-round text-sm text-primary">smart_toy</span>
-                      <span className="max-w-[100px] truncate">
-                        {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
-                      </span>
-                      <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
-                    </button>
+                  <div className="flex flex-col">
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsModelDropdownOpen((v) => !v)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                      >
+                        <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                        <span className="max-w-[100px] truncate">
+                          {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
+                        </span>
+                        <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                      </button>
                     {isModelDropdownOpen && (
                       <>
                         <div
@@ -1369,6 +1400,10 @@ function StudioPageInner() {
                         </div>
                       </>
                     )}
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
+                      {composerUsageCount}/{TIER_QUOTAS[userTier].postDrafts} drafts
+                    </span>
                   </div>
 
                   {/* Temperature Slider */}
@@ -1388,14 +1423,6 @@ function StudioPageInner() {
                     </span>
                   </div>
 
-                  <button
-                    onClick={copyDraft}
-                    disabled={!postDraft}
-                    className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <span className="material-icons-round text-sm">content_copy</span>
-                    Copy
-                  </button>
                   <button
                     onClick={generateDraft}
                     disabled={isGeneratingPost || !prompt.trim()}
@@ -1418,32 +1445,42 @@ function StudioPageInner() {
                     "Generate a draft to turn your data result into a publish-ready analyst summary."}
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  <button
-                    onClick={() => showToast("info", "Share link workflow will be wired next.")}
-                    className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
-                  >
-                    <span className="material-icons-round text-sm">share</span>
-                    Share Link
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => showToast("info", "Share link workflow will be wired next.")}
+                      className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
+                    >
+                      <span className="material-icons-round text-sm">share</span>
+                      Share Link
+                    </button>
+                    <button
+                      onClick={copyDraft}
+                      disabled={!postDraft}
+                      className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
+                    >
+                      <span className="material-icons-round text-sm">content_copy</span>
+                      Copy
+                    </button>
+                  </div>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => showToast("info", "PNG export is available in Step 3 above.")}
-                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary hover:shadow-sm transition-all duration-200 flex items-center gap-2"
+                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all duration-200 flex items-center gap-1"
                     >
-                      <span className="material-icons-round text-sm">image</span> PNG
+                      <span className="material-icons-round text-xs">image</span> PNG
                     </button>
                     <button
                       onClick={() => showToast("info", "PDF export will be wired next.")}
-                      className="px-4 py-2 border border-slate-custom-200 rounded-lg text-xs font-bold text-slate-custom-600 hover:border-primary hover:text-primary hover:shadow-sm transition-all duration-200 flex items-center gap-2"
+                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] transition-all duration-200 flex items-center gap-1"
                     >
-                      <span className="material-icons-round text-sm">description</span>
+                      <span className="material-icons-round text-xs">description</span>
                       PDF
                     </button>
                     <button
-                      className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-sm font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-2"
+                      className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-1"
                       onClick={() => showToast("info", "Publish workflow will be wired next.")}
                     >
-                      <span className="material-icons-round text-sm">rocket_launch</span>
+                      <span className="material-icons-round text-xs">rocket_launch</span>
                       Publish
                     </button>
                   </div>

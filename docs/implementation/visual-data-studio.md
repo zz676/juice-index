@@ -82,6 +82,23 @@ Added a model selector dropdown to Step 1 ("Ask Intelligence") so users can choo
 - Resolves the correct AI SDK provider (`openai()` or `anthropic()`) based on `ModelDefinition.provider`.
 - Falls back to `gpt-4o-mini` when no `modelId` is provided (preserves existing behavior).
 
+## ✅ Phase 3.6: Canvas Migration & UI Scroll Fix (Complete)
+
+### 1. Migrate from `chartjs-node-canvas` to `@napi-rs/canvas`
+The server-side chart rendering previously used `chartjs-node-canvas` which depends on the native `canvas` C++ module. This worked locally after `npm rebuild canvas` but failed on Vercel Lambda because native C++ addons aren't supported. Migrated to `@napi-rs/canvas`, a Rust-based alternative with prebuilt binaries for all platforms including Vercel's Lambda (Linux x64/arm64).
+
+**Changes:**
+- **`package.json`**: Removed `chartjs-node-canvas` and `canvas`; added `@napi-rs/canvas`.
+- **`src/app/api/dashboard/studio/generate-chart/route.ts`**:
+  - Replaced `ChartJSNodeCanvas` singleton with a `renderChartToBuffer()` function using `@napi-rs/canvas`'s `createCanvas` + Chart.js directly.
+  - Replaced `getLogoImage()` to use `@napi-rs/canvas`'s `loadImage()` (async).
+  - Updated watermark plugin to use a pre-loaded logo variable (since Chart.js plugin hooks are synchronous).
+  - Registered Chart.js components at module level with `Chart.register(…registerables, ChartDataLabels)`.
+- **`next.config.mjs`**: Replaced `canvas`/`chartjs-node-canvas` externals with `@napi-rs/canvas`; removed deprecated `experimental.serverComponentsExternalPackages`.
+
+### 2. Vertical Scroll for Visualization & Data Section
+Added `overflow-y-auto max-h-[80vh]` to the Visualization & Data section (`page.tsx`) so content scrolls independently when it exceeds 80% of viewport height (e.g., chart + customizer + generated image + data table).
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment

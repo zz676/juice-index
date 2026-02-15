@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -6,8 +8,9 @@ import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { ChartConfiguration, Plugin, ChartType as JsChartType } from "chart.js";
-import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+import { Chart, registerables } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { createCanvas, loadImage, type Image as NapiImage } from "@napi-rs/canvas";
 import { Brand, MetricType, PeriodType, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { studioQueryLimit, studioChartLimit } from "@/lib/ratelimit";
@@ -102,20 +105,26 @@ const EV_KEYWORDS = [
   "brand",
 ];
 
-let chartCanvas: ChartJSNodeCanvas | null = null;
+// Register Chart.js components once at module level
+Chart.register(...registerables, ChartDataLabels);
 
-function getChartCanvas(): ChartJSNodeCanvas {
-  if (!chartCanvas) {
-    chartCanvas = new ChartJSNodeCanvas({
-      width: 1200,
-      height: 675,
-      backgroundColour: "#ffffff",
-      chartCallback: (ChartJS) => {
-        ChartJS.register(ChartDataLabels);
-      },
-    });
-  }
-  return chartCanvas;
+async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> {
+  const canvas = createCanvas(1200, 675);
+  const ctx = canvas.getContext("2d");
+
+  // Fill white background (chartjs-node-canvas did this via backgroundColour option)
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, 1200, 675);
+
+  // Disable animation for synchronous server-side rendering
+  config.options = config.options || {};
+  config.options.animation = false;
+  config.options.responsive = false;
+
+  // Chart.js accepts canvas-compatible objects
+  new Chart(ctx as unknown as CanvasRenderingContext2D, config);
+
+  return canvas.toBuffer("image/png");
 }
 
 const sourceAttributionPlugin: Plugin = {
@@ -140,6 +149,24 @@ const sourceAttributionPlugin: Plugin = {
   },
 };
 
+let logoImageCache: NapiImage | null = null;
+
+async function getLogoImage(): Promise<NapiImage | null> {
+  if (logoImageCache) return logoImageCache;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "logo.png");
+    const logoBuffer = fs.readFileSync(logoPath);
+    const img = await loadImage(logoBuffer);
+    logoImageCache = img;
+    return img;
+  } catch {
+    return null;
+  }
+}
+
+// Pre-loaded logo image, set before chart rendering
+let preloadedLogo: NapiImage | null = null;
+
 const watermarkPlugin: Plugin = {
   id: "watermark",
   afterDraw: (chart, _args, options) => {
@@ -147,21 +174,38 @@ const watermarkPlugin: Plugin = {
     if (!pluginOptions?.enabled) return;
 
     const ctx = chart.ctx;
+    const centerX = chart.width / 2;
+    const centerY = chart.height / 2;
+
+    // Draw diagonal repeating watermark
     ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.font = "bold 60px Inter, Arial, sans-serif";
+    ctx.globalAlpha = 0.10;
+    ctx.font = "bold 48px Inter, Arial, sans-serif";
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-
-    // Rotate and draw watermark text diagonally across the chart
-    const centerX = chart.width / 2;
-    const centerY = chart.height / 2;
     ctx.translate(centerX, centerY);
     ctx.rotate(-Math.PI / 6);
-    ctx.fillText("Juice Index", 0, -30);
-    ctx.font = "24px Inter, Arial, sans-serif";
-    ctx.fillText("Upgrade to Pro to remove watermark", 0, 25);
+    ctx.fillText("juiceindex.io", 0, -20);
+    ctx.font = "20px Inter, Arial, sans-serif";
+    ctx.fillText("Upgrade to Pro to remove watermark", 0, 20);
+    ctx.restore();
+
+    // Draw logo + url in bottom-left corner
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    const logo = preloadedLogo;
+    const logoSize = 20;
+    const padding = 16;
+    const y = chart.height - padding - logoSize / 2;
+    if (logo) {
+      ctx.drawImage(logo as unknown as CanvasImageSource, padding, y - logoSize / 2, logoSize, logoSize);
+    }
+    ctx.font = "bold 13px Inter, Arial, sans-serif";
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("juiceindex.io", padding + (logo ? logoSize + 6 : 0), y);
     ctx.restore();
   },
 };
@@ -502,16 +546,51 @@ async function getLiveHints() {
       `
     );
 
+    // Fetch distinct values for filterable columns across other tables
+    const [plantExportPlants, plantExportBrands, batteryMakers, automakers, batteryScopes] = await Promise.all([
+      prisma.$queryRaw<Array<{ plant: string }>>(
+        Prisma.sql`SELECT DISTINCT "plant" FROM "public"."PlantExports" ORDER BY "plant" ASC LIMIT 30`
+      ).catch(() => [] as Array<{ plant: string }>),
+      prisma.$queryRaw<Array<{ brand: string }>>(
+        Prisma.sql`SELECT DISTINCT "brand" FROM "public"."PlantExports" ORDER BY "brand" ASC LIMIT 30`
+      ).catch(() => [] as Array<{ brand: string }>),
+      prisma.$queryRaw<Array<{ maker: string }>>(
+        Prisma.sql`SELECT DISTINCT "maker" FROM "public"."BatteryMakerMonthly" ORDER BY "maker" ASC LIMIT 30`
+      ).catch(() => [] as Array<{ maker: string }>),
+      prisma.$queryRaw<Array<{ automaker: string }>>(
+        Prisma.sql`SELECT DISTINCT "automaker" FROM "public"."AutomakerRankings" ORDER BY "automaker" ASC LIMIT 30`
+      ).catch(() => [] as Array<{ automaker: string }>),
+      prisma.$queryRaw<Array<{ scope: string }>>(
+        Prisma.sql`SELECT DISTINCT "scope" FROM "public"."BatteryMakerRankings" ORDER BY "scope" ASC LIMIT 10`
+      ).catch(() => [] as Array<{ scope: string }>),
+    ]);
+
     return {
       latestYear,
       years,
       brands: brandsRows.map((row) => row.brand),
+      tableValues: {
+        plantExports: {
+          plants: plantExportPlants.map((r) => r.plant),
+          brands: plantExportBrands.map((r) => r.brand),
+        },
+        batteryMakerMonthly: {
+          makers: batteryMakers.map((r) => r.maker),
+        },
+        automakerRankings: {
+          automakers: automakers.map((r) => r.automaker),
+        },
+        batteryMakerRankings: {
+          scopes: batteryScopes.map((r) => r.scope),
+        },
+      },
     };
   } catch {
     return {
       latestYear: new Date().getFullYear(),
       years: [] as number[],
       brands: [] as string[],
+      tableValues: {} as Record<string, Record<string, string[]>>,
     };
   }
 }
@@ -546,6 +625,11 @@ Live DB hints:
 - latest eVMetric year: ${hints.latestYear}
 - recent eVMetric years: ${hints.years.join(", ") || "unknown"}
 - delivery brands in latest year: ${hints.brands.join(", ") || "unknown"}
+${hints.tableValues?.plantExports?.plants?.length ? `- plantExports plants: ${hints.tableValues.plantExports.plants.join(", ")}` : ""}
+${hints.tableValues?.plantExports?.brands?.length ? `- plantExports brands: ${hints.tableValues.plantExports.brands.join(", ")}` : ""}
+${hints.tableValues?.batteryMakerMonthly?.makers?.length ? `- batteryMakerMonthly makers: ${hints.tableValues.batteryMakerMonthly.makers.join(", ")}` : ""}
+${hints.tableValues?.automakerRankings?.automakers?.length ? `- automakerRankings automakers: ${hints.tableValues.automakerRankings.automakers.join(", ")}` : ""}
+${hints.tableValues?.batteryMakerRankings?.scopes?.length ? `- batteryMakerRankings scopes: ${hints.tableValues.batteryMakerRankings.scopes.join(", ")}` : ""}
 
 Rules:
 1. If question is not about EV/NEV market data, set unsupported=true and include reason.
@@ -553,7 +637,8 @@ Rules:
 3. Return query as a valid JSON string representing Prisma findMany args object.
    Allowed top-level keys: where, orderBy, take, skip, select, distinct.
    Example:
-   {"where":{"brand":"TESLA","year":2024},"orderBy":[{"month":"asc"}],"take":12}
+   {"where":{"brand":"Tesla","year":2024},"orderBy":[{"month":"asc"}],"take":12}
+4a. IMPORTANT: Always use exact column values from the "Live DB hints" above. Never guess or transform values (e.g. use "Tesla Shanghai" not "Shanghai", use "Tesla" not "TESLA").
 4. Never generate raw SQL, mutations, or unsafe operations.
 5. Default to latest year when user omits year.
 6. Keep take <= 120.
@@ -566,6 +651,64 @@ Rules:
   });
 
   return object;
+}
+
+/**
+ * Recursively walk a Prisma `where` object and add `mode: "insensitive"` to
+ * every string filter so queries are case-insensitive.
+ *
+ *   { brand: "Tesla" }                    → { brand: { equals: "Tesla", mode: "insensitive" } }
+ *   { brand: { contains: "tesla" } }      → { brand: { contains: "tesla", mode: "insensitive" } }
+ *   { brand: { equals: "X", mode: … } }   → left as-is (already has mode)
+ */
+function addInsensitiveMode(where: unknown): unknown {
+  if (!where || typeof where !== "object") return where;
+  if (Array.isArray(where)) return where.map(addInsensitiveMode);
+
+  const result: Record<string, unknown> = {};
+  const STRING_FILTER_OPS = new Set(["equals", "contains", "startsWith", "endsWith", "not"]);
+
+  for (const [key, value] of Object.entries(where as Record<string, unknown>)) {
+    // Recurse into AND / OR arrays and NOT objects
+    if (key === "AND" || key === "OR") {
+      result[key] = Array.isArray(value)
+        ? value.map(addInsensitiveMode)
+        : addInsensitiveMode(value);
+      continue;
+    }
+    if (key === "NOT") {
+      result[key] = addInsensitiveMode(value);
+      continue;
+    }
+
+    // Simple string equality  →  wrap with equals + insensitive
+    if (typeof value === "string") {
+      result[key] = { equals: value, mode: "insensitive" };
+      continue;
+    }
+
+    // Object filter that already has a string op (equals, contains, …)
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const filterObj = value as Record<string, unknown>;
+      const hasStringOp = Object.keys(filterObj).some(
+        (k) => STRING_FILTER_OPS.has(k) && typeof filterObj[k] === "string"
+      );
+      if (hasStringOp && !("mode" in filterObj)) {
+        result[key] = { ...filterObj, mode: "insensitive" };
+        continue;
+      }
+    }
+
+    // Numbers, booleans, etc. — pass through unchanged
+    result[key] = value;
+  }
+
+  return result;
+}
+
+function applyCaseInsensitive(query: Record<string, unknown>): Record<string, unknown> {
+  if (!query.where) return query;
+  return { ...query, where: addInsensitiveMode(query.where) };
 }
 
 function parseGeneratedQuery(queryText: string): Record<string, unknown> {
@@ -615,7 +758,7 @@ export async function POST(req: Request) {
       if (queryLimitRes) return queryLimitRes;
 
       const table = payload.table.trim();
-      const query = payload.query as Record<string, unknown>;
+      const query = applyCaseInsensitive(payload.query as Record<string, unknown>);
 
       let execution;
       try {
@@ -723,7 +866,7 @@ export async function POST(req: Request) {
 
       let query: Record<string, unknown>;
       try {
-        query = parseGeneratedQuery(generated.query || "{}");
+        query = applyCaseInsensitive(parseGeneratedQuery(generated.query || "{}"));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to parse generated query";
@@ -845,8 +988,9 @@ export async function POST(req: Request) {
       watermark: applyWatermark,
     });
 
-    const canvas = getChartCanvas();
-    const imageBuffer = await canvas.renderToBuffer(config);
+    // Pre-load logo for the watermark plugin (sync hook needs it ready)
+    preloadedLogo = await getLogoImage();
+    const imageBuffer = await renderChartToBuffer(config);
 
     return NextResponse.json({
       mode: "chart",
