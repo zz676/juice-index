@@ -132,6 +132,77 @@ Requests for a locked model return 403. Per-model quota exceeded returns 429 wit
 - **Draft posts**: FREE limited to 5, PRO+ unlimited
 - **Scheduled posts**: FREE gets 0, PRO gets 10 pending max
 
+## How to Reset Quota Usage
+
+All quota counters are stored in Upstash Redis. You can reset a user's counters via the Upstash REST API. Credentials are in `.env.local` (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`).
+
+### 1. Find the user ID
+
+The user ID is the Supabase auth UUID (e.g., `f26fa805-93ec-4ad0-8621-483c381c4d98`). You can find it in the `juice_api_subscriptions` table or from the Supabase dashboard.
+
+### 2. Determine the Redis key
+
+Date keys use UTC in `YYYYMMDD` format. Weekly keys use ISO week format `YYYY-Www`.
+
+| Quota | Redis key pattern | Reset window |
+|-------|-------------------|--------------|
+| Studio queries (global) | `studio:query:{userId}:{YYYYMMDD}` | Daily |
+| Chart generations | `studio:chart:{userId}:{YYYYMMDD}` | Daily |
+| Post drafts (global) | `studio:post:{userId}:{YYYYMMDD}` | Daily |
+| Per-model queries | `studio:query:model:{modelId}:{userId}:{YYYYMMDD}` | Daily |
+| Per-model drafts | `studio:post:model:{modelId}:{userId}:{YYYYMMDD}` | Daily |
+| API requests | `rl:{userId}:{YYYYMMDD}` | Daily |
+| CSV exports | `csv:{userId}:{YYYYMM}` | Monthly |
+| Weekly publishes | `publish:{userId}:{YYYY-Www}` | Weekly |
+
+Model IDs: `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `claude-opus-4`
+
+### 3. Reset via curl
+
+```bash
+# Variables
+UPSTASH_URL="https://relaxed-bass-20761.upstash.io"
+UPSTASH_TOKEN="<token from .env.local>"
+USER_ID="<user-uuid>"
+TODAY=$(date -u +%Y%m%d)
+
+# Check current value
+curl -s "$UPSTASH_URL/get/studio:query:$USER_ID:$TODAY" \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+
+# Reset (delete the key — next request starts from 0)
+curl -s "$UPSTASH_URL/del/studio:query:$USER_ID:$TODAY" \
+  -X POST \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+```
+
+### 4. Reset all studio counters for a user at once
+
+```bash
+# Reset global counters
+for PREFIX in studio:query studio:chart studio:post; do
+  curl -s "$UPSTASH_URL/del/$PREFIX:$USER_ID:$TODAY" \
+    -X POST -H "Authorization: Bearer $UPSTASH_TOKEN"
+done
+
+# Reset per-model counters
+for MODEL in gpt-4o-mini gpt-4o claude-3-5-sonnet claude-opus-4; do
+  for PREFIX in studio:query:model studio:post:model; do
+    curl -s "$UPSTASH_URL/del/$PREFIX:$MODEL:$USER_ID:$TODAY" \
+      -X POST -H "Authorization: Bearer $UPSTASH_TOKEN"
+  done
+done
+```
+
+### 5. Scan for all keys belonging to a user
+
+```bash
+curl -s "$UPSTASH_URL/scan/0/match/*:$USER_ID:*/count/100" \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+```
+
+Counters auto-expire at UTC midnight (daily) or end of period (weekly/monthly) via TTL set at increment time. Deleting a key is safe — it will be re-created on the next request.
+
 ## Key Files
 
 - `src/lib/api/quotas.ts` — centralized tier config with per-model quotas
