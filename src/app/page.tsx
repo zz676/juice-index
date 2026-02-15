@@ -76,6 +76,38 @@ const categories = [
 export default function LandingPage() {
   return (
     <div className="bg-background-light text-slate-custom-800 font-display antialiased overflow-x-hidden min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                name: "Juice Index",
+                url: "https://juiceindex.io",
+                logo: "https://juiceindex.io/logo.png",
+                description:
+                  "AI-powered EV market intelligence platform providing production data, insurance registrations, battery supply chain analytics, and market insights.",
+              },
+              {
+                "@type": "SoftwareApplication",
+                name: "Juice Index",
+                applicationCategory: "BusinessApplication",
+                operatingSystem: "Web",
+                url: "https://juiceindex.io",
+                offers: {
+                  "@type": "Offer",
+                  price: "0",
+                  priceCurrency: "USD",
+                },
+                description:
+                  "AI-powered data intelligence on the global electric vehicle market.",
+              },
+            ],
+          }),
+        }}
+      />
       {/* 1. Navbar */}
       <Navbar />
 
