@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const profileRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
     const [tier, setTier] = useState<string>("FREE");
+    const [role, setRole] = useState<string>("USER");
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -37,9 +38,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         });
         fetch("/api/dashboard/tier")
             .then((r) => r.json())
-            .then((d) => { if (d.tier) setTier(d.tier); })
+            .then((d) => { if (d.tier) setTier(d.tier); if (d.role) setRole(d.role); })
             .catch(() => {});
     }, [supabase]);
+
+    const finalNavItems = role === "ADMIN"
+        ? [...navItems, { href: "/dashboard/admin", icon: "admin_panel_settings", label: "Admin Console" }]
+        : navItems;
 
     const displayName = user?.name || user?.email || "";
     const initials = user?.name
@@ -105,8 +110,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                 {/* Nav Items */}
                 <nav className={`flex-1 flex flex-col gap-1 ${collapsed ? "items-center px-2" : "px-4"} mt-2`}>
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
+                    {finalNavItems.map((item) => {
+                        const isActive = item.href === "/dashboard"
+                            ? pathname === "/dashboard"
+                            : pathname === item.href || pathname.startsWith(item.href + "/");
                         return (
                             <Link
                                 key={item.href}
