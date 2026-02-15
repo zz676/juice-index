@@ -72,7 +72,13 @@ function whereToSql(where: unknown): string {
       continue;
     }
 
-    if ("equals" in raw) parts.push(`${col} = ${qValue(raw.equals)}`);
+    if ("equals" in raw) {
+      if (raw.mode === "insensitive" && typeof raw.equals === "string") {
+        parts.push(`${col} ILIKE ${qString(raw.equals as string)}`);
+      } else {
+        parts.push(`${col} = ${qValue(raw.equals)}`);
+      }
+    }
     if ("in" in raw && Array.isArray(raw.in) && raw.in.length) {
       parts.push(`${col} IN ${qValue(raw.in)}`);
     }
@@ -110,6 +116,7 @@ function whereToSql(where: unknown): string {
       "contains",
       "startsWith",
       "endsWith",
+      "mode",
     ]);
     const hasRecognized = Object.keys(raw).some((k) => recognizedKeys.has(k));
     if (!hasRecognized) {

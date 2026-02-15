@@ -33,13 +33,16 @@ type ChartStyleOptions = {
   fontColor?: string;
   titleColor?: string;
   titleSize?: number;
+  titleFont?: string;
   xAxisFontSize?: number;
   yAxisFontSize?: number;
   xAxisFontColor?: string;
   yAxisFontColor?: string;
+  axisFont?: string;
   sourceText?: string;
   sourceColor?: string;
   sourceFontSize?: number;
+  sourceFont?: string;
   barWidth?: number;
   paddingTop?: number;
   paddingBottom?: number;
@@ -47,6 +50,10 @@ type ChartStyleOptions = {
   paddingRight?: number;
   showValues?: boolean;
   showGrid?: boolean;
+  xAxisLineColor?: string;
+  yAxisLineColor?: string;
+  xAxisLineWidth?: number;
+  yAxisLineWidth?: number;
 };
 
 const DEFAULT_SOURCE_TEXT = "Powered by evjuice.net";
@@ -168,16 +175,17 @@ const sourceAttributionPlugin: Plugin = {
   id: "sourceAttribution",
   afterDraw: (chart, _args, options) => {
     const pluginOptions = options as
-      | { text?: string; color?: string; fontSize?: number }
+      | { text?: string; color?: string; fontSize?: number; fontFamily?: string }
       | undefined;
     const rawText = pluginOptions?.text ?? DEFAULT_SOURCE_TEXT;
     if (!rawText?.trim()) return;
 
     const ctx = chart.ctx;
     const fontSize = pluginOptions?.fontSize ?? 12;
+    const fontFamily = pluginOptions?.fontFamily || "Inter, Arial, sans-serif";
 
     ctx.save();
-    ctx.font = `italic ${fontSize}px Inter, Arial, sans-serif`;
+    ctx.font = `italic ${fontSize}px ${fontFamily}`;
     ctx.fillStyle = pluginOptions?.color || "#65a30d";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
@@ -346,16 +354,19 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
     fontColor: typeof obj.fontColor === "string" ? obj.fontColor : undefined,
     titleColor: typeof obj.titleColor === "string" ? obj.titleColor : undefined,
     titleSize: asNumber(obj.titleSize),
+    titleFont: typeof obj.titleFont === "string" ? obj.titleFont : undefined,
     xAxisFontSize: asNumber(obj.xAxisFontSize),
     yAxisFontSize: asNumber(obj.yAxisFontSize),
     xAxisFontColor:
       typeof obj.xAxisFontColor === "string" ? obj.xAxisFontColor : undefined,
     yAxisFontColor:
       typeof obj.yAxisFontColor === "string" ? obj.yAxisFontColor : undefined,
+    axisFont: typeof obj.axisFont === "string" ? obj.axisFont : undefined,
     sourceText: typeof obj.sourceText === "string" ? obj.sourceText : undefined,
     sourceColor:
       typeof obj.sourceColor === "string" ? obj.sourceColor : undefined,
     sourceFontSize: asNumber(obj.sourceFontSize),
+    sourceFont: typeof obj.sourceFont === "string" ? obj.sourceFont : undefined,
     barWidth: asNumber(obj.barWidth),
     paddingTop: asNumber(obj.paddingTop),
     paddingBottom: asNumber(obj.paddingBottom),
@@ -364,6 +375,12 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
     showValues:
       typeof obj.showValues === "boolean" ? obj.showValues : undefined,
     showGrid: typeof obj.showGrid === "boolean" ? obj.showGrid : undefined,
+    xAxisLineColor:
+      typeof obj.xAxisLineColor === "string" ? obj.xAxisLineColor : undefined,
+    yAxisLineColor:
+      typeof obj.yAxisLineColor === "string" ? obj.yAxisLineColor : undefined,
+    xAxisLineWidth: asNumber(obj.xAxisLineWidth),
+    yAxisLineWidth: asNumber(obj.yAxisLineWidth),
   };
 }
 
@@ -417,6 +434,7 @@ function renderChartConfig(params: {
           text: title,
           color: titleColor,
           font: {
+            family: style.titleFont || "Inter",
             size: style.titleSize && style.titleSize > 0 ? style.titleSize : 24,
             weight: "bold",
           },
@@ -446,6 +464,7 @@ function renderChartConfig(params: {
             style.sourceFontSize && style.sourceFontSize > 0
               ? style.sourceFontSize
               : 12,
+          fontFamily: style.sourceFont || "Inter, Arial, sans-serif",
         },
         watermark: {
           enabled: watermark,
@@ -454,10 +473,15 @@ function renderChartConfig(params: {
       scales: {
         x: {
           beginAtZero: isHorizontal,
+          border: {
+            color: style.xAxisLineColor || "#e5e7eb",
+            width: style.xAxisLineWidth ?? 1,
+          },
           grid: { color: "#e5e7eb", display: showGrid },
           ticks: {
             color: xTickColor,
             font: {
+              family: style.axisFont || "Inter",
               size:
                 style.xAxisFontSize && style.xAxisFontSize > 0
                   ? style.xAxisFontSize
@@ -470,10 +494,15 @@ function renderChartConfig(params: {
         },
         y: {
           beginAtZero: !isHorizontal,
+          border: {
+            color: style.yAxisLineColor || "#e5e7eb",
+            width: style.yAxisLineWidth ?? 1,
+          },
           grid: { color: "#e5e7eb", display: showGrid },
           ticks: {
             color: yTickColor,
             font: {
+              family: style.axisFont || "Inter",
               size:
                 style.yAxisFontSize && style.yAxisFontSize > 0
                   ? style.yAxisFontSize
