@@ -108,12 +108,12 @@ const EV_KEYWORDS = [
 // Register Chart.js components once at module level
 Chart.register(...registerables, ChartDataLabels);
 
-async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> {
+async function renderChartToBuffer(config: ChartConfiguration, backgroundColor?: string): Promise<Buffer> {
   const canvas = createCanvas(1200, 675);
   const ctx = canvas.getContext("2d");
 
-  // Fill white background (chartjs-node-canvas did this via backgroundColour option)
-  ctx.fillStyle = "#ffffff";
+  // Fill background with the user's chosen color (defaults to white)
+  ctx.fillStyle = backgroundColor || "#ffffff";
   ctx.fillRect(0, 0, 1200, 675);
 
   // Disable animation for synchronous server-side rendering
@@ -990,7 +990,7 @@ export async function POST(req: Request) {
 
     // Pre-load logo for the watermark plugin (sync hook needs it ready)
     preloadedLogo = await getLogoImage();
-    const imageBuffer = await renderChartToBuffer(config);
+    const imageBuffer = await renderChartToBuffer(config, style.backgroundColor);
 
     return NextResponse.json({
       mode: "chart",
