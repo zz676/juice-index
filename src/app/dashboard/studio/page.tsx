@@ -28,6 +28,7 @@ import {
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
+import { encodeShareState, decodeShareState } from "@/lib/studio/share";
 
 type ChartPoint = { label: string; value: number };
 
@@ -63,6 +64,12 @@ function StudioPageInner() {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [chartImage, setChartImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [imgZoom, setImgZoom] = useState(1);
+  const [imgPan, setImgPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panMode, setPanMode] = useState(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const panOrigin = useRef({ x: 0, y: 0 });
   const [prompt, setPrompt] = useState("");
   const [isGeneratingQueryPlan, setIsGeneratingQueryPlan] = useState(false);
   const [isRunningQuery, setIsRunningQuery] = useState(false);
@@ -166,9 +173,34 @@ function StudioPageInner() {
 
   useEffect(() => {
     setMounted(true);
+
+    const shareParam = searchParams.get("s");
+    if (shareParam) {
+      const result = decodeShareState(shareParam);
+      if (result) {
+        const { state: s, expired } = result;
+        setPrompt(s.prompt);
+        setQueryJsonText(s.queryJsonText);
+        setGeneratedSql(s.generatedSql);
+        setTableName(s.tableName);
+        setXField(s.xField);
+        setYField(s.yField);
+        setRawData(s.rawData);
+        setChartData(s.chartData);
+        setChartConfig(s.chartConfig);
+        if (s.postDraft) setPostDraft(s.postDraft);
+        setActiveSection(s.postDraft ? 4 : 3);
+        if (expired) {
+          setTimeout(() => showToast("info", "This share link is older than 7 days. Data may be outdated."), 300);
+        }
+      }
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
     return () => {
       if (toastTimer.current) clearTimeout(toastTimer.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchUsage = useCallback(() => {
@@ -483,6 +515,8 @@ function StudioPageInner() {
       }
 
       setChartImage(image);
+      setImgZoom(1);
+      setImgPan({ x: 0, y: 0 });
       fetchUsage();
       showToast("success", "Chart image ready!");
     } catch (err) {
@@ -615,6 +649,30 @@ function StudioPageInner() {
     showToast("success", "PDF download started!");
   }, [chartImage, chartConfig.title, showToast]);
 
+  const copyShareLink = useCallback(() => {
+    const encoded = encodeShareState({
+      prompt,
+      queryJsonText,
+      generatedSql,
+      tableName,
+      xField,
+      yField,
+      rawData,
+      chartData,
+      chartConfig,
+      postDraft,
+    });
+    const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
+    if (url.length > 8000) {
+      showToast("error", "Dataset too large for a share link. Try reducing rows.");
+      return;
+    }
+    navigator.clipboard.writeText(url).then(
+      () => showToast("success", "Share link copied!"),
+      () => showToast("error", "Failed to copy link.")
+    );
+  }, [prompt, queryJsonText, generatedSql, tableName, xField, yField, rawData, chartData, chartConfig, postDraft, showToast]);
+
   if (!mounted) return null;
 
   const hasChartData = chartData.length > 0;
@@ -622,22 +680,9 @@ function StudioPageInner() {
 
   return (
     <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
-      {toast && (
-        <div
-          className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-8 py-4 rounded-xl border text-sm font-medium shadow-lg transition-all ${
-            toast.type === "success"
-              ? "border-primary bg-primary text-green-900"
-              : toast.type === "error"
-              ? "border-red-300 bg-red-200 text-red-700"
-              : "border-slate-200 bg-white text-slate-700"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
 
-        <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10">
+        <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 relative">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowSidebar((v) => !v)}
@@ -654,6 +699,19 @@ function StudioPageInner() {
               Draft
             </span>
           </div>
+          {toast && (
+            <div
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
+                toast.type === "success"
+                  ? "border-primary bg-primary text-green-900"
+                  : toast.type === "error"
+                  ? "border-red-300 bg-red-200 text-red-700"
+                  : "border-slate-200 bg-white text-slate-700"
+              }`}
+            >
+              {toast.message}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-custom-400 flex items-center gap-1">
               <span className="material-icons-round text-sm">cloud_done</span> Saved
@@ -902,14 +960,16 @@ function StudioPageInner() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400">
                         SQL Preview
                       </span>
-                      <button
-                        onClick={copySql}
-                        disabled={!generatedSql}
-                        className="p-0.5 rounded text-slate-custom-400 hover:text-primary disabled:opacity-40 transition-colors flex items-center"
-                        title="Copy SQL"
-                      >
-                        <span className="material-icons-round text-[14px]">content_copy</span>
-                      </button>
+                      <div className="relative group">
+                        <button
+                          onClick={copySql}
+                          disabled={!generatedSql}
+                          className="p-0.5 rounded text-primary hover:text-green-400 disabled:opacity-40 transition-colors flex items-center"
+                        >
+                          <span className="material-icons-round text-[14px]">content_copy</span>
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
+                      </div>
                     </div>
                     <textarea
                       value={generatedSql || ""}
@@ -1069,7 +1129,7 @@ function StudioPageInner() {
               className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
             >
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
-              <div className="px-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+              <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
                   <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     3
@@ -1109,10 +1169,10 @@ function StudioPageInner() {
                   </div>
                   <button
                     onClick={() => setShowCustomizer((v) => !v)}
-                    className={`px-2 py-1 text-xs font-bold rounded-full flex items-center gap-1 transition-all ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
                       showCustomizer
-                        ? "bg-primary/10 text-primary"
-                        : "text-slate-500 hover:text-primary"
+                        ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
+                        : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
                     }`}
                   >
                     <span className="material-icons-round text-sm">tune</span>
@@ -1283,7 +1343,7 @@ function StudioPageInner() {
 
                 {chartConfig.sourceText && (
                   <div
-                    className="text-right italic -mt-3"
+                    className="text-right italic -mt-3 pb-[2px]"
                     style={{
                       color: chartConfig.sourceColor,
                       fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
@@ -1307,15 +1367,19 @@ function StudioPageInner() {
                   <button
                     onClick={generateChartImage}
                     disabled={isGeneratingImage || !hasChartData}
-                    className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] transition-all duration-200 flex items-center gap-1 disabled:opacity-50"
+                    className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                 >
-                  <span
-                    className={`material-icons-round text-xs ${
-                      isGeneratingImage ? "animate-spin" : ""
-                    }`}
-                  >
-                    {isGeneratingImage ? "refresh" : "image"}
-                  </span>
+                  {isGeneratingImage ? (
+                    <span className="material-icons-round text-sm animate-spin">refresh</span>
+                  ) : (
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="5" width="14" height="11" rx="2" />
+                      <path d="M3 13l4-4 3 3 2.5-2.5L17 13" />
+                      <circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
+                      <path d="M15 2l0.6 1.4L17 4l-1.4 0.6L15 6l-0.6-1.4L13 4l1.4-0.6Z" fill="currentColor" stroke="none" />
+                      <path d="M1.5 3l0.4 0.9L3 4.3l-1.1 0.4L1.5 5.6l-0.4-0.9L0 4.3l1.1-0.4Z" fill="currentColor" stroke="none" />
+                    </svg>
+                  )}
                     {isGeneratingImage ? "Generating..." : "Generate Image"}
                   </button>
                 </div>
@@ -1323,49 +1387,118 @@ function StudioPageInner() {
 
               {chartImage && (
                 <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1">
+                  <div className="flex items-center mb-3">
+                    {/* Left: label */}
+                    <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
                       <span className="material-icons-round text-sm text-primary">
                         check_circle
                       </span>
                       Generated Image
                     </span>
-                    <div className="flex items-center gap-2">
+                    {/* Center: zoom/pan controls */}
+                    <div className="flex-1 flex items-center justify-center gap-1.5">
                       <button
-                        onClick={copyChartToClipboard}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                        onClick={() => { setImgZoom((z) => Math.max(0.5, z - 0.25)); }}
+                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                        title="Zoom out"
                       >
-                        <span className="material-icons-round text-xs">content_copy</span>
-                        Copy Image
+                        <span className="material-icons-round text-xs">remove</span>
+                      </button>
+                      <span className="text-[9px] font-mono text-slate-custom-500 w-8 text-center">
+                        {Math.round(imgZoom * 100)}%
+                      </span>
+                      <button
+                        onClick={() => { setImgZoom((z) => Math.min(5, z + 0.25)); }}
+                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                        title="Zoom in"
+                      >
+                        <span className="material-icons-round text-xs">add</span>
                       </button>
                       <button
-                        onClick={downloadImage}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                        onClick={() => setPanMode((v) => !v)}
+                        className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${
+                          panMode
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-slate-custom-200 text-slate-custom-500 hover:text-primary hover:border-primary/50"
+                        }`}
+                        title="Pan / drag"
                       >
-                        <span className="material-icons-round text-xs">download</span>
-                        PNG
+                        <span className="material-icons-round text-xs">pan_tool</span>
                       </button>
                       <button
-                        onClick={downloadPdf}
-                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-custom-600 hover:text-primary transition-all duration-200 flex items-center gap-1"
+                        onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
+                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                        title="Reset view"
                       >
-                        <span className="material-icons-round text-xs">description</span>
-                        PDF
-                      </button>
-                      <button
-                        onClick={() => setChartImage(null)}
-                        className="text-xs text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
-                      >
-                        <span className="material-icons-round text-sm">close</span>
+                        <span className="material-icons-round text-xs">fit_screen</span>
                       </button>
                     </div>
+                    {/* Right: export actions */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="relative group">
+                        <button
+                          onClick={copyChartToClipboard}
+                          className="text-slate-custom-400 hover:text-primary transition-all"
+                        >
+                          <span className="material-icons-round text-sm">content_copy</span>
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
+                      </div>
+                      <div className="relative group">
+                        <button
+                          onClick={downloadImage}
+                          className="text-slate-custom-400 hover:text-primary transition-all"
+                        >
+                          <span className="material-icons-round text-sm">download</span>
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
+                      </div>
+                      <div className="relative group">
+                        <button
+                          onClick={() => setChartImage(null)}
+                          className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
+                        >
+                          <span className="material-icons-round text-sm">close</span>
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                      </div>
+                    </div>
                   </div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={chartImage}
-                    alt="Generated chart"
-                    className="w-full max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)]"
-                  />
+                  <div className="relative max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                    onWheel={(e) => {
+                      e.preventDefault();
+                      setImgZoom((z) => Math.min(5, Math.max(0.5, z + (e.deltaY < 0 ? 0.15 : -0.15))));
+                    }}
+                    onMouseDown={(e) => {
+                      if (!panMode) return;
+                      e.preventDefault();
+                      setIsPanning(true);
+                      panStart.current = { x: e.clientX, y: e.clientY };
+                      panOrigin.current = { ...imgPan };
+                    }}
+                    onMouseMove={(e) => {
+                      if (!isPanning) return;
+                      setImgPan({
+                        x: panOrigin.current.x + (e.clientX - panStart.current.x),
+                        y: panOrigin.current.y + (e.clientY - panStart.current.y),
+                      });
+                    }}
+                    onMouseUp={() => setIsPanning(false)}
+                    onMouseLeave={() => setIsPanning(false)}
+                    style={{ cursor: panMode ? (isPanning ? "grabbing" : "grab") : "default" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={chartImage}
+                      alt="Generated chart"
+                      draggable={false}
+                      className="w-full transition-transform duration-100"
+                      style={{
+                        transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
+                        transformOrigin: "center center",
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </section>
@@ -1375,7 +1508,7 @@ function StudioPageInner() {
               onClickCapture={() => setActiveSection(4)}
               className="bg-white rounded-2xl overflow-auto border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              <div className="px-5 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+              <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                 <div className="flex items-center gap-2">
                   <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     4
@@ -1452,7 +1585,7 @@ function StudioPageInner() {
                   </div>
 
                   {/* Temperature Slider */}
-                  <div className="flex items-center gap-1.5 bg-white border border-slate-custom-200 px-2.5 py-1.5 rounded-lg shadow-sm">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
                     <span className="material-icons-round text-sm text-orange-400">thermostat</span>
                     <input
                       type="range"
@@ -1471,7 +1604,7 @@ function StudioPageInner() {
                   <button
                     onClick={generateDraft}
                     disabled={isGeneratingPost || !prompt.trim()}
-                    className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
+                    className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                   >
                     <span
                       className={`material-icons-round text-sm ${
@@ -1489,23 +1622,28 @@ function StudioPageInner() {
                   {postDraft ||
                     "Generate a draft to turn your data result into a publish-ready analyst summary."}
                 </div>
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => showToast("info", "Share link workflow will be wired next.")}
-                      className="text-xs text-slate-custom-500 hover:text-primary transition-all flex items-center gap-1 italic"
-                    >
-                      <span className="material-icons-round text-sm">share</span>
-                      Share Link
-                    </button>
-                    <button
-                      onClick={copyDraft}
-                      disabled={!postDraft}
-                      className="text-xs font-bold text-slate-custom-500 hover:text-primary transition-colors flex items-center gap-1 disabled:opacity-50"
-                    >
-                      <span className="material-icons-round text-sm">content_copy</span>
-                      Copy Post
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={copyShareLink}
+                        disabled={!hasChartData}
+                        className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
+                      >
+                        <span className="material-icons-round text-sm">share</span>
+                      </button>
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
+                    </div>
+                    <div className="relative group">
+                      <button
+                        onClick={copyDraft}
+                        disabled={!postDraft}
+                        className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
+                      >
+                        <span className="material-icons-round text-sm">content_copy</span>
+                      </button>
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-1 cursor-pointer">
@@ -1517,22 +1655,17 @@ function StudioPageInner() {
                       />
                       <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
                     </label>
-                    <button
-                      onClick={downloadPdf}
-                      disabled={!chartImage}
-                      className="px-2 py-0.5 bg-primary text-slate-custom-600 text-[10px] font-bold rounded-full hover:shadow-[0_0_15px_rgba(106,218,27,0.4)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
-                    >
-                      <span className="material-icons-round text-[10px]">description</span>
-                      <span className="italic">PDF</span>
-                    </button>
-                    <button
-                      className="px-3 py-1 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold rounded-full shadow-sm hover:shadow-[0_0_18px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
-                      disabled={!postDraft}
-                      onClick={() => showToast("info", "Publish workflow will be wired next.")}
-                    >
-                      <span className="material-icons-round text-xs">rocket_launch</span>
-                      Publish
-                    </button>
+                    <div className="relative group">
+                      <button
+                        className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                        disabled={!postDraft}
+                        onClick={() => showToast("info", "Publish workflow will be wired next.")}
+                      >
+                        <span className="material-icons-round text-sm">rocket_launch</span>
+                        Publish
+                      </button>
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
+                    </div>
                   </div>
                 </div>
               </div>
