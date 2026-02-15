@@ -30,6 +30,7 @@ const kpiConfig: Record<KpiId, {
   color: string;
   formatCumulative: (v: number) => string;
   formatDaily: (v: number) => string;
+  allowDecimals: boolean;
 }> = {
   arr: {
     cumulativeLabel: "Cumulative Subs",
@@ -37,6 +38,7 @@ const kpiConfig: Record<KpiId, {
     color: "#22c55e",
     formatCumulative: fmt,
     formatDaily: fmt,
+    allowDecimals: false,
   },
   users: {
     cumulativeLabel: "Cumulative Signups",
@@ -44,6 +46,7 @@ const kpiConfig: Record<KpiId, {
     color: "#3b82f6",
     formatCumulative: fmt,
     formatDaily: fmt,
+    allowDecimals: false,
   },
   "ai-cost": {
     cumulativeLabel: "Cumulative Spend",
@@ -51,6 +54,7 @@ const kpiConfig: Record<KpiId, {
     color: "#f59e0b",
     formatCumulative: fmtUSD,
     formatDaily: fmtUSD,
+    allowDecimals: true,
   },
   "api-requests": {
     cumulativeLabel: "Cumulative Requests",
@@ -58,6 +62,7 @@ const kpiConfig: Record<KpiId, {
     color: "#8b5cf6",
     formatCumulative: fmt,
     formatDaily: fmt,
+    allowDecimals: false,
   },
 };
 
@@ -191,6 +196,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                     tickLine={false}
                     axisLine={false}
                     width={70}
+                    allowDecimals={kpiConfig[activeKpi].allowDecimals}
                     label={{ value: kpiConfig[activeKpi].cumulativeLabel, angle: -90, position: "insideLeft", style: { fontSize: 11, fill: "#64748b" }, offset: -4 }}
                   />
                   <YAxis
@@ -201,6 +207,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                     tickLine={false}
                     axisLine={false}
                     width={70}
+                    allowDecimals={kpiConfig[activeKpi].allowDecimals}
                     label={{ value: kpiConfig[activeKpi].dailyLabel, angle: 90, position: "insideRight", style: { fontSize: 11, fill: "#64748b" }, offset: -4 }}
                   />
                   <Tooltip
@@ -228,6 +235,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                     stroke={kpiConfig[activeKpi].color}
                     strokeWidth={2}
                     fill={`url(#gradient-cumulative-${activeKpi})`}
+                    dot={{ r: 4, fill: kpiConfig[activeKpi].color, strokeWidth: 0 }}
                   />
                   <Bar
                     yAxisId="right"
@@ -235,6 +243,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
                     fill={kpiConfig[activeKpi].color}
                     opacity={0.35}
                     radius={[2, 2, 0, 0]}
+                    barSize={24}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
