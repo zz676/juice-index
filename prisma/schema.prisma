@@ -1584,7 +1584,7 @@ model ApiKey {
 
 model ApiRequestLog {
   id             String   @id @default(cuid())
-  apiKeyId       String
+  apiKeyId       String?
   userId         String
   endpoint       String
   method         String
@@ -1594,7 +1594,7 @@ model ApiRequestLog {
   tierAtRequest  String?
   createdAt      DateTime @default(now())
 
-  ApiKey         ApiKey   @relation(fields: [apiKeyId], references: [id])
+  ApiKey         ApiKey?  @relation(fields: [apiKeyId], references: [id])
 
   @@index([apiKeyId])
   @@index([userId])

@@ -33,6 +33,7 @@ The admin dashboard displays four categories of metrics, organized into tabs:
 ### AI Usage
 - **Per-model breakdown**: Request count, total cost, success rate, input/output tokens, average latency.
 - **Daily cost trend (30d)**: Day-by-day AI cost for the last 30 days.
+- **Data source**: `juice_ai_usage` table, populated by the studio `generate-chart` (Mode 1 AI query) and `generate-post` endpoints after each AI model call. Logged fields include model ID, token counts, duration, and success/failure status.
 
 ### API Activity
 - **Request counts**: Today, this week (7d), this month (30d).
@@ -40,6 +41,7 @@ The admin dashboard displays four categories of metrics, organized into tabs:
 - **Error rate**: Percentage of requests with status code >= 400 in the last 30 days.
 - **Top 10 endpoints**: Most-called endpoints in the last 30 days.
 - **Requests by tier**: API usage breakdown by subscription tier.
+- **Data source**: `juice_api_request_logs` table. Logged by public v1 API routes (with `apiKeyId`) and dashboard studio endpoints (with `apiKeyId` null). The `apiKeyId` field is optional to support both external API key auth and internal session auth.
 
 ## KPI Trend Charts
 

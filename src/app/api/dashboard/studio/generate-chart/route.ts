@@ -733,7 +733,8 @@ async function generateStructuredQuery(prompt: string, modelId?: string) {
     ? anthropic(modelDef.providerModelId)
     : openai(modelDef.providerModelId);
 
-  const { object } = await generateObject({
+  const aiStart = Date.now();
+  const { object, usage } = await generateObject({
     model: aiModel,
     schema: QUERY_RESPONSE_SCHEMA,
     system: `You convert natural language EV market questions into safe Prisma findMany queries.
@@ -771,8 +772,9 @@ Rules:
 `,
     prompt: `[USER QUERY]: ${prompt}`,
   });
+  const aiDurationMs = Date.now() - aiStart;
 
-  return object;
+  return { object, usage, durationMs: aiDurationMs, modelId: modelDef.id };
 }
 
 /**
@@ -846,6 +848,7 @@ function parseGeneratedQuery(queryText: string): Record<string, unknown> {
 }
 
 export async function POST(req: Request) {
+  const reqStart = Date.now();
   try {
     const userId = await getAuthedSupabaseUserId();
     if (!userId) {
@@ -915,6 +918,10 @@ export async function POST(req: Request) {
           ? payload.chartTitle.trim()
           : "Data Results";
 
+      prisma.apiRequestLog.create({
+        data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+      }).catch(() => {});
+
       return NextResponse.json({
         mode: "query",
         table: execution.table,
@@ -970,12 +977,37 @@ export async function POST(req: Request) {
 
       let generated;
       try {
-        generated = await generateStructuredQuery(prompt, effectiveModelId);
+        const aiResult = await generateStructuredQuery(prompt, effectiveModelId);
+        generated = aiResult.object;
+
+        // Log successful AI usage
+        await prisma.aIUsage.create({
+          data: {
+            type: "text",
+            model: aiResult.modelId,
+            cost: 0,
+            success: true,
+            source: "studio-query",
+            inputTokens: aiResult.usage.inputTokens ?? 0,
+            outputTokens: aiResult.usage.outputTokens ?? 0,
+            durationMs: aiResult.durationMs,
+          },
+        }).catch(() => {});
       } catch (error) {
-        const message =
-          "LLM request failed";
+        // Log failed AI usage
+        await prisma.aIUsage.create({
+          data: {
+            type: "text",
+            model: effectiveModelId,
+            cost: 0,
+            success: false,
+            errorMsg: error instanceof Error ? error.message : "LLM request failed",
+            source: "studio-query",
+          },
+        }).catch(() => {});
+
         return NextResponse.json(
-          { error: "LLM_ERROR", message },
+          { error: "LLM_ERROR", message: "LLM request failed" },
           { status: 503 }
         );
       }
@@ -1010,6 +1042,10 @@ export async function POST(req: Request) {
 
       // Generate runnable query payload without executing it yet.
       if (payload.previewOnly === true) {
+        prisma.apiRequestLog.create({
+          data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+        }).catch(() => {});
+
         return NextResponse.json({
           mode: "query-plan",
           table: generated.table,
@@ -1037,6 +1073,11 @@ export async function POST(req: Request) {
       }
 
       const preview = buildPreviewData(execution.data);
+
+      prisma.apiRequestLog.create({
+        data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+      }).catch(() => {});
+
       return NextResponse.json({
         mode: "query",
         table: execution.table,
@@ -1121,6 +1162,10 @@ export async function POST(req: Request) {
     // Pre-load logo for the watermark plugin (sync hook needs it ready)
     preloadedLogo = await getLogoImage();
     const imageBuffer = await renderChartToBuffer(config);
+
+    prisma.apiRequestLog.create({
+      data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+    }).catch(() => {});
 
     return NextResponse.json({
       mode: "chart",

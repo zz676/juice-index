@@ -180,6 +180,7 @@ Keep tone factual and publish-ready. No hashtags. No markdown.`;
 }
 
 export async function POST(request: Request) {
+  const reqStart = Date.now();
   try {
     const userId = await getAuthedSupabaseUserId();
     if (!userId) {
@@ -247,12 +248,45 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await generateText({
-      model: resolveModel(modelDef.provider, modelDef.providerModelId),
-      prompt,
-      temperature,
-      maxOutputTokens: modelDef.defaultMaxTokens,
-    });
+    let result;
+    const aiStart = Date.now();
+    try {
+      result = await generateText({
+        model: resolveModel(modelDef.provider, modelDef.providerModelId),
+        prompt,
+        temperature,
+        maxOutputTokens: modelDef.defaultMaxTokens,
+      });
+      const aiDurationMs = Date.now() - aiStart;
+
+      // Log successful AI usage
+      await prisma.aIUsage.create({
+        data: {
+          type: "text",
+          model: requestedModelId,
+          cost: 0,
+          success: true,
+          source: "studio-draft",
+          inputTokens: result.usage.inputTokens ?? 0,
+          outputTokens: result.usage.outputTokens ?? 0,
+          durationMs: aiDurationMs,
+        },
+      }).catch(() => {});
+    } catch (aiError) {
+      // Log failed AI usage
+      await prisma.aIUsage.create({
+        data: {
+          type: "text",
+          model: requestedModelId,
+          cost: 0,
+          success: false,
+          errorMsg: aiError instanceof Error ? aiError.message : "LLM request failed",
+          source: "studio-draft",
+          durationMs: Date.now() - aiStart,
+        },
+      }).catch(() => {});
+      throw aiError;
+    }
 
     let content = result.text.trim();
     if (!content) {
@@ -267,6 +301,10 @@ export async function POST(request: Request) {
       /(sk_live_|sk_test_|whsec_|SUPABASE_|DATABASE_URL|OPENAI_API_KEY|Bearer\s+[A-Za-z0-9_\-]{20,})\S*/gi,
       "[REDACTED]",
     );
+
+    prisma.apiRequestLog.create({
+      data: { userId, endpoint: "/api/dashboard/studio/generate-post", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+    }).catch(() => {});
 
     return NextResponse.json({ content });
   } catch (error) {
