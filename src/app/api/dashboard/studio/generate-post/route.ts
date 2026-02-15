@@ -13,6 +13,7 @@ import {
   canAccessModel,
   DEFAULT_MODEL_ID,
   DEFAULT_TEMPERATURE,
+  estimateCost,
 } from "@/lib/studio/models";
 
 export const runtime = "nodejs";
@@ -260,15 +261,17 @@ export async function POST(request: Request) {
       const aiDurationMs = Date.now() - aiStart;
 
       // Log successful AI usage
+      const inTok = result.usage.inputTokens ?? 0;
+      const outTok = result.usage.outputTokens ?? 0;
       await prisma.aIUsage.create({
         data: {
           type: "text",
           model: requestedModelId,
-          cost: 0,
+          cost: estimateCost(requestedModelId, inTok, outTok),
           success: true,
           source: "studio-draft",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          inputTokens: inTok,
+          outputTokens: outTok,
           durationMs: aiDurationMs,
         },
       }).catch(() => {});
