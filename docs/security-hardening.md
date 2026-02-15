@@ -91,6 +91,47 @@ CREATE INDEX ON juice_stripe_webhook_events (processedAt);
 
 Run `npx prisma migrate dev` to apply.
 
+## Post-Deploy Checklist
+
+### Secrets Management
+
+- Verify Vercel deployment uses Vercel Environment Variables (encrypted at rest), not a `.env.local` file on the server.
+- Ensure `CRON_SECRET` is a strong random value (32+ chars). Generate with: `openssl rand -hex 32`
+- Add `TOKEN_ENCRYPTION_KEY` to Vercel env vars: `openssl rand -hex 32`
+- If `.env.local` was ever committed to git, rotate **all** keys immediately (Stripe, Supabase, Upstash, OpenAI, X OAuth).
+
+### Session & Auth Configuration
+
+- Check Supabase dashboard (Authentication > Settings) for session expiry. Default: 1hr access token / 1 week refresh. Adjust if needed.
+- Verify expired sessions on API routes (`/api/*`) return 401 JSON, not a redirect to `/login`.
+
+### Database Connection Limits
+
+- Confirm `DATABASE_URL` points to PgBouncer pooler (port 6543) and `DIRECT_URL` to direct connection (port 5432).
+- Verify Supabase plan supports expected traffic (free tier = 60 direct connections).
+
+### Monitoring & Alerting
+
+- Set up [Sentry](https://sentry.io) (`@sentry/nextjs`) for server-side error tracking.
+- Enable Stripe webhook failure alerts in [Stripe Dashboard > Webhooks](https://dashboard.stripe.com/webhooks).
+- Set up Upstash Redis usage alerts in [Upstash Console](https://console.upstash.com).
+
+### Audit Logging
+
+- `ApiRequestLog` captures all public API calls (already implemented).
+- Expand structured `[AUDIT]` logging to cover: subscription changes, X account connections, account deletions. These appear in Vercel function logs.
+
+### Data Backup & Recovery
+
+- In Supabase Dashboard > Settings > Database, verify daily backups are enabled (paid plans only).
+- Document restore procedure: Supabase Dashboard > Backups > Restore.
+
+### Legal / Compliance
+
+- Add `/privacy` and `/terms` pages before launch.
+- Define a data retention policy (e.g., `ApiRequestLog` pruned after 90 days).
+- Add cookie consent banner if serving EU users (Supabase auth uses cookies).
+
 ## Verification
 
 1. **Security headers**: Scan production URL with securityheaders.com
