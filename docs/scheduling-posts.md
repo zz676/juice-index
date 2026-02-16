@@ -111,3 +111,5 @@ Each status tab shows a unique empty state message:
 ## Cron Job
 
 A background cron job periodically checks for SCHEDULED posts where `scheduledFor <= now` and publishes them via the X API. Posts transition through PUBLISHING to either PUBLISHED or FAILED.
+
+Vercel Cron is configured in `vercel.json` at the project root to trigger `POST /api/cron/publish-user-posts` every minute. Note: "Publish Now" posts are published synchronously by the API handlers and do not rely on the cron job.

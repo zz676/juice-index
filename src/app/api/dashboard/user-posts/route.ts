@@ -6,6 +6,8 @@ import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { weeklyPublishLimit, getWeeklyPublishUsage } from "@/lib/ratelimit";
 import { getXCharLimit } from "@/lib/x/char-limits";
+import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { postTweet } from "@/lib/x/post-tweet";
 
 export const runtime = "nodejs";
 
@@ -136,9 +138,49 @@ export async function POST(request: NextRequest) {
         { status: 429 }
       );
     }
-    // Queued for immediate publishing by cron
-    postStatus = UserPostStatus.SCHEDULED;
-    scheduledDate = null;
+    // Publish synchronously — look up X account
+    const xAccountForPublish = await prisma.xAccount.findUnique({
+      where: { userId: user.id },
+    });
+    if (!xAccountForPublish) {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: "No X account connected. Connect your X account in Settings to publish." },
+        { status: 400 }
+      );
+    }
+
+    let accessToken: string;
+    try {
+      accessToken = await refreshTokenIfNeeded(xAccountForPublish);
+    } catch (err) {
+      return NextResponse.json(
+        { error: "PUBLISH_FAILED", message: `Failed to refresh X token: ${err instanceof Error ? err.message : "Unknown error"}` },
+        { status: 502 }
+      );
+    }
+
+    let tweet: { id: string; text: string };
+    try {
+      tweet = await postTweet(accessToken, content);
+    } catch (err) {
+      return NextResponse.json(
+        { error: "PUBLISH_FAILED", message: `Failed to publish to X: ${err instanceof Error ? err.message : "Unknown error"}` },
+        { status: 502 }
+      );
+    }
+
+    const publishedPost = await prisma.userPost.create({
+      data: {
+        userId: user.id,
+        content,
+        status: UserPostStatus.PUBLISHED,
+        tweetId: tweet.id,
+        tweetUrl: `https://x.com/i/status/${tweet.id}`,
+        publishedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({ post: publishedPost }, { status: 201 });
   } else if (action === "schedule") {
     if (!hasTier(userTier, "STARTER")) {
       return NextResponse.json(

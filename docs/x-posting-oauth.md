@@ -60,9 +60,9 @@ In the "X Posting Account" card, when a user has an eligible tier but no connect
 
 ## Error Visibility
 
-Posts are published asynchronously via a cron job after being queued with status `SCHEDULED`. If publishing fails, the `lastError` field is saved to the database. Error information is surfaced as follows:
+"Publish Now" posts are published synchronously — the API calls the X API directly and returns success or failure immediately. Scheduled posts (with a future `scheduledFor`) are published by the cron job. In both cases, errors are surfaced as follows:
 
-- **Studio page**: The success toast reads "Post queued for publishing!" (not "published") to set accurate expectations.
+- **Studio page**: On synchronous publish success, the toast reads "Post published to X!". On failure, the error message from the X API is shown directly in the toast.
 - **Posts page (`/dashboard/posts`)**: FAILED posts show `lastError` inline below the status badge — no need to expand the row.
 - **CompactPostTable**: FAILED posts show `lastError` inline below the post content/date.
 

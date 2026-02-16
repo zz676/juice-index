@@ -13,15 +13,14 @@ export async function POST(request: NextRequest) {
 
   const now = new Date();
 
-  // Fetch posts that are SCHEDULED and either have no scheduledFor (immediate)
-  // or their scheduledFor time has passed
+  // Fetch posts that are SCHEDULED and their scheduledFor time has passed
   const posts = await prisma.userPost.findMany({
     where: {
       status: UserPostStatus.SCHEDULED,
-      OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
+      scheduledFor: { lte: now },
     },
     take: 10,
-    orderBy: { createdAt: "asc" },
+    orderBy: { scheduledFor: "asc" },
   });
 
   const results: { id: string; status: string; error?: string }[] = [];

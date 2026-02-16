@@ -3,6 +3,10 @@ import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { UserPostStatus } from "@prisma/client";
 import { getXCharLimit } from "@/lib/x/char-limits";
+import { normalizeTier, hasTier } from "@/lib/api/tier";
+import { weeklyPublishLimit } from "@/lib/ratelimit";
+import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { postTweet } from "@/lib/x/post-tweet";
 
 export const runtime = "nodejs";
 
@@ -135,8 +139,71 @@ export async function PATCH(
       data.status = UserPostStatus.SCHEDULED;
       data.scheduledFor = scheduledDate;
     } else if (action === "publish") {
-      data.status = UserPostStatus.SCHEDULED;
-      data.scheduledFor = null;
+      // Tier check
+      const pubSubscription = await prisma.apiSubscription.findUnique({
+        where: { userId: user.id },
+        select: { tier: true },
+      });
+      const pubTier = normalizeTier(pubSubscription?.tier);
+      if (!hasTier(pubTier, "STARTER")) {
+        return NextResponse.json(
+          { error: "FORBIDDEN", message: "Publishing to X requires a Starter subscription or higher." },
+          { status: 403 }
+        );
+      }
+      // Weekly quota check
+      const rl = await weeklyPublishLimit(user.id, pubTier, new Date());
+      if (!rl.success) {
+        return NextResponse.json(
+          { error: "QUOTA_EXCEEDED", message: `Weekly publish limit reached (${rl.limit}/${rl.limit}). Resets next Monday.` },
+          { status: 429 }
+        );
+      }
+      // Look up X account
+      const xAccountForPublish = await prisma.xAccount.findUnique({
+        where: { userId: user.id },
+      });
+      if (!xAccountForPublish) {
+        return NextResponse.json(
+          { error: "BAD_REQUEST", message: "No X account connected. Connect your X account in Settings to publish." },
+          { status: 400 }
+        );
+      }
+      // Refresh token and publish
+      let accessToken: string;
+      try {
+        accessToken = await refreshTokenIfNeeded(xAccountForPublish);
+      } catch (err) {
+        return NextResponse.json(
+          { error: "PUBLISH_FAILED", message: `Failed to refresh X token: ${err instanceof Error ? err.message : "Unknown error"}` },
+          { status: 502 }
+        );
+      }
+      const postContent = (content as string) || post.content;
+      let tweet: { id: string; text: string };
+      try {
+        tweet = await postTweet(accessToken, postContent);
+      } catch (err) {
+        return NextResponse.json(
+          { error: "PUBLISH_FAILED", message: `Failed to publish to X: ${err instanceof Error ? err.message : "Unknown error"}` },
+          { status: 502 }
+        );
+      }
+      // Update post as published
+      const publishedPost = await prisma.userPost.update({
+        where: { id },
+        data: {
+          ...(content !== undefined ? { content } : {}),
+          status: UserPostStatus.PUBLISHED,
+          tweetId: tweet.id,
+          tweetUrl: `https://x.com/i/status/${tweet.id}`,
+          publishedAt: new Date(),
+          scheduledFor: null,
+          lastError: null,
+          attempts: 0,
+        },
+      });
+      return NextResponse.json({ post: publishedPost });
     } else {
       data.status = UserPostStatus.DRAFT;
       data.scheduledFor = null;

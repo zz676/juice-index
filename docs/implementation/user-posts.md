@@ -55,7 +55,7 @@ Create a new post.
 **Body:** `{ content: string, action: "draft" | "publish" | "schedule", scheduledFor?: string }`
 
 - `draft` — saves as DRAFT
-- `publish` — sets status to SCHEDULED with `scheduledFor: null` (cron picks up immediately); enforces weekly publish quota (returns 429 if exceeded)
+- `publish` — publishes to X synchronously (refreshes token, calls X API, returns PUBLISHED post); enforces weekly publish quota (returns 429 if exceeded); returns 400 if no X account connected, 502 on X API failure
 - `schedule` — STARTER+ only, sets SCHEDULED with future `scheduledFor`
 
 ### `GET /api/dashboard/user-posts/[id]`
@@ -80,8 +80,10 @@ Cancel a SCHEDULED post, reverting it to DRAFT and clearing `scheduledFor`.
 
 **Auth:** `Authorization: Bearer <CRON_SECRET>`
 
+**Trigger:** Vercel Cron via `vercel.json` (every minute). See `vercel.json` at project root.
+
 **Behavior:**
-1. Fetches up to 10 posts with `status=SCHEDULED` and `scheduledFor <= now` (or `scheduledFor IS NULL` for immediate)
+1. Fetches up to 10 posts with `status=SCHEDULED` and `scheduledFor <= now` (only future-scheduled posts; "Publish Now" is handled synchronously in the POST/PATCH handlers)
 2. For each post:
    - Sets status to PUBLISHING, increments attempts
    - Loads the user's XAccount
