@@ -10,6 +10,8 @@ export type PublishInfo = {
   xUsername: string | null;
   xDisplayName: string | null;
   xAvatarUrl: string | null;
+  isXPremium: boolean;
+  charLimit: number;
   publishUsed: number;
   publishLimit: number;
   publishReset: number;
@@ -71,11 +73,14 @@ export default function PublishModal({
     info !== null &&
     Number.isFinite(info.publishLimit) &&
     info.publishUsed >= info.publishLimit;
+  const charLimit = info?.charLimit ?? 280;
+  const overCharLimit = postDraft.length > charLimit;
   const canConfirm =
     info !== null &&
     info.canPublish &&
     info.hasXAccount &&
     !quotaExhausted &&
+    !overCharLimit &&
     !isPublishing &&
     !isScheduling;
 
@@ -178,8 +183,13 @@ export default function PublishModal({
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-custom-900 truncate">
+                        <p className="text-sm font-medium text-slate-custom-900 truncate flex items-center gap-1.5">
                           {info.xDisplayName || info.xUsername}
+                          {info.isXPremium && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700">
+                              Premium
+                            </span>
+                          )}
                         </p>
                         <p className="text-xs text-slate-custom-500">
                           @{info.xUsername}
@@ -266,8 +276,15 @@ export default function PublishModal({
                     <p className="text-sm text-slate-custom-800 leading-relaxed whitespace-pre-wrap line-clamp-6">
                       {postDraft}
                     </p>
-                    <p className="text-[10px] text-slate-custom-400 mt-2 text-right">
-                      {postDraft.length}/280
+                    <p className={`text-[10px] font-medium mt-2 text-right ${
+                      overCharLimit ? "text-red-600" : postDraft.length > charLimit * 0.9 ? "text-yellow-600" : "text-slate-custom-400"
+                    }`}>
+                      {postDraft.length.toLocaleString()}/{charLimit.toLocaleString()}
+                      {overCharLimit && (
+                        <span className="ml-1">
+                          ({(postDraft.length - charLimit).toLocaleString()} over)
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

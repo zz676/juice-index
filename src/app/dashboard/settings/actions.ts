@@ -102,6 +102,40 @@ export async function updatePreferences(prevState: any, formData: FormData) {
     }
 }
 
+export async function toggleXPremium() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { message: "Unauthorized", type: "error" };
+    }
+
+    try {
+        const xAccount = await prisma.xAccount.findUnique({
+            where: { userId: user.id },
+            select: { id: true, isXPremium: true },
+        });
+
+        if (!xAccount) {
+            return { message: "No X account connected", type: "error" };
+        }
+
+        await prisma.xAccount.update({
+            where: { id: xAccount.id },
+            data: { isXPremium: !xAccount.isXPremium },
+        });
+
+        revalidatePath("/dashboard/settings");
+        return {
+            message: `X Premium ${!xAccount.isXPremium ? "enabled" : "disabled"}`,
+            type: "success",
+            isXPremium: !xAccount.isXPremium,
+        };
+    } catch (error) {
+        return { message: "Failed to update X Premium status", type: "error" };
+    }
+}
+
 export async function deleteAccount(prevState: any, formData: FormData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

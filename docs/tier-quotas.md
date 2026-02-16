@@ -132,6 +132,23 @@ Requests for a locked model return 403. Per-model quota exceeded returns 429 wit
 - **Draft posts**: FREE limited to 5, PRO+ unlimited
 - **Scheduled posts**: FREE gets 0, PRO gets 10 pending max
 
+### X Character Limits
+
+Post character limits are determined by whether the user has X Premium enabled on their linked X account:
+
+| Account Type | Character Limit |
+|-------------|----------------|
+| X Free | 280 |
+| X Premium | 25,000 |
+
+The `isXPremium` flag is stored on the `XAccount` model and can be toggled by users in **Settings > Connected Accounts**. The character limit is enforced:
+
+- **Backend**: `POST /api/dashboard/user-posts` and `PATCH /api/dashboard/user-posts/[id]` validate content length against the dynamic limit
+- **Frontend**: Studio textarea and publish modal show a dynamic character counter with color warnings (green → yellow at 90% → red when over)
+- **LLM Prompt**: The AI draft generation prompt includes the character limit instruction so generated drafts respect the user's limit
+
+The utility `src/lib/x/char-limits.ts` exports `getXCharLimit(isXPremium)` used by all backend routes.
+
 ## How to Reset Quota Usage
 
 All quota counters are stored in Upstash Redis. You can reset a user's counters via the Upstash REST API. Credentials are in `.env.local` (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`).

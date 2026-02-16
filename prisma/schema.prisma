@@ -568,6 +568,8 @@ model XAccount {
   refreshToken   String
   /// Timestamp for token expires.
   tokenExpiresAt DateTime
+  /// Whether the user has X Premium (25k char limit vs 280).
+  isXPremium     Boolean  @default(false)
   /// Timestamp when the record was created.
   createdAt      DateTime @default(now())
   /// Timestamp when the record was last updated.

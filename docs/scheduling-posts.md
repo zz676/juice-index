@@ -27,15 +27,17 @@ DRAFT → SCHEDULED → PUBLISHING → PUBLISHED
 ## Scheduling from Studio
 
 1. Generate a post in the AI Studio workflow (query → chart → draft).
-2. Click the **Publish** button to open the Publish Modal.
-3. Click **"Schedule For Later"** — this reveals a date and time picker.
-4. Select a future date and time.
-5. Click **"Confirm Schedule"** — the post is created with status `SCHEDULED`.
-6. A success toast confirms the scheduled date/time.
+2. **Edit the draft** — the generated text appears in an editable textarea. Adjust wording, length, or tone as needed. A live character counter shows `current/limit` with color warnings (yellow at 90%, red when over).
+3. Click the **Publish** button to open the Publish Modal.
+4. Click **"Schedule For Later"** — this reveals a date and time picker.
+5. Select a future date and time.
+6. Click **"Confirm Schedule"** — the post is created with status `SCHEDULED`.
+7. A success toast confirms the scheduled date/time.
 
 The modal validates that:
 - Both date and time are provided
 - The datetime is in the future
+- The post content is within the character limit (280 for free X accounts, 25,000 for X Premium)
 
 ## Scheduling from Posts Page
 

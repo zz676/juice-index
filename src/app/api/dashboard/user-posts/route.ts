@@ -5,6 +5,7 @@ import { UserPostStatus, AuthProvider } from "@prisma/client";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { weeklyPublishLimit, getWeeklyPublishUsage } from "@/lib/ratelimit";
+import { getXCharLimit } from "@/lib/x/char-limits";
 
 export const runtime = "nodejs";
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.xAccount.findUnique({
       where: { userId: user.id },
-      select: { id: true },
+      select: { id: true, isXPremium: true },
     }),
     prisma.account.findFirst({
       where: { userId: user.id, provider: AuthProvider.X },
@@ -53,6 +54,7 @@ export async function GET(request: NextRequest) {
   const canSchedule = hasTier(userTier, "STARTER");
 
   const publishUsage = await getWeeklyPublishUsage(user.id, userTier);
+  const charLimit = getXCharLimit(xAccount?.isXPremium ?? false);
 
   return NextResponse.json({
     posts,
@@ -63,6 +65,7 @@ export async function GET(request: NextRequest) {
     canSchedule,
     hasXAccount: !!xAccount,
     hasXLoginIdentity: !!xLoginAccount,
+    charLimit,
     publishUsed: publishUsage.used,
     publishLimit: publishUsage.limit,
     publishReset: publishUsage.reset,
@@ -85,9 +88,16 @@ export async function POST(request: NextRequest) {
 
   const { content, action = "draft", scheduledFor } = body;
 
-  if (!content || typeof content !== "string" || content.length === 0 || content.length > 280) {
+  // Fetch xAccount to determine character limit
+  const xAccount = await prisma.xAccount.findUnique({
+    where: { userId: user.id },
+    select: { isXPremium: true },
+  });
+  const charLimit = getXCharLimit(xAccount?.isXPremium ?? false);
+
+  if (!content || typeof content !== "string" || content.length === 0 || content.length > charLimit) {
     return NextResponse.json(
-      { error: "BAD_REQUEST", message: "Content must be 1-280 characters" },
+      { error: "BAD_REQUEST", message: `Content must be 1-${charLimit.toLocaleString()} characters` },
       { status: 400 }
     );
   }

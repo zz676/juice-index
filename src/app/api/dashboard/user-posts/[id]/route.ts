@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { UserPostStatus } from "@prisma/client";
+import { getXCharLimit } from "@/lib/x/char-limits";
 
 export const runtime = "nodejs";
 
@@ -84,9 +85,15 @@ export async function PATCH(
   const data: Record<string, unknown> = {};
 
   if (content !== undefined) {
-    if (typeof content !== "string" || content.length === 0 || content.length > 280) {
+    const xAccount = await prisma.xAccount.findUnique({
+      where: { userId: user.id },
+      select: { isXPremium: true },
+    });
+    const charLimit = getXCharLimit(xAccount?.isXPremium ?? false);
+
+    if (typeof content !== "string" || content.length === 0 || content.length > charLimit) {
       return NextResponse.json(
-        { error: "BAD_REQUEST", message: "Content must be 1-280 characters" },
+        { error: "BAD_REQUEST", message: `Content must be 1-${charLimit.toLocaleString()} characters` },
         { status: 400 }
       );
     }

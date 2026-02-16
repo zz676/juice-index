@@ -12,7 +12,7 @@ Users can compose, manage, and publish their own posts to X (Twitter) directly f
 |--------|------|-------------|
 | id | String (cuid) | Primary key |
 | userId | String | Foreign key to User |
-| content | String | Tweet text (max 280 chars, validated in API) |
+| content | String | Tweet text (dynamic char limit: 280 for free X accounts, 25,000 for X Premium; validated in API) |
 | status | UserPostStatus | DRAFT, SCHEDULED, PUBLISHING, PUBLISHED, FAILED |
 | scheduledFor | DateTime? | Future publish time (PRO only); null = publish immediately |
 | publishedAt | DateTime? | When the tweet was posted |
@@ -46,7 +46,7 @@ List the current user's posts with pagination and filtering.
 
 **Query params:** `status?`, `search?`, `page?` (default 1), `limit?` (default 20, max 50)
 
-**Response:** `{ posts, pagination: { page, limit, total, totalPages }, isPro }`
+**Response:** `{ posts, pagination: { page, limit, total, totalPages }, isPro, charLimit }`
 
 ### `POST /api/dashboard/user-posts`
 
@@ -107,7 +107,7 @@ Refreshes an expired OAuth 2.0 token via `POST https://api.x.com/2/oauth2/token`
 
 ### Posts Page (`/dashboard/posts`)
 
-- **Compose Panel** — collapsible card with textarea (280-char counter), Save Draft / Post Now / Schedule buttons
+- **Compose Panel** — collapsible card with textarea (dynamic char counter based on X Premium status), Save Draft / Post Now / Schedule buttons
 - **Tier gating** — Schedule button disabled for free users; date/time pickers shown for STARTER+ users
 - **Status Tabs** — All, Draft, Scheduled, Published, Failed (each with count)
 - **Posts Table** — Content, Status, Date, Actions columns with context-appropriate actions per status
@@ -128,7 +128,7 @@ Extended with styles for: DRAFT (slate), SCHEDULED (purple), PUBLISHING (blue), 
 
 Lightweight preflight endpoint called on Studio page mount (to enable early X account pre-check) and again when the publish modal opens (to refresh quota data). Returns tier, X account status, and weekly publish quota usage.
 
-**Response:** `{ tier, canPublish, hasXAccount, xUsername, xDisplayName, xAvatarUrl, publishUsed, publishLimit, publishReset }`
+**Response:** `{ tier, canPublish, hasXAccount, xUsername, xDisplayName, xAvatarUrl, isXPremium, charLimit, publishUsed, publishLimit, publishReset }`
 
 ## Weekly Publish Quota
 
@@ -147,11 +147,11 @@ Enforced in `POST /api/dashboard/user-posts` (action=publish). Returns 429 if qu
 
 The Studio page (`/dashboard/studio`) includes a publish confirmation modal that:
 
-1. Shows X account connection status (green if connected, yellow warning if not)
+1. Shows X account connection status (green if connected, yellow warning if not) with "Premium" badge if X Premium is enabled
 2. Displays weekly publish quota as a progress bar
-3. Previews the post content with character count
+3. Previews the post content with dynamic character count (280 or 25,000 based on X Premium status), color-coded warnings
 4. Offers an "Attach chart image" toggle when a chart image exists
-5. Disables the Confirm button if: no X account, quota exhausted, or FREE tier
+5. Disables the Confirm button if: no X account, quota exhausted, over character limit, or FREE tier
 
 ### X Account Pre-check
 
@@ -169,6 +169,32 @@ The prompt state resets automatically when the modal closes.
 
 For FREE tier users, the Publish button renders as disabled with a lock icon and shows an upgrade toast on click.
 
+## X Premium & Dynamic Character Limits
+
+The system supports both X free accounts (280 char limit) and X Premium accounts (25,000 char limit). The `isXPremium` boolean flag on the `XAccount` model determines which limit applies.
+
+### How It Works
+
+1. **Settings Toggle**: Users enable/disable X Premium via a toggle switch in Settings > Connected Accounts. This calls the `toggleXPremium` server action which flips `XAccount.isXPremium`.
+
+2. **Backend Validation**: The `POST` and `PATCH` handlers for `/api/dashboard/user-posts` fetch the user's `XAccount.isXPremium` and validate content length against `getXCharLimit(isXPremium)` from `src/lib/x/char-limits.ts`.
+
+3. **Frontend Display**: The character limit flows to the frontend via:
+   - `GET /api/dashboard/user-posts` returns `charLimit` (used on Posts page)
+   - `GET /api/dashboard/studio/publish-info` returns `charLimit` and `isXPremium` (used in Studio)
+
+4. **AI Draft Generation**: The LLM prompt in `buildPrompt()` includes `"Your response MUST be under ${charLimit} characters."` so generated drafts respect the user's limit.
+
+5. **Editable Drafts**: The Studio page renders the AI-generated draft in an editable `<textarea>` (not a read-only div), allowing users to trim or modify content before publishing.
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `src/lib/x/char-limits.ts` | `X_FREE_CHAR_LIMIT` (280), `X_PREMIUM_CHAR_LIMIT` (25,000), `getXCharLimit()` |
+| `src/app/dashboard/settings/actions.ts` | `toggleXPremium` server action |
+| `src/app/dashboard/settings/connected-accounts.tsx` | X Premium toggle UI |
+
 ## Auth Guard
 
 `src/lib/auth/require-user.ts` provides a reusable `requireUser()` function that:
@@ -182,6 +208,7 @@ For FREE tier users, the Publish button renders as disabled with a lock icon and
 |------|---------|
 | `prisma/schema.prisma` | UserPost model + UserPostStatus enum |
 | `src/lib/auth/require-user.ts` | Auth guard utility |
+| `src/lib/x/char-limits.ts` | X character limit constants and helper |
 | `src/lib/x/post-tweet.ts` | X API tweet creation |
 | `src/lib/x/refresh-token.ts` | X OAuth token refresh |
 | `src/app/api/dashboard/user-posts/route.ts` | GET (list) + POST (create) |
