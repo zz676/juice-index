@@ -19,7 +19,7 @@ DRAFT → SCHEDULED → PUBLISHING → PUBLISHED
 | Status | Description |
 |--------|-------------|
 | **DRAFT** | Post saved but not queued for publishing. Can be edited, published, scheduled, or deleted. |
-| **SCHEDULED** | Post queued for automatic publishing at `scheduledFor` datetime. Can be rescheduled, cancelled back to DRAFT, or deleted. |
+| **SCHEDULED** | Post queued for automatic publishing at `scheduledFor` datetime. Can be edited, rescheduled, cancelled back to DRAFT, or deleted. |
 | **PUBLISHING** | Post is currently being published by the cron job. No actions available (spinner shown). |
 | **PUBLISHED** | Post successfully published to X. A `tweetUrl` link is available to view it. |
 | **FAILED** | Publishing failed after one or more attempts. `lastError` and `attempts` are available. Can be retried, edited, or deleted. |
@@ -43,6 +43,19 @@ The modal validates that:
 2. Write your post content.
 3. Select a date and time using the date/time inputs.
 4. Click **"Schedule"** — the post is created with status `SCHEDULED`.
+
+## Editing Scheduled Posts
+
+Scheduled posts can be edited directly without cancelling them first:
+
+1. Find the SCHEDULED post in the table.
+2. Click the **edit** (pencil) icon button in the Actions column.
+3. The compose panel opens with the post content pre-filled and the existing schedule date/time pre-populated.
+4. Modify the content and/or adjust the schedule date/time.
+5. Click **"Schedule"** to save content changes and keep (or update) the scheduled time.
+6. Alternatively, click **"Save Draft"** to move the post back to DRAFT status.
+
+The PATCH endpoint accepts `{ content, action: "schedule", scheduledFor }` for SCHEDULED posts, so content and schedule time can be updated in a single request.
 
 ## Rescheduling
 

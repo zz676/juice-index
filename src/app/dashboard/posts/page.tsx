@@ -228,6 +228,14 @@ export default function PostsPage() {
     setEditingId(post.id);
     setComposeOpen(true);
     setComposeError("");
+    if (post.status === "SCHEDULED" && post.scheduledFor) {
+      const d = new Date(post.scheduledFor);
+      setScheduleDate(d.toISOString().slice(0, 10));
+      setScheduleTime(d.toTimeString().slice(0, 5));
+    } else {
+      setScheduleDate("");
+      setScheduleTime("");
+    }
   };
 
   const handleDelete = async (postId: string) => {
@@ -752,6 +760,13 @@ export default function PostsPage() {
                           {/* SCHEDULED actions */}
                           {post.status === "SCHEDULED" && (
                             <>
+                              <button
+                                onClick={() => handleEdit(post)}
+                                className="p-1.5 rounded hover:bg-slate-custom-100 text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
+                                title="Edit"
+                              >
+                                <span className="material-icons-round text-base">edit</span>
+                              </button>
                               <button
                                 onClick={() => {
                                   if (rescheduleId === post.id) {
