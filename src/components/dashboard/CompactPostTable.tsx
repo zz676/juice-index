@@ -146,6 +146,11 @@ export function CompactPostTable() {
                 <p className="text-[11px] text-slate-custom-400">
                   {formatDate(post)}
                 </p>
+                {post.status === "FAILED" && post.lastError && (
+                  <p className="text-[10px] text-red-500 truncate" title={post.lastError}>
+                    {post.lastError}
+                  </p>
+                )}
               </div>
               <StatusBadge status={post.status} />
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -186,15 +191,6 @@ export function CompactPostTable() {
                   </button>
                 )}
 
-                {/* Failed: show error tooltip */}
-                {post.status === "FAILED" && post.lastError && (
-                  <span
-                    className="p-1 text-red-400 cursor-help"
-                    title={post.lastError}
-                  >
-                    <span className="material-icons-round text-base">info_outline</span>
-                  </span>
-                )}
               </div>
             </div>
           ))

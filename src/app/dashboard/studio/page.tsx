@@ -744,7 +744,7 @@ function StudioPageInner() {
             "Failed to publish"
         );
       }
-      showToast("success", "Post published to X!");
+      showToast("success", "Post queued for publishing!");
       setShowPublishModal(false);
       // Refresh publish info so quota display updates
       fetchPublishInfo();

@@ -58,6 +58,14 @@ In the "X Posting Account" card, when a user has an eligible tier but no connect
 - **API**: `GET /api/dashboard/user-posts` queries `juice_accounts` for an `AuthProvider.X` record for the current user and returns `hasXLoginIdentity: boolean` alongside `hasXAccount`.
 - **Settings page**: The server component checks `authUser.identities` for a `"twitter"` or `"x"` provider and passes `hasXLoginIdentity` as a prop to `<XPostingAccount>`.
 
+## Error Visibility
+
+Posts are published asynchronously via a cron job after being queued with status `SCHEDULED`. If publishing fails, the `lastError` field is saved to the database. Error information is surfaced as follows:
+
+- **Studio page**: The success toast reads "Post queued for publishing!" (not "published") to set accurate expectations.
+- **Posts page (`/dashboard/posts`)**: FAILED posts show `lastError` inline below the status badge — no need to expand the row.
+- **CompactPostTable**: FAILED posts show `lastError` inline below the post content/date.
+
 ## Environment Variables
 
 Required in `.env.local`:
