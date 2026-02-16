@@ -1332,8 +1332,8 @@ function StudioPageInner() {
                     Visualization &amp; Data
                   </h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex bg-slate-custom-100 rounded-md p-0.5 border border-slate-custom-200">
+                <div className="flex items-start gap-1.5 pb-1">
+                  <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
                     {([
                       { value: "bar" as const, label: "Bar", icon: "bar_chart" },
                       { value: "line" as const, label: "Line", icon: "show_chart" },
@@ -1348,13 +1348,13 @@ function StudioPageInner() {
                         onClick={() =>
                           setChartConfig((c) => ({ ...c, chartType: ct.value }))
                         }
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors ${
+                        className={`px-1.5 py-0 rounded text-[7px] font-medium flex items-center gap-px transition-colors leading-tight ${
                           chartConfig.chartType === ct.value
                             ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
                             : "text-slate-custom-500 hover:text-slate-custom-900"
                         }`}
                       >
-                        <span className="material-icons-round text-xs">
+                        <span className="material-icons-round text-[9px]">
                           {ct.icon}
                         </span>
                         {ct.label}
@@ -1363,13 +1363,13 @@ function StudioPageInner() {
                   </div>
                   <button
                     onClick={() => setShowCustomizer((v) => !v)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold transition-all duration-200 ${
                       showCustomizer
                         ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
                         : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
                     }`}
                   >
-                    <span className="material-icons-round text-sm">tune</span>
+                    <span className="material-icons-round text-xs">tune</span>
                     Customize
                   </button>
                 </div>
