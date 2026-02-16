@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/publish-user-posts",
+      "schedule": "* * * * *"
+    }
+  ]
+}
