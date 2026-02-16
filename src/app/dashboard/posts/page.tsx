@@ -647,6 +647,11 @@ export default function PostsPage() {
                       {/* Status */}
                       <td className="px-4 py-3">
                         <StatusBadge status={post.status} />
+                        {post.status === "FAILED" && post.lastError && (
+                          <p className="text-[11px] text-red-500 mt-1 max-w-[200px] truncate" title={post.lastError}>
+                            {post.lastError}
+                          </p>
+                        )}
                       </td>
 
                       {/* Date */}
