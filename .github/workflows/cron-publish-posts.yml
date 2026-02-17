@@ -1,0 +1,22 @@
+name: Cron – Publish Scheduled Posts
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub Actions minimum interval)
+    - cron: "*/5 * * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger publish-user-posts endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/publish-user-posts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $response"
+          if [ "$response" -ne 200 ]; then
+            echo "::error::Cron endpoint returned HTTP $response"
+            exit 1
+          fi
