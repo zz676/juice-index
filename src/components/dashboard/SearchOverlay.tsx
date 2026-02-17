@@ -236,7 +236,7 @@ export default function SearchOverlay() {
                       {brand.label}
                     </p>
                     <p className="text-xs text-slate-custom-400">
-                      Open in Studio
+                      Open in Juice AI
                     </p>
                   </div>
                   <span className="material-icons-round text-sm text-slate-custom-300">
