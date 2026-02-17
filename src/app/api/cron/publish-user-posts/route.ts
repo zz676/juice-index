@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserPostStatus } from "@prisma/client";
 import { postTweet } from "@/lib/x/post-tweet";
-import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { uploadMedia } from "@/lib/x/upload-media";
+import { refreshTokenIfNeeded, XTokenExpiredError } from "@/lib/x/refresh-token";
 import { verifyCronAuth } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
@@ -54,11 +55,34 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Refresh token if expired
-      const accessToken = await refreshTokenIfNeeded(xAccount);
+      // Refresh token if expired — fail permanently if token is revoked (retries won't help)
+      let accessToken: string;
+      try {
+        accessToken = await refreshTokenIfNeeded(xAccount);
+      } catch (err) {
+        if (err instanceof XTokenExpiredError) {
+          await prisma.userPost.update({
+            where: { id: post.id },
+            data: {
+              status: UserPostStatus.FAILED,
+              lastError: "X connection expired. Please reconnect your X account in Settings and reschedule.",
+            },
+          });
+          results.push({ id: post.id, status: "FAILED", error: "X token expired" });
+          continue;
+        }
+        throw err; // other errors go to the retry catch block
+      }
+
+      // Upload image if stored on the post
+      let mediaIds: string[] | undefined;
+      if (post.imageBase64) {
+        const { mediaId } = await uploadMedia(accessToken, post.imageBase64);
+        mediaIds = [mediaId];
+      }
 
       // Post the tweet
-      const tweet = await postTweet(accessToken, post.content);
+      const tweet = await postTweet(accessToken, post.content, mediaIds);
 
       await prisma.userPost.update({
         where: { id: post.id },
@@ -68,11 +92,13 @@ export async function POST(request: NextRequest) {
           tweetUrl: `https://x.com/i/status/${tweet.id}`,
           publishedAt: new Date(),
           lastError: null,
+          imageBase64: null,
         },
       });
 
       results.push({ id: post.id, status: "PUBLISHED" });
     } catch (err) {
+      console.error(`[cron] Failed to publish post ${post.id}:`, err);
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error";
       const newAttempts = post.attempts + 1;

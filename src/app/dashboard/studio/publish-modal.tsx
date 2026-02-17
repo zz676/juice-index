@@ -31,6 +31,7 @@ interface PublishModalProps {
   attachImage: boolean;
   onAttachImageChange: (v: boolean) => void;
   chartImage: string | null;
+  error?: string | null;
 }
 
 export default function PublishModal({
@@ -47,6 +48,7 @@ export default function PublishModal({
   attachImage,
   onAttachImageChange,
   chartImage,
+  error,
 }: PublishModalProps) {
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
@@ -347,6 +349,20 @@ export default function PublishModal({
                       Attach chart image
                     </span>
                   </label>
+                )}
+
+                {/* Error */}
+                {error && (
+                  <div className="p-3 rounded-lg border border-red-200 bg-red-50/50">
+                    <div className="flex items-start gap-2">
+                      <span className="material-icons-round text-red-500 text-sm mt-0.5 shrink-0">
+                        error
+                      </span>
+                      <p className="text-xs text-red-700 leading-relaxed">
+                        {error}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : null}

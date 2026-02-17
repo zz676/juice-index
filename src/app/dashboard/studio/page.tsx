@@ -111,6 +111,7 @@ function StudioPageInner() {
     draftLimit: number;
   }>>([]);
   const defaultPanelWidth = 450;
+  const minPanelWidth = 260;
   const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
   const isResizing = useRef(false);
   const panelLeftOffset = useRef(0);
@@ -119,11 +120,12 @@ function StudioPageInner() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [publishInfo, setPublishInfo] = useState<PublishInfo | null>(null);
   const [isLoadingPublishInfo, setIsLoadingPublishInfo] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing.current) return;
-      const newWidth = Math.min(Math.max(e.clientX - panelLeftOffset.current, defaultPanelWidth), 700);
+      const newWidth = Math.min(Math.max(e.clientX - panelLeftOffset.current, minPanelWidth), 700);
       setPanelWidth(newWidth);
     };
     const handleMouseUp = () => {
@@ -719,6 +721,7 @@ function StudioPageInner() {
       showToast("error", "X account not connected. Connect in Settings to publish.");
       return;
     }
+    setPublishError(null);
     setShowPublishModal(true);
     fetchPublishInfo();
   }, [userTier, publishInfo, showToast, fetchPublishInfo]);
@@ -727,15 +730,20 @@ function StudioPageInner() {
     if (!postDraft) return;
     const limit = publishInfo?.charLimit ?? 280;
     if (postDraft.length > limit) {
-      showToast("error", `Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
+      setPublishError(`Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
       return;
     }
+    setPublishError(null);
     setIsPublishing(true);
     try {
       const res = await fetch("/api/dashboard/user-posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postDraft, action: "publish" }),
+        body: JSON.stringify({
+          content: postDraft,
+          action: "publish",
+          ...(attachImage && chartImage ? { imageBase64: chartImage } : {}),
+        }),
       });
       const data = (await res.json()) as Record<string, unknown>;
       if (!res.ok) {
@@ -749,14 +757,11 @@ function StudioPageInner() {
       // Refresh publish info so quota display updates
       fetchPublishInfo();
     } catch (err) {
-      showToast(
-        "error",
-        err instanceof Error ? err.message : "Failed to publish"
-      );
+      setPublishError(err instanceof Error ? err.message : "Failed to publish");
     } finally {
       setIsPublishing(false);
     }
-  }, [postDraft, publishInfo, showToast, fetchPublishInfo]);
+  }, [postDraft, publishInfo, showToast, fetchPublishInfo, attachImage, chartImage]);
 
   const handleSaveDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -764,7 +769,11 @@ function StudioPageInner() {
       const res = await fetch("/api/dashboard/user-posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postDraft, action: "draft" }),
+        body: JSON.stringify({
+          content: postDraft,
+          action: "draft",
+          ...(attachImage && chartImage ? { imageBase64: chartImage } : {}),
+        }),
       });
       if (!res.ok) {
         const data = (await res.json()) as Record<string, unknown>;
@@ -778,21 +787,27 @@ function StudioPageInner() {
     } finally {
       setShowPublishModal(false);
     }
-  }, [postDraft, showToast]);
+  }, [postDraft, showToast, attachImage, chartImage]);
 
   const handleConfirmSchedule = useCallback(async (scheduledFor: string) => {
     if (!postDraft) return;
     const limit = publishInfo?.charLimit ?? 280;
     if (postDraft.length > limit) {
-      showToast("error", `Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
+      setPublishError(`Post exceeds ${limit.toLocaleString()} character limit. Please shorten it.`);
       return;
     }
+    setPublishError(null);
     setIsScheduling(true);
     try {
       const res = await fetch("/api/dashboard/user-posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: postDraft, action: "schedule", scheduledFor }),
+        body: JSON.stringify({
+          content: postDraft,
+          action: "schedule",
+          scheduledFor,
+          ...(attachImage && chartImage ? { imageBase64: chartImage } : {}),
+        }),
       });
       const data = (await res.json()) as Record<string, unknown>;
       if (!res.ok) {
@@ -812,14 +827,11 @@ function StudioPageInner() {
       setShowPublishModal(false);
       fetchPublishInfo();
     } catch (err) {
-      showToast(
-        "error",
-        err instanceof Error ? err.message : "Failed to schedule post"
-      );
+      setPublishError(err instanceof Error ? err.message : "Failed to schedule post");
     } finally {
       setIsScheduling(false);
     }
-  }, [postDraft, publishInfo, showToast, fetchPublishInfo]);
+  }, [postDraft, publishInfo, showToast, fetchPublishInfo, attachImage, chartImage]);
 
   if (!mounted) return null;
 
@@ -882,21 +894,9 @@ function StudioPageInner() {
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col lg:flex-row">
           <div
-            className={`${showSidebar ? "w-full" : "hidden lg:flex"} bg-slate-custom-50 border-r border-slate-custom-200 flex flex-col overflow-y-auto relative flex-shrink-0`}
+            className={`${showSidebar ? "w-full" : "hidden lg:flex"} bg-slate-custom-50 flex flex-col overflow-y-auto relative flex-shrink-0`}
             style={{ width: showSidebar ? `${panelWidth}px` : undefined }}
           >
-            {/* Resize Handle */}
-            <div
-              onMouseDown={(e) => {
-                e.preventDefault();
-                const panelEl = e.currentTarget.parentElement;
-                panelLeftOffset.current = panelEl ? panelEl.getBoundingClientRect().left : 0;
-                isResizing.current = true;
-                document.body.style.cursor = "col-resize";
-                document.body.style.userSelect = "none";
-              }}
-              className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/40 active:bg-primary/60 transition-colors z-10"
-            />
             <section
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
@@ -1314,6 +1314,23 @@ function StudioPageInner() {
               </div>
             </section>
           </div>
+
+          {/* Resize Handle */}
+          {showSidebar && (
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const sidebarEl = e.currentTarget.previousElementSibling as HTMLElement | null;
+                panelLeftOffset.current = sidebarEl ? sidebarEl.getBoundingClientRect().left : 0;
+                isResizing.current = true;
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+              }}
+              className="hidden lg:flex items-center justify-center w-2 flex-shrink-0 cursor-col-resize group hover:bg-primary/10 active:bg-primary/20 transition-colors"
+            >
+              <div className="w-0.5 h-8 rounded-full bg-slate-custom-300 group-hover:bg-primary group-active:bg-primary transition-colors" />
+            </div>
+          )}
 
           <div className="flex-1 h-full min-h-0 bg-slate-custom-100 p-3 pr-6 overflow-y-auto flex flex-col gap-3">
             <section
@@ -1970,6 +1987,7 @@ function StudioPageInner() {
         attachImage={attachImage}
         onAttachImageChange={setAttachImage}
         chartImage={chartImage}
+        error={publishError}
       />
     </div>
   );

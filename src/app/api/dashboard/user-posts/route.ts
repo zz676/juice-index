@@ -6,8 +6,9 @@ import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
 import { weeklyPublishLimit, getWeeklyPublishUsage } from "@/lib/ratelimit";
 import { getXCharLimit } from "@/lib/x/char-limits";
-import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { refreshTokenIfNeeded, XTokenExpiredError } from "@/lib/x/refresh-token";
 import { postTweet } from "@/lib/x/post-tweet";
+import { uploadMedia, stripBase64Prefix } from "@/lib/x/upload-media";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
+      omit: { imageBase64: true },
     }),
     prisma.userPost.count({ where }),
     prisma.apiSubscription.findUnique({
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
   const { user, error } = await requireUser();
   if (error) return error;
 
-  let body: { content?: string; action?: string; scheduledFor?: string };
+  let body: { content?: string; action?: string; scheduledFor?: string; imageBase64?: string };
   try {
     body = await request.json();
   } catch {
@@ -88,7 +90,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { content, action = "draft", scheduledFor } = body;
+  const { content, action = "draft", scheduledFor, imageBase64 } = body;
+
+  // Validate image size (X Media API limit is 5 MB; base64 has ~33% overhead)
+  if (imageBase64) {
+    const raw = stripBase64Prefix(imageBase64);
+    const estimatedBytes = Math.ceil(raw.length * 3 / 4);
+    if (estimatedBytes > 3.5 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: "Image must be under 3.5 MB" },
+        { status: 400 }
+      );
+    }
+  }
 
   // Fetch xAccount to determine character limit
   const xAccount = await prisma.xAccount.findUnique({
@@ -153,16 +167,38 @@ export async function POST(request: NextRequest) {
     try {
       accessToken = await refreshTokenIfNeeded(xAccountForPublish);
     } catch (err) {
+      console.error("[user-posts POST] Failed to refresh X token:", err);
+      if (err instanceof XTokenExpiredError) {
+        return NextResponse.json(
+          { error: "X_TOKEN_EXPIRED", message: err.message },
+          { status: 401 }
+        );
+      }
       return NextResponse.json(
         { error: "PUBLISH_FAILED", message: `Failed to refresh X token: ${err instanceof Error ? err.message : "Unknown error"}` },
         { status: 502 }
       );
     }
 
+    let mediaIds: string[] | undefined;
+    if (imageBase64) {
+      try {
+        const { mediaId } = await uploadMedia(accessToken, imageBase64);
+        mediaIds = [mediaId];
+      } catch (err) {
+        console.error("[user-posts POST] Failed to upload media:", err);
+        return NextResponse.json(
+          { error: "PUBLISH_FAILED", message: `Failed to upload image: ${err instanceof Error ? err.message : "Unknown error"}` },
+          { status: 502 }
+        );
+      }
+    }
+
     let tweet: { id: string; text: string };
     try {
-      tweet = await postTweet(accessToken, content);
+      tweet = await postTweet(accessToken, content, mediaIds);
     } catch (err) {
+      console.error("[user-posts POST] Failed to publish to X:", err);
       return NextResponse.json(
         { error: "PUBLISH_FAILED", message: `Failed to publish to X: ${err instanceof Error ? err.message : "Unknown error"}` },
         { status: 502 }
@@ -237,6 +273,7 @@ export async function POST(request: NextRequest) {
       content,
       status: postStatus,
       scheduledFor: scheduledDate,
+      ...(imageBase64 ? { imageBase64 } : {}),
     },
   });
 
