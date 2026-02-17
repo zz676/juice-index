@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!xAccount) {
+        console.error(
+          `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${post.attempts + 1}): No X account connected`,
+        );
         await prisma.userPost.update({
           where: { id: post.id },
           data: {
@@ -72,6 +75,9 @@ export async function POST(request: NextRequest) {
               lastError: "X connection expired. Please reconnect your X account in Settings and reschedule.",
             },
           });
+          console.error(
+            `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${post.attempts + 1}): X token expired`,
+          );
           results.push({ id: post.id, status: "FAILED", error: "X token expired" });
           continue;
         }
@@ -103,10 +109,14 @@ export async function POST(request: NextRequest) {
       console.log(`[cron] Published post ${post.id} -> tweet ${tweet.id}`);
       results.push({ id: post.id, status: "PUBLISHED" });
     } catch (err) {
-      console.error(`[cron] Failed to publish post ${post.id}:`, err);
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error";
       const newAttempts = post.attempts + 1;
+
+      console.error(
+        `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${newAttempts}, content="${post.content.slice(0, 80)}"): ${errorMessage}`,
+        err,
+      );
 
       if (newAttempts < 3) {
         // Retry on next cron run
