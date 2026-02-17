@@ -59,6 +59,7 @@ const xErrorMessages: Record<string, string> = {
     invalid_state: "OAuth state validation failed. Please try again.",
     state_mismatch: "OAuth state mismatch. Please try again.",
     token_exchange_failed: "Failed to connect your X account. Please try again.",
+    empty_tokens: "X returned empty credentials. Please disconnect and reconnect your account.",
     access_denied: "You denied access to your X account.",
 };
 

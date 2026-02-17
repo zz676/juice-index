@@ -5,8 +5,8 @@ import crypto from "crypto";
  */
 
 export function getXOAuthClientCredentials() {
-  const clientId = process.env.X_OAUTH_CLIENT_ID;
-  const clientSecret = process.env.X_OAUTH_CLIENT_SECRET;
+  const clientId = process.env.X_OAUTH_CLIENT_ID?.trim();
+  const clientSecret = process.env.X_OAUTH_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
     throw new Error("X_OAUTH_CLIENT_ID and X_OAUTH_CLIENT_SECRET must be configured");
   }
