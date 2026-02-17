@@ -21,6 +21,16 @@
   --spacing: 0.25rem;
 }
 
+/* ─── Dashboard button breathing glow ─── */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(106, 218, 27, 0.3), 0 0 3px rgba(106, 218, 27, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(106, 218, 27, 0.5), 0 0 6px rgba(106, 218, 27, 0.25);
+  }
+}
+
 /* ─── Base styles compatible with Tailwind ─── */
 html {
   scroll-behavior: smooth;
