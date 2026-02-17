@@ -70,7 +70,23 @@ export async function GET(request: NextRequest) {
       clientSecret,
     });
 
+    console.log(
+      "[X OAuth] Token exchange complete —",
+      `accessToken: ${tokens.accessToken ? `present (${tokens.accessToken.length} chars)` : "MISSING"},`,
+      `refreshToken: ${tokens.refreshToken ? `present (${tokens.refreshToken.length} chars)` : "MISSING"},`,
+      `expiresIn: ${tokens.expiresIn}`
+    );
+
+    if (!tokens.accessToken || !tokens.refreshToken) {
+      console.error("[X OAuth] Token exchange returned empty tokens — aborting");
+      settingsUrl.searchParams.set("x_error", "empty_tokens");
+      const response = NextResponse.redirect(settingsUrl);
+      response.cookies.delete("x_oauth_state");
+      return response;
+    }
+
     const profile = await fetchXUserProfile(tokens.accessToken);
+    console.log("[X OAuth] Profile fetched — username:", profile.username, "xUserId:", profile.xUserId);
 
     // Encrypt tokens before storing
     const encAccessToken = encryptToken(tokens.accessToken);
@@ -99,6 +115,8 @@ export async function GET(request: NextRequest) {
         tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
       },
     });
+
+    console.log("[X OAuth] XAccount upserted for user", user.id);
 
     settingsUrl.searchParams.set("x_connected", "true");
   } catch (err) {
