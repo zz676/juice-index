@@ -41,17 +41,17 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, feedRes, postsRes] = await Promise.all([
+        const [statsRes, feedRes, tierRes] = await Promise.all([
           fetch("/api/dashboard/stats"),
           fetch("/api/dashboard/feed"),
-          fetch("/api/dashboard/user-posts?limit=1"),
+          fetch("/api/dashboard/tier"),
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
         if (feedRes.ok) setFeed(await feedRes.json());
-        if (postsRes.ok) {
-          const postsJson = await postsRes.json();
-          if (postsJson.tier) setTier(postsJson.tier);
+        if (tierRes.ok) {
+          const tierJson = await tierRes.json();
+          if (tierJson.tier) setTier(tierJson.tier);
         }
       } catch (error) {
         console.error("Failed to load dashboard data", error);
