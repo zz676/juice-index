@@ -63,7 +63,7 @@ export default function Navbar() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white shadow-[0_2px_12px_rgba(106,218,27,0.35)] hover:bg-primary-dark hover:shadow-[0_4px_20px_rgba(106,218,27,0.5)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+                className="inline-flex items-center justify-center px-5 py-2 text-[15px] font-semibold rounded-full bg-primary text-white animate-[glow-pulse_3s_ease-in-out_infinite] hover:bg-primary-dark hover:shadow-[0_0_24px_rgba(106,218,27,0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
               >
                 Dashboard
               </Link>
@@ -140,7 +140,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileOpen(false)}
-                    className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full shadow-[0_2px_12px_rgba(106,218,27,0.35)] hover:bg-primary-dark hover:shadow-[0_4px_20px_rgba(106,218,27,0.5)] active:scale-[0.98] transition-all duration-200"
+                    className="text-center py-3 text-sm font-semibold bg-primary text-white rounded-full animate-[glow-pulse_3s_ease-in-out_infinite] hover:bg-primary-dark hover:shadow-[0_0_24px_rgba(106,218,27,0.55)] active:scale-[0.98] transition-all duration-200"
                   >
                     Dashboard
                   </Link>
