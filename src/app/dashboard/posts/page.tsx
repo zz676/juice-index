@@ -55,7 +55,7 @@ const EMPTY_STATES: Record<string, { icon: string; title: string; description: s
   DRAFT: {
     icon: "draft",
     title: "No drafts",
-    description: "Create posts in Juice AI Studio or compose one here.",
+    description: "Create posts in Juice AI or compose one here.",
   },
   SCHEDULED: {
     icon: "schedule",

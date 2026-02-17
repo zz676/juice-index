@@ -1,8 +1,8 @@
-# Visual Data Studio (Create Charts & Social Posts from Data)
+# Juice AI (Create Charts & Social Posts from Data)
 
 Last updated: {% current_date %}
 
-This document outlines the **Visual Data Studio**, a tool designed for **content creators, analysts, and social media managers** who need to turn trusted EV data into shareable, high-quality assets without writing SQL or wrestling with Excel.
+This document outlines **Juice AI**, a tool designed for **content creators, analysts, and social media managers** who need to turn trusted EV data into shareable, high-quality assets without writing SQL or wrestling with Excel.
 
 ## The Goal: "From Question to Shareable Asset in Seconds"
 
@@ -16,7 +16,7 @@ This document outlines the **Visual Data Studio**, a tool designed for **content
 3. **Creating charts is tedious.**
    - Even with data, users have to export to CSV, import to Excel/Canva, style it to match their brand, and then export as an image. This takes 15-30 minutes per chart.
 
-### The Solution: Visual Data Studio
+### The Solution: Juice AI
 
 A guided, safe, and branded workflow that acts as a **force multiplier for content creation**:
 
@@ -27,9 +27,9 @@ A guided, safe, and branded workflow that acts as a **force multiplier for conte
 
 ---
 
-## User Flow (The "Studio" Workflow)
+## User Flow (The "Juice AI" Workflow)
 
-The interface is designed not as a database tool, but as a **creative studio**.
+The interface is designed not as a database tool, but as a **creative AI workspace**.
 
 **Current Implementation**: `src/app/dashboard/studio/page.tsx`
 
@@ -68,7 +68,7 @@ You are not selling "database access." You are selling **Content Velocity**.
 - **Social Media Managers**: Need daily content for X/LinkedIn.
 - **Investors/Consultants**: Need quick slides for decks.
 
-### Monetization Model: "Studio Access"
+### Monetization Model: "Juice AI Access"
 
 | Feature | Free Tier (Viewer) | Creator Tier (Pro) | Publisher Tier (Enterprise) |
 | :--- | :--- | :--- | :--- |
@@ -81,13 +81,13 @@ You are not selling "database access." You are selling **Content Velocity**.
 
 ### Differentiator
 - **Competitors**: Excel (too manual), Tableau (too complex), ChatGPT (too inaccurate).
-- **Visual Data Studio**: The speed of AI + the trust of real Database + the polish of a Design Agency.
+- **Juice AI**: The speed of AI + the trust of real Database + the polish of a Design Agency.
 
 ---
 
 ## Technical Architecture (Simplified)
 
-While the user sees a "Studio," the backend ensures safety and performance.
+While the user sees "Juice AI," the backend ensures safety and performance.
 
 ### 1. Intelligent Query Generation
 - **LLM Layer**: Translates vague questions into specific Prisma queries.
@@ -141,7 +141,7 @@ The Generated Image section includes interactive viewing controls:
 ### 9. Rate Limiting & Quotas
 - Rate limit checks fail open — if Upstash Redis is unreachable, requests are allowed through with a console warning.
 - When the daily query quota is exhausted, the Generate Query button is replaced with an info message and the Run Query button is disabled.
-- Toasts are displayed in the header row alongside "AI-Powered Workflow", centered.
+- Toasts are displayed in the header row alongside the "Juice AI" heading, centered.
 
 ### 10. UI Polish
 - All action buttons use green (`text-primary` / `text-green-600`) font colors with green glow effects.

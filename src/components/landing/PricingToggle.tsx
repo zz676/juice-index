@@ -48,7 +48,7 @@ const tiers: TierDef[] = [
       "Dashboard Access",
       "10 CSV Exports/mo",
       "3-Year Historical Data",
-      "10 Studio Queries/day",
+      "10 Juice AI Queries/day",
     ],
     cta: "Get Started",
     ctaHref: "/login?mode=magic&intent=signup&plan=starter",

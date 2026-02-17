@@ -57,7 +57,7 @@ export default function ApiUsageCard({
 
         {/* Quota Summary */}
         <div className="grid grid-cols-2 gap-3">
-          <QuotaItem label="Studio Queries / Day" value={formatLimit(quotas.studioQueries)} />
+          <QuotaItem label="Juice AI Queries / Day" value={formatLimit(quotas.studioQueries)} />
           <QuotaItem label="Chart Generations / Day" value={formatLimit(quotas.chartGen)} />
           <QuotaItem label="AI Post Drafts / Day" value={formatLimit(quotas.postDrafts)} />
           <QuotaItem label="CSV Exports / Month" value={formatLimit(quotas.csvExports)} />

@@ -853,8 +853,13 @@ function StudioPageInner() {
                 {showSidebar ? "chevron_left" : "menu"}
               </span>
             </button>
-            <h1 className="font-bold text-slate-custom-900 text-lg">
-              AI-Powered Workflow
+            <h1 className="font-extrabold text-lg flex items-center gap-1.5">
+              <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
+                Juice AI
+              </span>
+              <span className="material-icons-round text-primary text-base animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
+                auto_awesome
+              </span>
             </h1>
             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
               Draft
