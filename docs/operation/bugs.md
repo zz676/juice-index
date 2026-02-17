@@ -70,3 +70,31 @@ The user's OAuth 2.0 token is still used for the tweet creation (`api.x.com/2/tw
 | OAuth 2.0 Access Token | 2 hours | Yes (via refresh token in `refreshTokenIfNeeded`) | Refresh token rotation, app credential change |
 | OAuth 2.0 Refresh Token | ~6 months | Rotated on each refresh (new token saved to DB) | App credential change, user revokes access |
 | OAuth 1.0a App Tokens | Permanent | N/A (static env vars) | Manual regeneration in X Developer Portal |
+
+---
+
+## Dashboard "Upgrade to Pro" Banner Shown to Pro Users
+
+**Symptom**: After logging in as a Pro subscriber, the dashboard overview page still displays the banner: "Data shown is delayed by 30 days and limited to 1 year of history. Upgrade to Pro for real-time data and 5 years of history."
+
+**Root cause**: The dashboard page (`src/app/dashboard/page.tsx`) was fetching the user's tier from `/api/dashboard/user-posts?limit=1`. That endpoint calls `normalizeTier(subscription?.tier)` on the raw subscription tier column **without checking whether the subscription status is `active` or `trialing`**. The dedicated `/api/dashboard/tier` endpoint has the proper status check (only returns the real tier if the subscription is active/trialing, otherwise defaults to `"FREE"`).
+
+The dashboard layout sidebar already used the correct `/api/dashboard/tier` endpoint — only the page-level tier state was wrong.
+
+**Fix**: Switched the dashboard page to fetch tier from `/api/dashboard/tier` instead of deriving it from the user-posts response. The `tier === "FREE"` condition on the banner now evaluates correctly for paid users.
+
+**File**: `src/app/dashboard/page.tsx` (lines 44-55)
+
+**PR**: #102
+
+---
+
+## Prisma Client Missing `isXPremium` Field — 500 on publish-info
+
+**Symptom**: The `/api/dashboard/studio/publish-info` endpoint returns a 500 error with `PrismaClientValidationError: Unknown field 'isXPremium' for select statement on model 'XAccount'`.
+
+**Root cause**: The `isXPremium` field was added to the `XAccount` model in `prisma/schema.prisma` (line 572) but `npx prisma generate` was not run afterward. The generated Prisma client in `node_modules/.prisma/client` did not include the new field, so any query selecting it failed at validation time.
+
+**Fix**: Run `npx prisma generate` to regenerate the client, then restart the dev server. No code changes needed — this is a local environment sync issue.
+
+**Prevention**: After any `schema.prisma` change, always run `npx prisma generate` before testing. If using `prisma db push` or `prisma migrate`, the client is regenerated automatically.
