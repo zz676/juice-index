@@ -12,7 +12,9 @@ export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const startTime = Date.now();
   const now = new Date();
+  console.log(`[cron] publish-user-posts started at ${now.toISOString()}`);
 
   // Fetch posts that are SCHEDULED and their scheduledFor time has passed
   const posts = await prisma.userPost.findMany({
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
     take: 10,
     orderBy: { scheduledFor: "asc" },
   });
+
+  console.log(`[cron] Found ${posts.length} posts ready to publish`);
 
   const results: { id: string; status: string; error?: string }[] = [];
 
@@ -96,6 +100,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      console.log(`[cron] Published post ${post.id} -> tweet ${tweet.id}`);
       results.push({ id: post.id, status: "PUBLISHED" });
     } catch (err) {
       console.error(`[cron] Failed to publish post ${post.id}:`, err);
@@ -126,5 +131,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ processed: results.length, results });
+  const published = results.filter((r) => r.status === "PUBLISHED").length;
+  const failed = results.filter((r) => r.status === "FAILED").length;
+  const retrying = results.filter((r) => r.status === "RETRY").length;
+  const durationMs = Date.now() - startTime;
+
+  console.log(
+    `[cron] Done in ${durationMs}ms — ${posts.length} found, ${published} published, ${failed} failed, ${retrying} retrying`,
+  );
+
+  return NextResponse.json({
+    processed: results.length,
+    published,
+    failed,
+    retrying,
+    durationMs,
+    results,
+  });
 }

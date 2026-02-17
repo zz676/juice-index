@@ -12,11 +12,14 @@ jobs:
     steps:
       - name: Trigger publish-user-posts endpoint
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          body=$(curl -s -w "\n%{http_code}" \
             -X POST "${{ secrets.APP_URL }}/api/cron/publish-user-posts" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
-          echo "HTTP status: $response"
-          if [ "$response" -ne 200 ]; then
-            echo "::error::Cron endpoint returned HTTP $response"
+          http_code=$(echo "$body" | tail -1)
+          response_body=$(echo "$body" | sed '$d')
+          echo "HTTP status: $http_code"
+          echo "Response: $response_body"
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Cron endpoint returned HTTP $http_code"
             exit 1
           fi
