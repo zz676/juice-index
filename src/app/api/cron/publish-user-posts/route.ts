@@ -12,7 +12,9 @@ export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
+  const startTime = Date.now();
   const now = new Date();
+  console.log(`[cron] publish-user-posts started at ${now.toISOString()}`);
 
   // Fetch posts that are SCHEDULED and their scheduledFor time has passed
   const posts = await prisma.userPost.findMany({
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
     take: 10,
     orderBy: { scheduledFor: "asc" },
   });
+
+  console.log(`[cron] Found ${posts.length} posts ready to publish`);
 
   const results: { id: string; status: string; error?: string }[] = [];
 
@@ -40,6 +44,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (!xAccount) {
+        console.error(
+          `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${post.attempts + 1}): No X account connected`,
+        );
         await prisma.userPost.update({
           where: { id: post.id },
           data: {
@@ -68,6 +75,9 @@ export async function POST(request: NextRequest) {
               lastError: "X connection expired. Please reconnect your X account in Settings and reschedule.",
             },
           });
+          console.error(
+            `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${post.attempts + 1}): X token expired`,
+          );
           results.push({ id: post.id, status: "FAILED", error: "X token expired" });
           continue;
         }
@@ -96,12 +106,17 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      console.log(`[cron] Published post ${post.id} -> tweet ${tweet.id}`);
       results.push({ id: post.id, status: "PUBLISHED" });
     } catch (err) {
-      console.error(`[cron] Failed to publish post ${post.id}:`, err);
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error";
       const newAttempts = post.attempts + 1;
+
+      console.error(
+        `[cron] FAILED post ${post.id} (user=${post.userId}, scheduledFor=${post.scheduledFor?.toISOString() ?? "none"}, attempts=${newAttempts}, content="${post.content.slice(0, 80)}"): ${errorMessage}`,
+        err,
+      );
 
       if (newAttempts < 3) {
         // Retry on next cron run
@@ -126,5 +141,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ processed: results.length, results });
+  const published = results.filter((r) => r.status === "PUBLISHED").length;
+  const failed = results.filter((r) => r.status === "FAILED").length;
+  const retrying = results.filter((r) => r.status === "RETRY").length;
+  const durationMs = Date.now() - startTime;
+
+  console.log(
+    `[cron] Done in ${durationMs}ms — ${posts.length} found, ${published} published, ${failed} failed, ${retrying} retrying`,
+  );
+
+  return NextResponse.json({
+    processed: results.length,
+    published,
+    failed,
+    retrying,
+    durationMs,
+    results,
+  });
 }
