@@ -63,9 +63,34 @@ export default function Navbar() {
             {user ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-4 py-1.5 text-[12px] font-semibold rounded-full bg-primary text-white animate-[glow-pulse_3s_ease-in-out_infinite] hover:bg-primary-dark hover:shadow-[0_0_24px_rgba(106,218,27,0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
+                className="inline-flex items-center justify-center text-primary hover:text-primary-dark hover:scale-[1.03] active:scale-[0.98] transition-all duration-200"
               >
-                Dashboard
+                <svg width="38" height="38" viewBox="0 0 64 52" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  {/* Outer panel */}
+                  <rect x="2" y="2" width="60" height="48" rx="5" />
+                  {/* Pie chart */}
+                  <circle cx="20" cy="20" r="10" />
+                  <path d="M20 10 L20 20 L28.66 15" />
+                  <line x1="20" y1="20" x2="13" y2="27" />
+                  {/* List items top-right */}
+                  <circle cx="38" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                  <line x1="42" y1="12" x2="54" y2="12" />
+                  <circle cx="38" cy="19" r="1.5" fill="currentColor" stroke="none" />
+                  <line x1="42" y1="19" x2="54" y2="19" />
+                  {/* List items bottom-left */}
+                  <circle cx="8" cy="36" r="1.5" fill="currentColor" stroke="none" />
+                  <line x1="12" y1="36" x2="24" y2="36" />
+                  <circle cx="8" cy="42" r="1.5" fill="currentColor" stroke="none" />
+                  <line x1="12" y1="42" x2="24" y2="42" />
+                  {/* Bar chart */}
+                  <line x1="34" y1="44" x2="56" y2="44" />
+                  <rect x="35" y="38" width="4" height="6" rx="0.5" fill="currentColor" stroke="none" />
+                  <rect x="41" y="34" width="4" height="10" rx="0.5" fill="currentColor" stroke="none" />
+                  <rect x="47" y="30" width="4" height="14" rx="0.5" fill="currentColor" stroke="none" />
+                  <rect x="53" y="26" width="4" height="18" rx="0.5" fill="currentColor" stroke="none" />
+                  {/* Trend line */}
+                  <polyline x1="35" y1="35" points="35,35 42,30 48,33 56,24" fill="none" />
+                </svg>
               </Link>
             ) : (
               <>
@@ -140,9 +165,34 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileOpen(false)}
-                    className="text-center py-2.5 text-[11px] font-semibold bg-primary text-white rounded-full animate-[glow-pulse_3s_ease-in-out_infinite] hover:bg-primary-dark hover:shadow-[0_0_24px_rgba(106,218,27,0.55)] active:scale-[0.98] transition-all duration-200"
+                    className="inline-flex items-center justify-center py-2.5 text-primary hover:text-primary-dark active:scale-[0.98] transition-all duration-200"
                   >
-                    Dashboard
+                    <svg width="42" height="42" viewBox="0 0 64 52" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Outer panel */}
+                      <rect x="2" y="2" width="60" height="48" rx="5" />
+                      {/* Pie chart */}
+                      <circle cx="20" cy="20" r="10" />
+                      <path d="M20 10 L20 20 L28.66 15" />
+                      <line x1="20" y1="20" x2="13" y2="27" />
+                      {/* List items top-right */}
+                      <circle cx="38" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                      <line x1="42" y1="12" x2="54" y2="12" />
+                      <circle cx="38" cy="19" r="1.5" fill="currentColor" stroke="none" />
+                      <line x1="42" y1="19" x2="54" y2="19" />
+                      {/* List items bottom-left */}
+                      <circle cx="8" cy="36" r="1.5" fill="currentColor" stroke="none" />
+                      <line x1="12" y1="36" x2="24" y2="36" />
+                      <circle cx="8" cy="42" r="1.5" fill="currentColor" stroke="none" />
+                      <line x1="12" y1="42" x2="24" y2="42" />
+                      {/* Bar chart */}
+                      <line x1="34" y1="44" x2="56" y2="44" />
+                      <rect x="35" y="38" width="4" height="6" rx="0.5" fill="currentColor" stroke="none" />
+                      <rect x="41" y="34" width="4" height="10" rx="0.5" fill="currentColor" stroke="none" />
+                      <rect x="47" y="30" width="4" height="14" rx="0.5" fill="currentColor" stroke="none" />
+                      <rect x="53" y="26" width="4" height="18" rx="0.5" fill="currentColor" stroke="none" />
+                      {/* Trend line */}
+                      <polyline x1="35" y1="35" points="35,35 42,30 48,33 56,24" fill="none" />
+                    </svg>
                   </Link>
                 ) : (
                   <>
