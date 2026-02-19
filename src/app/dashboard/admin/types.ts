@@ -77,3 +77,46 @@ export interface AdminMetrics {
   apiActivity: APIActivityMetrics;
   webhookHealth: WebhookHealthMetrics;
 }
+
+// ── Engagement admin types ─────────────────────────────────────────────────
+
+export interface AdminEngagementUser {
+  userId: string;
+  name: string | null;
+  email: string;
+  totalReplies: number;
+  postedReplies: number;
+  failedReplies: number;
+  successRate: number;
+  totalCost: number;
+  lastReplyDate: string | null;
+}
+
+export interface AdminEngagementSummary {
+  totalReplies: number;
+  totalCost: number;
+  avgCostPerReply: number;
+  activeUsers: number;
+}
+
+export interface AdminEngagementReply {
+  id: string;
+  sourceTweetId: string;
+  sourceTweetText: string | null;
+  sourceTweetUrl: string | null;
+  replyText: string | null;
+  replyTweetId: string | null;
+  replyTweetUrl: string | null;
+  replyImageUrl: string | null;
+  tone: string;
+  status: string;
+  lastError: string | null;
+  attempts: number;
+  textGenerationCost: number;
+  imageGenerationCost: number;
+  apiCallCost: number;
+  totalCost: number;
+  createdAt: string;
+  updatedAt: string;
+  MonitoredAccount: { username: string; displayName: string | null; avatarUrl: string | null } | null;
+}

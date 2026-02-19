@@ -473,6 +473,10 @@ model User {
   subscriptions     ApiSubscription[]
   apiKeys           ApiKey[]
   userPosts         UserPost[]
+  MonitoredAccount  MonitoredAccount[]
+  EngagementReply   EngagementReply[]
+  FollowingCache    FollowingCache[]
+  EngagementConfig  EngagementConfig?
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1562,6 +1566,24 @@ enum ScrapeStatus {
   PENDING
 }
 
+enum ReplyTone {
+  HUMOR
+  SARCASTIC
+  HUGE_FAN
+  CHEERS
+  NEUTRAL
+  PROFESSIONAL
+}
+
+enum EngagementReplyStatus {
+  PENDING
+  GENERATING
+  POSTING
+  POSTED
+  FAILED
+  SKIPPED
+}
+
 model ApiKey {
   id                String    @id @default(cuid())
   userId            String
@@ -1673,6 +1695,139 @@ model Notification {
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, read])
   @@map("juice_notifications")
+}
+
+/// X account followed/monitored for engagement auto-replies.
+model MonitoredAccount {
+  /// Primary identifier for the record.
+  id                  String            @id @default(cuid())
+  /// Identifier of the related user.
+  userId              String
+  /// X user identifier of the monitored account.
+  xUserId             String
+  /// Username/handle of the monitored account.
+  username            String
+  /// Human-friendly display name.
+  displayName         String?
+  /// URL for avatar.
+  avatarUrl           String?
+  /// Reply tone to use for this account.
+  tone                ReplyTone         @default(NEUTRAL)
+  /// Optional custom tone prompt override.
+  customTonePrompt    String?
+  /// Always include a generated image with replies.
+  alwaysGenerateImage Boolean           @default(false)
+  /// Whether auto-reply is enabled for this account.
+  enabled             Boolean           @default(true)
+  /// Last tweet ID seen from this account (for polling).
+  lastSeenTweetId     String?
+  /// Timestamp when the account was last polled.
+  lastCheckedAt       DateTime?
+  /// Timestamp when the record was created.
+  createdAt           DateTime          @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt           DateTime          @updatedAt
+  User                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  EngagementReply     EngagementReply[]
+
+  @@unique([userId, xUserId])
+  @@index([userId])
+  @@index([enabled])
+  @@map("juice_monitored_accounts")
+}
+
+/// Auto-generated reply to a monitored account's tweet.
+model EngagementReply {
+  /// Primary identifier for the record.
+  id                  String                @id @default(cuid())
+  /// Identifier of the related user.
+  userId              String
+  /// Identifier of the monitored account that triggered this reply.
+  monitoredAccountId  String
+  /// X tweet ID that was replied to.
+  sourceTweetId       String
+  /// Text content of the source tweet.
+  sourceTweetText     String?
+  /// URL of the source tweet.
+  sourceTweetUrl      String?
+  /// Generated reply text.
+  replyText           String?
+  /// URL of the generated reply image.
+  replyImageUrl       String?
+  /// Tone used for this reply.
+  tone                ReplyTone
+  /// Workflow status for the record.
+  status              EngagementReplyStatus @default(PENDING)
+  /// X tweet ID of the posted reply.
+  replyTweetId        String?
+  /// URL of the posted reply on X.
+  replyTweetUrl       String?
+  /// Error message if the reply failed.
+  lastError           String?
+  /// Number of posting attempts.
+  attempts            Int                   @default(0)
+  /// AI text generation cost in USD.
+  textGenerationCost  Float                 @default(0)
+  /// Image generation cost in USD.
+  imageGenerationCost Float                 @default(0)
+  /// X API call cost in USD.
+  apiCallCost         Float                 @default(0)
+  /// Total cost in USD.
+  totalCost           Float                 @default(0)
+  /// Timestamp when the record was created.
+  createdAt           DateTime              @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt           DateTime              @updatedAt
+  User                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MonitoredAccount    MonitoredAccount      @relation(fields: [monitoredAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([monitoredAccountId])
+  @@map("juice_engagement_replies")
+}
+
+/// Cache of X accounts that a user follows (for the monitored account picker).
+model FollowingCache {
+  /// Primary identifier for the record.
+  id          String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId      String
+  /// X user identifier of the followed account.
+  xUserId     String
+  /// Username/handle of the followed account.
+  username    String
+  /// Human-friendly display name.
+  displayName String?
+  /// URL for avatar.
+  avatarUrl   String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime @updatedAt
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, xUserId])
+  @@index([userId])
+  @@map("juice_following_cache")
+}
+
+/// Global engagement auto-reply configuration per user.
+model EngagementConfig {
+  /// Primary identifier for the record.
+  id           String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId       String   @unique
+  /// Whether all auto-replies are globally paused.
+  globalPaused Boolean  @default(false)
+  /// Timestamp when the record was created.
+  createdAt    DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt    DateTime @updatedAt
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("juice_engagement_configs")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)

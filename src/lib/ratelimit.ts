@@ -333,6 +333,40 @@ export async function getWeeklyPublishUsage(
   }
 }
 
+export function engagementReplyLimit(userId: string, tier: ApiTier, now: Date): Promise<RateLimitResult> {
+  return rateLimitDailyPrefixed("engagement:reply", userId, TIER_QUOTAS[tier].dailyReplies, now);
+}
+
+export function engagementImageLimit(userId: string, tier: ApiTier, now: Date): Promise<RateLimitResult> {
+  return rateLimitDailyPrefixed("engagement:image", userId, TIER_QUOTAS[tier].dailyImageGen, now);
+}
+
+export async function getEngagementUsage(
+  userId: string,
+  tier: ApiTier,
+): Promise<{ replyUsed: number; replyLimit: number; imageUsed: number; imageLimit: number }> {
+  const replyLimit = TIER_QUOTAS[tier].dailyReplies;
+  const imageLimit = TIER_QUOTAS[tier].dailyImageGen;
+
+  try {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(now.getUTCDate()).padStart(2, "0");
+    const dateKey = `${y}${m}${d}`;
+
+    const [replyUsed, imageUsed] = await Promise.all([
+      upstashGet(`engagement:reply:${userId}:${dateKey}`),
+      upstashGet(`engagement:image:${userId}:${dateKey}`),
+    ]);
+
+    return { replyUsed, replyLimit, imageUsed, imageLimit };
+  } catch (err) {
+    console.warn("Failed to fetch engagement usage, returning zeros:", err);
+    return { replyUsed: 0, replyLimit, imageUsed: 0, imageLimit };
+  }
+}
+
 export type ModelUsageEntry = {
   modelId: string;
   queryUsed: number;

@@ -6,11 +6,15 @@ interface PostTweetResult {
 export async function postTweet(
   accessToken: string,
   content: string,
-  mediaIds?: string[]
+  mediaIds?: string[],
+  replyToTweetId?: string
 ): Promise<PostTweetResult> {
   const payload: Record<string, unknown> = { text: content };
   if (mediaIds && mediaIds.length > 0) {
     payload.media = { media_ids: mediaIds };
+  }
+  if (replyToTweetId) {
+    payload.reply = { in_reply_to_tweet_id: replyToTweetId };
   }
 
   const res = await fetch("https://api.x.com/2/tweets", {
