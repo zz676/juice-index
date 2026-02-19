@@ -13,6 +13,7 @@ const CANONICAL_TABLES = new Set([
   "batteryMakerRankings",
   "plantExports",
   "vehicleSpec",
+  "nioPowerSnapshot",
 ]);
 
 const ALIASES: Record<string, string> = {
@@ -43,6 +44,11 @@ const ALIASES: Record<string, string> = {
   dealer_inventory_factor: "chinaDealerInventoryFactor",
   via_index: "chinaViaIndex",
   battery_installation: "chinaBatteryInstallation",
+
+  niopowersnapshot: "nioPowerSnapshot",
+  nio_power_snapshot: "nioPowerSnapshot",
+  nio_power: "nioPowerSnapshot",
+  power_snapshot: "nioPowerSnapshot",
 };
 
 export function normalizeTableName(raw: string): string {

@@ -114,6 +114,12 @@ const EV_KEYWORDS = [
   "market share",
   "ranking",
   "brand",
+  "swap",
+  "charging",
+  "pile",
+  "infrastructure",
+  "power",
+  "station",
 ];
 
 // Register Chart.js components once at module level
@@ -667,7 +673,7 @@ async function getLiveHints() {
     );
 
     // Fetch distinct values for filterable columns across other tables
-    const [plantExportPlants, plantExportBrands, batteryMakers, automakers, batteryScopes] = await Promise.all([
+    const [plantExportPlants, plantExportBrands, batteryMakers, automakers, batteryScopes, nioPowerRange] = await Promise.all([
       prisma.$queryRaw<Array<{ plant: string }>>(
         Prisma.sql`SELECT DISTINCT "plant" FROM "public"."PlantExports" ORDER BY "plant" ASC LIMIT 30`
       ).catch(() => [] as Array<{ plant: string }>),
@@ -683,6 +689,9 @@ async function getLiveHints() {
       prisma.$queryRaw<Array<{ scope: string }>>(
         Prisma.sql`SELECT DISTINCT "scope" FROM "public"."BatteryMakerRankings" ORDER BY "scope" ASC LIMIT 10`
       ).catch(() => [] as Array<{ scope: string }>),
+      prisma.$queryRaw<Array<{ min: Date; max: Date }>>(
+        Prisma.sql`SELECT MIN("asOfTime") AS min, MAX("asOfTime") AS max FROM "public"."NioPowerSnapshot"`
+      ).catch(() => [] as Array<{ min: Date; max: Date }>),
     ]);
 
     return {
@@ -704,6 +713,9 @@ async function getLiveHints() {
           scopes: batteryScopes.map((r) => r.scope),
         },
       },
+      nioPowerDateRange: nioPowerRange.length
+        ? { min: nioPowerRange[0].min, max: nioPowerRange[0].max }
+        : null,
     };
   } catch {
     return {
@@ -711,6 +723,7 @@ async function getLiveHints() {
       years: [] as number[],
       brands: [] as string[],
       tableValues: {} as Record<string, Record<string, string[]>>,
+      nioPowerDateRange: null as { min: Date; max: Date } | null,
     };
   }
 }
@@ -751,6 +764,7 @@ ${hints.tableValues?.plantExports?.brands?.length ? `- plantExports brands: ${hi
 ${hints.tableValues?.batteryMakerMonthly?.makers?.length ? `- batteryMakerMonthly makers: ${hints.tableValues.batteryMakerMonthly.makers.join(", ")}` : ""}
 ${hints.tableValues?.automakerRankings?.automakers?.length ? `- automakerRankings automakers: ${hints.tableValues.automakerRankings.automakers.join(", ")}` : ""}
 ${hints.tableValues?.batteryMakerRankings?.scopes?.length ? `- batteryMakerRankings scopes: ${hints.tableValues.batteryMakerRankings.scopes.join(", ")}` : ""}
+${hints.nioPowerDateRange ? `- nioPowerSnapshot date range: ${hints.nioPowerDateRange.min} to ${hints.nioPowerDateRange.max}` : ""}
 
 Rules:
 1. If question is not about EV/NEV market data, set unsupported=true and include reason.

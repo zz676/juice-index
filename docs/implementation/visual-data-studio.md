@@ -99,6 +99,21 @@ The server-side chart rendering previously used `chartjs-node-canvas` which depe
 ### 2. Vertical Scroll for Visualization & Data Section
 Added `overflow-y-auto max-h-[80vh]` to the Visualization & Data section (`page.tsx`) so content scrolls independently when it exceeds 80% of viewport height (e.g., chart + customizer + generated image + data table).
 
+## ✅ Phase 3.7: NioPowerSnapshot Studio Support (Complete)
+
+Wired the existing `NioPowerSnapshot` Prisma table into the Studio query generation pipeline so users can ask about NIO swap stations, charging infrastructure, and cumulative usage stats.
+
+### Changes
+- **Keyword gate** (`EV_KEYWORDS`): Added "swap", "charging", "pile", "infrastructure", "power", "station" so infrastructure queries pass the pre-filter.
+- **Allowed tables** (`query-executor.ts`): Added `nioPowerSnapshot` to `ALLOWED_TABLES` and `getTableInfo()` with all 10 fields (`asOfTime`, `totalStations`, `swapStations`, `highwaySwapStations`, `cumulativeSwaps`, `chargingStations`, `chargingPiles`, `cumulativeCharges`, `thirdPartyPiles`, `thirdPartyUsagePercent`).
+- **Table name normalization** (`table-name.ts`): Added canonical entry and aliases (`niopowersnapshot`, `nio_power_snapshot`, `nio_power`, `power_snapshot`).
+- **Live DB hints** (`getLiveHints()`): Added a query to fetch the `NioPowerSnapshot` date range (`MIN`/`MAX` of `asOfTime`) and include it in the AI system prompt.
+
+### Example queries now supported
+- "NIO swap stations trend"
+- "NIO charging piles over time"
+- "How many total swap stations does NIO have?"
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment
