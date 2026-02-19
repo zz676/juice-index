@@ -17,6 +17,7 @@ const ALLOWED_TABLES = [
   "batteryMakerRankings",
   "plantExports",
   "vehicleSpec",
+  "nioPowerSnapshot",
 ] as const;
 
 type AllowedTable = (typeof ALLOWED_TABLES)[number];
@@ -223,6 +224,22 @@ export function getTableInfo(table: string): { fields: string[]; description: st
     nevSalesSummary: {
       fields: ["year", "startDate", "endDate", "retailSales", "retailYoy", "wholesaleSales", "wholesaleYoy"],
       description: "Weekly/bi-weekly sales flash reports",
+    },
+    nioPowerSnapshot: {
+      fields: [
+        "asOfTime",
+        "totalStations",
+        "swapStations",
+        "highwaySwapStations",
+        "cumulativeSwaps",
+        "chargingStations",
+        "chargingPiles",
+        "cumulativeCharges",
+        "thirdPartyPiles",
+        "thirdPartyUsagePercent",
+      ],
+      description:
+        "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access",
     },
   };
 
