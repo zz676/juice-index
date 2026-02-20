@@ -26,6 +26,7 @@ function buildReplyPrompt(sourceTweetText: string, toneInstructions: string): st
 
 Reply to this tweet with exactly 1-2 sentences (under 280 characters total).
 Rules:
+- Reply in the same language as the tweet
 - Reference what was said in the tweet
 - No hashtags
 - No markdown formatting
