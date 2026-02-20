@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         : (user?.email?.[0]?.toUpperCase() ?? "?");
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await fetch("/api/auth/signout", { method: "POST" });
         window.location.href = "/login";
     };
 

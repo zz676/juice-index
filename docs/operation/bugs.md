@@ -151,6 +151,20 @@ The dashboard layout sidebar already used the correct `/api/dashboard/tier` endp
 
 ---
 
+## X Login — "Unable to Exchange External Code" After Logout + Re-login
+
+**Symptom**: Logging in with X works the first time. After logging out and attempting to log in with X again, the user is redirected to `/login?error=auth` with `error_description=Unable to exchange external code`.
+
+**Root cause**: The logout handler called `supabase.auth.signOut()` from the **browser client**, which cannot delete HttpOnly cookies — only the server can. The Supabase session cookie (`@supabase/ssr` stores sessions as HttpOnly) persisted in the browser after logout. When the user initiated a new X OAuth flow, Supabase's callback at `https://<project-ref>.supabase.co/auth/v1/callback` encountered the stale session cookie alongside the new OAuth code, causing the code exchange to fail.
+
+**Fix**: Replaced the client-side `supabase.auth.signOut()` call in the logout handler with a `POST /api/auth/signout` request. The new route calls `signOut()` from the server-side Supabase client (via `createClient()` from `@/lib/supabase/server`), which has full access to set `Set-Cookie` headers and properly clears the HttpOnly session cookie.
+
+**Files**:
+- `src/app/api/auth/signout/route.ts` (new server-side sign-out route)
+- `src/app/dashboard/layout.tsx` (`handleSignOut` now calls the API route)
+
+---
+
 ## X OAuth — "Something Went Wrong / You Weren't Able to Give Access"
 
 **Symptom**: After clicking "Connect X Account", X's authorization page shows "Something went wrong. You weren't able to give access to the App." The error occurs on X's side before the callback is reached.
