@@ -104,20 +104,21 @@ export function AccountCard({ account, globalPaused, onUpdate, onDelete }: Accou
         </div>
         {/* Enable/disable toggle */}
         <div className="relative group flex-shrink-0">
-          <button
-            onClick={handleToggleEnabled}
-            disabled={loading || globalPaused}
-            className={`relative w-10 h-6 rounded-full transition-colors ${
-              account.enabled && !globalPaused ? "bg-primary" : "bg-slate-custom-200"
-            } ${globalPaused ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          <div
+            role="switch"
+            aria-checked={account.enabled}
             aria-label={account.enabled ? "Disable" : "Enable"}
+            onClick={!loading && !globalPaused ? handleToggleEnabled : undefined}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              account.enabled && !globalPaused ? "bg-primary" : "bg-slate-custom-200"
+            } ${globalPaused || loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <span
-              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                account.enabled ? "translate-x-5" : "translate-x-1"
+            <div
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                account.enabled ? "translate-x-5" : "translate-x-0"
               }`}
             />
-          </button>
+          </div>
           {globalPaused && (
             <div className="absolute right-0 bottom-full mb-1 px-2 py-1 text-xs bg-slate-custom-800 text-white rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
               Global pause is active
@@ -150,20 +151,21 @@ export function AccountCard({ account, globalPaused, onUpdate, onDelete }: Accou
       {/* Image toggle */}
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-custom-600">Always generate image</span>
-        <button
-          onClick={() => patch({ alwaysGenerateImage: !account.alwaysGenerateImage })}
-          disabled={loading}
-          className={`relative w-8 h-5 rounded-full transition-colors ${
-            account.alwaysGenerateImage ? "bg-primary" : "bg-slate-custom-200"
-          }`}
+        <div
+          role="switch"
+          aria-checked={account.alwaysGenerateImage}
           aria-label="Toggle image generation"
+          onClick={!loading ? () => patch({ alwaysGenerateImage: !account.alwaysGenerateImage }) : undefined}
+          className={`relative w-11 h-6 rounded-full transition-colors ${
+            account.alwaysGenerateImage ? "bg-primary" : "bg-slate-custom-200"
+          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
         >
-          <span
-            className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-              account.alwaysGenerateImage ? "translate-x-3.5" : "translate-x-0.5"
+          <div
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              account.alwaysGenerateImage ? "translate-x-5" : "translate-x-0"
             }`}
           />
-        </button>
+        </div>
       </div>
 
       {/* Delete */}
