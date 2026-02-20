@@ -263,6 +263,10 @@ export function EngagementTab() {
         sortOrder: order,
       });
       const res = await fetch(`/api/dashboard/admin/engagement?${params}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
       const data = await res.json();
       setUsers(data.users ?? []);
       setSummary(data.summary ?? null);

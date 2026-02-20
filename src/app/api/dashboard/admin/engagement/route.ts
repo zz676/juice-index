@@ -25,6 +25,7 @@ type SummaryRow = {
 };
 
 export async function GET(request: NextRequest) {
+  try {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
@@ -120,4 +121,11 @@ export async function GET(request: NextRequest) {
       activeUsers,
     },
   });
+  } catch (err) {
+    console.error("[admin/engagement GET]", err);
+    return NextResponse.json(
+      { error: "Internal server error", message: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
 }
