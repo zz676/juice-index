@@ -149,7 +149,7 @@ export default function Navbar() {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="md:hidden fixed inset-0 top-16 bg-background-light z-40"
           >
-            <div className="flex flex-col px-6 py-8 gap-2">
+            <div className="flex flex-col px-6 py-8 gap-2 bg-white/80 backdrop-blur-md">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
