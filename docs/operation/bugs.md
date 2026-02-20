@@ -98,3 +98,70 @@ The dashboard layout sidebar already used the correct `/api/dashboard/tier` endp
 **Fix**: Run `npx prisma generate` to regenerate the client, then restart the dev server. No code changes needed — this is a local environment sync issue.
 
 **Prevention**: After any `schema.prisma` change, always run `npx prisma generate` before testing. If using `prisma db push` or `prisma migrate`, the client is regenerated automatically.
+
+---
+
+## Engagement Center — Toggle Buttons Show No Knob
+
+**Symptom**: The enable/disable and image-generation toggle switches in `AccountCard` render as solid colored ovals with no visible white knob.
+
+**Root cause**: `<button>` elements do not reliably contain `absolute`-positioned children across browsers. The toggle thumb (`<span className="absolute ...">`) was clipped and not rendered.
+
+**Fix**: Replaced both `<button>` + `<span>` toggle implementations with `<div role="switch">` + `<div>` thumb using `w-11 h-6` container, `w-5 h-5 top-0.5 left-0.5` thumb, `translate-x-5` / `translate-x-0` for on/off.
+
+**File**: `src/app/dashboard/engagement/account-card.tsx`
+
+---
+
+## Engagement Admin Tab — "Unexpected End of JSON Input"
+
+**Symptom**: Clicking the Engagement tab in the Admin Console throws `Failed to execute 'json' on 'Response': Unexpected end of JSON input` at `engagement-tab.tsx:266`.
+
+**Root cause**: Two issues combined. The API route (`/api/dashboard/admin/engagement`) crashed with an unhandled Prisma error (e.g. engagement tables not yet migrated), causing Next.js to return a 500 with an **empty body**. The client called `res.json()` unconditionally, blowing up on the empty string.
+
+**Fix**:
+1. Added `res.ok` check before `res.json()` in `EngagementTab` — reads `res.text()` and throws a meaningful error on non-200.
+2. Wrapped the entire GET handler in `try/catch` so Prisma errors return `{ error, message }` JSON instead of an empty 500.
+
+**Files**: `src/app/dashboard/admin/engagement-tab.tsx`, `src/app/api/dashboard/admin/engagement/route.ts`
+
+---
+
+## Engagement Admin — `column "total_replies" does not exist` (Prisma $queryRaw)
+
+**Symptom**: Admin Engagement tab returns 500 with `PrismaClientKnownRequestError: Raw query failed. Code: 42703. Message: column "total_replies" does not exist`.
+
+**Root cause**: The `ORDER BY` clause used snake_case identifiers (`total_replies`, `posted_replies`, `last_reply_date`, `total_cost`) but the `SELECT` clause aliased them as quoted camelCase (`"totalReplies"`, `"postedReplies"`, `"lastReplyDate"`, `"totalCost"`). PostgreSQL treats quoted identifiers as case-sensitive — the snake_case names matched nothing.
+
+**Fix**: Updated `orderClause` in the route to use the same quoted camelCase aliases as the `SELECT`.
+
+**File**: `src/app/api/dashboard/admin/engagement/route.ts`
+
+---
+
+## Supabase Session — "Cannot Create Property 'user' on String"
+
+**Symptom**: After connecting an X account (or any OAuth provider that adds extra user metadata), requests fail with `TypeError: Cannot create property 'user' on string '{"access_token":"eyJ...'`. The session string is truncated mid-JSON.
+
+**Root cause**: The Supabase middleware used the legacy `get(name)` / `set(name, value, options)` / `remove()` cookie API. When `@supabase/ssr` splits a large session across multiple chunked cookies (`sb-xxx-auth-token.0`, `.1`, …) to work around the 4KB browser cookie limit, the legacy `get(name)` only retrieves the first chunk — giving Supabase truncated JSON. Calling `.user =` on a string then throws.
+
+**Fix**: Updated middleware to use `getAll()` / `setAll()` which reads and writes all cookie chunks correctly.
+
+**File**: `src/lib/supabase/middleware.ts`
+
+---
+
+## X OAuth — "Something Went Wrong / You Weren't Able to Give Access"
+
+**Symptom**: After clicking "Connect X Account", X's authorization page shows "Something went wrong. You weren't able to give access to the App." The error occurs on X's side before the callback is reached.
+
+**Root cause (this instance)**: The callback URL `https://juiceindex.io/api/x/callback` was not registered in the X Developer Portal under User Authentication Settings → Callback URI / Redirect URL. X rejects the entire authorization request if the `redirect_uri` in the OAuth URL is not on the allowlist, showing the same error regardless of whether it's a URI mismatch or a client ID issue.
+
+**Fix**: Added `https://juiceindex.io/api/x/callback` to the registered callback URIs in the X Developer Portal.
+
+**Checklist when this error appears**:
+1. Verify `redirect_uri` in the failing URL matches a registered callback URI exactly (no trailing slash)
+2. Check `X_OAUTH_CLIENT_ID` in Vercel matches the OAuth 2.0 Client ID in the portal
+3. Confirm the X app has OAuth 2.0 enabled, app type is "Web App / Automated App or Bot", permissions are "Read and Write"
+4. If previously connected: go to `twitter.com/settings/connected_apps`, revoke the app, then retry
+5. Try in an incognito window to rule out stale browser session state

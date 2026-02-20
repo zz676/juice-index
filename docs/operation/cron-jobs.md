@@ -9,6 +9,7 @@ Cron jobs are triggered via GitHub Actions workflows that call HTTP endpoints on
 | Endpoint | Schedule | Workflow |
 |----------|----------|----------|
 | `/api/cron/publish-user-posts` | Every 5 minutes | `cron-publish-posts.yml` |
+| `/api/cron/engagement-poll` | Every 5 minutes | `cron-engagement-poll.yml` |
 | `/api/cron/prune-usage` | Not yet scheduled | — |
 
 All cron endpoints require a `Authorization: Bearer <CRON_SECRET>` header and accept `POST` requests.
