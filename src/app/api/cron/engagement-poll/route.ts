@@ -14,6 +14,14 @@ import { EngagementReplyStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
 
+type AccountStat = {
+  username: string;
+  newTweets: number;
+  replied: number;
+  failed: number;
+  skipped: number;
+};
+
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
@@ -38,7 +46,7 @@ export async function POST(request: NextRequest) {
     byUserId.set(account.userId, group);
   }
 
-  let processed = 0;
+  let accountsChecked = 0;
   let replied = 0;
   let failed = 0;
   let skipped = 0;
@@ -48,6 +56,8 @@ export async function POST(request: NextRequest) {
     noXAccount: 0,
     tokenError: 0,
   };
+  // Per-account stats, keyed by account.id
+  const accountStats = new Map<string, AccountStat>();
 
   for (const [userId, accounts] of byUserId) {
     // Fetch user-level data in parallel
@@ -98,6 +108,11 @@ export async function POST(request: NextRequest) {
       skipped += accounts.length;
       skipReasons.tokenError += accounts.length;
       continue;
+    }
+
+    // Initialize per-account stat entries for this user's accounts
+    for (const acc of accounts) {
+      accountStats.set(acc.id, { username: acc.username, newTweets: 0, replied: 0, failed: 0, skipped: 0 });
     }
 
     // ── Retry PENDING replies (attempts < 3) ────────────────────────────
@@ -223,6 +238,8 @@ export async function POST(request: NextRequest) {
 
         console.log(`[cron]   Retry succeeded: reply ${reply.id} → tweet ${postedTweet.id}`);
         replied++;
+        const retryStat = accountStats.get(reply.monitoredAccountId);
+        if (retryStat) retryStat.replied++;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
         console.error(`[cron]   Retry failed for reply ${reply.id} (attempt ${newAttempts}): ${errorMessage}`);
@@ -235,12 +252,15 @@ export async function POST(request: NextRequest) {
           },
         });
         failed++;
+        const retryStat = accountStats.get(reply.monitoredAccountId);
+        if (retryStat) retryStat.failed++;
       }
     }
 
     // Process each monitored account for this user
     for (const account of accounts) {
-      processed++;
+      accountsChecked++;
+      const stat = accountStats.get(account.id)!;
       try {
         console.log(`[cron]   Checking @${account.username} (lastSeenTweetId=${account.lastSeenTweetId ?? "none"})`);
         const tweets = await fetchRecentTweets(accessToken, account.xUserId, account.lastSeenTweetId);
@@ -254,6 +274,7 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        stat.newTweets = tweets.length;
         console.log(`[cron]   @${account.username}: ${tweets.length} new tweet(s) → will reply to all (quota permitting)`);
 
         // Tweets are returned newest-first from X API
@@ -278,6 +299,7 @@ export async function POST(request: NextRequest) {
               },
             });
             skipped++;
+            stat.skipped++;
             continue;
           }
 
@@ -302,6 +324,7 @@ export async function POST(request: NextRequest) {
               },
             });
             skipped++;
+            stat.skipped++;
             continue;
           }
           console.log(`[cron]   Quota OK (remaining=${replyQuota.remaining}), generating reply for tweet ${tweet.id}`);
@@ -429,6 +452,7 @@ export async function POST(request: NextRequest) {
               `[cron] Posted reply for @${account.username} tweet ${tweet.id} → reply ${postedTweet.id}`,
             );
             replied++;
+            stat.replied++;
           } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Unknown error";
             const newAttempts = replyRecord.attempts + 1;
@@ -452,6 +476,7 @@ export async function POST(request: NextRequest) {
             });
 
             failed++;
+            stat.failed++;
           }
         }
 
@@ -470,15 +495,18 @@ export async function POST(request: NextRequest) {
           .update({ where: { id: account.id }, data: { lastCheckedAt: new Date() } })
           .catch(() => {});
         failed++;
+        stat.failed++;
       }
     }
   }
 
   const durationMs = Date.now() - startTime;
+  const accounts = [...accountStats.values()].sort((a, b) => a.username.localeCompare(b.username));
+
   console.log(
-    `[cron] engagement-poll done in ${durationMs}ms — processed=${processed}, replied=${replied}, failed=${failed}, skipped=${skipped}`,
+    `[cron] engagement-poll done in ${durationMs}ms — accountsChecked=${accountsChecked}, replied=${replied}, failed=${failed}, skipped=${skipped}`,
     `| skipReasons: ${JSON.stringify(skipReasons)}`,
   );
 
-  return NextResponse.json({ processed, replied, failed, skipped, skipReasons, durationMs });
+  return NextResponse.json({ accountsChecked, replied, failed, skipped, skipReasons, durationMs, accounts });
 }
