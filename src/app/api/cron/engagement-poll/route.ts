@@ -123,16 +123,50 @@ export async function POST(request: NextRequest) {
         let quotaExhausted = false;
 
         for (const tweet of tweets) {
-          if (quotaExhausted) break;
+          // If quota was exhausted by a previous tweet, log and record each remaining tweet as SKIPPED
+          if (quotaExhausted) {
+            console.log(`[cron]   SKIPPED tweet ${tweet.id} (@${account.username}): daily reply quota exhausted`);
+            await prisma.engagementReply.create({
+              data: {
+                userId,
+                monitoredAccountId: account.id,
+                sourceTweetId: tweet.id,
+                sourceTweetText: tweet.text,
+                sourceTweetUrl: tweet.url,
+                tone: account.tone,
+                status: EngagementReplyStatus.SKIPPED,
+                lastError: "Daily reply quota exhausted",
+                attempts: 0,
+              },
+            });
+            skipped++;
+            continue;
+          }
 
           // Check daily reply quota (increments counter)
           const replyQuota = await engagementReplyLimit(userId, tier, new Date());
           if (!replyQuota.success) {
             console.log(`[cron]   Daily reply quota exhausted for user ${userId} (limit=${replyQuota.limit}, remaining=0)`);
             quotaExhausted = true;
-            break;
+            // Log and record this tweet as SKIPPED too
+            console.log(`[cron]   SKIPPED tweet ${tweet.id} (@${account.username}): daily reply quota exhausted`);
+            await prisma.engagementReply.create({
+              data: {
+                userId,
+                monitoredAccountId: account.id,
+                sourceTweetId: tweet.id,
+                sourceTweetText: tweet.text,
+                sourceTweetUrl: tweet.url,
+                tone: account.tone,
+                status: EngagementReplyStatus.SKIPPED,
+                lastError: "Daily reply quota exhausted",
+                attempts: 0,
+              },
+            });
+            skipped++;
+            continue;
           }
-          console.log(`[cron]   Quota OK (remaining=${replyQuota.remaining ?? "?"}), generating reply for tweet ${tweet.id}`);
+          console.log(`[cron]   Quota OK (remaining=${replyQuota.remaining}), generating reply for tweet ${tweet.id}`);
 
           // Create PENDING record
           const replyRecord = await prisma.engagementReply.create({
