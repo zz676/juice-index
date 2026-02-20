@@ -19,6 +19,9 @@ export type TierQuota = {
   xAccounts: number;
   studioQueriesByModel: ModelQuotas;
   postDraftsByModel: ModelQuotas;
+  dailyReplies: number;
+  monitoredAccounts: number;
+  dailyImageGen: number;
 };
 
 export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
@@ -43,6 +46,9 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     postDraftsByModel: {
       "gpt-4o-mini": 1,
     },
+    dailyReplies: 0,
+    monitoredAccounts: 0,
+    dailyImageGen: 0,
   },
   STARTER: {
     dailyApi: 500,
@@ -69,6 +75,9 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
       "gpt-4o": 3,
       "claude-3-5-sonnet": 3,
     },
+    dailyReplies: 5,
+    monitoredAccounts: 5,
+    dailyImageGen: 2,
   },
   PRO: {
     dailyApi: 1_000,
@@ -97,6 +106,9 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
       "claude-3-5-sonnet": 10,
       "claude-opus-4": 5,
     },
+    dailyReplies: 25,
+    monitoredAccounts: 20,
+    dailyImageGen: 10,
   },
   ENTERPRISE: {
     dailyApi: 100_000,
@@ -125,6 +137,9 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
       "claude-3-5-sonnet": Infinity,
       "claude-opus-4": Infinity,
     },
+    dailyReplies: Infinity,
+    monitoredAccounts: Infinity,
+    dailyImageGen: Infinity,
   },
 };
 

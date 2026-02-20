@@ -12,12 +12,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { AdminMetrics } from "./types";
+import { EngagementTab } from "./engagement-tab";
 
 const tabs = [
   { id: "revenue", label: "Revenue", icon: "attach_money" },
   { id: "users", label: "Users", icon: "group" },
   { id: "ai", label: "AI Usage", icon: "smart_toy" },
   { id: "api", label: "API Activity", icon: "api" },
+  { id: "engagement", label: "Engagement", icon: "forum" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -280,6 +282,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
       {activeTab === "users" && <UsersTab data={data} />}
       {activeTab === "ai" && <AIUsageTab data={data} />}
       {activeTab === "api" && <APIActivityTab data={data} />}
+      {activeTab === "engagement" && <EngagementTab />}
     </div>
   );
 }
