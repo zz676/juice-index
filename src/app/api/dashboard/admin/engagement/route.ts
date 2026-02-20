@@ -41,10 +41,10 @@ export async function GET(request: NextRequest) {
   const orderClause: Record<SortBy, string> = {
     name: `u.name ${sortOrder}`,
     email: `u.email ${sortOrder}`,
-    totalReplies: `total_replies ${sortOrder}`,
-    successRate: `posted_replies::float / NULLIF(total_replies, 0) ${sortOrder} NULLS LAST`,
-    lastReplyDate: `last_reply_date ${sortOrder} NULLS LAST`,
-    totalCost: `total_cost ${sortOrder} NULLS LAST`,
+    totalReplies: `"totalReplies" ${sortOrder}`,
+    successRate: `"postedReplies"::float / NULLIF("totalReplies", 0) ${sortOrder} NULLS LAST`,
+    lastReplyDate: `"lastReplyDate" ${sortOrder} NULLS LAST`,
+    totalCost: `"totalCost" ${sortOrder} NULLS LAST`,
   };
 
   const offset = (page - 1) * limit;
