@@ -100,6 +100,106 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
+    // ── Retry PENDING replies (attempts < 3) ────────────────────────────
+    const pendingReplies = await prisma.engagementReply.findMany({
+      where: { userId, status: EngagementReplyStatus.PENDING, attempts: { lt: 3 } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (pendingReplies.length > 0) {
+      console.log(`[cron] ↳ Found ${pendingReplies.length} PENDING reply(ies) to retry`);
+    }
+
+    for (const reply of pendingReplies) {
+      const replyQuota = await engagementReplyLimit(userId, tier, new Date());
+      if (!replyQuota.success) {
+        console.log(`[cron]   Retry quota exhausted for user ${userId}, stopping retries`);
+        break;
+      }
+
+      const account = accounts.find((a) => a.id === reply.monitoredAccountId);
+      if (!account) {
+        console.warn(`[cron]   Retry skipped reply ${reply.id}: monitored account disabled or removed`);
+        continue;
+      }
+
+      const newAttempts = reply.attempts + 1;
+      console.log(`[cron]   Retrying reply ${reply.id} for @${account.username} tweet ${reply.sourceTweetId} (attempt ${newAttempts})`);
+
+      try {
+        await prisma.engagementReply.update({
+          where: { id: reply.id },
+          data: { status: EngagementReplyStatus.GENERATING, attempts: newAttempts },
+        });
+
+        // Reuse existing reply text if already generated, otherwise regenerate
+        let replyText = reply.replyText;
+        let inputTokens = 0;
+        let outputTokens = 0;
+        if (!replyText) {
+          const generated = await generateReply(reply.sourceTweetText ?? "", account.tone, account.customTonePrompt);
+          replyText = generated.text;
+          inputTokens = generated.inputTokens;
+          outputTokens = generated.outputTokens;
+        }
+
+        let imageGenerated = false;
+        let mediaIds: string[] | undefined;
+        if (account.alwaysGenerateImage) {
+          const imgQuota = await engagementImageLimit(userId, tier, new Date());
+          if (imgQuota.success) {
+            try {
+              const imgResult = await generateImage(reply.sourceTweetText ?? "", replyText);
+              if (imgResult.generated) {
+                const { mediaId } = await uploadMedia(accessToken, `data:image/png;base64,${imgResult.imageBase64}`);
+                mediaIds = [mediaId];
+                imageGenerated = true;
+              }
+            } catch (imgErr) {
+              console.warn(`[cron]   Image generation failed for retry ${reply.id}, posting without image:`, imgErr);
+            }
+          }
+        }
+
+        await prisma.engagementReply.update({
+          where: { id: reply.id },
+          data: { status: EngagementReplyStatus.POSTING, replyText },
+        });
+
+        const postedTweet = await postTweet(accessToken, replyText, mediaIds, reply.sourceTweetId);
+        const costs = computeTotalReplyCost(inputTokens, outputTokens, imageGenerated);
+
+        await prisma.engagementReply.update({
+          where: { id: reply.id },
+          data: {
+            status: EngagementReplyStatus.POSTED,
+            replyTweetId: postedTweet.id,
+            replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+            textGenerationCost: costs.textCost,
+            imageGenerationCost: costs.imageCost,
+            apiCallCost: costs.apiCost,
+            totalCost: costs.totalCost,
+            lastError: null,
+          },
+        });
+
+        console.log(`[cron]   Retry succeeded: reply ${reply.id} → tweet ${postedTweet.id}`);
+        replied++;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        console.error(`[cron]   Retry failed for reply ${reply.id} (attempt ${newAttempts}): ${errorMessage}`);
+        await prisma.engagementReply.update({
+          where: { id: reply.id },
+          data: {
+            status: newAttempts >= 3 ? EngagementReplyStatus.FAILED : EngagementReplyStatus.PENDING,
+            lastError: errorMessage,
+            attempts: newAttempts,
+          },
+        });
+        failed++;
+      }
+    }
+
     // Process each monitored account for this user
     for (const account of accounts) {
       processed++;
