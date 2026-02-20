@@ -42,6 +42,12 @@ export async function POST(request: NextRequest) {
   let replied = 0;
   let failed = 0;
   let skipped = 0;
+  const skipReasons: Record<string, number> = {
+    globalPaused: 0,
+    insufficientTier: 0,
+    noXAccount: 0,
+    tokenError: 0,
+  };
 
   for (const [userId, accounts] of byUserId) {
     // Fetch user-level data in parallel
@@ -51,25 +57,30 @@ export async function POST(request: NextRequest) {
       prisma.apiSubscription.findUnique({ where: { userId }, select: { tier: true } }),
     ]);
 
+    const tier = normalizeTier(subscription?.tier);
+    console.log(`[cron] User ${userId} | tier=${tier} | accounts=${accounts.length} | xAccount=${!!xAccount} | globalPaused=${config?.globalPaused ?? false}`);
+
     // Skip if globally paused
     if (config?.globalPaused) {
-      console.log(`[cron] Skipping user ${userId}: globally paused`);
+      console.log(`[cron] ↳ SKIP: globally paused`);
       skipped += accounts.length;
+      skipReasons.globalPaused += accounts.length;
       continue;
     }
 
     // Check tier
-    const tier = normalizeTier(subscription?.tier);
     if (!hasTier(tier, "STARTER")) {
-      console.log(`[cron] Skipping user ${userId}: insufficient tier (${tier})`);
+      console.log(`[cron] ↳ SKIP: insufficient tier (${tier}), need STARTER+`);
       skipped += accounts.length;
+      skipReasons.insufficientTier += accounts.length;
       continue;
     }
 
     // Require connected X account
     if (!xAccount) {
-      console.log(`[cron] Skipping user ${userId}: no X account connected`);
+      console.log(`[cron] ↳ SKIP: no X account connected`);
       skipped += accounts.length;
+      skipReasons.noXAccount += accounts.length;
       continue;
     }
 
@@ -77,13 +88,15 @@ export async function POST(request: NextRequest) {
     let accessToken: string;
     try {
       accessToken = await refreshTokenIfNeeded(xAccount);
+      console.log(`[cron] ↳ Token OK, processing ${accounts.length} account(s)`);
     } catch (err) {
       if (err instanceof XTokenExpiredError) {
-        console.error(`[cron] Skipping user ${userId}: X token expired`);
+        console.error(`[cron] ↳ SKIP: X token expired`);
       } else {
-        console.error(`[cron] Skipping user ${userId}: token refresh failed`, err);
+        console.error(`[cron] ↳ SKIP: token refresh failed`, err);
       }
       skipped += accounts.length;
+      skipReasons.tokenError += accounts.length;
       continue;
     }
 
@@ -91,9 +104,11 @@ export async function POST(request: NextRequest) {
     for (const account of accounts) {
       processed++;
       try {
+        console.log(`[cron]   Checking @${account.username} (lastSeenTweetId=${account.lastSeenTweetId ?? "none"})`);
         const tweets = await fetchRecentTweets(accessToken, account.xUserId, account.lastSeenTweetId);
 
         if (tweets.length === 0) {
+          console.log(`[cron]   @${account.username}: no new tweets`);
           await prisma.monitoredAccount.update({
             where: { id: account.id },
             data: { lastCheckedAt: new Date() },
@@ -101,22 +116,57 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`[cron] @${account.username}: ${tweets.length} new tweet(s)`);
+        console.log(`[cron]   @${account.username}: ${tweets.length} new tweet(s) → will reply to all (quota permitting)`);
 
         // Tweets are returned newest-first from X API
         const newestTweetId = tweets[0].id;
         let quotaExhausted = false;
 
         for (const tweet of tweets) {
-          if (quotaExhausted) break;
+          // If quota was exhausted by a previous tweet, log and record each remaining tweet as SKIPPED
+          if (quotaExhausted) {
+            console.log(`[cron]   SKIPPED tweet ${tweet.id} (@${account.username}): daily reply quota exhausted`);
+            await prisma.engagementReply.create({
+              data: {
+                userId,
+                monitoredAccountId: account.id,
+                sourceTweetId: tweet.id,
+                sourceTweetText: tweet.text,
+                sourceTweetUrl: tweet.url,
+                tone: account.tone,
+                status: EngagementReplyStatus.SKIPPED,
+                lastError: "Daily reply quota exhausted",
+                attempts: 0,
+              },
+            });
+            skipped++;
+            continue;
+          }
 
           // Check daily reply quota (increments counter)
           const replyQuota = await engagementReplyLimit(userId, tier, new Date());
           if (!replyQuota.success) {
-            console.log(`[cron] Reply quota exhausted for user ${userId}`);
+            console.log(`[cron]   Daily reply quota exhausted for user ${userId} (limit=${replyQuota.limit}, remaining=0)`);
             quotaExhausted = true;
-            break;
+            // Log and record this tweet as SKIPPED too
+            console.log(`[cron]   SKIPPED tweet ${tweet.id} (@${account.username}): daily reply quota exhausted`);
+            await prisma.engagementReply.create({
+              data: {
+                userId,
+                monitoredAccountId: account.id,
+                sourceTweetId: tweet.id,
+                sourceTweetText: tweet.text,
+                sourceTweetUrl: tweet.url,
+                tone: account.tone,
+                status: EngagementReplyStatus.SKIPPED,
+                lastError: "Daily reply quota exhausted",
+                attempts: 0,
+              },
+            });
+            skipped++;
+            continue;
           }
+          console.log(`[cron]   Quota OK (remaining=${replyQuota.remaining}), generating reply for tweet ${tweet.id}`);
 
           // Create PENDING record
           const replyRecord = await prisma.engagementReply.create({
@@ -251,7 +301,8 @@ export async function POST(request: NextRequest) {
   const durationMs = Date.now() - startTime;
   console.log(
     `[cron] engagement-poll done in ${durationMs}ms — processed=${processed}, replied=${replied}, failed=${failed}, skipped=${skipped}`,
+    `| skipReasons: ${JSON.stringify(skipReasons)}`,
   );
 
-  return NextResponse.json({ processed, replied, failed, skipped, durationMs });
+  return NextResponse.json({ processed, replied, failed, skipped, skipReasons, durationMs });
 }

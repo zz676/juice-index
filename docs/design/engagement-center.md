@@ -46,7 +46,7 @@ The Engagement Center adds automatic AI-generated replies to new X posts from mo
 ### Reply Generation (`src/lib/engagement/generate-reply.ts`)
 - Uses Vercel AI SDK with `gpt-4o-mini` for cost-efficient volume
 - Per-tone system prompts (HUMOR, SARCASTIC, HUGE_FAN, CHEERS, NEUTRAL, PROFESSIONAL)
-- Prompt rules: under 280 chars, reference source tweet, no hashtags/markdown/AI disclosure, 1-2 sentences, temperature 0.7
+- Prompt rules: under 280 chars, reply in same language as source tweet, reference source tweet, no hashtags/markdown/AI disclosure, 1-2 sentences, temperature 0.7
 
 ### Image Generation (`src/lib/engagement/generate-image.ts`)
 - Uses `openai` package directly for DALL-E 3 API
@@ -80,7 +80,7 @@ The Engagement Center adds automatic AI-generated replies to new X posts from mo
 
 ## Cron Job
 
-`/api/cron/engagement-poll` — Runs every **1 minute** via Vercel Cron (`vercel.json`):
+`/api/cron/engagement-poll` — Triggered every **5 minutes** via GitHub Actions (`.github/workflows/cron-engagement-poll.yml`). Uses `APP_URL` and `CRON_SECRET` repository secrets. (Vercel Cron requires Pro plan; GitHub Actions covers the free tier.)
 
 1. Verify cron auth (Bearer `CRON_SECRET`)
 2. Query all enabled `MonitoredAccount` records
@@ -94,7 +94,7 @@ The Engagement Center adds automatic AI-generated replies to new X posts from mo
    - For each new tweet: check daily reply quota, create `PENDING` reply record, generate text, optionally generate + upload image, post reply, update to `POSTED`
    - On error: mark `FAILED` (or keep `PENDING` for retry if attempts < 3)
    - Update `lastSeenTweetId` and `lastCheckedAt`
-5. Return `{ processed, replied, failed, skipped, durationMs }`
+5. Return `{ processed, replied, failed, skipped, skipReasons, durationMs }`
 
 ## Dashboard UI
 
