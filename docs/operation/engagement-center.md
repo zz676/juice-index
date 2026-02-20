@@ -153,6 +153,37 @@ curl -X POST https://juiceindex.io/api/cron/engagement-poll \
 
 ---
 
+## AI Usage Tracking
+
+Every GPT-4o-mini and DALL-E 3 call made by the cron job is logged to the `juice_ai_usage` table with `source = 'engagement-reply'`. This allows the admin AI Usage dashboard to include engagement costs alongside Studio usage.
+
+Logged fields per call:
+
+| Field | Text generation | Image generation |
+|---|---|---|
+| `type` | `"text"` | `"image"` |
+| `model` | `"gpt-4o-mini"` | `"dall-e-3"` |
+| `size` | — | `"1024x1024"` |
+| `source` | `"engagement-reply"` | `"engagement-reply"` |
+| `inputTokens` / `outputTokens` | from API response | — |
+| `cost` | computed via `computeTextGenerationCost()` | `0.04` (or `0` on failure) |
+| `durationMs` | measured around the API call | measured around the API call |
+| `success` | `true` / `false` | `true` / `false` |
+| `errorMsg` | set on failure | set on failure |
+
+Both the new-tweet path and the retry path log AI calls. Text generation is only logged when text is actually regenerated (reused text from a previous attempt is not re-logged).
+
+To query engagement AI spend:
+```sql
+SELECT DATE("createdAt") AS day, SUM(cost) AS total_cost, COUNT(*) AS calls
+FROM juice_ai_usage
+WHERE source = 'engagement-reply'
+GROUP BY 1
+ORDER BY 1 DESC;
+```
+
+---
+
 ## Quota Reference
 
 | Capability | FREE | STARTER | PRO | ENTERPRISE |
