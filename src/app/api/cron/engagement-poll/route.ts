@@ -9,7 +9,7 @@ import { uploadMedia } from "@/lib/x/upload-media";
 import { postTweet } from "@/lib/x/post-tweet";
 import { engagementReplyLimit, engagementImageLimit } from "@/lib/ratelimit";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
-import { computeTotalReplyCost } from "@/lib/engagement/cost-utils";
+import { computeTotalReplyCost, computeTextGenerationCost } from "@/lib/engagement/cost-utils";
 import { EngagementReplyStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -137,10 +137,24 @@ export async function POST(request: NextRequest) {
         let inputTokens = 0;
         let outputTokens = 0;
         if (!replyText) {
+          const textStart = Date.now();
           const generated = await generateReply(reply.sourceTweetText ?? "", account.tone, account.customTonePrompt);
+          const textDurationMs = Date.now() - textStart;
           replyText = generated.text;
           inputTokens = generated.inputTokens;
           outputTokens = generated.outputTokens;
+          prisma.aIUsage.create({
+            data: {
+              type: "text",
+              model: "gpt-4o-mini",
+              source: "engagement-reply",
+              inputTokens,
+              outputTokens,
+              cost: computeTextGenerationCost(inputTokens, outputTokens),
+              durationMs: textDurationMs,
+              success: true,
+            },
+          }).catch(() => {});
         }
 
         let imageGenerated = false;
@@ -149,14 +163,38 @@ export async function POST(request: NextRequest) {
           const imgQuota = await engagementImageLimit(userId, tier, new Date());
           if (imgQuota.success) {
             try {
+              const imgStart = Date.now();
               const imgResult = await generateImage(reply.sourceTweetText ?? "", replyText);
+              const imgDurationMs = Date.now() - imgStart;
               if (imgResult.generated) {
                 const { mediaId } = await uploadMedia(accessToken, `data:image/png;base64,${imgResult.imageBase64}`);
                 mediaIds = [mediaId];
                 imageGenerated = true;
+                prisma.aIUsage.create({
+                  data: {
+                    type: "image",
+                    model: "dall-e-3",
+                    size: "1024x1024",
+                    source: "engagement-reply",
+                    cost: 0.04,
+                    durationMs: imgDurationMs,
+                    success: true,
+                  },
+                }).catch(() => {});
               }
             } catch (imgErr) {
               console.warn(`[cron]   Image generation failed for retry ${reply.id}, posting without image:`, imgErr);
+              prisma.aIUsage.create({
+                data: {
+                  type: "image",
+                  model: "dall-e-3",
+                  size: "1024x1024",
+                  source: "engagement-reply",
+                  cost: 0,
+                  success: false,
+                  errorMsg: imgErr instanceof Error ? imgErr.message : "Image generation failed",
+                },
+              }).catch(() => {});
             }
           }
         }
@@ -290,7 +328,21 @@ export async function POST(request: NextRequest) {
             });
 
             // Generate reply text
+            const textStart = Date.now();
             const generated = await generateReply(tweet.text, account.tone, account.customTonePrompt);
+            const textDurationMs = Date.now() - textStart;
+            prisma.aIUsage.create({
+              data: {
+                type: "text",
+                model: "gpt-4o-mini",
+                source: "engagement-reply",
+                inputTokens: generated.inputTokens,
+                outputTokens: generated.outputTokens,
+                cost: computeTextGenerationCost(generated.inputTokens, generated.outputTokens),
+                durationMs: textDurationMs,
+                success: true,
+              },
+            }).catch(() => {});
 
             // Optionally generate and upload an image
             let imageGenerated = false;
@@ -300,7 +352,9 @@ export async function POST(request: NextRequest) {
               const imgQuota = await engagementImageLimit(userId, tier, new Date());
               if (imgQuota.success) {
                 try {
+                  const imgStart = Date.now();
                   const imgResult = await generateImage(tweet.text, generated.text);
+                  const imgDurationMs = Date.now() - imgStart;
                   if (imgResult.generated) {
                     const { mediaId } = await uploadMedia(
                       accessToken,
@@ -308,12 +362,34 @@ export async function POST(request: NextRequest) {
                     );
                     mediaIds = [mediaId];
                     imageGenerated = true;
+                    prisma.aIUsage.create({
+                      data: {
+                        type: "image",
+                        model: "dall-e-3",
+                        size: "1024x1024",
+                        source: "engagement-reply",
+                        cost: 0.04,
+                        durationMs: imgDurationMs,
+                        success: true,
+                      },
+                    }).catch(() => {});
                   }
                 } catch (imgErr) {
                   console.warn(
                     `[cron] Image generation failed for reply ${replyRecord.id}, posting without image:`,
                     imgErr,
                   );
+                  prisma.aIUsage.create({
+                    data: {
+                      type: "image",
+                      model: "dall-e-3",
+                      size: "1024x1024",
+                      source: "engagement-reply",
+                      cost: 0,
+                      success: false,
+                      errorMsg: imgErr instanceof Error ? imgErr.message : "Image generation failed",
+                    },
+                  }).catch(() => {});
                 }
               }
             }
