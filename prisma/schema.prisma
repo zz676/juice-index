@@ -1750,6 +1750,8 @@ model EngagementReply {
   sourceTweetText     String?
   /// URL of the source tweet.
   sourceTweetUrl      String?
+  /// Timestamp when the source tweet was published on X.
+  sourceTweetCreatedAt DateTime?
   /// Generated reply text.
   replyText           String?
   /// URL of the generated reply image.
