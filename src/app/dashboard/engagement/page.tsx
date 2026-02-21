@@ -18,6 +18,7 @@ export default function EngagementPage() {
   const [tones, setTones] = useState<UserTone[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
+  const [xTokenError, setXTokenError] = useState(false);
   const [addHandle, setAddHandle] = useState("");
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export default function EngagementPage() {
       const res = await fetch("/api/dashboard/engagement/accounts");
       const data = await res.json();
       setAccounts(data.accounts ?? []);
+      setXTokenError(data.xTokenError ?? false);
     } finally {
       setLoadingAccounts(false);
     }
@@ -104,6 +106,18 @@ export default function EngagementPage() {
 
       {/* Global pause banner */}
       <GlobalPauseBanner />
+
+      {xTokenError && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <span className="material-icons-round text-amber-500 text-[20px]">warning</span>
+          <span>
+            Your X account connection has expired. Auto-replies are paused.{" "}
+            <a href="/dashboard/settings" className="font-semibold underline underline-offset-2">
+              Reconnect in Settings →
+            </a>
+          </span>
+        </div>
+      )}
 
       {/* Usage bar */}
       <UsageBar />
