@@ -44,6 +44,20 @@ The JSON response includes a `skipReasons` breakdown:
 
 ---
 
+## Stale Tweet Protection
+
+When a new monitored account is added, `lastSeenTweetId` is `null`. Without a recency guard the
+X API would return up to 10 of the account's most recent tweets regardless of age, causing the
+cron to generate replies to months-old posts.
+
+`fetchRecentTweets()` always passes `start_time` set to **6 hours before now**. The X API applies
+both `since_id` (when set) and `start_time`; tweets must satisfy both filters. This means:
+
+- **New account (`lastSeenTweetId = null`)**: only tweets from the last 6 hours are returned.
+- **Existing account**: `start_time` acts as a redundant safety net alongside `since_id`.
+
+---
+
 ## Reply Status Workflow
 
 ```

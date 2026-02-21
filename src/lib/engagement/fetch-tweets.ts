@@ -56,6 +56,10 @@ export async function fetchRecentTweets(
     params.set("since_id", sinceId);
   }
 
+  // Always restrict to tweets from the last 6 hours to avoid replying to stale posts
+  const lookback = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  params.set("start_time", lookback.toISOString());
+
   const data = await xGet<XTweetsResponse>(
     accessToken,
     `/users/${xUserId}/tweets?${params}`,
