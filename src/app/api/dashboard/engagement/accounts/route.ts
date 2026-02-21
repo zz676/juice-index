@@ -107,7 +107,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const found = await lookupUserByUsername(accessToken, username).catch(() => null);
+    let found;
+    try {
+      found = await lookupUserByUsername(accessToken, username);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("(401)")) {
+        await prisma.xAccount.update({
+          where: { id: xAccount.id },
+          data: { tokenError: true },
+        });
+        return NextResponse.json(
+          { error: "X_TOKEN_ERROR", message: "Your X connection is no longer valid. Please reconnect your X account in Settings." },
+          { status: 502 }
+        );
+      }
+      return NextResponse.json(
+        { error: "X_API_ERROR", message: `Failed to look up @${username} on X: ${message}` },
+        { status: 502 }
+      );
+    }
     if (!found) {
       return NextResponse.json(
         { error: "NOT_FOUND", message: `@${username} was not found on X.` },
