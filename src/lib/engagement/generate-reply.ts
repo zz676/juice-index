@@ -1,65 +1,61 @@
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
-import type { ReplyTone, GenerateReplyResult } from "./types";
+import type { GenerateReplyResult } from "./types";
 
-const REPLY_MODEL = "gpt-4o-mini";
-const REPLY_TEMPERATURE = 0.7;
+const REPLY_MODEL = "gpt-4.1-mini";
 const REPLY_MAX_TOKENS = 120;
-
-const TONE_SYSTEM_PROMPTS: Record<ReplyTone, string> = {
-  HUMOR:
-    "You are a witty, funny commentator on EV and tech industry news. Write replies that are clever, playful, and entertaining — think light humor and clever wordplay. Never be mean-spirited.",
-  SARCASTIC:
-    "You are a dry, sarcastic EV industry observer. Write replies with a tongue-in-cheek tone that acknowledges the obvious or ironic aspects of the tweet. Keep it smart and understated, never cruel.",
-  HUGE_FAN:
-    "You are an enthusiastic, passionate fan of this account. Write replies that are genuinely excited, supportive, and show deep appreciation for their work. Energy is high but authentic.",
-  CHEERS:
-    "You are a positive, encouraging voice in the EV community. Write replies that celebrate progress, offer genuine support, and inspire optimism. Keep it warm and uplifting.",
-  NEUTRAL:
-    "You are a balanced, informative EV industry analyst. Write replies that add context, share relevant data points, or thoughtfully acknowledge the tweet's key insight. Keep tone objective.",
-  PROFESSIONAL:
-    "You are a professional EV industry executive and thought leader. Write replies that are insightful, polished, and add business or market perspective. Tone is confident and authoritative.",
-};
-
-function buildReplyPrompt(
-  sourceTweetText: string,
-  toneInstructions: string,
-  quotedTweetText?: string | null,
-): string {
-  const tweetSection = quotedTweetText
-    ? `"${sourceTweetText}"\n\nThis tweet is quoting another post that says:\n"${quotedTweetText}"`
-    : `"${sourceTweetText}"`;
-
-  return `${toneInstructions}
-
-Reply to this tweet with exactly 1-2 sentences (under 280 characters total).
-Rules:
-- Reply in the same language as the tweet
-- Reference what was said in the tweet
-- No hashtags
-- No markdown formatting
-- Do not reveal you are an AI
-- Must be under 280 characters
-
-Tweet to reply to:
-${tweetSection}
-
-Write only the reply text, nothing else.`;
-}
 
 export async function generateReply(
   sourceTweetText: string,
-  tone: ReplyTone,
-  customTonePrompt?: string | null,
-  quotedTweetText?: string | null,
+  tonePrompt: string,
+  options?: {
+    quotedTweetText?: string | null;
+    accountContext?: string | null;
+    recentReplies?: string[];
+    temperature?: number;
+  },
 ): Promise<GenerateReplyResult> {
-  const systemPrompt = customTonePrompt?.trim() || TONE_SYSTEM_PROMPTS[tone];
-  const prompt = buildReplyPrompt(sourceTweetText, systemPrompt, quotedTweetText);
+  const systemParts: string[] = [tonePrompt];
+
+  if (options?.accountContext?.trim()) {
+    systemParts.push(`About the account you're replying to:\n${options.accountContext.trim()}`);
+  }
+
+  if (options?.recentReplies && options.recentReplies.length > 0) {
+    const recentList = options.recentReplies
+      .slice(0, 5)
+      .map((r, i) => `${i + 1}. "${r}"`)
+      .join("\n");
+    systemParts.push(
+      `Your recent replies (DO NOT start with the same words or repeat similar patterns):\n${recentList}`,
+    );
+  }
+
+  systemParts.push(`Rules:
+- Reply in the same language as the tweet
+- Reference what was said in the tweet
+- No hashtags, no markdown formatting
+- Must be 1-2 sentences, under 280 characters
+- Write like a real person, not a corporate account or AI
+- Vary sentence structure and openings
+- Never start with generic affirmations ("Great point!", "Absolutely!", "确实", "Indeed")
+- Avoid exclamation marks in every sentence
+- No filler phrases ("It's worth noting", "This is interesting")
+- Sound like a quick, natural thought — not a composed essay
+
+Write only the reply text, nothing else.`);
+
+  const systemMessage = systemParts.join("\n\n");
+
+  const tweetSection = options?.quotedTweetText
+    ? `${sourceTweetText}\n\n[Quoting: ${options.quotedTweetText}]`
+    : sourceTweetText;
 
   const result = await generateText({
     model: openai(REPLY_MODEL),
-    prompt,
-    temperature: REPLY_TEMPERATURE,
+    system: systemMessage,
+    messages: [{ role: "user", content: tweetSection }],
+    temperature: options?.temperature ?? 0.8,
     maxOutputTokens: REPLY_MAX_TOKENS,
   });
 

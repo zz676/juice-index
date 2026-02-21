@@ -1,18 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { UserTone } from "@prisma/client";
 import { GlobalPauseBanner } from "./global-pause-banner";
 import { UsageBar } from "./usage-bar";
 import { AccountCard, type MonitoredAccountRow } from "./account-card";
 import { ImportFollowingModal } from "./import-following-modal";
 import { ReplyMonitoringTable } from "./reply-monitoring-table";
 import { AccountAnalyticsChart } from "./account-analytics-chart";
+import { ToneSettings } from "./tone-settings";
 
-type TabId = "accounts" | "replies" | "analytics";
+type TabId = "accounts" | "replies" | "analytics" | "tones";
 
 export default function EngagementPage() {
   const [activeTab, setActiveTab] = useState<TabId>("accounts");
   const [accounts, setAccounts] = useState<MonitoredAccountRow[]>([]);
+  const [tones, setTones] = useState<UserTone[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
   const [addHandle, setAddHandle] = useState("");
@@ -30,6 +33,16 @@ export default function EngagementPage() {
     }
   }, []);
 
+  const fetchTones = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/engagement/tones");
+      const data = await res.json();
+      setTones(data.tones ?? []);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const fetchPauseState = useCallback(async () => {
     try {
       const res = await fetch("/api/dashboard/engagement/config");
@@ -43,7 +56,8 @@ export default function EngagementPage() {
   useEffect(() => {
     fetchAccounts();
     fetchPauseState();
-  }, [fetchAccounts, fetchPauseState]);
+    fetchTones();
+  }, [fetchAccounts, fetchPauseState, fetchTones]);
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,6 +116,7 @@ export default function EngagementPage() {
               { id: "accounts", label: "Monitored Accounts", icon: "manage_accounts" },
               { id: "replies", label: "Reply Monitoring", icon: "forum" },
               { id: "analytics", label: "Account Analytics", icon: "insights" },
+              { id: "tones", label: "Tone Settings", icon: "tune" },
             ] as const
           ).map((tab) => (
             <button
@@ -168,6 +183,7 @@ export default function EngagementPage() {
                 <AccountCard
                   key={account.id}
                   account={account}
+                  tones={tones}
                   globalPaused={globalPaused}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
@@ -183,6 +199,11 @@ export default function EngagementPage() {
 
       {/* Tab: Account Analytics */}
       {activeTab === "analytics" && <AccountAnalyticsChart accounts={accounts} />}
+
+      {/* Tab: Tone Settings */}
+      {activeTab === "tones" && (
+        <ToneSettings tones={tones} onTonesChange={setTones} />
+      )}
     </div>
   );
 }

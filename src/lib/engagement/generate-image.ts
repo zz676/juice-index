@@ -3,16 +3,16 @@ import type { GenerateImageResult } from "./types";
 const DALLE3_ENDPOINT = "https://api.openai.com/v1/images/generations";
 
 function buildImagePrompt(sourceTweetText: string, replyText: string): string {
-  return `Create a clean, modern social media image for an EV industry tweet reply.
+  return `Create a clean, modern social media image for a tweet reply.
 
 Context:
 - Original tweet: "${sourceTweetText.slice(0, 200)}"
 - Reply: "${replyText.slice(0, 200)}"
 
 Style requirements:
-- Professional, sleek design with electric vehicle or technology theme
-- Bold typography with key stat or phrase overlaid
-- Dark or gradient background with blue/teal accent colors
+- Professional, visually compelling design that fits the topic of the tweet
+- Bold typography with a key phrase or idea overlaid
+- Dark or gradient background with accent colors that match the mood of the content
 - Suitable for Twitter/X (square format)
 - No text that says "Tweet", no social media icons, no borders`;
 }
