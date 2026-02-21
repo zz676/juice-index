@@ -14,7 +14,12 @@ async function xGet<T>(accessToken: string, path: string): Promise<T> {
 }
 
 interface XTweetsResponse {
-  data?: Array<{ id: string; text: string }>;
+  data?: Array<{
+    id: string;
+    text: string;
+    referenced_tweets?: Array<{ type: string; id: string }>;
+  }>;
+  includes?: { tweets?: Array<{ id: string; text: string }> };
   meta?: { newest_id?: string };
 }
 
@@ -50,7 +55,8 @@ export async function fetchRecentTweets(
   const params = new URLSearchParams({
     max_results: "10",
     exclude: "retweets,replies",
-    "tweet.fields": "id,text",
+    "tweet.fields": "id,text,referenced_tweets",
+    expansions: "referenced_tweets.id",
   });
   if (sinceId) {
     params.set("since_id", sinceId);
@@ -67,11 +73,22 @@ export async function fetchRecentTweets(
 
   if (!data.data?.length) return [];
 
-  return data.data.map((t) => ({
-    id: t.id,
-    text: t.text,
-    url: `https://x.com/i/web/status/${t.id}`,
-  }));
+  // Build a lookup map for expanded quoted tweets
+  const includedTweets = new Map<string, string>();
+  for (const t of data.includes?.tweets ?? []) {
+    includedTweets.set(t.id, t.text);
+  }
+
+  return data.data.map((t) => {
+    const quotedRef = t.referenced_tweets?.find((r) => r.type === "quoted");
+    const quotedTweetText = quotedRef ? includedTweets.get(quotedRef.id) : undefined;
+    return {
+      id: t.id,
+      text: t.text,
+      url: `https://x.com/i/web/status/${t.id}`,
+      ...(quotedTweetText !== undefined && { quotedTweetText }),
+    };
+  });
 }
 
 /**

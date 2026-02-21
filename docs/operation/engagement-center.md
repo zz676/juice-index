@@ -44,6 +44,49 @@ The JSON response includes a `skipReasons` breakdown:
 
 ---
 
+## Quote Tweet Context Expansion
+
+When a monitored account posts a quote tweet (e.g. quoting a post and writing "True"), the X API
+returns only the quoting user's text by default. Without the original post, the AI generates a
+contextless reply.
+
+`fetchRecentTweets()` requests `expansions=referenced_tweets.id` and `tweet.fields=referenced_tweets`
+in the same API call (no additional request). The response includes an `includes.tweets` array with
+the full text of any referenced tweets.
+
+**How it works:**
+
+1. Each tweet's `referenced_tweets` array is checked for an entry with `type: "quoted"`.
+2. If found, the quoted tweet's text is looked up from `includes.tweets` and attached as
+   `FetchedTweet.quotedTweetText`.
+3. `sourceTweetText` stored in the DB is formatted as:
+   ```
+   <quoting tweet text>
+
+   [Quoting: <quoted tweet text>]
+   ```
+4. The AI prompt receives the original tweet text plus a separate quoted-context block:
+   ```
+   Tweet to reply to:
+   "<quoting text>"
+
+   This tweet is quoting another post that says:
+   "<quoted text>"
+   ```
+
+**Edge cases:**
+
+| Situation | Behavior |
+|---|---|
+| Non-quote tweet | `referenced_tweets` absent → `quotedTweetText` undefined → identical to previous behavior |
+| Quoted tweet deleted | X API won't include it in `includes.tweets` → graceful degradation, no quoted context |
+| Retweet of a quote tweet | Already excluded by `exclude=retweets,replies` |
+
+**UI note:** The `[Quoting: ...]` suffix is stored in `sourceTweetText`. The engagement center
+tooltip that displays `sourceTweetText` will naturally show the full context.
+
+---
+
 ## Stale Tweet Protection
 
 When a new monitored account is added, `lastSeenTweetId` is `null`. Without a recency guard the
