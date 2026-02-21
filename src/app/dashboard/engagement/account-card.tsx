@@ -16,7 +16,11 @@ export interface MonitoredAccountRow {
   accountContext: string | null;
   toneWeights: Record<string, number> | null;
   temperature: number;
+  pollInterval: number;
 }
+
+const POLL_STEPS = [5, 10, 15, 30, 60, 1440, 10080];
+const POLL_LABELS = ["5 min", "10 min", "15 min", "30 min", "1 hr", "1 day", "7 days"];
 
 const COLOR_DOT: Record<string, string> = {
   slate: "bg-slate-400",
@@ -52,6 +56,10 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(account.toneWeights ?? {});
   const [localTemperature, setLocalTemperature] = useState(Math.min(account.temperature ?? 0.8, 1.0));
   const [localImageFrequency, setLocalImageFrequency] = useState(account.imageFrequency ?? 0);
+  const [localPollInterval, setLocalPollInterval] = useState(() => {
+    const idx = POLL_STEPS.indexOf(account.pollInterval ?? 5);
+    return idx >= 0 ? idx : 0;
+  });
   const contextRef = useRef<HTMLTextAreaElement>(null);
   const pendingRef = useRef<Record<string, unknown>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -253,6 +261,31 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
         <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
           <span>Focused</span>
           <span>Creative</span>
+        </div>
+      </div>
+
+      {/* Check frequency slider */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-2">
+          Check Frequency
+          <span className="ml-1 font-normal text-slate-custom-400">
+            ({POLL_LABELS[localPollInterval]})
+          </span>
+        </p>
+        <input
+          type="range"
+          min={0}
+          max={POLL_STEPS.length - 1}
+          step={1}
+          value={localPollInterval}
+          onChange={(e) => setLocalPollInterval(Number(e.target.value))}
+          onPointerUp={(e) => scheduleCommit({ pollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)] })}
+          className="w-full h-1.5 accent-primary"
+          disabled={loading}
+        />
+        <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
+          <span>Frequent</span>
+          <span>Rare</span>
         </div>
       </div>
 

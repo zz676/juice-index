@@ -11,6 +11,7 @@ The Engagement Center adds automatic AI-generated replies to new X posts from mo
 **MonitoredAccount** - Accounts to watch for new tweets:
 - Links to a User and stores the X user ID, username, display name, avatar
 - Per-account settings: tone (enum), custom tone prompt, always generate image flag, enabled flag
+- `pollInterval Int @default(5)` — how often (in minutes) to poll this account; allowed values: 5, 10, 15, 30, 60, 1440, 10080
 - Tracks `lastSeenTweetId` and `lastCheckedAt` for polling
 - Unique constraint on `[userId, xUserId]`
 
@@ -90,6 +91,7 @@ The Engagement Center adds automatic AI-generated replies to new X posts from mo
    - Skip if no X account connected
    - Refresh OAuth token (skip user on `XTokenExpiredError`)
 4. For each account:
+   - Skip if `pollInterval > 5` and `lastCheckedAt` is set and elapsed time < `pollInterval` minutes (increments `notDueYet` in `skipReasons`)
    - Fetch recent tweets since `lastSeenTweetId`
    - For each new tweet: check daily reply quota, create `PENDING` reply record, generate text, optionally generate + upload image, post reply, update to `POSTED`
    - On error: mark `FAILED` (or keep `PENDING` for retry if attempts < 3)

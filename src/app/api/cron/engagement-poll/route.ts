@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
     insufficientTier: 0,
     noXAccount: 0,
     tokenError: 0,
+    notDueYet: 0,
   };
   // Per-account stats, keyed by account.id
   const accountStats = new Map<string, AccountStat>();
@@ -364,6 +365,16 @@ export async function POST(request: NextRequest) {
 
     // Process each monitored account for this user
     for (const account of accounts) {
+      const interval = account.pollInterval ?? 5;
+      if (interval > 5 && account.lastCheckedAt) {
+        const elapsedMs = Date.now() - account.lastCheckedAt.getTime();
+        if (elapsedMs < interval * 60 * 1000) {
+          console.log(`[cron]   @${account.username}: not due yet (interval=${interval}m, elapsed=${Math.round(elapsedMs / 60000)}m)`);
+          skipped++;
+          skipReasons.notDueYet++;
+          continue;
+        }
+      }
       accountsChecked++;
       const stat = accountStats.get(account.id)!;
       try {
