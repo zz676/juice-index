@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import type { UserTone } from "@prisma/client";
 import type { ReplyTone } from "@prisma/client";
 
 export interface MonitoredAccountRow {
@@ -12,53 +13,55 @@ export interface MonitoredAccountRow {
   customTonePrompt: string | null;
   alwaysGenerateImage: boolean;
   enabled: boolean;
+  accountContext: string | null;
+  toneWeights: Record<string, number> | null;
+  temperature: number;
 }
 
-const TONES: { value: ReplyTone; label: string }[] = [
-  { value: "NEUTRAL", label: "Neutral" },
-  { value: "PROFESSIONAL", label: "Professional" },
-  { value: "HUMOR", label: "Humor" },
-  { value: "SARCASTIC", label: "Sarcastic" },
-  { value: "HUGE_FAN", label: "Huge Fan" },
-  { value: "CHEERS", label: "Cheers" },
-];
-
-const TONE_COLORS: Record<ReplyTone, string> = {
-  NEUTRAL: "bg-slate-100 text-slate-600",
-  PROFESSIONAL: "bg-blue-100 text-blue-700",
-  HUMOR: "bg-yellow-100 text-yellow-700",
-  SARCASTIC: "bg-orange-100 text-orange-700",
-  HUGE_FAN: "bg-pink-100 text-pink-700",
-  CHEERS: "bg-green-100 text-green-700",
+const COLOR_DOT: Record<string, string> = {
+  slate: "bg-slate-400",
+  blue: "bg-blue-500",
+  yellow: "bg-yellow-400",
+  orange: "bg-orange-400",
+  pink: "bg-pink-400",
+  green: "bg-green-500",
+  purple: "bg-purple-500",
+  teal: "bg-teal-500",
 };
 
 interface AccountCardProps {
   account: MonitoredAccountRow;
+  tones: UserTone[];
   globalPaused: boolean;
   onUpdate: (updated: MonitoredAccountRow) => void;
   onDelete: (id: string) => void;
 }
 
-export function AccountCard({ account, globalPaused, onUpdate, onDelete }: AccountCardProps) {
+export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const contextRef = useRef<HTMLTextAreaElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const patch = async (data: Partial<MonitoredAccountRow>) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/dashboard/engagement/accounts/${account.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        onUpdate(json.account as MonitoredAccountRow);
+  const patch = useCallback(
+    async (data: Record<string, unknown>) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/engagement/accounts/${account.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          onUpdate(json.account as MonitoredAccountRow);
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [account.id, onUpdate],
+  );
 
   const handleDelete = async () => {
     if (!confirm(`Stop monitoring @${account.username}?`)) return;
@@ -78,6 +81,28 @@ export function AccountCard({ account, globalPaused, onUpdate, onDelete }: Accou
   const handleToggleEnabled = () => {
     if (globalPaused) return;
     patch({ enabled: !account.enabled });
+  };
+
+  const effectiveWeights: Record<string, number> = account.toneWeights ?? {};
+
+  const handleWeightChange = (toneId: string, value: number) => {
+    const newWeights = { ...effectiveWeights, [toneId]: value };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      patch({ toneWeights: newWeights });
+    }, 600);
+  };
+
+  const handleTemperatureChange = (value: number) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      patch({ temperature: value });
+    }, 600);
+  };
+
+  const handleContextBlur = () => {
+    const value = contextRef.current?.value ?? "";
+    patch({ accountContext: value || null });
   };
 
   return (
@@ -127,30 +152,82 @@ export function AccountCard({ account, globalPaused, onUpdate, onDelete }: Accou
         </div>
       </div>
 
-      {/* Tone selector */}
-      <div>
-        <p className="text-xs font-medium text-slate-custom-500 mb-1.5">Reply Tone</p>
-        <div className="flex flex-wrap gap-1.5">
-          {TONES.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => patch({ tone: value })}
-              disabled={loading}
-              className={`px-2 py-0.5 text-xs font-medium rounded-full transition-colors ${
-                account.tone === value
-                  ? TONE_COLORS[value] + " ring-2 ring-offset-1 ring-current"
-                  : "bg-slate-custom-50 text-slate-custom-500 hover:bg-slate-custom-100"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+      {/* Tone weight sliders */}
+      {tones.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-slate-custom-500 mb-2">Tone Weights</p>
+          <div className="flex flex-col gap-2">
+            {tones.map((tone) => {
+              const weight = effectiveWeights[tone.id] ?? 0;
+              return (
+                <div key={tone.id} className="flex items-center gap-2">
+                  <div
+                    className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${COLOR_DOT[tone.color] ?? "bg-slate-400"}`}
+                  />
+                  <span className="text-xs text-slate-custom-600 w-20 truncate flex-shrink-0">
+                    {tone.name}
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    defaultValue={weight}
+                    onChange={(e) => handleWeightChange(tone.id, Number(e.target.value))}
+                    className="flex-1 h-1.5 accent-primary"
+                    disabled={loading}
+                  />
+                  <span className="text-xs text-slate-custom-400 w-7 text-right flex-shrink-0">
+                    {weight}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
+      )}
+
+      {/* Temperature slider */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-2">
+          Creativity
+          <span className="ml-1 font-normal text-slate-custom-400">
+            ({account.temperature.toFixed(1)})
+          </span>
+        </p>
+        <input
+          type="range"
+          min={0.1}
+          max={1.5}
+          step={0.1}
+          defaultValue={account.temperature}
+          onChange={(e) => handleTemperatureChange(Number(e.target.value))}
+          className="w-full h-1.5 accent-primary"
+          disabled={loading}
+        />
+        <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
+          <span>Focused</span>
+          <span>Creative</span>
+        </div>
+      </div>
+
+      {/* Account context textarea */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-1">Account Context</p>
+        <textarea
+          ref={contextRef}
+          defaultValue={account.accountContext ?? ""}
+          onBlur={handleContextBlur}
+          rows={2}
+          placeholder="e.g., Tech blogger covering AI startups"
+          className="w-full text-xs text-slate-custom-700 border border-slate-custom-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+          disabled={loading}
+        />
       </div>
 
       {/* Image toggle */}
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-custom-600">Always generate image</span>
+        <span className="text-xs text-slate-custom-600">Generate images (~1/3 of replies)</span>
         <div
           role="switch"
           aria-checked={account.alwaysGenerateImage}

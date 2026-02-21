@@ -28,6 +28,9 @@ export async function PATCH(
     customTonePrompt?: string | null;
     alwaysGenerateImage?: boolean;
     enabled?: boolean;
+    accountContext?: string | null;
+    toneWeights?: Record<string, number> | null;
+    temperature?: number;
   };
   try {
     body = await request.json();
@@ -51,6 +54,18 @@ export async function PATCH(
   }
   if (body.enabled !== undefined) {
     data.enabled = Boolean(body.enabled);
+  }
+  if (body.accountContext !== undefined) {
+    data.accountContext = body.accountContext ?? null;
+  }
+  if (body.toneWeights !== undefined) {
+    data.toneWeights = body.toneWeights ?? null;
+  }
+  if (body.temperature !== undefined) {
+    const temp = Number(body.temperature);
+    if (!isNaN(temp) && temp >= 0.1 && temp <= 1.5) {
+      data.temperature = temp;
+    }
   }
 
   if (Object.keys(data).length === 0) {

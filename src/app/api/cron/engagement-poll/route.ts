@@ -11,12 +11,68 @@ import { engagementReplyLimit, engagementImageLimit } from "@/lib/ratelimit";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { computeTotalReplyCost, computeTextGenerationCost } from "@/lib/engagement/cost-utils";
 import { EngagementReplyStatus } from "@prisma/client";
+import type { UserTone, MonitoredAccount } from "@prisma/client";
 
 export const runtime = "nodejs";
+
+const FALLBACK_TONE_PROMPTS: Record<string, string> = {
+  HUMOR:
+    "You are a witty, funny commentator. Write replies that are clever, playful, and entertaining — think light humor and clever wordplay. Never be mean-spirited.",
+  SARCASTIC:
+    "You are a dry, sarcastic observer. Write replies with a tongue-in-cheek tone that acknowledges the obvious or ironic aspects of the tweet. Keep it smart and understated, never cruel.",
+  HUGE_FAN:
+    "You are an enthusiastic, passionate fan of this account. Write replies that are genuinely excited, supportive, and show deep appreciation for their work. Energy is high but authentic.",
+  CHEERS:
+    "You are a positive, encouraging voice in this community. Write replies that celebrate progress, offer genuine support, and inspire optimism. Keep it warm and uplifting.",
+  NEUTRAL:
+    "You are a balanced, informative analyst. Write replies that add context, share relevant data points, or thoughtfully acknowledge the tweet's key insight. Keep tone objective.",
+  PROFESSIONAL:
+    "You are a professional executive and thought leader. Write replies that are insightful, polished, and add business or market perspective. Tone is confident and authoritative.",
+};
 
 function formatTweetWithQuote(text: string, quotedText?: string): string {
   if (!quotedText) return text;
   return `${text}\n\n[Quoting: ${quotedText}]`;
+}
+
+type PickedTone = { toneId: string | null; toneName: string; prompt: string };
+
+function pickUserTone(
+  account: MonitoredAccount,
+  toneMap: Map<string, UserTone>,
+): PickedTone {
+  const weights = account.toneWeights as Record<string, number> | null;
+
+  if (!weights) {
+    const fallbackPrompt =
+      FALLBACK_TONE_PROMPTS[account.tone] ?? FALLBACK_TONE_PROMPTS["NEUTRAL"];
+    return { toneId: null, toneName: account.tone, prompt: fallbackPrompt };
+  }
+
+  const entries = Object.entries(weights).filter(
+    ([id, w]) => w > 0 && toneMap.has(id),
+  );
+
+  if (entries.length === 0) {
+    const fallbackPrompt =
+      FALLBACK_TONE_PROMPTS[account.tone] ?? FALLBACK_TONE_PROMPTS["NEUTRAL"];
+    return { toneId: null, toneName: account.tone, prompt: fallbackPrompt };
+  }
+
+  const total = entries.reduce((sum, [, w]) => sum + w, 0);
+  let rand = Math.random() * total;
+
+  for (const [id, weight] of entries) {
+    rand -= weight;
+    if (rand <= 0) {
+      const tone = toneMap.get(id)!;
+      return { toneId: id, toneName: tone.name, prompt: tone.prompt };
+    }
+  }
+
+  // Fallback to first entry
+  const tone = toneMap.get(entries[0][0])!;
+  return { toneId: entries[0][0], toneName: tone.name, prompt: tone.prompt };
 }
 
 type AccountStat = {
@@ -66,11 +122,15 @@ export async function POST(request: NextRequest) {
 
   for (const [userId, accounts] of byUserId) {
     // Fetch user-level data in parallel
-    const [xAccount, config, subscription] = await Promise.all([
+    const [xAccount, config, subscription, userTones] = await Promise.all([
       prisma.xAccount.findUnique({ where: { userId } }),
       prisma.engagementConfig.findUnique({ where: { userId }, select: { globalPaused: true } }),
       prisma.apiSubscription.findUnique({ where: { userId }, select: { tier: true } }),
+      prisma.userTone.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
     ]);
+
+    // Build tone map for weighted random selection
+    const userToneMap = new Map<string, UserTone>(userTones.map((t) => [t.id, t]));
 
     const tier = normalizeTier(subscription?.tier);
     console.log(`[cron] User ${userId} | tier=${tier} | accounts=${accounts.length} | xAccount=${!!xAccount} | globalPaused=${config?.globalPaused ?? false}`);
@@ -157,8 +217,23 @@ export async function POST(request: NextRequest) {
         let inputTokens = 0;
         let outputTokens = 0;
         if (!replyText) {
+          const selected = pickUserTone(account, userToneMap);
+          // Fetch recent replies for this account
+          const recentReplyTexts = await prisma.engagementReply
+            .findMany({
+              where: { monitoredAccountId: account.id, status: "POSTED", replyText: { not: null } },
+              orderBy: { createdAt: "desc" },
+              take: 5,
+              select: { replyText: true },
+            })
+            .then((rows) => rows.map((r) => r.replyText!));
+
           const textStart = Date.now();
-          const generated = await generateReply(reply.sourceTweetText ?? "", account.tone, account.customTonePrompt);
+          const generated = await generateReply(reply.sourceTweetText ?? "", selected.prompt, {
+            accountContext: account.accountContext,
+            recentReplies: recentReplyTexts,
+            temperature: account.temperature,
+          });
           const textDurationMs = Date.now() - textStart;
           replyText = generated.text;
           inputTokens = generated.inputTokens;
@@ -166,7 +241,7 @@ export async function POST(request: NextRequest) {
           prisma.aIUsage.create({
             data: {
               type: "text",
-              model: "gpt-4o-mini",
+              model: "gpt-4.1-mini",
               source: "engagement-reply",
               inputTokens,
               outputTokens,
@@ -179,7 +254,7 @@ export async function POST(request: NextRequest) {
 
         let imageGenerated = false;
         let mediaIds: string[] | undefined;
-        if (account.alwaysGenerateImage) {
+        if (account.alwaysGenerateImage && Math.random() < 1 / 3) {
           const imgQuota = await engagementImageLimit(userId, tier, new Date());
           if (imgQuota.success) {
             try {
@@ -282,6 +357,16 @@ export async function POST(request: NextRequest) {
         stat.newTweets = tweets.length;
         console.log(`[cron]   @${account.username}: ${tweets.length} new tweet(s) → will reply to all (quota permitting)`);
 
+        // Fetch recent replies for repetition avoidance
+        const recentReplyTexts = await prisma.engagementReply
+          .findMany({
+            where: { monitoredAccountId: account.id, status: "POSTED", replyText: { not: null } },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { replyText: true },
+          })
+          .then((rows) => rows.map((r) => r.replyText!));
+
         // Tweets are returned newest-first from X API
         const newestTweetId = tweets[0].id;
         let quotaExhausted = false;
@@ -314,7 +399,6 @@ export async function POST(request: NextRequest) {
           if (!replyQuota.success) {
             console.log(`[cron]   Daily reply quota exhausted for user ${userId} (limit=${replyQuota.limit}, remaining=0)`);
             quotaExhausted = true;
-            // Log and record this tweet as SKIPPED too
             console.log(`[cron]   SKIPPED tweet ${tweet.id} (@${account.username}): daily reply quota exhausted`);
             await prisma.engagementReply.create({
               data: {
@@ -336,6 +420,9 @@ export async function POST(request: NextRequest) {
           }
           console.log(`[cron]   Quota OK (remaining=${replyQuota.remaining}), generating reply for tweet ${tweet.id}`);
 
+          // Pick tone for this reply
+          const selected = pickUserTone(account, userToneMap);
+
           // Create PENDING record
           const replyRecord = await prisma.engagementReply.create({
             data: {
@@ -346,6 +433,8 @@ export async function POST(request: NextRequest) {
               sourceTweetUrl: tweet.url,
               sourceTweetCreatedAt: tweet.createdAt ? new Date(tweet.createdAt) : null,
               tone: account.tone,
+              userToneId: selected.toneId,
+              userToneName: selected.toneName,
               status: EngagementReplyStatus.PENDING,
               attempts: 1,
             },
@@ -360,12 +449,17 @@ export async function POST(request: NextRequest) {
 
             // Generate reply text
             const textStart = Date.now();
-            const generated = await generateReply(tweet.text, account.tone, account.customTonePrompt, tweet.quotedTweetText);
+            const generated = await generateReply(tweet.text, selected.prompt, {
+              quotedTweetText: tweet.quotedTweetText,
+              accountContext: account.accountContext,
+              recentReplies: recentReplyTexts,
+              temperature: account.temperature,
+            });
             const textDurationMs = Date.now() - textStart;
             prisma.aIUsage.create({
               data: {
                 type: "text",
-                model: "gpt-4o-mini",
+                model: "gpt-4.1-mini",
                 source: "engagement-reply",
                 inputTokens: generated.inputTokens,
                 outputTokens: generated.outputTokens,
@@ -379,7 +473,7 @@ export async function POST(request: NextRequest) {
             let imageGenerated = false;
             let mediaIds: string[] | undefined;
 
-            if (account.alwaysGenerateImage) {
+            if (account.alwaysGenerateImage && Math.random() < 1 / 3) {
               const imgQuota = await engagementImageLimit(userId, tier, new Date());
               if (imgQuota.success) {
                 try {
@@ -457,7 +551,7 @@ export async function POST(request: NextRequest) {
             });
 
             console.log(
-              `[cron] Posted reply for @${account.username} tweet ${tweet.id} → reply ${postedTweet.id}`,
+              `[cron] Posted reply for @${account.username} tweet ${tweet.id} → reply ${postedTweet.id} (tone: ${selected.toneName})`,
             );
             replied++;
             stat.replied++;

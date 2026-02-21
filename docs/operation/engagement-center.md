@@ -225,16 +225,64 @@ curl -X POST https://juiceindex.io/api/cron/engagement-poll \
 
 ---
 
+## Tone System (UserTone)
+
+Replies are generated using a per-user tone library stored in `juice_user_tones`. Each `UserTone` record has:
+
+| Field | Description |
+|---|---|
+| `name` | Display name (e.g. "Humor", "My Custom Tone") |
+| `prompt` | Full system prompt passed to the AI |
+| `color` | UI color key (slate, blue, yellow, orange, pink, green, purple, teal) |
+
+**Default tones:** On first access of `/api/dashboard/engagement/tones`, 6 default tones are seeded for the user: Humor, Sarcastic, Huge Fan, Cheers, Neutral, Professional. These can be edited or deleted.
+
+**Tone Settings tab:** The Engagement Center has a 4th tab "Tone Settings" where users can view, edit, and create custom tones with full prompt control.
+
+---
+
+## Per-Account Tone Weights, Temperature, and Context
+
+Each `MonitoredAccount` has three new personalization fields:
+
+| Field | Description |
+|---|---|
+| `toneWeights` | JSON map of `{ userToneId: weight }`. Weights are arbitrary numbers — only the ratio matters. Null = fall back to legacy `tone` enum. |
+| `temperature` | Float 0.1–1.5, default 0.8. Controls reply creativity/randomness. |
+| `accountContext` | Free-text description shown to the AI (e.g. "Tech blogger covering AI startups"). |
+
+**Weighted random tone selection:** At reply generation time, `pickUserTone()` picks a tone proportional to its weight. A weight of 0 excludes that tone. Example: Humor=40, Neutral=60 → Neutral picked ~60% of the time.
+
+**Legacy fallback:** If `toneWeights` is null (pre-existing accounts), the legacy `tone` enum is used with the corresponding default prompt.
+
+---
+
+## Selective Image Generation
+
+When `alwaysGenerateImage` is enabled on an account, images are generated for **approximately 1/3 of replies** (controlled by `Math.random() < 1/3`). This reduces DALL-E 3 costs while keeping visual variety.
+
+---
+
+## AI Model
+
+Text replies are generated using **GPT-4.1-mini** (previously gpt-4o-mini). Prompts use a split system/user message structure:
+- **System message:** Tone prompt + account context + recent reply history + anti-AI writing rules
+- **User message:** The tweet text to reply to
+
+Recent replies (up to 5) are passed to avoid repetitive openings and patterns.
+
+---
+
 ## AI Usage Tracking
 
-Every GPT-4o-mini and DALL-E 3 call made by the cron job is logged to the `juice_ai_usage` table with `source = 'engagement-reply'`. This allows the admin AI Usage dashboard to include engagement costs alongside Studio usage.
+Every GPT-4.1-mini and DALL-E 3 call made by the cron job is logged to the `juice_ai_usage` table with `source = 'engagement-reply'`. This allows the admin AI Usage dashboard to include engagement costs alongside Studio usage.
 
 Logged fields per call:
 
 | Field | Text generation | Image generation |
 |---|---|---|
 | `type` | `"text"` | `"image"` |
-| `model` | `"gpt-4o-mini"` | `"dall-e-3"` |
+| `model` | `"gpt-4.1-mini"` | `"dall-e-3"` |
 | `size` | — | `"1024x1024"` |
 | `source` | `"engagement-reply"` | `"engagement-reply"` |
 | `inputTokens` / `outputTokens` | from API response | — |

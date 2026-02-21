@@ -477,6 +477,7 @@ model User {
   EngagementReply   EngagementReply[]
   FollowingCache    FollowingCache[]
   EngagementConfig  EngagementConfig?
+  UserTone          UserTone[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1723,6 +1724,12 @@ model MonitoredAccount {
   lastSeenTweetId     String?
   /// Timestamp when the account was last polled.
   lastCheckedAt       DateTime?
+  /// Free-text description of the account for personalization context.
+  accountContext      String?
+  /// Weighted tone map: { userToneId: weight }. Null = use legacy tone field.
+  toneWeights         Json?
+  /// Per-account temperature for reply generation.
+  temperature         Float             @default(0.8)
   /// Timestamp when the record was created.
   createdAt           DateTime          @default(now())
   /// Timestamp when the record was last updated.
@@ -1756,8 +1763,12 @@ model EngagementReply {
   replyText           String?
   /// URL of the generated reply image.
   replyImageUrl       String?
-  /// Tone used for this reply.
+  /// Tone used for this reply (legacy enum, kept for existing records).
   tone                ReplyTone
+  /// UserTone id used for this reply (new system).
+  userToneId          String?
+  /// Snapshot of the tone name at generation time.
+  userToneName        String?
   /// Workflow status for the record.
   status              EngagementReplyStatus @default(PENDING)
   /// X tweet ID of the posted reply.
@@ -1830,6 +1841,29 @@ model EngagementConfig {
   User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("juice_engagement_configs")
+}
+
+/// Per-user editable tone definitions for engagement reply generation.
+model UserTone {
+  /// Primary identifier for the record.
+  id        String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId    String
+  /// Display name for the tone (e.g. "Humor", "My Custom Tone").
+  name      String
+  /// Full system prompt text for this tone.
+  prompt    String   @db.Text
+  /// UI color key: slate, blue, yellow, orange, pink, green, purple, teal.
+  color     String   @default("slate")
+  /// Timestamp when the record was created.
+  createdAt DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("juice_user_tones")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)
