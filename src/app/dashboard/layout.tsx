@@ -11,7 +11,6 @@ const navItems = [
     { href: "/dashboard/studio", icon: "auto_awesome", label: "Juice AI" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Subscription & Billing" },
     { href: "/dashboard/posts", icon: "article", label: "Posts" },
-    { href: "/dashboard/engagement", icon: "forum", label: "Engagement" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];
 
@@ -44,7 +43,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }, [supabase]);
 
     const finalNavItems = role === "ADMIN"
-        ? [...navItems, { href: "/dashboard/admin", icon: "admin_panel_settings", label: "Admin Console" }]
+        ? [...navItems, { href: "/dashboard/engagement", icon: "forum", label: "Engagement" }, { href: "/dashboard/admin", icon: "admin_panel_settings", label: "Admin Console" }]
         : navItems;
 
     const displayName = user?.name || user?.email || "";
