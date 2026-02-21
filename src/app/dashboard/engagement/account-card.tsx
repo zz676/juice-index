@@ -50,7 +50,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(account.toneWeights ?? {});
-  const [localTemperature, setLocalTemperature] = useState(account.temperature ?? 0.8);
+  const [localTemperature, setLocalTemperature] = useState(Math.min(account.temperature ?? 0.8, 1.0));
   const [localImageFrequency, setLocalImageFrequency] = useState(account.imageFrequency ?? 0);
   const contextRef = useRef<HTMLTextAreaElement>(null);
   const pendingRef = useRef<Record<string, unknown>>({});
@@ -242,7 +242,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
         <input
           type="range"
           min={0.1}
-          max={1.5}
+          max={1.0}
           step={0.1}
           value={localTemperature}
           onChange={(e) => handleTemperatureChange(Number(e.target.value))}
