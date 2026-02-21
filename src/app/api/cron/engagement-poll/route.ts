@@ -163,10 +163,35 @@ export async function POST(request: NextRequest) {
     let accessToken: string;
     try {
       accessToken = await refreshTokenIfNeeded(xAccount);
+      // Clear any previous token error on success
+      if (xAccount.tokenError) {
+        await prisma.xAccount.update({
+          where: { id: xAccount.id },
+          data: { tokenError: false },
+        });
+      }
       console.log(`[cron] ↳ Token OK, processing ${accounts.length} account(s)`);
     } catch (err) {
       if (err instanceof XTokenExpiredError) {
         console.error(`[cron] ↳ SKIP: X token expired`);
+        // Mark error and notify user (deduped — only once per incident)
+        if (!xAccount.tokenError) {
+          await prisma.xAccount.update({
+            where: { id: xAccount.id },
+            data: { tokenError: true },
+          });
+          await prisma.notification.create({
+            data: {
+              userId,
+              type: "SYSTEM",
+              title: "X account needs reconnecting",
+              message:
+                "Your X connection has expired. Auto-replies are paused until you reconnect in Settings.",
+              link: "/dashboard/settings",
+              read: false,
+            },
+          });
+        }
       } else {
         console.error(`[cron] ↳ SKIP: token refresh failed`, err);
       }

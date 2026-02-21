@@ -103,6 +103,7 @@ export async function GET(request: NextRequest) {
         accessToken: encAccessToken,
         refreshToken: encRefreshToken,
         tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
+        tokenError: false,
       },
       create: {
         userId: user.id,
@@ -113,6 +114,7 @@ export async function GET(request: NextRequest) {
         accessToken: encAccessToken,
         refreshToken: encRefreshToken,
         tokenExpiresAt: new Date(Date.now() + tokens.expiresIn * 1000),
+        tokenError: false,
       },
     });
 
