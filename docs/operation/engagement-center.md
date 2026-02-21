@@ -87,6 +87,21 @@ tooltip that displays `sourceTweetText` will naturally show the full context.
 
 ---
 
+## Source Tweet Publish Date
+
+The `sourceTweetCreatedAt` field stores the timestamp when the source tweet was originally published on X. It is fetched from the X API's `created_at` field and stored on the `EngagementReply` record.
+
+**How it works:**
+
+- `fetchRecentTweets()` requests `tweet.fields=created_at` alongside the existing tweet fields.
+- The value is an ISO 8601 string from the X API (e.g. `"2026-02-20T14:32:00.000Z"`).
+- It is stored as `sourceTweetCreatedAt DateTime?` on `juice_engagement_replies` for every new reply record.
+- The Engagement Center table displays it as a **"Post Date"** column (formatted as "Mon D, HH:MM AM/PM"), next to the existing **"Date"** column (which shows when the reply was processed).
+
+**Null values:** Records created before this field was introduced, or in the rare case the X API omits `created_at`, will have `NULL` stored. The UI shows "—" for those rows.
+
+---
+
 ## Stale Tweet Protection
 
 When a new monitored account is added, `lastSeenTweetId` is `null`. Without a recency guard the

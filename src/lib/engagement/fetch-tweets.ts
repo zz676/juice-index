@@ -17,6 +17,7 @@ interface XTweetsResponse {
   data?: Array<{
     id: string;
     text: string;
+    created_at?: string;
     referenced_tweets?: Array<{ type: string; id: string }>;
   }>;
   includes?: { tweets?: Array<{ id: string; text: string }> };
@@ -55,7 +56,7 @@ export async function fetchRecentTweets(
   const params = new URLSearchParams({
     max_results: "10",
     exclude: "retweets,replies",
-    "tweet.fields": "id,text,referenced_tweets",
+    "tweet.fields": "id,text,referenced_tweets,created_at",
     expansions: "referenced_tweets.id",
   });
   if (sinceId) {
@@ -87,6 +88,7 @@ export async function fetchRecentTweets(
       text: t.text,
       url: `https://x.com/i/web/status/${t.id}`,
       ...(quotedTweetText !== undefined && { quotedTweetText }),
+      ...(t.created_at !== undefined && { createdAt: t.created_at }),
     };
   });
 }

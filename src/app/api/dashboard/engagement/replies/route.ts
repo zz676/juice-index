@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
         lastError: true,
         totalCost: true,
         createdAt: true,
+        sourceTweetCreatedAt: true,
         monitoredAccountId: true,
         MonitoredAccount: { select: { username: true, displayName: true, avatarUrl: true } },
       },

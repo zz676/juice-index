@@ -18,6 +18,7 @@ interface ReplyRow {
   lastError: string | null;
   totalCost: number;
   createdAt: string;
+  sourceTweetCreatedAt: string | null;
   MonitoredAccount: {
     username: string;
     displayName: string | null;
@@ -314,6 +315,9 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
                       <SortIcon field="createdAt" />
                     </button>
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
+                    Post Date
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -405,6 +409,18 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-slate-custom-500">
+                        {reply.sourceTweetCreatedAt
+                          ? new Date(reply.sourceTweetCreatedAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
                       </span>
                     </td>
                   </tr>
