@@ -13,7 +13,7 @@ export async function GET() {
   const { user, error } = await requireUser();
   if (error) return error;
 
-  const [accounts, subscription] = await Promise.all([
+  const [accounts, subscription, xAccount] = await Promise.all([
     prisma.monitoredAccount.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "asc" },
@@ -22,12 +22,16 @@ export async function GET() {
       where: { userId: user.id },
       select: { tier: true },
     }),
+    prisma.xAccount.findUnique({
+      where: { userId: user.id },
+      select: { tokenError: true },
+    }),
   ]);
 
   const tier = normalizeTier(subscription?.tier);
   const accountLimit = TIER_QUOTAS[tier].monitoredAccounts;
 
-  return NextResponse.json({ accounts, accountLimit });
+  return NextResponse.json({ accounts, accountLimit, xTokenError: xAccount?.tokenError ?? false });
 }
 
 export async function POST(request: NextRequest) {
