@@ -176,78 +176,6 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
           })}
         </div>
 
-        {/* Account Filter Dropdown */}
-        {accounts.length > 0 && (
-          <div className="relative flex-shrink-0" ref={filterRef}>
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 transition-colors"
-            >
-              {selectedAccount ? (
-                <>
-                  {selectedAccount.avatarUrl ? (
-                    <img
-                      src={selectedAccount.avatarUrl}
-                      alt={selectedAccount.username}
-                      className="w-4 h-4 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <span className="material-icons-round text-base">account_circle</span>
-                  )}
-                  @{selectedAccount.username}
-                </>
-              ) : (
-                <>
-                  <span className="material-icons-round text-base">filter_list</span>
-                  All Accounts
-                </>
-              )}
-              <span className="material-icons-round text-[14px]">
-                {filterOpen ? "expand_less" : "expand_more"}
-              </span>
-            </button>
-
-            {filterOpen && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
-                <button
-                  onClick={() => handleSelectAccount(null)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
-                    selectedAccountId === null ? "text-primary font-semibold" : "text-slate-custom-700"
-                  }`}
-                >
-                  <span className="material-icons-round text-[16px]">all_inclusive</span>
-                  <span className="text-sm">All Accounts</span>
-                </button>
-                <div className="border-t border-slate-custom-100 mt-1 pt-1 max-h-60 overflow-y-auto">
-                  {accounts.map((account) => (
-                    <button
-                      key={account.id}
-                      onClick={() => handleSelectAccount(account.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
-                        selectedAccountId === account.id ? "text-primary font-semibold" : "text-slate-custom-700"
-                      }`}
-                    >
-                      {account.avatarUrl ? (
-                        <img
-                          src={account.avatarUrl}
-                          alt={account.username}
-                          className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
-                          {account.username[0]?.toUpperCase()}
-                        </div>
-                      )}
-                      <span className="text-sm truncate">@{account.username}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Summary bar (shown when account is selected) */}
@@ -300,8 +228,70 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
                     Source Tweet
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
-                    Account
+                  <th className="px-4 py-3 text-left">
+                    <div className="relative" ref={filterRef}>
+                      <button
+                        onClick={() => setFilterOpen(!filterOpen)}
+                        className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
+                          selectedAccountId
+                            ? "text-primary"
+                            : "text-slate-custom-500 hover:text-slate-custom-700"
+                        }`}
+                      >
+                        Account
+                        <span
+                          className={`material-icons-round text-[14px] ${
+                            selectedAccountId ? "text-primary" : "text-slate-custom-300"
+                          }`}
+                        >
+                          filter_list
+                        </span>
+                        {selectedAccountId && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+                        )}
+                      </button>
+
+                      {filterOpen && (
+                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
+                          <button
+                            onClick={() => handleSelectAccount(null)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                              selectedAccountId === null ? "text-primary font-semibold" : "text-slate-custom-700"
+                            }`}
+                          >
+                            <span className="material-icons-round text-[16px]">all_inclusive</span>
+                            <span className="text-sm">All Accounts</span>
+                          </button>
+                          <div className="border-t border-slate-custom-100 mt-1 pt-1 max-h-60 overflow-y-auto">
+                            {accounts.map((account) => (
+                              <button
+                                key={account.id}
+                                onClick={() => handleSelectAccount(account.id)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                                  selectedAccountId === account.id
+                                    ? "text-primary font-semibold"
+                                    : "text-slate-custom-700"
+                                }`}
+                              >
+                                {account.avatarUrl ? (
+                                  <img
+                                    src={account.avatarUrl}
+                                    alt={account.username}
+                                    className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
+                                    {account.username[0]?.toUpperCase()}
+                                  </div>
+                                )}
+                                <span className="text-sm truncate">@{account.username}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </th>
                   <th className="px-4 py-3 text-left">
                     <button
