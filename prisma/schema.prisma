@@ -1732,6 +1732,8 @@ model MonitoredAccount {
   toneWeights         Json?
   /// Per-account temperature for reply generation.
   temperature         Float             @default(0.8)
+  /// How often (in minutes) to poll this account. Defaults to every 5 minutes.
+  pollInterval        Int               @default(5)
   /// Timestamp when the record was created.
   createdAt           DateTime          @default(now())
   /// Timestamp when the record was last updated.

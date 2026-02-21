@@ -29,6 +29,7 @@ Each run logs per-user context and per-account activity. Key log lines:
 | `SKIP: no X account connected` | User hasn't connected X in Settings |
 | `SKIP: X token expired` | OAuth refresh token is expired — user must reconnect |
 | `SKIP: token refresh failed` | Temporary X API error — will retry next run |
+| `not due yet (interval=Xm, elapsed=Ym)` | Account's `pollInterval` has not elapsed since `lastCheckedAt` |
 
 The JSON response includes a `skipReasons` breakdown:
 ```json
@@ -37,7 +38,7 @@ The JSON response includes a `skipReasons` breakdown:
   "replied": 3,
   "failed": 0,
   "skipped": 8,
-  "skipReasons": { "globalPaused": 0, "insufficientTier": 8, "noXAccount": 0, "tokenError": 0 },
+  "skipReasons": { "globalPaused": 0, "insufficientTier": 8, "noXAccount": 0, "tokenError": 0, "notDueYet": 0 },
   "durationMs": 4201
 }
 ```
@@ -243,13 +244,14 @@ Replies are generated using a per-user tone library stored in `juice_user_tones`
 
 ## Per-Account Tone Weights, Temperature, and Context
 
-Each `MonitoredAccount` has three new personalization fields:
+Each `MonitoredAccount` has personalization fields:
 
 | Field | Description |
 |---|---|
 | `toneWeights` | JSON map of `{ userToneId: weight }`. Weights are arbitrary numbers — only the ratio matters. Null = fall back to legacy `tone` enum. |
-| `temperature` | Float 0.1–1.5, default 0.8. Controls reply creativity/randomness. |
+| `temperature` | Float 0.1–1.0, default 0.8. Controls reply creativity/randomness. |
 | `accountContext` | Free-text description shown to the AI (e.g. "Tech blogger covering AI startups"). |
+| `pollInterval` | Int (minutes), default 5. Allowed values: 5, 10, 15, 30, 60, 1440, 10080. Accounts with interval > 5 are skipped by the cron if `lastCheckedAt` is within the interval window. |
 
 **Weighted random tone selection:** At reply generation time, `pickUserTone()` picks a tone proportional to its weight. A weight of 0 excludes that tone. Example: Humor=40, Neutral=60 → Neutral picked ~60% of the time.
 

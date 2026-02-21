@@ -31,6 +31,7 @@ export async function PATCH(
     accountContext?: string | null;
     toneWeights?: Record<string, number> | null;
     temperature?: number;
+    pollInterval?: number;
   };
   try {
     body = await request.json();
@@ -66,8 +67,15 @@ export async function PATCH(
   }
   if (body.temperature !== undefined) {
     const temp = Number(body.temperature);
-    if (!isNaN(temp) && temp >= 0.1 && temp <= 1.5) {
+    if (!isNaN(temp) && temp >= 0.1 && temp <= 1.0) {
       data.temperature = temp;
+    }
+  }
+  if (body.pollInterval !== undefined) {
+    const VALID_POLL_INTERVALS = [5, 10, 15, 30, 60, 1440, 10080];
+    const interval = Number(body.pollInterval);
+    if (VALID_POLL_INTERVALS.includes(interval)) {
+      data.pollInterval = interval;
     }
   }
 
