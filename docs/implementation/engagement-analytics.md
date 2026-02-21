@@ -24,13 +24,15 @@ The filter appends `accountId` as a URL param to `/api/dashboard/engagement/repl
 
 The **Account Analytics** tab renders `AccountAnalyticsChart`, which:
 
-- Requires the user to pick one account from a dropdown.
-- Offers a time range selector: 7 / 14 / 30 / 90 days.
-- Fetches daily aggregates from `/api/dashboard/engagement/analytics?accountId=X&days=N`.
-- Renders a dual-Y-axis `LineChart` via Recharts:
-  - Left axis: reply count (integer)
-  - Right axis: cost in USD
-- Shows summary stats cards (total replies, total cost) below the chart.
+- Supports selecting one or more accounts from a dropdown (all accounts selected by default).
+- Offers a granularity toggle (daily / hourly) and a matching time range selector.
+- Fetches aggregates from `/api/dashboard/engagement/analytics`.
+- Renders a multi-line `LineChart` via Recharts, one line per selected account.
+- Shows aggregate summary cards (total replies, total cost) below the chart.
+- When more than one account is selected, shows a **Per Account** breakdown table with:
+  - Color swatch and avatar matching the chart line
+  - Reply count and API cost per account
+  - Clickable **replies** and **cost** column headers to sort ascending or descending (defaults to replies descending)
 
 ---
 
