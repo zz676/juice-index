@@ -8,6 +8,7 @@ export interface FetchedTweet {
   text: string;
   url: string;
   quotedTweetText?: string;
+  createdAt?: string; // ISO 8601 from X API created_at field
 }
 
 /** One entry from the X following list. */
