@@ -575,6 +575,8 @@ model XAccount {
   tokenExpiresAt DateTime
   /// Whether the user has X Premium (25k char limit vs 280).
   isXPremium     Boolean  @default(false)
+  /// Set to true when the refresh token is invalidated; cleared on successful reconnect.
+  tokenError     Boolean  @default(false)
   /// Timestamp when the record was created.
   createdAt      DateTime @default(now())
   /// Timestamp when the record was last updated.
