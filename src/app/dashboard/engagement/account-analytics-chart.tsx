@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LineChart,
   Line,
@@ -13,22 +13,11 @@ import {
 } from "recharts";
 import type { MonitoredAccountRow } from "./account-card";
 
-interface AnalyticsDataPoint {
-  date: string;
-  replies: number;
-  cost: number;
-}
-
-interface AnalyticsSummary {
-  totalReplies: number;
-  totalCost: number;
-}
+type Granularity = "day" | "hour";
 
 interface AccountAnalyticsChartProps {
   accounts: MonitoredAccountRow[];
 }
-
-type Granularity = "day" | "hour";
 
 const RANGE_OPTIONS: Record<Granularity, Array<{ value: number; label: string }>> = {
   day: [
@@ -45,50 +34,133 @@ const RANGE_OPTIONS: Record<Granularity, Array<{ value: number; label: string }>
   ],
 };
 
+const ACCOUNT_COLORS = [
+  "#6366f1",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#3b82f6",
+  "#f97316",
+  "#14b8a6",
+];
+
 export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) {
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    accounts.length === 1 ? accounts[0].id : null,
+  // Default: all accounts selected
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(accounts.map((a) => a.id)),
   );
   const [granularity, setGranularity] = useState<Granularity>("day");
   const [days, setDays] = useState(30);
-  const [data, setData] = useState<AnalyticsDataPoint[]>([]);
-  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [chartData, setChartData] = useState<Record<string, number | string>[]>([]);
+  const [accountMap, setAccountMap] = useState<Record<string, string>>({});
+  const [summary, setSummary] = useState<Record<string, { totalReplies: number; totalCost: number }>>({});
   const [loading, setLoading] = useState(false);
-  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
-  const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (accountDropdownRef.current && !accountDropdownRef.current.contains(e.target as Node)) {
-        setAccountDropdownOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Focus search input when dropdown opens
   useEffect(() => {
-    if (!selectedAccountId) return;
+    if (dropdownOpen) {
+      setTimeout(() => searchRef.current?.focus(), 0);
+    } else {
+      setSearch("");
+    }
+  }, [dropdownOpen]);
+
+  // Stable key to use as effect dependency — avoids firing on every render
+  const selectedIdsKey = useMemo(
+    () => [...selectedIds].sort().join(","),
+    [selectedIds],
+  );
+
+  useEffect(() => {
+    if (selectedIds.size === 0) {
+      setChartData([]);
+      setSummary({});
+      return;
+    }
     setLoading(true);
     fetch(
-      `/api/dashboard/engagement/analytics?accountId=${selectedAccountId}&days=${days}&granularity=${granularity}`,
+      `/api/dashboard/engagement/analytics?accountIds=${selectedIdsKey}&days=${days}&granularity=${granularity}`,
     )
       .then((r) => r.json())
       .then((d) => {
-        setData(d.data ?? []);
-        setSummary(d.summary ?? null);
+        const map: Record<string, string> = d.accountMap ?? {};
+        const series: Record<string, Array<{ date: string; replies: number; cost: number }>> =
+          d.series ?? {};
+        setAccountMap(map);
+        setSummary(d.summary ?? {});
+
+        // Collect all unique date buckets across all accounts
+        const allDates = new Set<string>();
+        Object.values(series).forEach((pts) => pts.forEach((p) => allDates.add(p.date)));
+        const sortedDates = [...allDates].sort();
+
+        // Pivot into a flat array for Recharts
+        const pivoted = sortedDates.map((date) => {
+          const point: Record<string, number | string> = { date };
+          Object.entries(series).forEach(([accountId, pts]) => {
+            const match = pts.find((p) => p.date === date);
+            point[`r_${accountId}`] = match?.replies ?? 0;
+          });
+          return point;
+        });
+
+        setChartData(pivoted);
       })
       .finally(() => setLoading(false));
-  }, [selectedAccountId, days, granularity]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdsKey, days, granularity]);
 
   const handleGranularityChange = (g: Granularity) => {
     setGranularity(g);
-    // reset to a sensible default range for the new granularity
     setDays(g === "hour" ? 1 : 30);
   };
 
-  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? null;
+  const handleToggleAccount = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleAll = () => {
+    if (selectedIds.size === accounts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(accounts.map((a) => a.id)));
+    }
+  };
+
+  const filteredAccounts = search
+    ? accounts.filter(
+        (a) =>
+          a.username.toLowerCase().includes(search.toLowerCase()) ||
+          (a.displayName ?? "").toLowerCase().includes(search.toLowerCase()),
+      )
+    : accounts;
+
+  // Ordered list of active IDs (preserves stable color assignment)
+  const activeAccountIds = accounts.map((a) => a.id).filter((id) => selectedIds.has(id));
 
   const formatXAxisTick = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -118,94 +190,158 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
     label,
   }: {
     active?: boolean;
-    payload?: Array<{ name: string; value: number; color: string }>;
+    payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
     label?: string;
   }) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-white border border-slate-custom-200 rounded-xl shadow-lg px-4 py-3 text-xs">
+      <div className="bg-white border border-slate-custom-200 rounded-xl shadow-lg px-4 py-3 text-xs min-w-[160px]">
         <p className="font-semibold text-slate-custom-700 mb-2">
           {label ? formatTooltipLabel(label) : ""}
         </p>
         {payload.map((entry) => (
-          <div key={entry.name} className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: entry.color }} />
+          <div key={entry.dataKey} className="flex items-center gap-2 mb-1">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ background: entry.color }}
+            />
             <span className="text-slate-custom-500">{entry.name}:</span>
-            <span className="font-semibold text-slate-custom-900">
-              {entry.name === "Cost" ? `$${entry.value.toFixed(4)}` : entry.value}
-            </span>
+            <span className="font-semibold text-slate-custom-900">{entry.value}</span>
           </div>
         ))}
       </div>
     );
   };
 
+  const rangeLabel =
+    granularity === "hour" && days === 1 ? "last 24 hours" : `last ${days} days`;
+
+  const totalReplies = Object.values(summary).reduce((s, v) => s + v.totalReplies, 0);
+  const totalCost = Object.values(summary).reduce((s, v) => s + v.totalCost, 0);
+
+  const buttonLabel =
+    selectedIds.size === 0
+      ? "No accounts"
+      : selectedIds.size === accounts.length
+        ? "All Accounts"
+        : `${selectedIds.size} account${selectedIds.size > 1 ? "s" : ""}`;
+
   return (
     <div className="space-y-4">
       {/* Controls */}
       <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-wrap items-center gap-4">
-        {/* Account selector */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm font-medium text-slate-custom-600 whitespace-nowrap">Account:</span>
-          <div className="relative" ref={accountDropdownRef}>
+        {/* Multi-account selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-custom-600 whitespace-nowrap">
+            Accounts:
+          </span>
+          <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border border-slate-custom-200 bg-white text-slate-custom-700 hover:bg-slate-custom-50 transition-colors min-w-[160px]"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border border-slate-custom-200 bg-white text-slate-custom-700 hover:bg-slate-custom-50 transition-colors min-w-[180px]"
             >
-              {selectedAccount ? (
-                <>
-                  {selectedAccount.avatarUrl ? (
-                    <img
-                      src={selectedAccount.avatarUrl}
-                      alt={selectedAccount.username}
-                      className="w-4 h-4 rounded-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="w-4 h-4 rounded-full bg-slate-custom-200 flex items-center justify-center text-[9px] font-bold text-slate-custom-500">
-                      {selectedAccount.username[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <span className="truncate">@{selectedAccount.username}</span>
-                </>
-              ) : (
-                <span className="text-slate-custom-400">Select account…</span>
-              )}
-              <span className="material-icons-round text-[14px] ml-auto flex-shrink-0">
-                {accountDropdownOpen ? "expand_less" : "expand_more"}
+              <span className="material-icons-round text-[16px] text-slate-custom-400">group</span>
+              <span className="flex-1 text-left truncate">{buttonLabel}</span>
+              <span className="material-icons-round text-[14px] flex-shrink-0 text-slate-custom-400">
+                {dropdownOpen ? "expand_less" : "expand_more"}
               </span>
             </button>
 
-            {accountDropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52 max-h-60 overflow-y-auto">
-                {accounts.map((account) => (
-                  <button
-                    key={account.id}
-                    onClick={() => {
-                      setSelectedAccountId(account.id);
-                      setAccountDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
-                      selectedAccountId === account.id
-                        ? "text-primary font-semibold"
-                        : "text-slate-custom-700"
-                    }`}
-                  >
-                    {account.avatarUrl ? (
-                      <img
-                        src={account.avatarUrl}
-                        alt={account.username}
-                        className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
-                        {account.username[0]?.toUpperCase()}
-                      </div>
+            {dropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg z-50 w-64">
+                {/* Search */}
+                <div className="p-2 border-b border-slate-custom-100">
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-custom-50 rounded-lg">
+                    <span className="material-icons-round text-[16px] text-slate-custom-400">
+                      search
+                    </span>
+                    <input
+                      ref={searchRef}
+                      type="text"
+                      placeholder="Search accounts…"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="flex-1 bg-transparent text-sm text-slate-custom-700 placeholder-slate-custom-400 outline-none"
+                    />
+                    {search && (
+                      <button
+                        onClick={() => setSearch("")}
+                        className="text-slate-custom-400 hover:text-slate-custom-600"
+                      >
+                        <span className="material-icons-round text-[14px]">close</span>
+                      </button>
                     )}
-                    <span className="text-sm truncate">@{account.username}</span>
-                  </button>
-                ))}
+                  </div>
+                </div>
+
+                {/* All toggle — hidden while searching */}
+                {!search && (
+                  <label className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-custom-50 cursor-pointer border-b border-slate-custom-100">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.size === accounts.length}
+                      ref={(el) => {
+                        if (el)
+                          el.indeterminate =
+                            selectedIds.size > 0 && selectedIds.size < accounts.length;
+                      }}
+                      onChange={handleToggleAll}
+                      className="rounded border-slate-custom-300 text-primary focus:ring-primary/50"
+                    />
+                    <span className="text-sm font-semibold text-slate-custom-700">All</span>
+                    <span className="ml-auto text-xs text-slate-custom-400">
+                      {selectedIds.size}/{accounts.length}
+                    </span>
+                  </label>
+                )}
+
+                {/* Account list */}
+                <div className="max-h-56 overflow-y-auto py-1">
+                  {filteredAccounts.length === 0 ? (
+                    <p className="px-3 py-3 text-xs text-slate-custom-400 text-center">
+                      No accounts found.
+                    </p>
+                  ) : (
+                    filteredAccounts.map((account, i) => {
+                      const colorIdx = accounts.findIndex((a) => a.id === account.id);
+                      return (
+                        <label
+                          key={account.id}
+                          className="flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(account.id)}
+                            onChange={() => handleToggleAccount(account.id)}
+                            className="rounded border-slate-custom-300 text-primary focus:ring-primary/50 flex-shrink-0"
+                          />
+                          {/* Color swatch matching chart line */}
+                          <span
+                            className="w-2 h-2 rounded-full flex-shrink-0"
+                            style={{
+                              background: ACCOUNT_COLORS[colorIdx % ACCOUNT_COLORS.length],
+                            }}
+                          />
+                          {account.avatarUrl ? (
+                            <img
+                              src={account.avatarUrl}
+                              alt={account.username}
+                              className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
+                              {account.username[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-sm text-slate-custom-700 truncate">
+                            @{account.username}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -217,7 +353,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
             <button
               key={g}
               onClick={() => handleGranularityChange(g)}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors capitalize ${
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
                 granularity === g
                   ? "bg-white text-slate-custom-900 shadow-sm"
                   : "text-slate-custom-500 hover:text-slate-custom-700"
@@ -248,11 +384,11 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
 
       {/* Chart card */}
       <div className="bg-white rounded-xl border border-slate-custom-200 p-5">
-        {!selectedAccountId ? (
+        {selectedIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-icons-round text-[48px] text-slate-custom-300">insights</span>
             <p className="mt-3 text-sm text-slate-custom-500">
-              Select an account above to view analytics.
+              Select at least one account above to view analytics.
             </p>
           </div>
         ) : loading ? (
@@ -260,22 +396,20 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
             <div className="h-4 bg-slate-custom-50 rounded animate-pulse w-1/3" />
             <div className="h-48 bg-slate-custom-50 rounded animate-pulse" />
           </div>
-        ) : data.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-icons-round text-[48px] text-slate-custom-300">bar_chart</span>
             <p className="mt-3 text-sm text-slate-custom-500">
-              No data for the selected account in the last{" "}
-              {granularity === "hour" && days === 1 ? "24 hours" : `${days} days`}.
+              No data for the selected accounts in the {rangeLabel}.
             </p>
           </div>
         ) : (
           <>
             <h3 className="text-sm font-semibold text-slate-custom-700 mb-4">
-              {granularity === "hour" ? "Hourly" : "Daily"} Activity —{" "}
-              {granularity === "hour" && days === 1 ? "last 24 hours" : `last ${days} days`}
+              {granularity === "hour" ? "Hourly" : "Daily"} Replies — {rangeLabel}
             </h3>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="date"
@@ -286,21 +420,11 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  yAxisId="left"
                   allowDecimals={false}
                   tick={{ fontSize: 11, fill: "#94a3b8" }}
                   tickLine={false}
                   axisLine={false}
                   width={32}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tickFormatter={(v: number) => `$${v.toFixed(3)}`}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={56}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend
@@ -308,51 +432,95 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
                   iconType="circle"
                   iconSize={8}
                 />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="replies"
-                  name="Replies"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="cost"
-                  name="Cost"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
+                {activeAccountIds.map((accountId, i) => (
+                  <Line
+                    key={accountId}
+                    type="monotone"
+                    dataKey={`r_${accountId}`}
+                    name={`@${accountMap[accountId] ?? accountId}`}
+                    stroke={ACCOUNT_COLORS[i % ACCOUNT_COLORS.length]}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </>
         )}
       </div>
 
-      {/* Summary stats */}
-      {selectedAccountId && summary && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
-            <p className="text-xs font-medium text-slate-custom-500 mb-1">Total Replies</p>
-            <p className="text-2xl font-bold text-slate-custom-900">{summary.totalReplies}</p>
-            <p className="text-xs text-slate-custom-400 mt-0.5">
-              {granularity === "hour" && days === 1 ? "Last 24 hours" : `Last ${days} days`}
-            </p>
+      {/* Summary */}
+      {selectedIds.size > 0 && Object.keys(summary).length > 0 && (
+        <div className="space-y-3">
+          {/* Aggregate totals */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
+              <p className="text-xs font-medium text-slate-custom-500 mb-1">Total Replies</p>
+              <p className="text-2xl font-bold text-slate-custom-900">{totalReplies}</p>
+              <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
+              <p className="text-xs font-medium text-slate-custom-500 mb-1">Total API Cost</p>
+              <p className="text-2xl font-bold text-slate-custom-900">${totalCost.toFixed(4)}</p>
+              <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
+            </div>
           </div>
-          <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
-            <p className="text-xs font-medium text-slate-custom-500 mb-1">Total API Cost</p>
-            <p className="text-2xl font-bold text-slate-custom-900">
-              ${summary.totalCost.toFixed(4)}
-            </p>
-            <p className="text-xs text-slate-custom-400 mt-0.5">
-              {granularity === "hour" && days === 1 ? "Last 24 hours" : `Last ${days} days`}
-            </p>
-          </div>
+
+          {/* Per-account breakdown (only meaningful when > 1 selected) */}
+          {activeAccountIds.length > 1 && (
+            <div className="bg-white rounded-xl border border-slate-custom-200 overflow-hidden">
+              <div className="px-4 py-3 border-b border-slate-custom-100">
+                <p className="text-xs font-semibold text-slate-custom-600">Per Account</p>
+              </div>
+              <div className="divide-y divide-slate-custom-50">
+                {activeAccountIds.map((accountId, i) => {
+                  const s = summary[accountId];
+                  if (!s) return null;
+                  const account = accounts.find((a) => a.id === accountId);
+                  return (
+                    <div key={accountId} className="flex items-center justify-between px-4 py-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ background: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length] }}
+                        />
+                        {account?.avatarUrl ? (
+                          <img
+                            src={account.avatarUrl}
+                            alt={account.username}
+                            className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
+                            {account?.username[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-sm text-slate-custom-700 truncate">
+                          @{accountMap[accountId] ?? accountId}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-6 flex-shrink-0">
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-custom-900">
+                            {s.totalReplies}
+                          </p>
+                          <p className="text-[10px] text-slate-custom-400">replies</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-slate-custom-900">
+                            ${s.totalCost.toFixed(4)}
+                          </p>
+                          <p className="text-[10px] text-slate-custom-400">cost</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
