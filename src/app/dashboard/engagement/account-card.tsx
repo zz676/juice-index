@@ -159,7 +159,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3">
         {account.avatarUrl ? (
@@ -227,7 +227,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
                     value={weight}
                     onChange={(e) => handleWeightChange(tone.id, Number(e.target.value))}
                     onPointerUp={(e) => handleWeightCommit(tone.id, Number((e.target as HTMLInputElement).value))}
-                    className="flex-1 h-1.5 accent-primary"
+                    className="flex-1 min-w-0 h-1.5 accent-primary"
                     disabled={loading}
                   />
                   <span className="text-xs text-slate-custom-400 w-7 text-right flex-shrink-0">
