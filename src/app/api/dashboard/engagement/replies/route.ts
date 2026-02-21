@@ -31,7 +31,12 @@ export async function GET(request: NextRequest) {
     where.monitoredAccountId = accountId;
   }
 
-  const [replies, total, statusCounts] = await Promise.all([
+  const accountFilterWhere: Record<string, unknown> = { userId: user.id };
+  if (accountId) {
+    accountFilterWhere.monitoredAccountId = accountId;
+  }
+
+  const [replies, total, statusCounts, costAggregate] = await Promise.all([
     prisma.engagementReply.findMany({
       where,
       orderBy: { [sortBy]: sortOrder },
@@ -58,8 +63,12 @@ export async function GET(request: NextRequest) {
     prisma.engagementReply.count({ where }),
     prisma.engagementReply.groupBy({
       by: ["status"],
-      where: { userId: user.id },
+      where: accountFilterWhere,
       _count: { id: true },
+    }),
+    prisma.engagementReply.aggregate({
+      where,
+      _sum: { totalCost: true },
     }),
   ]);
 
@@ -71,5 +80,6 @@ export async function GET(request: NextRequest) {
     replies,
     pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     statusCounts: statusCountMap,
+    totalCost: costAggregate._sum.totalCost ?? 0,
   });
 }

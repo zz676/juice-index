@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import type { EngagementReplyStatus } from "@prisma/client";
+import type { MonitoredAccountRow } from "./account-card";
 
 interface ReplyRow {
   id: string;
@@ -31,6 +32,10 @@ interface Pagination {
   totalPages: number;
 }
 
+interface ReplyMonitoringTableProps {
+  accounts: MonitoredAccountRow[];
+}
+
 type SortField = "createdAt" | "status" | "tone";
 const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
   "All",
@@ -42,7 +47,7 @@ const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
   "SKIPPED",
 ];
 
-export function ReplyMonitoringTable() {
+export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
   const [replies, setReplies] = useState<ReplyRow[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -53,16 +58,32 @@ export function ReplyMonitoringTable() {
   const [statusCounts, setStatusCounts] = useState<Partial<Record<EngagementReplyStatus, number>>>(
     {},
   );
+  const [totalCost, setTotalCost] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"All" | EngagementReplyStatus>("All");
   const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const fetchReplies = async (
     page = 1,
     tab: "All" | EngagementReplyStatus = activeTab,
     sort = sortBy,
     order = sortOrder,
+    accountId: string | null = selectedAccountId,
   ) => {
     setLoading(true);
     try {
@@ -73,11 +94,13 @@ export function ReplyMonitoringTable() {
         sortOrder: order,
       });
       if (tab !== "All") params.set("status", tab);
+      if (accountId) params.set("accountId", accountId);
       const res = await fetch(`/api/dashboard/engagement/replies?${params}`);
       const data = await res.json();
       setReplies(data.replies ?? []);
       setPagination(data.pagination);
       setStatusCounts(data.statusCounts ?? {});
+      setTotalCost(data.totalCost ?? 0);
     } finally {
       setLoading(false);
     }
@@ -90,21 +113,28 @@ export function ReplyMonitoringTable() {
 
   const handleTabChange = (tab: "All" | EngagementReplyStatus) => {
     setActiveTab(tab);
-    fetchReplies(1, tab, sortBy, sortOrder);
+    fetchReplies(1, tab, sortBy, sortOrder, selectedAccountId);
   };
 
   const handleSort = (field: SortField) => {
     const newOrder = sortBy === field && sortOrder === "desc" ? "asc" : "desc";
     setSortBy(field);
     setSortOrder(newOrder);
-    fetchReplies(1, activeTab, field, newOrder);
+    fetchReplies(1, activeTab, field, newOrder, selectedAccountId);
   };
 
   const handlePage = (page: number) => {
-    fetchReplies(page, activeTab, sortBy, sortOrder);
+    fetchReplies(page, activeTab, sortBy, sortOrder, selectedAccountId);
+  };
+
+  const handleSelectAccount = (id: string | null) => {
+    setSelectedAccountId(id);
+    setFilterOpen(false);
+    fetchReplies(1, activeTab, sortBy, sortOrder, id);
   };
 
   const totalCount = Object.values(statusCounts).reduce((s, c) => s + (c ?? 0), 0);
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? null;
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortBy !== field) {
@@ -119,30 +149,121 @@ export function ReplyMonitoringTable() {
 
   return (
     <div className="space-y-4">
-      {/* Status Tabs */}
-      <div className="flex gap-2 border-b border-slate-custom-200 pb-px overflow-x-auto">
-        {STATUS_TABS.map((tab) => {
-          const count = tab === "All" ? totalCount : statusCounts[tab] || 0;
-          return (
+      {/* Filter bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Status Tabs */}
+        <div className="flex gap-2 border-b border-slate-custom-200 pb-px overflow-x-auto flex-1">
+          {STATUS_TABS.map((tab) => {
+            const count = tab === "All" ? totalCount : statusCounts[tab] || 0;
+            return (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? "border-primary text-slate-custom-900"
+                    : "border-transparent text-slate-custom-500 hover:text-slate-custom-700"
+                }`}
+              >
+                {tab === "All" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}
+                {count > 0 && (
+                  <span className="ml-1.5 text-[11px] bg-slate-custom-100 text-slate-custom-600 px-1.5 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Account Filter Dropdown */}
+        {accounts.length > 0 && (
+          <div className="relative flex-shrink-0" ref={filterRef}>
             <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab
-                  ? "border-primary text-slate-custom-900"
-                  : "border-transparent text-slate-custom-500 hover:text-slate-custom-700"
-              }`}
+              onClick={() => setFilterOpen(!filterOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 transition-colors"
             >
-              {tab === "All" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}
-              {count > 0 && (
-                <span className="ml-1.5 text-[11px] bg-slate-custom-100 text-slate-custom-600 px-1.5 py-0.5 rounded-full">
-                  {count}
-                </span>
+              {selectedAccount ? (
+                <>
+                  {selectedAccount.avatarUrl ? (
+                    <img
+                      src={selectedAccount.avatarUrl}
+                      alt={selectedAccount.username}
+                      className="w-4 h-4 rounded-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="material-icons-round text-base">account_circle</span>
+                  )}
+                  @{selectedAccount.username}
+                </>
+              ) : (
+                <>
+                  <span className="material-icons-round text-base">filter_list</span>
+                  All Accounts
+                </>
               )}
+              <span className="material-icons-round text-[14px]">
+                {filterOpen ? "expand_less" : "expand_more"}
+              </span>
             </button>
-          );
-        })}
+
+            {filterOpen && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
+                <button
+                  onClick={() => handleSelectAccount(null)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                    selectedAccountId === null ? "text-primary font-semibold" : "text-slate-custom-700"
+                  }`}
+                >
+                  <span className="material-icons-round text-[16px]">all_inclusive</span>
+                  <span className="text-sm">All Accounts</span>
+                </button>
+                <div className="border-t border-slate-custom-100 mt-1 pt-1 max-h-60 overflow-y-auto">
+                  {accounts.map((account) => (
+                    <button
+                      key={account.id}
+                      onClick={() => handleSelectAccount(account.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                        selectedAccountId === account.id ? "text-primary font-semibold" : "text-slate-custom-700"
+                      }`}
+                    >
+                      {account.avatarUrl ? (
+                        <img
+                          src={account.avatarUrl}
+                          alt={account.username}
+                          className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
+                          {account.username[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm truncate">@{account.username}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Summary bar (shown when account is selected) */}
+      {selectedAccountId && (
+        <div className="flex items-center gap-6 px-4 py-2.5 bg-slate-custom-50 rounded-lg border border-slate-custom-100 text-sm">
+          <span className="text-slate-custom-500 font-medium">
+            Total Replies:{" "}
+            <span className="text-slate-custom-900 font-semibold">{pagination.total}</span>
+          </span>
+          <span className="text-slate-custom-300">|</span>
+          <span className="text-slate-custom-500 font-medium">
+            Total Fees:{" "}
+            <span className="text-slate-custom-900 font-semibold">${totalCost.toFixed(4)}</span>
+          </span>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden">

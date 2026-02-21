@@ -6,8 +6,9 @@ import { UsageBar } from "./usage-bar";
 import { AccountCard, type MonitoredAccountRow } from "./account-card";
 import { ImportFollowingModal } from "./import-following-modal";
 import { ReplyMonitoringTable } from "./reply-monitoring-table";
+import { AccountAnalyticsChart } from "./account-analytics-chart";
 
-type TabId = "accounts" | "replies";
+type TabId = "accounts" | "replies" | "analytics";
 
 export default function EngagementPage() {
   const [activeTab, setActiveTab] = useState<TabId>("accounts");
@@ -100,6 +101,7 @@ export default function EngagementPage() {
             [
               { id: "accounts", label: "Monitored Accounts", icon: "manage_accounts" },
               { id: "replies", label: "Reply Monitoring", icon: "forum" },
+              { id: "analytics", label: "Account Analytics", icon: "insights" },
             ] as const
           ).map((tab) => (
             <button
@@ -177,7 +179,10 @@ export default function EngagementPage() {
       )}
 
       {/* Tab: Reply Monitoring */}
-      {activeTab === "replies" && <ReplyMonitoringTable />}
+      {activeTab === "replies" && <ReplyMonitoringTable accounts={accounts} />}
+
+      {/* Tab: Account Analytics */}
+      {activeTab === "analytics" && <AccountAnalyticsChart accounts={accounts} />}
     </div>
   );
 }
