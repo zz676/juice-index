@@ -50,8 +50,8 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(accounts.map((a) => a.id)),
   );
-  const [granularity, setGranularity] = useState<Granularity>("day");
-  const [days, setDays] = useState(30);
+  const [granularity, setGranularity] = useState<Granularity>("hour");
+  const [days, setDays] = useState(1);
   const [chartData, setChartData] = useState<Record<string, number | string>[]>([]);
   const [accountMap, setAccountMap] = useState<Record<string, string>>({});
   const [summary, setSummary] = useState<Record<string, { totalReplies: number; totalCost: number }>>({});
