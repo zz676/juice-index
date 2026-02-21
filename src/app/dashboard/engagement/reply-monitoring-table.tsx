@@ -51,7 +51,7 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
   const [replies, setReplies] = useState<ReplyRow[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    limit: 10,
+    limit: 25,
     total: 0,
     totalPages: 0,
   });
@@ -89,7 +89,7 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
     try {
       const params = new URLSearchParams({
         page: String(page),
-        limit: "10",
+        limit: "25",
         sortBy: sort,
         sortOrder: order,
       });
