@@ -194,7 +194,7 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="p-6 space-y-4">
             {[...Array(5)].map((_, i) => (
