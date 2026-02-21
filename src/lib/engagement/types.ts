@@ -7,6 +7,7 @@ export interface FetchedTweet {
   id: string;
   text: string;
   url: string;
+  quotedTweetText?: string;
 }
 
 /** One entry from the X following list. */

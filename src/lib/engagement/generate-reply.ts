@@ -21,7 +21,15 @@ const TONE_SYSTEM_PROMPTS: Record<ReplyTone, string> = {
     "You are a professional EV industry executive and thought leader. Write replies that are insightful, polished, and add business or market perspective. Tone is confident and authoritative.",
 };
 
-function buildReplyPrompt(sourceTweetText: string, toneInstructions: string): string {
+function buildReplyPrompt(
+  sourceTweetText: string,
+  toneInstructions: string,
+  quotedTweetText?: string | null,
+): string {
+  const tweetSection = quotedTweetText
+    ? `"${sourceTweetText}"\n\nThis tweet is quoting another post that says:\n"${quotedTweetText}"`
+    : `"${sourceTweetText}"`;
+
   return `${toneInstructions}
 
 Reply to this tweet with exactly 1-2 sentences (under 280 characters total).
@@ -34,7 +42,7 @@ Rules:
 - Must be under 280 characters
 
 Tweet to reply to:
-"${sourceTweetText}"
+${tweetSection}
 
 Write only the reply text, nothing else.`;
 }
@@ -43,9 +51,10 @@ export async function generateReply(
   sourceTweetText: string,
   tone: ReplyTone,
   customTonePrompt?: string | null,
+  quotedTweetText?: string | null,
 ): Promise<GenerateReplyResult> {
   const systemPrompt = customTonePrompt?.trim() || TONE_SYSTEM_PROMPTS[tone];
-  const prompt = buildReplyPrompt(sourceTweetText, systemPrompt);
+  const prompt = buildReplyPrompt(sourceTweetText, systemPrompt, quotedTweetText);
 
   const result = await generateText({
     model: openai(REPLY_MODEL),

@@ -14,6 +14,11 @@ import { EngagementReplyStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
 
+function formatTweetWithQuote(text: string, quotedText?: string): string {
+  if (!quotedText) return text;
+  return `${text}\n\n[Quoting: ${quotedText}]`;
+}
+
 type AccountStat = {
   username: string;
   newTweets: number;
@@ -290,7 +295,7 @@ export async function POST(request: NextRequest) {
                 userId,
                 monitoredAccountId: account.id,
                 sourceTweetId: tweet.id,
-                sourceTweetText: tweet.text,
+                sourceTweetText: formatTweetWithQuote(tweet.text, tweet.quotedTweetText),
                 sourceTweetUrl: tweet.url,
                 tone: account.tone,
                 status: EngagementReplyStatus.SKIPPED,
@@ -315,7 +320,7 @@ export async function POST(request: NextRequest) {
                 userId,
                 monitoredAccountId: account.id,
                 sourceTweetId: tweet.id,
-                sourceTweetText: tweet.text,
+                sourceTweetText: formatTweetWithQuote(tweet.text, tweet.quotedTweetText),
                 sourceTweetUrl: tweet.url,
                 tone: account.tone,
                 status: EngagementReplyStatus.SKIPPED,
@@ -335,7 +340,7 @@ export async function POST(request: NextRequest) {
               userId,
               monitoredAccountId: account.id,
               sourceTweetId: tweet.id,
-              sourceTweetText: tweet.text,
+              sourceTweetText: formatTweetWithQuote(tweet.text, tweet.quotedTweetText),
               sourceTweetUrl: tweet.url,
               tone: account.tone,
               status: EngagementReplyStatus.PENDING,
@@ -352,7 +357,7 @@ export async function POST(request: NextRequest) {
 
             // Generate reply text
             const textStart = Date.now();
-            const generated = await generateReply(tweet.text, account.tone, account.customTonePrompt);
+            const generated = await generateReply(tweet.text, account.tone, account.customTonePrompt, tweet.quotedTweetText);
             const textDurationMs = Date.now() - textStart;
             prisma.aIUsage.create({
               data: {
@@ -376,7 +381,7 @@ export async function POST(request: NextRequest) {
               if (imgQuota.success) {
                 try {
                   const imgStart = Date.now();
-                  const imgResult = await generateImage(tweet.text, generated.text);
+                  const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
                   const imgDurationMs = Date.now() - imgStart;
                   if (imgResult.generated) {
                     const { mediaId } = await uploadMedia(
