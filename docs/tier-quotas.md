@@ -28,7 +28,7 @@ Juice Index uses a 4-tier system for gating features and enforcing quotas. The c
 | CSV exports/month | 0 | 10 | 50 | Unlimited |
 | Weekly publishes | 1 | 10 | 10 | Unlimited |
 | Data delay (days) | 30 | 0 | 0 | 0 |
-| Historical data (months) | 12 | 36 | 60 | Unlimited |
+| Historical data (months) | 12 | 60 | 60 | Unlimited |
 | Seats | 1 | 1 | 1 | 5+ |
 | X accounts linked | 0 | 1 | 1 | 5 |
 
@@ -219,6 +219,17 @@ curl -s "$UPSTASH_URL/scan/0/match/*:$USER_ID:*/count/100" \
 ```
 
 Counters auto-expire at UTC midnight (daily) or end of period (weekly/monthly) via TTL set at increment time. Deleting a key is safe — it will be re-created on the next request.
+
+## Pricing Page Feature Lists
+
+The landing page pricing cards (`src/components/landing/PricingToggle.tsx`) show a curated subset of features per tier. These are aligned with `quotas.ts` values:
+
+| Tier | Features Displayed |
+|------|--------------------|
+| Analyst (Free) | Dashboard with 30-day delayed data · 3 Juice AI queries/day · 1 chart generation/day · 1-year historical data |
+| Starter | Real-time data (no delay) · 15 Juice AI queries/day · 10 CSV exports/month · 5-year historical data · X posting & scheduling |
+| Pro | 50 Juice AI queries/day · 20 chart generations/day · 50 CSV exports/month · Claude Opus 4 model access · Engagement Center |
+| Institutional | Unlimited AI queries & charts · Full API access (10 keys) · 5+ seat licenses · Dedicated analyst support |
 
 ## Key Files
 
