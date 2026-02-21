@@ -58,6 +58,8 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<"replies" | "cost">("replies");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -161,6 +163,25 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
 
   // Ordered list of active IDs (preserves stable color assignment)
   const activeAccountIds = accounts.map((a) => a.id).filter((id) => selectedIds.has(id));
+
+  // Per-account sorted IDs for the breakdown table
+  const sortedAccountIds = [...activeAccountIds].sort((a, b) => {
+    const sa = summary[a];
+    const sb = summary[b];
+    if (!sa || !sb) return 0;
+    const valA = sortField === "replies" ? sa.totalReplies : sa.totalCost;
+    const valB = sortField === "replies" ? sb.totalReplies : sb.totalCost;
+    return sortDir === "desc" ? valB - valA : valA - valB;
+  });
+
+  function handleSort(field: "replies" | "cost") {
+    if (sortField === field) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+  }
 
   const formatXAxisTick = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -470,20 +491,41 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
           {/* Per-account breakdown (only meaningful when > 1 selected) */}
           {activeAccountIds.length > 1 && (
             <div className="bg-white rounded-xl border border-slate-custom-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-custom-100">
+              <div className="px-4 py-3 border-b border-slate-custom-100 flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-custom-600">Per Account</p>
+                <div className="flex items-center gap-6 flex-shrink-0">
+                  <button
+                    onClick={() => handleSort("replies")}
+                    className="flex items-center gap-1 text-[10px] font-semibold text-slate-custom-500 hover:text-slate-custom-900 transition-colors w-14 justify-end"
+                  >
+                    replies
+                    <span className="text-[9px]">
+                      {sortField === "replies" ? (sortDir === "desc" ? "↓" : "↑") : "↕"}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleSort("cost")}
+                    className="flex items-center gap-1 text-[10px] font-semibold text-slate-custom-500 hover:text-slate-custom-900 transition-colors w-14 justify-end"
+                  >
+                    cost
+                    <span className="text-[9px]">
+                      {sortField === "cost" ? (sortDir === "desc" ? "↓" : "↑") : "↕"}
+                    </span>
+                  </button>
+                </div>
               </div>
               <div className="divide-y divide-slate-custom-50">
-                {activeAccountIds.map((accountId, i) => {
+                {sortedAccountIds.map((accountId) => {
                   const s = summary[accountId];
                   if (!s) return null;
                   const account = accounts.find((a) => a.id === accountId);
+                  const colorIndex = activeAccountIds.indexOf(accountId);
                   return (
                     <div key={accountId} className="flex items-center justify-between px-4 py-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ background: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length] }}
+                          style={{ background: ACCOUNT_COLORS[colorIndex % ACCOUNT_COLORS.length] }}
                         />
                         {account?.avatarUrl ? (
                           <img
@@ -502,17 +544,15 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
                         </span>
                       </div>
                       <div className="flex items-center gap-6 flex-shrink-0">
-                        <div className="text-right">
+                        <div className="text-right w-14">
                           <p className="text-sm font-semibold text-slate-custom-900">
                             {s.totalReplies}
                           </p>
-                          <p className="text-[10px] text-slate-custom-400">replies</p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right w-14">
                           <p className="text-sm font-semibold text-slate-custom-900">
                             ${s.totalCost.toFixed(4)}
                           </p>
-                          <p className="text-[10px] text-slate-custom-400">cost</p>
                         </div>
                       </div>
                     </div>
