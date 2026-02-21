@@ -114,6 +114,49 @@ Wired the existing `NioPowerSnapshot` Prisma table into the Studio query generat
 - "NIO charging piles over time"
 - "How many total swap stations does NIO have?"
 
+## ✅ Phase 3.8: Field Type Registry & Query System Bug Fixes (Complete)
+
+Introduced a field type registry as a single source of truth for all allowed Studio tables, fixing 5 systemic bugs in the query generation and execution pipeline.
+
+### New File: `src/lib/studio/field-registry.ts`
+
+A registry mapping each of the 15 allowed tables to their exact Prisma field types. Key distinctions encoded:
+- `eVMetric.brand` → `Enum(Brand)`, `eVMetric.period` → `Int` (month number 1–12, not a string)
+- `plantExports.brand` → `String` (not the Brand enum)
+- `batteryMakerRankings.periodType` → `String` (not the PeriodType enum)
+- `nioPowerSnapshot.cumulativeSwaps/cumulativeCharges` → `BigInt`
+- `nioPowerSnapshot.asOfTime` → `DateTime`
+
+Exported utilities: `ALLOWED_TABLE_NAMES`, `getTableDef`, `getFieldNames`, `isStringField`, `getBigIntFields`, `convertBigIntsToNumbers`, `formatFieldsForPrompt`, `getAllowedTablesList`.
+
+### Bug Fixes
+
+**Bug 1: `mode: "insensitive"` on non-String fields (Prisma crash)**
+- Replaced `addInsensitiveMode` / `applyCaseInsensitive` (which blindly wrapped all string values) with schema-aware `coerceWhereClause` / `applyQueryCoercion`.
+- Now only fields typed `String` in the registry receive `mode: "insensitive"`. Enum fields (`brand`, `metric`, `periodType`, `vehicleType`), DateTime fields, and other non-String fields pass through unchanged.
+
+**Bug 2: BigInt JSON serialization crash**
+- `nioPowerSnapshot.cumulativeSwaps` and `cumulativeCharges` are `BigInt`. `JSON.stringify` (used inside `NextResponse.json()`) throws a `TypeError` on BigInt values.
+- Fixed by calling `convertBigIntsToNumbers(table, rows)` from the registry before both Mode 0 and Mode 1 `NextResponse.json()` responses.
+
+**Bug 3: `detectYField` ignores BigInt**
+- `detectYField` used `typeof v === "number"` which misses `typeof v === "bigint"`, causing chart Y-axis auto-detection to fail for `nioPowerSnapshot`.
+- Added `isNumericValue(v)` helper (`typeof v === "number" || typeof v === "bigint"`) and replaced all `typeof === "number"` checks in `detectYField`.
+
+**Bug 4: AI has no date context**
+- AI system prompt now includes `Today's date: ${today}` and a new rule 13 instructing the AI to compute actual ISO dates from relative expressions ("last 30 days", "past month", etc.).
+
+**Bug 5: AI doesn't know field types or enum values**
+- `tableDoc` now uses `formatFieldsForPrompt(table.name)` instead of `table.fields.join(", ")`, giving the AI rich type information, e.g.:
+  `brand: Enum(Brand) [BYD, NIO, XPENG, ...], metric: Enum(MetricType) [...], year: Int, period: Int`
+- New rule 14 reinforces strict type adherence, clarifies `eVMetric.period` is a number, and explains that String fields receive automatic case-insensitive matching.
+- Updated the query example from `"brand":"Tesla"` to `"brand":"TESLA_CHINA"` to reinforce correct enum value usage.
+
+### Refactor: `src/lib/query-executor.ts`
+
+- Removed the hardcoded `ALLOWED_TABLES` array and `AllowedTable` type (180+ lines of duplicate data).
+- `getTableInfo()` and `getAllowedTables()` now delegate to the registry, ensuring a single source of truth.
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment
