@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { UserTone } from "@prisma/client";
 import type { ReplyTone } from "@prisma/client";
 
@@ -11,7 +11,7 @@ export interface MonitoredAccountRow {
   avatarUrl: string | null;
   tone: ReplyTone;
   customTonePrompt: string | null;
-  alwaysGenerateImage: boolean;
+  imageFrequency: number;
   enabled: boolean;
   accountContext: string | null;
   toneWeights: Record<string, number> | null;
@@ -29,6 +29,15 @@ const COLOR_DOT: Record<string, string> = {
   teal: "bg-teal-500",
 };
 
+const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
+  { id: "default-neutral", name: "Neutral", color: "slate" },
+  { id: "default-professional", name: "Professional", color: "blue" },
+  { id: "default-humor", name: "Humor", color: "yellow" },
+  { id: "default-sarcastic", name: "Sarcastic", color: "orange" },
+  { id: "default-hugefan", name: "Huge Fan", color: "pink" },
+  { id: "default-cheers", name: "Cheers", color: "green" },
+];
+
 interface AccountCardProps {
   account: MonitoredAccountRow;
   tones: UserTone[];
@@ -37,10 +46,14 @@ interface AccountCardProps {
   onDelete: (id: string) => void;
 }
 
-export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
+export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [localWeights, setLocalWeights] = useState<Record<string, number>>(account.toneWeights ?? {});
+  const [localTemperature, setLocalTemperature] = useState(account.temperature ?? 0.8);
+  const [localImageFrequency, setLocalImageFrequency] = useState(account.imageFrequency ?? 0);
   const contextRef = useRef<HTMLTextAreaElement>(null);
+  const pendingRef = useRef<Record<string, unknown>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const patch = useCallback(
@@ -78,26 +91,58 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
     }
   };
 
+  const flushPending = useCallback(() => {
+    if (Object.keys(pendingRef.current).length === 0) return;
+    const data = pendingRef.current;
+    pendingRef.current = {};
+    patch(data);
+  }, [patch]);
+
+  const scheduleCommit = useCallback((data: Record<string, unknown>) => {
+    pendingRef.current = { ...pendingRef.current, ...data };
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(flushPending, 8000);
+  }, [flushPending]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (Object.keys(pendingRef.current).length === 0) return;
+      fetch(`/api/dashboard/engagement/accounts/${account.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pendingRef.current),
+        keepalive: true,
+      });
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      flushPending();
+    };
+  }, [account.id, flushPending]);
+
   const handleToggleEnabled = () => {
     if (globalPaused) return;
     patch({ enabled: !account.enabled });
   };
 
-  const effectiveWeights: Record<string, number> = account.toneWeights ?? {};
+  const effectiveTones = tones.length > 0 ? tones : DEFAULT_TONES;
 
   const handleWeightChange = (toneId: string, value: number) => {
-    const newWeights = { ...effectiveWeights, [toneId]: value };
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      patch({ toneWeights: newWeights });
-    }, 600);
+    setLocalWeights((prev) => ({ ...prev, [toneId]: value }));
+  };
+
+  const handleWeightCommit = (toneId: string, value: number) => {
+    scheduleCommit({ toneWeights: { ...localWeights, [toneId]: value } });
   };
 
   const handleTemperatureChange = (value: number) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      patch({ temperature: value });
-    }, 600);
+    setLocalTemperature(value);
+  };
+
+  const handleImageFrequencyChange = (value: number) => {
+    setLocalImageFrequency(value);
   };
 
   const handleContextBlur = () => {
@@ -153,12 +198,11 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
       </div>
 
       {/* Tone weight sliders */}
-      {tones.length > 0 && (
-        <div>
-          <p className="text-xs font-medium text-slate-custom-500 mb-2">Tone Weights</p>
-          <div className="flex flex-col gap-2">
-            {tones.map((tone) => {
-              const weight = effectiveWeights[tone.id] ?? 0;
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-2">Tone Weights</p>
+        <div className="flex flex-col gap-2">
+          {effectiveTones.map((tone) => {
+              const weight = localWeights[tone.id] ?? 0;
               return (
                 <div key={tone.id} className="flex items-center gap-2">
                   <div
@@ -172,8 +216,9 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
                     min={0}
                     max={100}
                     step={5}
-                    defaultValue={weight}
+                    value={weight}
                     onChange={(e) => handleWeightChange(tone.id, Number(e.target.value))}
+                    onPointerUp={(e) => handleWeightCommit(tone.id, Number((e.target as HTMLInputElement).value))}
                     className="flex-1 h-1.5 accent-primary"
                     disabled={loading}
                   />
@@ -185,14 +230,13 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
             })}
           </div>
         </div>
-      )}
 
       {/* Temperature slider */}
       <div>
         <p className="text-xs font-medium text-slate-custom-500 mb-2">
           Creativity
           <span className="ml-1 font-normal text-slate-custom-400">
-            ({account.temperature.toFixed(1)})
+            ({localTemperature.toFixed(1)})
           </span>
         </p>
         <input
@@ -200,8 +244,9 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
           min={0.1}
           max={1.5}
           step={0.1}
-          defaultValue={account.temperature}
+          value={localTemperature}
           onChange={(e) => handleTemperatureChange(Number(e.target.value))}
+          onPointerUp={(e) => scheduleCommit({ temperature: Number((e.target as HTMLInputElement).value) })}
           className="w-full h-1.5 accent-primary"
           disabled={loading}
         />
@@ -225,23 +270,28 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
         />
       </div>
 
-      {/* Image toggle */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-custom-600">Generate images (~1/3 of replies)</span>
-        <div
-          role="switch"
-          aria-checked={account.alwaysGenerateImage}
-          aria-label="Toggle image generation"
-          onClick={!loading ? () => patch({ alwaysGenerateImage: !account.alwaysGenerateImage }) : undefined}
-          className={`relative w-11 h-6 rounded-full transition-colors ${
-            account.alwaysGenerateImage ? "bg-primary" : "bg-slate-custom-200"
-          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-        >
-          <div
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-              account.alwaysGenerateImage ? "translate-x-5" : "translate-x-0"
-            }`}
-          />
+      {/* Image frequency slider */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-2">
+          Image frequency
+          <span className="ml-1 font-normal text-slate-custom-400">
+            {localImageFrequency === 0 ? "(off)" : `(${localImageFrequency}%)`}
+          </span>
+        </p>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={10}
+          value={localImageFrequency}
+          onChange={(e) => handleImageFrequencyChange(Number(e.target.value))}
+          onPointerUp={(e) => scheduleCommit({ imageFrequency: Number((e.target as HTMLInputElement).value) })}
+          className="w-full h-1.5 accent-primary"
+          disabled={loading}
+        />
+        <div className="flex justify-between text-[10px] text-slate-custom-400 mt-1">
+          <span>Off</span>
+          <span>100%</span>
         </div>
       </div>
 
@@ -256,4 +306,4 @@ export function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }
       </button>
     </div>
   );
-}
+});

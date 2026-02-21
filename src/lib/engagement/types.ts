@@ -39,7 +39,7 @@ export interface MonitoredAccountWithCredentials {
   username: string;
   tone: ReplyTone;
   customTonePrompt: string | null;
-  alwaysGenerateImage: boolean;
+  imageFrequency: number;
   lastSeenTweetId: string | null;
   xAccessToken: string;
   xRefreshToken: string;

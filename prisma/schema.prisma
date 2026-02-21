@@ -1716,8 +1716,8 @@ model MonitoredAccount {
   tone                ReplyTone         @default(NEUTRAL)
   /// Optional custom tone prompt override.
   customTonePrompt    String?
-  /// Always include a generated image with replies.
-  alwaysGenerateImage Boolean           @default(false)
+  /// Percentage (0–100) of replies that should include a generated image. 0 = disabled.
+  imageFrequency      Int               @default(0)
   /// Whether auto-reply is enabled for this account.
   enabled             Boolean           @default(true)
   /// Last tweet ID seen from this account (for polling).

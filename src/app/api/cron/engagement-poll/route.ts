@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
 
         let imageGenerated = false;
         let mediaIds: string[] | undefined;
-        if (account.alwaysGenerateImage && Math.random() < 1 / 3) {
+        if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
           const imgQuota = await engagementImageLimit(userId, tier, new Date());
           if (imgQuota.success) {
             try {
@@ -473,7 +473,7 @@ export async function POST(request: NextRequest) {
             let imageGenerated = false;
             let mediaIds: string[] | undefined;
 
-            if (account.alwaysGenerateImage && Math.random() < 1 / 3) {
+            if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
               const imgQuota = await engagementImageLimit(userId, tier, new Date());
               if (imgQuota.success) {
                 try {

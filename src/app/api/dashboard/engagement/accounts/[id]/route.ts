@@ -26,7 +26,7 @@ export async function PATCH(
   let body: {
     tone?: string;
     customTonePrompt?: string | null;
-    alwaysGenerateImage?: boolean;
+    imageFrequency?: number;
     enabled?: boolean;
     accountContext?: string | null;
     toneWeights?: Record<string, number> | null;
@@ -49,8 +49,11 @@ export async function PATCH(
   if (body.customTonePrompt !== undefined) {
     data.customTonePrompt = body.customTonePrompt ?? null;
   }
-  if (body.alwaysGenerateImage !== undefined) {
-    data.alwaysGenerateImage = Boolean(body.alwaysGenerateImage);
+  if (body.imageFrequency !== undefined) {
+    const freq = Math.round(Number(body.imageFrequency));
+    if (!isNaN(freq) && freq >= 0 && freq <= 100) {
+      data.imageFrequency = freq;
+    }
   }
   if (body.enabled !== undefined) {
     data.enabled = Boolean(body.enabled);

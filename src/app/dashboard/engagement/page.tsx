@@ -163,7 +163,7 @@ export default function EngagementPage() {
 
           {/* Account grid */}
           {loadingAccounts ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="h-44 bg-slate-custom-50 rounded-xl animate-pulse" />
               ))}
@@ -178,7 +178,7 @@ export default function EngagementPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {accounts.map((account) => (
                 <AccountCard
                   key={account.id}
