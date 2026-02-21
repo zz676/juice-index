@@ -28,17 +28,28 @@ interface AccountAnalyticsChartProps {
   accounts: MonitoredAccountRow[];
 }
 
-const DAYS_OPTIONS = [
-  { value: 7, label: "7 days" },
-  { value: 14, label: "14 days" },
-  { value: 30, label: "30 days" },
-  { value: 90, label: "90 days" },
-];
+type Granularity = "day" | "hour";
+
+const RANGE_OPTIONS: Record<Granularity, Array<{ value: number; label: string }>> = {
+  day: [
+    { value: 7, label: "7d" },
+    { value: 14, label: "14d" },
+    { value: 30, label: "30d" },
+    { value: 90, label: "90d" },
+  ],
+  hour: [
+    { value: 1, label: "24h" },
+    { value: 2, label: "48h" },
+    { value: 3, label: "3d" },
+    { value: 7, label: "7d" },
+  ],
+};
 
 export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     accounts.length === 1 ? accounts[0].id : null,
   );
+  const [granularity, setGranularity] = useState<Granularity>("day");
   const [days, setDays] = useState(30);
   const [data, setData] = useState<AnalyticsDataPoint[]>([]);
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -60,20 +71,45 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   useEffect(() => {
     if (!selectedAccountId) return;
     setLoading(true);
-    fetch(`/api/dashboard/engagement/analytics?accountId=${selectedAccountId}&days=${days}`)
+    fetch(
+      `/api/dashboard/engagement/analytics?accountId=${selectedAccountId}&days=${days}&granularity=${granularity}`,
+    )
       .then((r) => r.json())
       .then((d) => {
         setData(d.data ?? []);
         setSummary(d.summary ?? null);
       })
       .finally(() => setLoading(false));
-  }, [selectedAccountId, days]);
+  }, [selectedAccountId, days, granularity]);
+
+  const handleGranularityChange = (g: Granularity) => {
+    setGranularity(g);
+    // reset to a sensible default range for the new granularity
+    setDays(g === "hour" ? 1 : 30);
+  };
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? null;
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr + "T00:00:00");
+  const formatXAxisTick = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (granularity === "hour") {
+      return d.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
+    }
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const formatTooltipLabel = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (granularity === "hour") {
+      return d.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    }
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const CustomTooltip = ({
@@ -89,7 +125,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
     return (
       <div className="bg-white border border-slate-custom-200 rounded-xl shadow-lg px-4 py-3 text-xs">
         <p className="font-semibold text-slate-custom-700 mb-2">
-          {label ? formatDate(label) : ""}
+          {label ? formatTooltipLabel(label) : ""}
         </p>
         {payload.map((entry) => (
           <div key={entry.name} className="flex items-center gap-2 mb-1">
@@ -175,9 +211,26 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
           </div>
         </div>
 
-        {/* Days range selector */}
+        {/* Granularity toggle */}
+        <div className="flex items-center rounded-full bg-slate-custom-100 p-0.5 gap-0.5">
+          {(["day", "hour"] as Granularity[]).map((g) => (
+            <button
+              key={g}
+              onClick={() => handleGranularityChange(g)}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors capitalize ${
+                granularity === g
+                  ? "bg-white text-slate-custom-900 shadow-sm"
+                  : "text-slate-custom-500 hover:text-slate-custom-700"
+              }`}
+            >
+              {g === "day" ? "By Day" : "By Hour"}
+            </button>
+          ))}
+        </div>
+
+        {/* Range selector */}
         <div className="flex items-center gap-1">
-          {DAYS_OPTIONS.map((opt) => (
+          {RANGE_OPTIONS[granularity].map((opt) => (
             <button
               key={opt.value}
               onClick={() => setDays(opt.value)}
@@ -211,20 +264,22 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-icons-round text-[48px] text-slate-custom-300">bar_chart</span>
             <p className="mt-3 text-sm text-slate-custom-500">
-              No data for the selected account in the last {days} days.
+              No data for the selected account in the last{" "}
+              {granularity === "hour" && days === 1 ? "24 hours" : `${days} days`}.
             </p>
           </div>
         ) : (
           <>
             <h3 className="text-sm font-semibold text-slate-custom-700 mb-4">
-              Daily Activity — last {days} days
+              {granularity === "hour" ? "Hourly" : "Daily"} Activity —{" "}
+              {granularity === "hour" && days === 1 ? "last 24 hours" : `last ${days} days`}
             </h3>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="date"
-                  tickFormatter={formatDate}
+                  tickFormatter={formatXAxisTick}
                   tick={{ fontSize: 11, fill: "#94a3b8" }}
                   tickLine={false}
                   axisLine={false}
@@ -285,14 +340,18 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
           <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
             <p className="text-xs font-medium text-slate-custom-500 mb-1">Total Replies</p>
             <p className="text-2xl font-bold text-slate-custom-900">{summary.totalReplies}</p>
-            <p className="text-xs text-slate-custom-400 mt-0.5">Last {days} days</p>
+            <p className="text-xs text-slate-custom-400 mt-0.5">
+              {granularity === "hour" && days === 1 ? "Last 24 hours" : `Last ${days} days`}
+            </p>
           </div>
           <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
             <p className="text-xs font-medium text-slate-custom-500 mb-1">Total API Cost</p>
             <p className="text-2xl font-bold text-slate-custom-900">
               ${summary.totalCost.toFixed(4)}
             </p>
-            <p className="text-xs text-slate-custom-400 mt-0.5">Last {days} days</p>
+            <p className="text-xs text-slate-custom-400 mt-0.5">
+              {granularity === "hour" && days === 1 ? "Last 24 hours" : `Last ${days} days`}
+            </p>
           </div>
         </div>
       )}
