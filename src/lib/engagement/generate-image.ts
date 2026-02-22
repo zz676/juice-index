@@ -1,4 +1,3 @@
-import { createCanvas, loadImage } from "@napi-rs/canvas";
 import type { GenerateImageResult } from "./types";
 
 const DALLE3_ENDPOINT = "https://api.openai.com/v1/images/generations";
@@ -76,15 +75,5 @@ export async function generateImage(
     throw new Error("DALL-E returned no image data");
   }
 
-  // Resize to 1/3 of the generated resolution (1792x1024 → 597x341)
-  const srcBuf = Buffer.from(b64, "base64");
-  const src = await loadImage(srcBuf);
-  const w = Math.round(src.width / 3);
-  const h = Math.round(src.height / 3);
-  const canvas = createCanvas(w, h);
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(src, 0, 0, w, h);
-  const resizedB64 = canvas.toBuffer("image/png").toString("base64");
-
-  return { generated: true, imageBase64: resizedB64 };
+  return { generated: true, imageBase64: b64 };
 }
