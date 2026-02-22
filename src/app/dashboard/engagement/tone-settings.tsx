@@ -542,7 +542,7 @@ export function ToneSettings({ tones, onTonesChange, playgroundPreset }: ToneSet
   };
 
   return (
-    <div className="space-y-10">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* ── Tone Library ── */}
       <div className="space-y-6">
         {/* Add tone button */}
@@ -619,7 +619,7 @@ export function ToneSettings({ tones, onTonesChange, playgroundPreset }: ToneSet
             <p className="mt-3 text-sm text-slate-custom-500">No tones yet. Add a custom tone above.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {tones.map((tone) => (
               <ToneCard
                 key={tone.id}
@@ -631,9 +631,6 @@ export function ToneSettings({ tones, onTonesChange, playgroundPreset }: ToneSet
           </div>
         )}
       </div>
-
-      {/* Divider */}
-      <div className="border-t border-slate-custom-200" />
 
       {/* ── Playground ── */}
       <PlaygroundSection tones={tones} preset={playgroundPreset} />
