@@ -1,16 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-// We'll test the escapeHtml helper by exporting it, and the full message
-// format via a separate exported helper. See Task 2 for exports.
-
-// Inline copies for test-first writing — replace with real imports after Task 2.
-function escapeHtml(text: string): string {
-  throw new Error("not implemented");
-}
-
-function buildMessageText(authorUsername: string, replyText: string, tweetLinks: string): string {
-  throw new Error("not implemented");
-}
+import { escapeHtml, buildMessageText } from "./send-message";
 
 describe("escapeHtml", () => {
   it("passes through plain text unchanged", () => {
