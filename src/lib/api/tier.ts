@@ -1,3 +1,5 @@
+import { TIER_QUOTAS } from "./quotas";
+
 export type ApiTier = "FREE" | "STARTER" | "PRO" | "ENTERPRISE";
 
 export function normalizeTier(value: string | null | undefined): ApiTier {
@@ -18,15 +20,7 @@ export function hasTier(tier: ApiTier, minTier: ApiTier): boolean {
 }
 
 export function tierLimit(tier: ApiTier): number {
-  switch (tier) {
-    case "STARTER":
-      return 1000;
-    case "PRO":
-      return 10000;
-    case "ENTERPRISE":
-      return 100000;
-    case "FREE":
-    default:
-      return 10; // Lower limit for internal tools/dashboard usage? Or keep as 100?
-  }
+  return TIER_QUOTAS[tier].dailyApi;
 }
+
+export { TIER_QUOTAS, getQuota, getModelQuota, type TierQuota, type ModelQuotas } from "./quotas";

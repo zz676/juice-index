@@ -14,8 +14,18 @@ out/
 .DS_Store
 *.pem
 
+# typescript
+*.tsbuildinfo
+
 # debug
 npm-debug.log*
 
 # vercel
 .vercel
+
+# worktrees
+.worktrees/
+
+# playwright
+.playwright-mcp/
+.worktrees

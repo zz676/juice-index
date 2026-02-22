@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "API Documentation",
+  description:
+    "Explore the Juice Index REST API. Access EV production data, insurance registrations, battery supply chain metrics, and market analytics.",
+};
+
 export default function DocsPage() {
   // Swagger UI is loaded from a CDN to keep dependencies minimal.
   const specUrl = "/api/openapi.json";

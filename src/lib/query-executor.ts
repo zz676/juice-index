@@ -1,25 +1,12 @@
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { normalizeTableName } from "@/lib/data-explorer/table-name";
-
-const ALLOWED_TABLES = [
-  "eVMetric",
-  "automakerRankings",
-  "caamNevSales",
-  "cpcaNevRetail",
-  "cpcaNevProduction",
-  "nevSalesSummary",
-  "chinaPassengerInventory",
-  "chinaDealerInventoryFactor",
-  "chinaViaIndex",
-  "chinaBatteryInstallation",
-  "batteryMakerMonthly",
-  "batteryMakerRankings",
-  "plantExports",
-  "vehicleSpec",
-] as const;
-
-type AllowedTable = (typeof ALLOWED_TABLES)[number];
+import { normalizeTableName } from "@/lib/studio/table-name";
+import {
+  ALLOWED_TABLE_NAMES,
+  getTableDef,
+  getFieldNames,
+  getAllowedTablesList,
+} from "@/lib/studio/field-registry";
 
 const MAX_RESULTS = 1000;
 const QUERY_TIMEOUT = 5000;
@@ -109,9 +96,9 @@ export async function executeQuery(request: QueryRequest): Promise<QueryResult> 
 
   const normalizedTable = normalizeTableName(table);
 
-  if (!ALLOWED_TABLES.includes(normalizedTable as AllowedTable)) {
+  if (!ALLOWED_TABLE_NAMES.includes(normalizedTable)) {
     throw new Error(
-      `Table "${table}" is not allowed. Allowed tables: ${ALLOWED_TABLES.join(", ")}`
+      `Table "${table}" is not allowed. Allowed tables: ${ALLOWED_TABLE_NAMES.join(", ")}`
     );
   }
 
@@ -156,86 +143,11 @@ export async function executeQuery(request: QueryRequest): Promise<QueryResult> 
 }
 
 export function getTableInfo(table: string): { fields: string[]; description: string } | null {
-  const tableInfo: Record<string, { fields: string[]; description: string }> = {
-    eVMetric: {
-      fields: [
-        "brand",
-        "metric",
-        "periodType",
-        "year",
-        "period",
-        "value",
-        "yoyChange",
-        "momChange",
-        "marketShare",
-        "ranking",
-      ],
-      description: "Brand delivery/sales data",
-    },
-    automakerRankings: {
-      fields: ["year", "month", "ranking", "automaker", "value", "yoyChange", "momChange", "marketShare"],
-      description: "Monthly automaker sales rankings",
-    },
-    caamNevSales: {
-      fields: ["year", "month", "value", "yoyChange", "momChange", "unit"],
-      description: "CAAM official NEV sales",
-    },
-    cpcaNevRetail: {
-      fields: ["year", "month", "value", "yoyChange", "momChange", "unit"],
-      description: "CPCA NEV retail sales",
-    },
-    cpcaNevProduction: {
-      fields: ["year", "month", "value", "yoyChange", "momChange", "unit"],
-      description: "CPCA NEV production volume",
-    },
-    chinaPassengerInventory: {
-      fields: ["year", "month", "value", "unit"],
-      description: "Dealer + factory inventory levels",
-    },
-    chinaDealerInventoryFactor: {
-      fields: ["year", "month", "value"],
-      description: "Dealer inventory coefficient",
-    },
-    chinaViaIndex: {
-      fields: ["year", "month", "value", "unit"],
-      description: "Vehicle Inventory Alert Index",
-    },
-    chinaBatteryInstallation: {
-      fields: ["year", "month", "installation", "production", "unit"],
-      description: "Total battery installation & production",
-    },
-    batteryMakerMonthly: {
-      fields: ["maker", "year", "month", "installation", "production", "yoyChange"],
-      description: "Battery maker monthly performance",
-    },
-    batteryMakerRankings: {
-      fields: ["scope", "periodType", "year", "month", "ranking", "maker", "value", "marketShare"],
-      description: "Battery maker market share rankings",
-    },
-    plantExports: {
-      fields: ["plant", "brand", "year", "month", "value", "yoyChange"],
-      description: "Exports by manufacturing plant",
-    },
-    vehicleSpec: {
-      fields: ["brand", "model", "variant", "startingPrice", "currentPrice", "rangeCltc", "acceleration", "batteryCapacity", "vehicleType"],
-      description: "Vehicle specifications",
-    },
-    nevSalesSummary: {
-      fields: ["year", "startDate", "endDate", "retailSales", "retailYoy", "wholesaleSales", "wholesaleYoy"],
-      description: "Weekly/bi-weekly sales flash reports",
-    },
-  };
-
-  return tableInfo[table] || null;
+  const def = getTableDef(table);
+  if (!def) return null;
+  return { fields: getFieldNames(table), description: def.description };
 }
 
 export function getAllowedTables(): Array<{ name: string; description: string; fields: string[] }> {
-  return ALLOWED_TABLES.map((table) => {
-    const info = getTableInfo(table);
-    return {
-      name: table,
-      description: info?.description || "",
-      fields: info?.fields || [],
-    };
-  });
+  return getAllowedTablesList();
 }

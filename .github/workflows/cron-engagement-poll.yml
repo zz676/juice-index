@@ -1,0 +1,25 @@
+name: Cron – Engagement Poll
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub Actions minimum interval)
+    - cron: "*/5 * * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger engagement-poll endpoint
+        run: |
+          body=$(curl -s -w "\n%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/engagement-poll" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$body" | tail -1)
+          response_body=$(echo "$body" | sed '$d')
+          echo "HTTP status: $http_code"
+          echo "Response: $response_body"
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Cron endpoint returned HTTP $http_code"
+            exit 1
+          fi

@@ -32,8 +32,34 @@ export async function GET() {
       orderBy: [{ year: "desc" }, { month: "desc" }],
     });
 
+    // Fetch latest NEV production data
+    const latestProduction = await prisma.cpcaNevProduction.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    });
+
+    // Fetch latest battery installation data
+    const latestBattery = await prisma.chinaBatteryInstallation.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    });
+
+    // Fetch latest NEV exports (aggregate all plants for most recent month)
+    const latestExportRecord = await prisma.plantExports.findFirst({
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+    });
+    let exportTotal = 0;
+    let exportYear = 0;
+    let exportMonth = 0;
+    if (latestExportRecord) {
+      exportYear = latestExportRecord.year;
+      exportMonth = latestExportRecord.month;
+      const allExports = await prisma.plantExports.findMany({
+        where: { year: exportYear, month: exportMonth },
+      });
+      exportTotal = allExports.reduce((sum, e) => sum + e.value, 0);
+    }
+
     // If no data exists, return an empty-but-structured response
-    if (!recentSummaries.length && !latestRetail && !topAutomaker) {
+    if (!recentSummaries.length && !latestRetail && !topAutomaker && !latestProduction && !latestBattery && !latestExportRecord) {
       return NextResponse.json({
         cards: [],
         chart: { labels: [], currentYear: [], previousYear: [] },
@@ -79,7 +105,40 @@ export async function GET() {
         }
       : { icon: "leaderboard", label: "Leading OEM", value: "—" };
 
-    const cards = [penetrationCard, weeklyCard, oemCard];
+    const productionCard = latestProduction
+      ? {
+          icon: "precision_manufacturing",
+          label: "NEV Monthly Production",
+          value: `${(latestProduction.value / 10000).toFixed(1)}万`,
+          change: latestProduction.yoyChange != null
+            ? `${latestProduction.yoyChange >= 0 ? "+" : ""}${latestProduction.yoyChange.toFixed(1)}% YoY`
+            : "",
+          up: (latestProduction.yoyChange ?? 0) >= 0,
+        }
+      : { icon: "precision_manufacturing", label: "NEV Monthly Production", value: "—" };
+
+    const batteryCard = latestBattery
+      ? {
+          icon: "battery_charging_full",
+          label: "Battery Installation",
+          value: `${latestBattery.installation.toFixed(1)} GWh`,
+          change: latestBattery.production != null
+            ? `Prod: ${latestBattery.production.toFixed(1)} GWh`
+            : "",
+          up: true,
+        }
+      : { icon: "battery_charging_full", label: "Battery Installation", value: "—" };
+
+    const exportsCard = latestExportRecord
+      ? {
+          icon: "public",
+          label: "Total NEV Exports",
+          value: `${(exportTotal / 10000).toFixed(1)}万`,
+          badge: `${exportYear}/${String(exportMonth).padStart(2, "0")}`,
+        }
+      : { icon: "public", label: "Total NEV Exports", value: "—" };
+
+    const cards = [penetrationCard, weeklyCard, oemCard, productionCard, batteryCard, exportsCard];
 
     // Build chart data from recent summaries (reverse to chronological order)
     const chronological = [...recentSummaries].reverse();

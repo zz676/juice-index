@@ -1,0 +1,246 @@
+# Tier Feature & Quota System
+
+## Overview
+
+Juice Index uses a 4-tier system for gating features and enforcing quotas. The centralized configuration lives in `/src/lib/api/quotas.ts` as the single source of truth for all tier limits. The studio page sources all quota limits (global and per-model) from the `/api/dashboard/studio/usage` endpoint to avoid stale-tier display issues.
+
+## Tiers
+
+| Tier | Display Name | Visibility | Price |
+|------|-------------|------------|-------|
+| FREE | Analyst (Free) | Public | $0/mo |
+| STARTER | Starter | Public | $19.99/mo ($16.99/mo annual) |
+| PRO | Pro | Public | $49.99/mo ($44.99/mo annual) |
+| ENTERPRISE | Institutional | Public | Custom |
+
+## Quota Summary
+
+| Quota | Free | Starter | Pro | Enterprise |
+|-------|------|---------|-----|------------|
+| Daily API requests | 0 | 500 | 1,000 | 100,000 |
+| Monthly API cap | 0 | 10,000 | 25,000 | Unlimited |
+| API keys max | 0 | 1 | 2 | 10 |
+| Studio queries/day (global) | 3 | 15 | 50 | Unlimited |
+| Chart generations/day | 1 | 5 | 20 | Unlimited |
+| AI post drafts/day (global) | 1 | 5 | 20 | Unlimited |
+| Stored draft posts | 5 | 20 | Unlimited | Unlimited |
+| Pending scheduled posts | 0 | 5 | 10 | Unlimited |
+| CSV exports/month | 0 | 10 | 50 | Unlimited |
+| Weekly publishes | 1 | 10 | 10 | Unlimited |
+| Data delay (days) | 30 | 0 | 0 | 0 |
+| Historical data (months) | 12 | 60 | 60 | Unlimited |
+| Seats | 1 | 1 | 1 | 5+ |
+| X accounts linked | 0 | 1 | 1 | 5 |
+
+## Per-Model Daily Quotas
+
+Each AI model has its own daily sub-limit within the global cap. Both the global cap and the per-model cap must pass for a request to succeed.
+
+### Studio Queries (per day)
+
+| Model | Free | Starter | Pro | Enterprise |
+|-------|------|---------|-----|------------|
+| GPT-4o Mini | 3 | 15 | 50 | Unlimited |
+| GPT-4o | — | 5 | 25 | Unlimited |
+| Claude 3.5 Sonnet | — | 5 | 25 | Unlimited |
+| Claude Opus 4 | — | — | 10 | Unlimited |
+
+### Post Drafts (per day)
+
+| Model | Free | Starter | Pro | Enterprise |
+|-------|------|---------|-----|------------|
+| GPT-4o Mini | 1 | 5 | 20 | Unlimited |
+| GPT-4o | — | 3 | 10 | Unlimited |
+| Claude 3.5 Sonnet | — | 3 | 10 | Unlimited |
+| Claude Opus 4 | — | — | 5 | Unlimited |
+
+## Architecture
+
+### Centralized Config (`/src/lib/api/quotas.ts`)
+
+All tier quotas are defined in `TIER_QUOTAS` object. Server-side files import from this module:
+
+- `/src/lib/api/tier.ts` — re-exports `TIER_QUOTAS` and uses it for `tierLimit()`
+- `/src/lib/api/auth.ts` — uses `TIER_QUOTAS` for API rate limiting
+- `/src/lib/ratelimit.ts` — uses `TIER_QUOTAS` in `getStudioUsage()` to compute limits
+- `/src/app/dashboard/billing/tier-display.ts` — uses `TIER_QUOTAS` for display limits
+- `/src/app/dashboard/billing/api-usage-card.tsx` — uses `TIER_QUOTAS` for per-model quota display
+
+The studio page (`/src/app/dashboard/studio/page.tsx`) does **not** import `TIER_QUOTAS`. It reads all limits from the `/api/dashboard/studio/usage` response to avoid stale data from the cached `/api/dashboard/tier` endpoint (`max-age=60`).
+
+The `TierQuota` type includes:
+- `studioQueriesByModel: Record<string, number>` — per-model query sub-limits
+- `postDraftsByModel: Record<string, number>` — per-model draft sub-limits
+- `getModelQuota(tier, modelId, category)` — helper to look up a model's limit
+
+### Rate Limiting (`/src/lib/ratelimit.ts`)
+
+Separate rate limit functions with distinct Redis key prefixes:
+
+**Global limiters:**
+- `rateLimitDaily()` — API requests (`rl:{userId}:{date}`)
+- `studioQueryLimit()` — AI queries (`studio:query:{userId}:{date}`)
+- `studioChartLimit()` — chart generation (`studio:chart:{userId}:{date}`)
+- `studioPostDraftLimit()` — post drafts (`studio:post:{userId}:{date}`)
+- `csvExportMonthlyLimit()` — CSV exports (`csv:{userId}:{yearMonth}`)
+- `weeklyPublishLimit()` — X publishes (`publish:{userId}:{isoWeek}`)
+
+**Per-model limiters:**
+- `studioModelQueryLimit()` — per-model queries (`studio:query:model:{modelId}:{userId}:{date}`)
+- `studioModelPostDraftLimit()` — per-model drafts (`studio:post:model:{modelId}:{userId}:{date}`)
+
+**Composite enforcers (check global + per-model):**
+- `enforceStudioQueryLimits(userId, tier, modelId, now)` — returns `{ success, failedOn: "global" | "model" | null }`
+- `enforceStudioPostDraftLimits(userId, tier, modelId, now)` — same pattern
+
+**Read-only:**
+- `getWeeklyPublishUsage()` — read-only publish usage (no increment)
+- `getStudioUsage()` — aggregated usage + limits including per-model breakdown (returned via `/api/dashboard/studio/usage`); single source of truth for the studio UI
+
+### API Endpoint Tiers
+
+- `/api/v1/brands/*` — requires PRO
+- `/api/v1/industry/*` — requires ENTERPRISE
+
+### AI Model Access
+
+The Studio Analyst Composer (Step 4) supports multiple AI models gated by tier. Model definitions live in `/src/lib/studio/models.ts`.
+
+| Model | Provider | Min Tier | API Pricing (per MTok) | Description |
+|-------|----------|----------|------------------------|-------------|
+| GPT-4o Mini | OpenAI | FREE | $0.15 in / $0.60 out | Fast & affordable |
+| GPT-4o | OpenAI | STARTER | $2.50 in / $10.00 out | Best reasoning from OpenAI |
+| Claude 3.5 Sonnet | Anthropic | STARTER | $3.00 in / $15.00 out | Balanced speed & quality |
+| Claude Opus 4 | Anthropic | PRO | $15.00 in / $75.00 out | Most capable model |
+
+*Pricing reflects provider API costs (OpenAI / Anthropic) as of early 2025. These are the costs Juice Index pays per request — end users are not billed per token.*
+
+Users can also adjust the temperature (0.0–1.0) for generation creativity. The model dropdown shows all models but locks those above the user's tier with a lock icon. Exhausted models (per-model quota reached) are also disabled with a usage indicator.
+
+The backend validates model access and per-model quotas at:
+- `POST /api/dashboard/studio/generate-post` — composite global + per-model draft enforcement
+- `POST /api/dashboard/studio/generate-chart` — composite global + per-model query enforcement (Mode 1 only; Mode 0 uses global-only since no AI model is called)
+
+Requests for a locked model return 403. Per-model quota exceeded returns 429 with `modelLimited: true`.
+
+### Feature Gates
+
+- **X posting/scheduling**: Requires STARTER+ (FREE tier blocked); weekly publish quota enforced
+- **Chart watermark**: FREE tier charts have "Juice Index" watermark overlay
+- **CSV export**: FREE tier blocked, PRO limited to 50/month
+- **API keys**: FREE gets 0, PRO gets 2, ENTERPRISE gets 10
+- **Draft posts**: FREE limited to 5, PRO+ unlimited
+- **Scheduled posts**: FREE gets 0, PRO gets 10 pending max
+
+### X Character Limits
+
+Post character limits are determined by whether the user has X Premium enabled on their linked X account:
+
+| Account Type | Character Limit |
+|-------------|----------------|
+| X Free | 280 |
+| X Premium | 25,000 |
+
+The `isXPremium` flag is stored on the `XAccount` model and can be toggled by users in **Settings > Connected Accounts**. The character limit is enforced:
+
+- **Backend**: `POST /api/dashboard/user-posts` and `PATCH /api/dashboard/user-posts/[id]` validate content length against the dynamic limit
+- **Frontend**: Studio textarea and publish modal show a dynamic character counter with color warnings (green → yellow at 90% → red when over)
+- **LLM Prompt**: The AI draft generation prompt includes the character limit instruction so generated drafts respect the user's limit
+
+The utility `src/lib/x/char-limits.ts` exports `getXCharLimit(isXPremium)` used by all backend routes.
+
+## How to Reset Quota Usage
+
+All quota counters are stored in Upstash Redis. You can reset a user's counters via the Upstash REST API. Credentials are in `.env.local` (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`).
+
+### 1. Find the user ID
+
+The user ID is the Supabase auth UUID (e.g., `f26fa805-93ec-4ad0-8621-483c381c4d98`). You can find it in the `juice_api_subscriptions` table or from the Supabase dashboard.
+
+### 2. Determine the Redis key
+
+Date keys use UTC in `YYYYMMDD` format. Weekly keys use ISO week format `YYYY-Www`.
+
+| Quota | Redis key pattern | Reset window |
+|-------|-------------------|--------------|
+| Studio queries (global) | `studio:query:{userId}:{YYYYMMDD}` | Daily |
+| Chart generations | `studio:chart:{userId}:{YYYYMMDD}` | Daily |
+| Post drafts (global) | `studio:post:{userId}:{YYYYMMDD}` | Daily |
+| Per-model queries | `studio:query:model:{modelId}:{userId}:{YYYYMMDD}` | Daily |
+| Per-model drafts | `studio:post:model:{modelId}:{userId}:{YYYYMMDD}` | Daily |
+| API requests | `rl:{userId}:{YYYYMMDD}` | Daily |
+| CSV exports | `csv:{userId}:{YYYYMM}` | Monthly |
+| Weekly publishes | `publish:{userId}:{YYYY-Www}` | Weekly |
+
+Model IDs: `gpt-4o-mini`, `gpt-4o`, `claude-3-5-sonnet`, `claude-opus-4`
+
+### 3. Reset via curl
+
+```bash
+# Variables
+UPSTASH_URL="https://relaxed-bass-20761.upstash.io"
+UPSTASH_TOKEN="<token from .env.local>"
+USER_ID="<user-uuid>"
+TODAY=$(date -u +%Y%m%d)
+
+# Check current value
+curl -s "$UPSTASH_URL/get/studio:query:$USER_ID:$TODAY" \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+
+# Reset (delete the key — next request starts from 0)
+curl -s "$UPSTASH_URL/del/studio:query:$USER_ID:$TODAY" \
+  -X POST \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+```
+
+### 4. Reset all studio counters for a user at once
+
+```bash
+# Reset global counters
+for PREFIX in studio:query studio:chart studio:post; do
+  curl -s "$UPSTASH_URL/del/$PREFIX:$USER_ID:$TODAY" \
+    -X POST -H "Authorization: Bearer $UPSTASH_TOKEN"
+done
+
+# Reset per-model counters
+for MODEL in gpt-4o-mini gpt-4o claude-3-5-sonnet claude-opus-4; do
+  for PREFIX in studio:query:model studio:post:model; do
+    curl -s "$UPSTASH_URL/del/$PREFIX:$MODEL:$USER_ID:$TODAY" \
+      -X POST -H "Authorization: Bearer $UPSTASH_TOKEN"
+  done
+done
+```
+
+### 5. Scan for all keys belonging to a user
+
+```bash
+curl -s "$UPSTASH_URL/scan/0/match/*:$USER_ID:*/count/100" \
+  -H "Authorization: Bearer $UPSTASH_TOKEN"
+```
+
+Counters auto-expire at UTC midnight (daily) or end of period (weekly/monthly) via TTL set at increment time. Deleting a key is safe — it will be re-created on the next request.
+
+## Pricing Page Feature Lists
+
+The landing page pricing cards (`src/components/landing/PricingToggle.tsx`) show a curated subset of features per tier. These are aligned with `quotas.ts` values:
+
+| Tier | Features Displayed |
+|------|--------------------|
+| Analyst (Free) | Dashboard with 30-day delayed data · 3 Juice AI queries/day · 1 chart generation/day · 1-year historical data |
+| Starter | Real-time data (no delay) · 15 Juice AI queries/day · 10 CSV exports/month · 5-year historical data · X posting & scheduling |
+| Pro | 50 Juice AI queries/day · 20 chart generations/day · 50 CSV exports/month · Claude Opus 4 model access · Engagement Center |
+| Institutional | Unlimited AI queries & charts · Full API access (10 keys) · 5+ seat licenses · Dedicated analyst support |
+
+## Key Files
+
+- `src/lib/api/quotas.ts` — centralized tier config with per-model quotas
+- `src/lib/api/tier.ts` — imports from quotas, re-exports `getModelQuota`
+- `src/lib/api/auth.ts` — uses `TIER_QUOTAS` for API rate limiting
+- `src/lib/ratelimit.ts` — global + per-model rate limiters and composite enforcers
+- `src/lib/studio/models.ts` — AI model registry and tier-based access helpers
+- `src/app/api/dashboard/studio/generate-chart/route.ts` — studio rate limits with per-model enforcement
+- `src/app/api/dashboard/studio/generate-post/route.ts` — post draft limits with per-model enforcement
+- `src/app/api/dashboard/studio/usage/route.ts` — returns per-model usage breakdown
+- `src/app/dashboard/studio/page.tsx` — model dropdowns with quota indicators
+- `src/app/dashboard/billing/api-usage-card.tsx` — shows per-model quota section
+- `src/app/api/dashboard/tier/route.ts` — client-facing tier endpoint

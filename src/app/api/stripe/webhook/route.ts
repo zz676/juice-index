@@ -4,6 +4,9 @@ import { stripe, tierFromPrice } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
+/** Reject events created more than 5 minutes ago (Stripe recommendation). */
+const MAX_EVENT_AGE_SECONDS = 300;
+
 export async function POST(request: Request) {
   const sig = request.headers.get("stripe-signature");
   if (!sig) {
@@ -18,6 +21,23 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: "BAD_SIGNATURE", code: "BAD_SIGNATURE", message }, { status: 400 });
+  }
+
+  // Clock tolerance: reject events older than 5 minutes
+  const eventAge = Math.floor(Date.now() / 1000) - event.created;
+  if (eventAge > MAX_EVENT_AGE_SECONDS) {
+    return NextResponse.json(
+      { error: "STALE_EVENT", code: "STALE_EVENT", message: "Event is too old" },
+      { status: 400 },
+    );
+  }
+
+  // Idempotency: skip events we've already processed
+  const existing = await prisma.stripeWebhookEvent.findUnique({
+    where: { id: event.id },
+  });
+  if (existing) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   // We only need a small set of events to keep subscription state correct.
@@ -98,6 +118,15 @@ export async function POST(request: Request) {
         cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
       },
     });
+  }
+
+  // Record event as processed for idempotency
+  try {
+    await prisma.stripeWebhookEvent.create({
+      data: { id: event.id, eventType: event.type },
+    });
+  } catch {
+    // Ignore duplicate key errors (race condition between parallel webhook deliveries)
   }
 
   return NextResponse.json({ received: true });

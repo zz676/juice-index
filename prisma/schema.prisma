@@ -6,6 +6,19 @@ datasource db {
   provider = "postgresql"
 }
 
+/// Tracks processed Stripe webhook events for idempotency.
+model StripeWebhookEvent {
+  /// Stripe event ID (e.g. evt_xxx).
+  id          String   @id
+  /// Event type (e.g. customer.subscription.updated).
+  eventType   String
+  /// Timestamp when the event was processed.
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+  @@map("juice_stripe_webhook_events")
+}
+
 /// Tracks AI usage metrics, costs, and outcomes for text and image generation.
 model AIUsage {
   /// Primary identifier for the record.
@@ -456,8 +469,15 @@ model User {
   Session           Session[]
   UserPreference    UserPreference?
   XAccount          XAccount?
+  Notification      Notification[]
   subscriptions     ApiSubscription[]
   apiKeys           ApiKey[]
+  userPosts         UserPost[]
+  MonitoredAccount  MonitoredAccount[]
+  EngagementReply   EngagementReply[]
+  FollowingCache    FollowingCache[]
+  EngagementConfig  EngagementConfig?
+  UserTone          UserTone[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -553,6 +573,10 @@ model XAccount {
   refreshToken   String
   /// Timestamp for token expires.
   tokenExpiresAt DateTime
+  /// Whether the user has X Premium (25k char limit vs 280).
+  isXPremium     Boolean  @default(false)
+  /// Set to true when the refresh token is invalidated; cleared on successful reconnect.
+  tokenError     Boolean  @default(false)
   /// Timestamp when the record was created.
   createdAt      DateTime @default(now())
   /// Timestamp when the record was last updated.
@@ -1396,7 +1420,7 @@ model NioPowerSnapshot {
 enum AuthProvider {
   GOOGLE
   GITHUB
-  TWITTER
+  X
 }
 
 enum Brand {
@@ -1545,6 +1569,27 @@ enum ScrapeStatus {
   PENDING
 }
 
+enum ReplyTone {
+  HUMOR
+  SARCASTIC
+  HUGE_FAN
+  CHEERS
+  NEUTRAL
+  PROFESSIONAL
+}
+
+enum EngagementReplyStatus {
+  PENDING
+  GENERATING
+  POSTING
+  POSTED
+  FAILED
+  SKIPPED
+  SENT_TO_TELEGRAM
+  POSTED_T
+  DISCARDED
+}
+
 model ApiKey {
   id                String    @id @default(cuid())
   userId            String
@@ -1569,7 +1614,7 @@ model ApiKey {
 
 model ApiRequestLog {
   id             String   @id @default(cuid())
-  apiKeyId       String
+  apiKeyId       String?
   userId         String
   endpoint       String
   method         String
@@ -1579,7 +1624,7 @@ model ApiRequestLog {
   tierAtRequest  String?
   createdAt      DateTime @default(now())
 
-  ApiKey         ApiKey   @relation(fields: [apiKeyId], references: [id])
+  ApiKey         ApiKey?  @relation(fields: [apiKeyId], references: [id])
 
   @@index([apiKeyId])
   @@index([userId])
@@ -1602,6 +1647,280 @@ model ApiSubscription {
 
   User                 User      @relation(fields: [userId], references: [id])
   @@map("juice_api_subscriptions")
+}
+
+/// User-authored posts for publishing to X (Twitter).
+model UserPost {
+  id           String         @id @default(cuid())
+  userId       String
+  content      String
+  status       UserPostStatus @default(DRAFT)
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+  tweetId      String?
+  tweetUrl     String?
+  lastError    String?
+  attempts     Int            @default(0)
+  imageBase64  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  User         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([status, scheduledFor])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("juice_user_posts")
+}
+
+enum UserPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum NotificationType {
+  DIGEST_READY
+  ALERT
+  WELCOME
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  User      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, read])
+  @@map("juice_notifications")
+}
+
+/// X account followed/monitored for engagement auto-replies.
+model MonitoredAccount {
+  /// Primary identifier for the record.
+  id                  String            @id @default(cuid())
+  /// Identifier of the related user.
+  userId              String
+  /// X user identifier of the monitored account.
+  xUserId             String
+  /// Username/handle of the monitored account.
+  username            String
+  /// Human-friendly display name.
+  displayName         String?
+  /// URL for avatar.
+  avatarUrl           String?
+  /// Reply tone to use for this account.
+  tone                ReplyTone         @default(NEUTRAL)
+  /// Optional custom tone prompt override.
+  customTonePrompt    String?
+  /// Percentage (0–100) of replies that should include a generated image. 0 = disabled.
+  imageFrequency      Int               @default(0)
+  /// Whether auto-reply is enabled for this account.
+  enabled             Boolean           @default(true)
+  /// Whether replies should be auto-posted to X (true) or sent to Telegram for manual posting (false).
+  autoPost              Boolean           @default(false)
+  /// When true, this account runs during user-level pause schedule windows.
+  ignorePauseSchedule   Boolean           @default(false)
+  /// Last tweet ID seen from this account (for polling).
+  lastSeenTweetId     String?
+  /// Timestamp when the account was last polled.
+  lastCheckedAt       DateTime?
+  /// Free-text description of the account for personalization context.
+  accountContext      String?
+  /// Weighted tone map: { userToneId: weight }. Null = use legacy tone field.
+  toneWeights         Json?
+  /// Per-account temperature for reply generation.
+  temperature         Float             @default(0.8)
+  /// How often (in minutes) to poll this account. Defaults to every 5 minutes.
+  pollInterval        Int               @default(5)
+  /// Timestamp when the record was created.
+  createdAt           DateTime          @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt           DateTime          @updatedAt
+  User                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  EngagementReply     EngagementReply[]
+
+  @@unique([userId, xUserId])
+  @@index([userId])
+  @@index([enabled])
+  @@map("juice_monitored_accounts")
+}
+
+/// Auto-generated reply to a monitored account's tweet.
+model EngagementReply {
+  /// Primary identifier for the record.
+  id                  String                @id @default(cuid())
+  /// Identifier of the related user.
+  userId              String
+  /// Identifier of the monitored account that triggered this reply.
+  monitoredAccountId  String
+  /// X tweet ID that was replied to.
+  sourceTweetId       String
+  /// Text content of the source tweet.
+  sourceTweetText     String?
+  /// URL of the source tweet.
+  sourceTweetUrl      String?
+  /// Timestamp when the source tweet was published on X.
+  sourceTweetCreatedAt DateTime?
+  /// Generated reply text.
+  replyText           String?
+  /// URL of the generated reply image.
+  replyImageUrl       String?
+  /// Tone used for this reply (legacy enum, kept for existing records).
+  tone                ReplyTone
+  /// UserTone id used for this reply (new system).
+  userToneId          String?
+  /// Snapshot of the tone name at generation time.
+  userToneName        String?
+  /// Workflow status for the record.
+  status              EngagementReplyStatus @default(PENDING)
+  /// X tweet ID of the posted reply.
+  replyTweetId        String?
+  /// URL of the posted reply on X.
+  replyTweetUrl       String?
+  /// Error message if the reply failed.
+  lastError           String?
+  /// Number of posting attempts.
+  attempts            Int                   @default(0)
+  /// AI text generation cost in USD.
+  textGenerationCost  Float                 @default(0)
+  /// Image generation cost in USD.
+  imageGenerationCost Float                 @default(0)
+  /// X API call cost in USD.
+  apiCallCost         Float                 @default(0)
+  /// Total cost in USD.
+  totalCost           Float                 @default(0)
+  /// Timestamp when the record was created.
+  createdAt           DateTime              @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt           DateTime              @updatedAt
+  User                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MonitoredAccount    MonitoredAccount      @relation(fields: [monitoredAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status])
+  @@index([monitoredAccountId])
+  @@map("juice_engagement_replies")
+}
+
+/// Cache of X accounts that a user follows (for the monitored account picker).
+model FollowingCache {
+  /// Primary identifier for the record.
+  id          String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId      String
+  /// X user identifier of the followed account.
+  xUserId     String
+  /// Username/handle of the followed account.
+  username    String
+  /// Human-friendly display name.
+  displayName String?
+  /// URL for avatar.
+  avatarUrl   String?
+  /// Timestamp when the record was created.
+  createdAt   DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt   DateTime @updatedAt
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, xUserId])
+  @@index([userId])
+  @@map("juice_following_cache")
+}
+
+/// Global engagement auto-reply configuration per user.
+model EngagementConfig {
+  /// Primary identifier for the record.
+  id             String          @id @default(cuid())
+  /// Identifier of the related user.
+  userId         String          @unique
+  /// Whether all auto-replies are globally paused.
+  globalPaused      Boolean         @default(false)
+  /// When true, active pause schedule windows are bypassed (force-resume override).
+  scheduleOverride  Boolean         @default(false)
+  /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
+  timezone          String          @default("America/New_York")
+  /// Timestamp when the record was created.
+  createdAt      DateTime        @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt      DateTime        @updatedAt
+  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PauseSchedules PauseSchedule[]
+
+  @@map("juice_engagement_configs")
+}
+
+/// A daily time window during which auto-replies are automatically paused.
+model PauseSchedule {
+  /// Primary identifier for the record.
+  id                 String           @id @default(cuid())
+  /// Identifier of the related engagement config.
+  engagementConfigId String
+  /// Optional human-friendly label (e.g. "Overnight").
+  label              String?
+  /// Window start time in "HH:mm" 24-hour format.
+  startTime          String
+  /// Window end time in "HH:mm" 24-hour format.
+  endTime            String
+  /// Whether this schedule is active.
+  enabled            Boolean          @default(true)
+  /// Timestamp when the record was created.
+  createdAt          DateTime         @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt          DateTime         @updatedAt
+  EngagementConfig   EngagementConfig @relation(fields: [engagementConfigId], references: [id], onDelete: Cascade)
+  PauseExceptions    PauseException[]
+
+  @@index([engagementConfigId])
+  @@map("juice_pause_schedules")
+}
+
+/// A specific date on which a pause schedule should be skipped.
+model PauseException {
+  /// Primary identifier for the record.
+  id              String        @id @default(cuid())
+  /// Identifier of the related pause schedule.
+  pauseScheduleId String
+  /// The date to skip in "YYYY-MM-DD" format.
+  date            String
+  /// Timestamp when the record was created.
+  createdAt       DateTime      @default(now())
+  PauseSchedule   PauseSchedule @relation(fields: [pauseScheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([pauseScheduleId, date])
+  @@map("juice_pause_exceptions")
+}
+
+/// Per-user editable tone definitions for engagement reply generation.
+model UserTone {
+  /// Primary identifier for the record.
+  id        String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId    String
+  /// Display name for the tone (e.g. "Humor", "My Custom Tone").
+  name      String
+  /// Full system prompt text for this tone.
+  prompt    String   @db.Text
+  /// UI color key: slate, blue, yellow, orange, pink, green, purple, teal.
+  color     String   @default("slate")
+  /// Timestamp when the record was created.
+  createdAt DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("juice_user_tones")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)

@@ -1,0 +1,497 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import type { EngagementReplyStatus } from "@prisma/client";
+import type { MonitoredAccountRow } from "./account-card";
+import { ReplyDetailPanel } from "./reply-detail-panel";
+import type { ReplyRow } from "./reply-detail-panel";
+
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface ReplyMonitoringTableProps {
+  accounts: MonitoredAccountRow[];
+}
+
+type SortField = "createdAt" | "status" | "tone";
+const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
+  "All",
+  "POSTED",
+  "POSTED_T",
+  "SENT_TO_TELEGRAM",
+  "PENDING",
+  "GENERATING",
+  "POSTING",
+  "FAILED",
+  "SKIPPED",
+  "DISCARDED",
+];
+
+export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
+  const [replies, setReplies] = useState<ReplyRow[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 25,
+    total: 0,
+    totalPages: 0,
+  });
+  const [statusCounts, setStatusCounts] = useState<Partial<Record<EngagementReplyStatus, number>>>(
+    {},
+  );
+  const [totalCost, setTotalCost] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<"All" | EngagementReplyStatus>("All");
+  const [sortBy, setSortBy] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [loading, setLoading] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedReply, setSelectedReply] = useState<ReplyRow | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const fetchReplies = async (
+    page = 1,
+    tab: "All" | EngagementReplyStatus = activeTab,
+    sort = sortBy,
+    order = sortOrder,
+    accountId: string | null = selectedAccountId,
+  ) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: "25",
+        sortBy: sort,
+        sortOrder: order,
+      });
+      if (tab !== "All") params.set("status", tab);
+      if (accountId) params.set("accountId", accountId);
+      const res = await fetch(`/api/dashboard/engagement/replies?${params}`);
+      const data = await res.json();
+      setReplies(data.replies ?? []);
+      setPagination(data.pagination);
+      setStatusCounts(data.statusCounts ?? {});
+      setTotalCost(data.totalCost ?? 0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReplies(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleTabChange = (tab: "All" | EngagementReplyStatus) => {
+    setActiveTab(tab);
+    fetchReplies(1, tab, sortBy, sortOrder, selectedAccountId);
+  };
+
+  const handleSort = (field: SortField) => {
+    const newOrder = sortBy === field && sortOrder === "desc" ? "asc" : "desc";
+    setSortBy(field);
+    setSortOrder(newOrder);
+    fetchReplies(1, activeTab, field, newOrder, selectedAccountId);
+  };
+
+  const handlePage = (page: number) => {
+    fetchReplies(page, activeTab, sortBy, sortOrder, selectedAccountId);
+  };
+
+  const handleSelectAccount = (id: string | null) => {
+    setSelectedAccountId(id);
+    setFilterOpen(false);
+    fetchReplies(1, activeTab, sortBy, sortOrder, id);
+  };
+
+  const totalCount = Object.values(statusCounts).reduce((s, c) => s + (c ?? 0), 0);
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId) ?? null;
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortBy !== field) {
+      return <span className="material-icons-round text-[14px] text-slate-custom-300">unfold_more</span>;
+    }
+    return (
+      <span className="material-icons-round text-[14px] text-primary">
+        {sortOrder === "desc" ? "arrow_downward" : "arrow_upward"}
+      </span>
+    );
+  };
+
+  const handleReplyUpdate = (updated: ReplyRow) => {
+    setReplies((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setSelectedReply(updated);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Filter bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Status Tabs */}
+        <div className="flex gap-2 border-b border-slate-custom-200 pb-px overflow-x-auto flex-1">
+          {STATUS_TABS.map((tab) => {
+            const count = tab === "All" ? totalCount : statusCounts[tab] || 0;
+            return (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab
+                    ? "border-primary text-slate-custom-900"
+                    : "border-transparent text-slate-custom-500 hover:text-slate-custom-700"
+                }`}
+              >
+                {tab === "All" ? "All" : tab.charAt(0) + tab.slice(1).toLowerCase()}
+                {count > 0 && (
+                  <span className="ml-1.5 text-[11px] bg-slate-custom-100 text-slate-custom-600 px-1.5 py-0.5 rounded-full">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+      </div>
+
+      {/* Summary bar (shown when account is selected) */}
+      {selectedAccountId && (
+        <div className="flex items-center gap-6 px-4 py-2.5 bg-slate-custom-50 rounded-lg border border-slate-custom-100 text-sm">
+          <span className="text-slate-custom-500 font-medium">
+            Total Replies:{" "}
+            <span className="text-slate-custom-900 font-semibold">{pagination.total}</span>
+          </span>
+          <span className="text-slate-custom-300">|</span>
+          <span className="text-slate-custom-500 font-medium">
+            Total Fees:{" "}
+            <span className="text-slate-custom-900 font-semibold">${totalCost.toFixed(4)}</span>
+          </span>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="p-6 space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-slate-custom-50 rounded animate-pulse" />
+            ))}
+          </div>
+        ) : replies.length === 0 ? (
+          <div className="p-10 text-center">
+            <span className="material-icons-round text-[40px] text-slate-custom-300">forum</span>
+            <p className="mt-3 text-sm text-slate-custom-500">
+              {activeTab === "All" ? "No replies yet." : `No ${activeTab.toLowerCase()} replies.`}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-custom-100 bg-slate-custom-50">
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("status")}
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-custom-500 hover:text-slate-custom-700"
+                    >
+                      Status
+                      <SortIcon field="status" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
+                    Reply
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
+                    Source Tweet
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <div className="relative" ref={filterRef}>
+                      <button
+                        onClick={() => setFilterOpen(!filterOpen)}
+                        className={`flex items-center gap-1 text-xs font-semibold transition-colors ${
+                          selectedAccountId
+                            ? "text-primary"
+                            : "text-slate-custom-500 hover:text-slate-custom-700"
+                        }`}
+                      >
+                        Account
+                        <span
+                          className={`material-icons-round text-[14px] ${
+                            selectedAccountId ? "text-primary" : "text-slate-custom-300"
+                          }`}
+                        >
+                          filter_list
+                        </span>
+                        {selectedAccountId && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />
+                        )}
+                      </button>
+
+                      {filterOpen && (
+                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
+                          <button
+                            onClick={() => handleSelectAccount(null)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                              selectedAccountId === null ? "text-primary font-semibold" : "text-slate-custom-700"
+                            }`}
+                          >
+                            <span className="material-icons-round text-[16px]">all_inclusive</span>
+                            <span className="text-sm">All Accounts</span>
+                          </button>
+                          <div className="border-t border-slate-custom-100 mt-1 pt-1 max-h-60 overflow-y-auto">
+                            {accounts.map((account) => (
+                              <button
+                                key={account.id}
+                                onClick={() => handleSelectAccount(account.id)}
+                                className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
+                                  selectedAccountId === account.id
+                                    ? "text-primary font-semibold"
+                                    : "text-slate-custom-700"
+                                }`}
+                              >
+                                {account.avatarUrl ? (
+                                  <img
+                                    src={account.avatarUrl}
+                                    alt={account.username}
+                                    className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full bg-slate-custom-200 flex items-center justify-center text-[10px] font-bold text-slate-custom-500 flex-shrink-0">
+                                    {account.username[0]?.toUpperCase()}
+                                  </div>
+                                )}
+                                <span className="text-sm truncate">@{account.username}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("tone")}
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-custom-500 hover:text-slate-custom-700"
+                    >
+                      Tone
+                      <SortIcon field="tone" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-custom-500">
+                    Cost
+                  </th>
+                  <th className="px-4 py-3 text-left">
+                    <button
+                      onClick={() => handleSort("createdAt")}
+                      className="flex items-center gap-1 text-xs font-semibold text-slate-custom-500 hover:text-slate-custom-700"
+                    >
+                      Date
+                      <SortIcon field="createdAt" />
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
+                    Post Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {replies.map((reply) => (
+                  <tr
+                    key={reply.id}
+                    onClick={() => setSelectedReply(reply)}
+                    className="border-b border-slate-custom-50 hover:bg-slate-custom-50/50 transition-colors cursor-pointer"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <StatusBadge status={reply.status} />
+                        {reply.lastError && (
+                          <span
+                            className="text-[10px] text-red-500 truncate max-w-[120px]"
+                            title={reply.lastError}
+                          >
+                            {reply.lastError}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 max-w-[200px]">
+                      <div className="flex items-start gap-2">
+                        {reply.replyImageUrl && (
+                          <img
+                            src={reply.replyImageUrl}
+                            alt=""
+                            className="w-8 h-8 rounded object-cover flex-shrink-0 border border-slate-custom-100"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          {reply.replyTweetUrl ? (
+                            <a
+                              href={reply.replyTweetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-primary hover:underline text-xs font-medium flex items-center gap-1"
+                            >
+                              <span className="material-icons-round text-[12px]">open_in_new</span>
+                              View reply
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-custom-400 truncate block max-w-[160px]" title={reply.replyText ?? ""}>
+                              {reply.replyText || "—"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 max-w-[180px]">
+                      {reply.sourceTweetUrl ? (
+                        <a
+                          href={reply.sourceTweetUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-slate-custom-500 hover:text-primary truncate block max-w-[160px]"
+                          title={reply.sourceTweetText ?? ""}
+                        >
+                          {reply.sourceTweetText?.slice(0, 60) || reply.sourceTweetId}
+                          {(reply.sourceTweetText?.length ?? 0) > 60 ? "…" : ""}
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-custom-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {reply.MonitoredAccount ? (
+                        <div className="flex items-center gap-2">
+                          {reply.MonitoredAccount.avatarUrl ? (
+                            <img
+                              src={reply.MonitoredAccount.avatarUrl}
+                              alt={reply.MonitoredAccount.username}
+                              className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : null}
+                          <span className="text-xs text-slate-custom-700">
+                            @{reply.MonitoredAccount.username}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-custom-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-slate-custom-500 capitalize">
+                        {reply.tone.toLowerCase().replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs text-slate-custom-600">
+                        ${reply.totalCost.toFixed(4)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-slate-custom-500">
+                        {new Date(reply.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-slate-custom-500">
+                        {reply.sourceTweetCreatedAt
+                          ? new Date(reply.sourceTweetCreatedAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-custom-500">
+            Showing {(pagination.page - 1) * pagination.limit + 1}–
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+          </p>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handlePage(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-custom-200 hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => {
+              let pageNum: number;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.page <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.page >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = pagination.page - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePage(pageNum)}
+                  className={`w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
+                    pagination.page === pageNum
+                      ? "bg-slate-custom-900 text-white"
+                      : "hover:bg-slate-custom-50 text-slate-custom-600"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => handlePage(pagination.page + 1)}
+              disabled={pagination.page >= pagination.totalPages}
+              className="px-3 py-1.5 text-sm font-medium rounded-lg border border-slate-custom-200 hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedReply && (
+        <ReplyDetailPanel
+          reply={selectedReply}
+          onClose={() => setSelectedReply(null)}
+          onUpdate={handleReplyUpdate}
+        />
+      )}
+    </div>
+  );
+}

@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
 
 import { prisma } from '@/lib/prisma'
 import { User as SupabaseUser } from '@supabase/supabase-js'
+import { syncAccounts } from '@/lib/auth/sync-accounts'
+import { checkXPostingToken } from '@/lib/auth/check-x-posting-token'
 
 async function syncUser(user: SupabaseUser) {
     if (!user.email) return
@@ -73,4 +75,10 @@ async function syncUser(user: SupabaseUser) {
       VALUES (${subscriptionId}, ${user.id}, 'FREE', 'active', ${now}, ${now})
       ON CONFLICT ("userId") DO NOTHING
     `
+
+    // 3. Sync OAuth accounts (juice_accounts)
+    await syncAccounts(user.id, user.identities ?? [])
+
+    // 4. Proactively check X posting token health (fire-and-forget)
+    checkXPostingToken(user.id).catch(console.error)
 }

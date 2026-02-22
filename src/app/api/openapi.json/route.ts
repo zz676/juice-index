@@ -46,7 +46,7 @@ export async function GET() {
       "/api/v1/industry/caam-nev-sales": { get: { summary: "CAAM NEV sales", responses: { "200": { description: "OK" } } } },
       "/api/v1/industry/cpca-retail": { get: { summary: "CPCA NEV retail", responses: { "200": { description: "OK" } } } },
       "/api/v1/industry/cpca-production": { get: { summary: "CPCA NEV production", responses: { "200": { description: "OK" } } } },
-      "/api/v1/industry/battery-installation": { get: { summary: "China battery installation", responses: { "200": { description: "OK" } } } },
+      "/api/v1/industry/battery-installation": { get: { summary: "Battery installation", responses: { "200": { description: "OK" } } } },
       "/api/v1/industry/dealer-inventory-factor": { get: { summary: "Dealer inventory factor", responses: { "200": { description: "OK" } } } },
       "/api/v1/industry/via-index": { get: { summary: "VIA index", responses: { "200": { description: "OK" } } } },
       "/api/v1/industry/passenger-inventory": { get: { summary: "Passenger inventory", responses: { "200": { description: "OK" } } } },

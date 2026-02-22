@@ -32,13 +32,25 @@ function LoginForm() {
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Build the post-auth destination — route to billing when ?plan= is present
+  const planParam = searchParams.get("plan");
+  const postAuthPath = planParam
+    ? `/dashboard/billing?plan=${encodeURIComponent(planParam)}`
+    : "/dashboard";
+
+  // Build auth callback URL with a `next` param so the callback redirects correctly
+  function callbackUrl() {
+    const appUrl = getRedirectBase(window.location.origin);
+    const cb = new URL(`${appUrl}/auth/callback`);
+    cb.searchParams.set("next", postAuthPath);
+    return cb.toString();
+  }
+
   // Social Login Handler
   async function handleSocialLogin(provider: "google" | "x") {
     setIsLoading(true);
     setStatus(null);
     try {
-      const appUrl = getRedirectBase(window.location.origin);
-
       // Supabase may register X as "x" or "twitter" depending on config
       type OAuthProvider = "google" | "x" | "twitter";
       const candidates: OAuthProvider[] =
@@ -48,7 +60,7 @@ function LoginForm() {
       for (const candidate of candidates) {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: candidate,
-          options: { redirectTo: `${appUrl}/auth/callback` },
+          options: { redirectTo: callbackUrl() },
         });
         if (!error) return;
 
@@ -71,7 +83,6 @@ function LoginForm() {
     e.preventDefault();
     setStatus(null);
     setIsLoading(true);
-    const appUrl = getRedirectBase(window.location.origin);
 
     try {
       if (mode === "magic") {
@@ -79,7 +90,7 @@ function LoginForm() {
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: `${appUrl}/auth/callback`,
+            emailRedirectTo: callbackUrl(),
           },
         });
         if (error) throw error;
@@ -91,7 +102,7 @@ function LoginForm() {
             email,
             password,
             options: {
-              emailRedirectTo: `${appUrl}/auth/callback`,
+              emailRedirectTo: callbackUrl(),
             },
           });
           if (error) throw error;
@@ -102,8 +113,7 @@ function LoginForm() {
             password,
           });
           if (error) throw error;
-          // Successful login redirects automatically or handling session state
-          window.location.href = "/dashboard";
+          window.location.href = postAuthPath;
         }
       }
     } catch (err) {
@@ -127,7 +137,7 @@ function LoginForm() {
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
           Or{" "}
-          <Link href="/pricing" className="font-medium text-primary hover:text-primary-dark transition-colors">
+          <Link href="/#pricing" className="font-medium text-primary hover:text-primary-dark transition-colors">
             start your 14-day free trial
           </Link>
         </p>

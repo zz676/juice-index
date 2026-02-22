@@ -16,6 +16,7 @@ export async function GET() {
                 createdAt: true,
                 categories: true,
                 source: true,
+                sourceUrl: true,
             }
         });
 
@@ -26,6 +27,7 @@ export async function GET() {
             time: new Date(post.createdAt).toLocaleDateString(), // simplified
             tag: post.categories[0] || "General",
             tagColor: "bg-slate-100 text-slate-600", // logic to determine color based on tag
+            url: post.sourceUrl,
         }));
 
         // Mock catalysts for now (no Catalyst model yet)
@@ -38,9 +40,9 @@ export async function GET() {
         // If no posts found (db empty), mock some news
         if (news.length === 0) {
             news.push(
-                { id: "1", tag: "Policy", tagColor: "bg-primary/10 text-green-700", time: "2 hours ago", title: "Shenzhen announces new subsidies for EV trade-ins, boosting Q4 outlook", desc: "The municipal government revealed a tiered subsidy plan..." },
-                { id: "2", tag: "Tech", tagColor: "bg-blue-50 text-blue-600", time: "5 hours ago", title: "XPeng rolls out XNGP ADAS to 20 more cities", desc: "Beta testing shows 30% reduction..." },
-                { id: "3", tag: "Supply Chain", tagColor: "bg-orange-50 text-orange-600", time: "Yesterday", title: "CATL to launch new condensed matter battery in Q3", desc: "Higher energy density promises..." },
+                { id: "1", tag: "Policy", tagColor: "bg-primary/10 text-green-700", time: "2 hours ago", title: "Shenzhen announces new subsidies for EV trade-ins, boosting Q4 outlook", desc: "The municipal government revealed a tiered subsidy plan...", url: "#" },
+                { id: "2", tag: "Tech", tagColor: "bg-blue-50 text-blue-600", time: "5 hours ago", title: "XPeng rolls out XNGP ADAS to 20 more cities", desc: "Beta testing shows 30% reduction...", url: "#" },
+                { id: "3", tag: "Supply Chain", tagColor: "bg-orange-50 text-orange-600", time: "Yesterday", title: "CATL to launch new condensed matter battery in Q3", desc: "Higher energy density promises...", url: "#" },
             );
         }
 

@@ -13,14 +13,25 @@ export interface ChartConfig {
     fontColor: string;
     titleColor: string;
     titleSize: number;
+    titleFont: string;
     xAxisFontSize: number;
     yAxisFontSize: number;
     xAxisFontColor: string;
     yAxisFontColor: string;
+    axisFont: string;
     sourceText: string;
     sourceColor: string;
     sourceFontSize: number;
+    sourceFont: string;
     barWidth: number | undefined;
+    xAxisLineColor: string;
+    yAxisLineColor: string;
+    xAxisLineWidth: number;
+    yAxisLineWidth: number;
+    paddingTop: number;
+    paddingBottom: number;
+    paddingLeft: number;
+    paddingRight: number;
     showValues: boolean;
     showGrid: boolean;
 }
@@ -34,14 +45,25 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     fontColor: "#1e293b",
     titleColor: "#1e293b",
     titleSize: 24,
+    titleFont: "Inter",
     xAxisFontSize: 12,
     yAxisFontSize: 12,
     xAxisFontColor: "#64748b",
     yAxisFontColor: "#64748b",
-    sourceText: "source: evjuice.net",
+    axisFont: "Inter",
+    sourceText: "Powered by evjuice.net",
     sourceColor: "#6ada1b",
-    sourceFontSize: 11,
+    sourceFontSize: 18,
+    sourceFont: "Inter",
     barWidth: undefined,
+    xAxisLineColor: "#e5e7eb",
+    yAxisLineColor: "#e5e7eb",
+    xAxisLineWidth: 1,
+    yAxisLineWidth: 1,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
     showValues: true,
     showGrid: true,
 };
@@ -58,7 +80,7 @@ function ColorInput({ label, value, onChange }: { label: string; value: string; 
         <label className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-slate-600">{label}</span>
             <div className="relative">
-                <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
             </div>
         </label>
     );
@@ -143,10 +165,6 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                                 ))}
                             </div>
                         </div>
-                        <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Title</label>
-                            <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Chart title..." />
-                        </div>
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-slate-600">Show Values</span>
                             <button onClick={() => update({ showValues: !config.showValues })} className={`w-9 h-5 rounded-full transition-colors relative ${config.showValues ? "bg-primary" : "bg-slate-300"}`}>
@@ -160,6 +178,17 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                             </button>
                         </div>
                         <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
+                        <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                        <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Padding</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <NumberInput label="Top" value={config.paddingTop} onChange={(v) => update({ paddingTop: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                <NumberInput label="Left" value={config.paddingLeft} onChange={(v) => update({ paddingLeft: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                <NumberInput label="Right" value={config.paddingRight} onChange={(v) => update({ paddingRight: v ?? 20 })} placeholder="20" min={0} max={100} />
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -185,17 +214,47 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                         <ColorInput label="Background" value={config.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
                         <ColorInput label="Bar / Line Color" value={config.barColor} onChange={(v) => update({ barColor: v })} />
                         <ColorInput label="Font Color" value={config.fontColor} onChange={(v) => update({ fontColor: v })} />
+                        <div className="border-t border-slate-100 pt-3 mt-3">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Lines</label>
+                        </div>
+                        <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
+                        <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
                     </div>
                 )}
 
                 {activeSection === "typography" && (
                     <div className="space-y-3">
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Title</label>
+                        <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Chart title..." />
+                        <label className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-600">Title Font</span>
+                            <select
+                                value={config.titleFont}
+                                onChange={(e) => update({ titleFont: e.target.value })}
+                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                ))}
+                            </select>
+                        </label>
                         <ColorInput label="Title Color" value={config.titleColor} onChange={(v) => update({ titleColor: v })} />
                         <NumberInput label="Title Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
                         <div className="border-t border-slate-100 pt-3 mt-3">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axes</label>
                         </div>
+                        <label className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-600">Axis Font</span>
+                            <select
+                                value={config.axisFont}
+                                onChange={(e) => update({ axisFont: e.target.value })}
+                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                ))}
+                            </select>
+                        </label>
                         <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
                         <ColorInput label="X-Axis Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
                         <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
@@ -208,8 +267,20 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Watermark / Source</label>
                         <div>
                             <span className="text-xs font-medium text-slate-600 mb-1 block">Source Text</span>
-                            <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="source: evjuice.net" />
+                            <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Powered by evjuice.net" />
                         </div>
+                        <label className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-600">Source Font</span>
+                            <select
+                                value={config.sourceFont || "Inter"}
+                                onChange={(e) => update({ sourceFont: e.target.value })}
+                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                ))}
+                            </select>
+                        </label>
                         <ColorInput label="Source Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
                         <NumberInput label="Source Font Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
                     </div>

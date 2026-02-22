@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
   const interval = body.data.interval as Interval;
   const price = priceId(plan, interval);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/+$/, "") || "";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -62,6 +63,10 @@ export async function POST(request: NextRequest) {
     cancel_url: `${appUrl}/dashboard/billing?canceled=1`,
     client_reference_id: user.id,
     customer_email: user.email || undefined,
+    payment_method_collection: "always",
+    saved_payment_method_options: {
+      payment_method_save: "enabled",
+    },
     subscription_data: {
       metadata: {
         userId: user.id,

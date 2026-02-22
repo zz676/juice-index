@@ -12,6 +12,10 @@ We will adopt a testing pyramid approach, focusing on a solid foundation of unit
 - **Data Transformation**: Testing `chart-data.ts` and other utility functions that format data for Recharts.
 - **Rate Limiting**: Verifying token bucket logic and tier limits in isolation.
 - **Prompt Engineering**: Testing prompt generation logic for the natural language to SQL service.
+- **Tier Quotas** (`src/lib/api/__tests__/quotas.test.ts`): Validates `TIER_QUOTAS` config — all 13 fields per tier, FREE strictest / ENTERPRISE most permissive, monotonic hierarchy across all 4 tiers.
+- **Tier Helpers** (`src/lib/api/__tests__/tier.test.ts`): Tests `normalizeTier()` (case normalization, null/invalid fallback), `hasTier()` (rank comparison), `tierLimit()` (daily API quota lookup).
+- **Model Access** (`src/lib/studio/__tests__/models.test.ts`): Tests `MODEL_REGISTRY` structure, `getModelById()`, `canAccessModel()` tier gating (FREE → only free models, PRO → PRO + below, ENTERPRISE → all), and default constants.
+- **Rate Limits** (`src/lib/__tests__/ratelimit.test.ts`): Mocks `fetch` (Upstash REST) to test `studioQueryLimit`, `studioChartLimit`, `studioPostDraftLimit`, `csvExportMonthlyLimit` — verifies Infinity limits skip Redis, FREE CSV always fails, missing env vars throw.
 
 ### 1.2 Integration Tests (Vitest + Test DB)
 **Focus**: API endpoints, Database interactions, and Service layers.
@@ -19,7 +23,13 @@ We will adopt a testing pyramid approach, focusing on a solid foundation of unit
 - **Database Queries**: Verifying Prisma queries return expected data from the shared schema.
 - **Third-Party Integrations**: Mocking Stripe and OpenAI Vercel SDK interactions to verify handling of external responses.
 
-### 1.3 End-to-End (E2E) Tests (Playwright / Cypress)
+### 1.3 Route Handler Tests (Vitest + Mocked Prisma/Auth)
+**Focus**: Tier enforcement in API route handlers using mocked Prisma and auth.
+- **User Posts** (`src/app/api/dashboard/user-posts/__tests__/route.test.ts`): FREE blocked from publish/schedule, draft capped at 5; PRO can publish/schedule, capped at 10 scheduled; ENTERPRISE unlimited.
+- **API Keys** (`src/app/api/dashboard/api-keys/__tests__/route.test.ts`): FREE cannot create keys; STARTER max 1; PRO max 2; ENTERPRISE max 10.
+- **CSV Export** (`src/app/api/dashboard/csv-export/__tests__/route.test.ts`): FREE blocked; PRO within/over monthly limit; ENTERPRISE unlimited.
+
+### 1.4 End-to-End (E2E) Tests (Playwright / Cypress)
 **Focus**: Critical user journeys and UI interactions in a real browser environment.
 - **Data Explorer Flow**: User enters prompt -> query generates -> chart renders -> user customizes chart.
 - **Dashboard Access**: Verifying tier-based access control (Free vs. Pro).

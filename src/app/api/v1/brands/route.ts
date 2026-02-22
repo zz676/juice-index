@@ -21,7 +21,7 @@ const BRAND_LABELS: Record<Brand, string> = {
 
 export async function GET(request: NextRequest) {
   const start = Date.now();
-  const auth = await authenticatePublicApi(request, { endpoint: "/api/v1/brands", minTier: "FREE" });
+  const auth = await authenticatePublicApi(request, { endpoint: "/api/v1/brands", minTier: "PRO" });
   if (!auth.ok) return auth.res;
 
   const { ctx, headers } = auth;

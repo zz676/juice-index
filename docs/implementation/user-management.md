@@ -3,11 +3,16 @@
 ## Overview
 User management in Juice Index is designed around **API Subscriptions** and **RBAC (Role-Based Access Control)**.
 
+## Dashboard Sidebar Profile
+The sidebar in `src/app/dashboard/layout.tsx` displays the authenticated user's real profile:
+- **Name & email**: Fetched on mount via `supabase.auth.getUser()`, reading `full_name`/`name` from `user_metadata`.
+- **Avatar**: Shows the OAuth provider avatar (`avatar_url` or `picture` from `user_metadata`) when available; falls back to a circle with computed initials.
+- **Popover**: The account popover shows the same real name and email.
+
 ## Account Settings
 Located at `/dashboard/settings`.
 - **Profile Updates**: Uses a Server Action (`updateProfile`) to securely modify user data.
 - **Subscription View**: Displays current tier (`FREE`, `PRO`, `ENTERPRISE`) and status.
-- **API Keys Link**: Direct access to key management.
 
 ## Subscription Tiers
 We enforce feature limits based on the user's subscription tier, stored in `ApiSubscription`.
@@ -23,7 +28,7 @@ We enforce feature limits based on the user's subscription tier, stored in `ApiS
 
 ### Rate Limiting (`src/lib/ratelimit.ts`)
 - Uses Redis (via Upstash or local) to track API usage.
-- Enforced in `src/app/api/dashboard/explorer/generate-chart/route.ts`.
+- Enforced in `src/app/api/dashboard/studio/generate-chart/route.ts`.
 
 ## Middleware & Security
 - **File**: `src/middleware.ts`

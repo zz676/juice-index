@@ -13,7 +13,7 @@ Successfully ported all React components and pages from the legacy codebase, ada
 - **Landing Page** (`src/app/page.tsx`): Hero section, features grid, pricing preview.
 - **Pricing** (`src/app/pricing/page.tsx`): Tier comparison logic.
 - **Dashboard** (`src/app/dashboard/page.tsx`): Overview with summary cards, charts, and news feed.
-- **Data Explorer** (`src/app/dashboard/explorer/page.tsx`): 4-step workflow (Prompt -> Logic -> Viz -> Composer).
+- **Studio** (`src/app/dashboard/studio/page.tsx`): 4-step workflow (Prompt -> Logic -> Viz -> Composer).
 
 ### Infrastructure
 - **Styling**: Integrated Tailwind v4 alongside legacy CSS (scoped under `.legacy-ui`).
@@ -24,7 +24,7 @@ Successfully ported all React components and pages from the legacy codebase, ada
 Implemented the necessary API endpoints to power the frontend features, replacing mock data with real backend logic.
 
 ### Data Explorer API
-- **Endpoint**: `POST /api/dashboard/explorer/generate-chart`
+- **Endpoint**: `POST /api/dashboard/studio/generate-chart`
 - **Logic**: Uses Vercel AI SDK (`gpt-4o`) to convert natural language prompts into SQL queries.
 - **Security**: 
   - Validates SQL to ensure only `SELECT` statements are executed.
@@ -63,8 +63,99 @@ Implemented the necessary API endpoints to power the frontend features, replacin
 - `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` headers for Vercel edge caching.
 
 ### 5. Mobile Responsiveness
-- Data Explorer sidebar is collapsible on mobile via a toggle button.
+- Studio sidebar is collapsible on mobile via a toggle button.
 - Sidebar auto-collapses after query generation on small screens.
+
+## ✅ Phase 3.5: Step 1 Model Selector (Complete)
+
+Added a model selector dropdown to Step 1 ("Ask Intelligence") so users can choose which AI model powers query generation, matching the existing Step 4 dropdown pattern.
+
+### Frontend (`src/app/dashboard/studio/page.tsx`)
+- Added `queryModelId` and `isQueryModelDropdownOpen` state (independent from Step 4's `selectedModelId`).
+- Replaced the static "Juice-7B (Fast)" placeholder with a fully functional model dropdown using `MODEL_REGISTRY`.
+- Tier-gated: FREE users can only select GPT-4o Mini; PRO/ENTERPRISE models show a lock icon with an upgrade toast.
+- Passes `modelId` in the `generateRunnableQuery` API call body.
+
+### Backend (`src/app/api/dashboard/studio/generate-chart/route.ts`)
+- Accepts optional `modelId` from the request payload.
+- Validates tier access via `canAccessModel()` — returns 403 if the user's plan doesn't include the requested model.
+- Resolves the correct AI SDK provider (`openai()` or `anthropic()`) based on `ModelDefinition.provider`.
+- Falls back to `gpt-4o-mini` when no `modelId` is provided (preserves existing behavior).
+
+## ✅ Phase 3.6: Canvas Migration & UI Scroll Fix (Complete)
+
+### 1. Migrate from `chartjs-node-canvas` to `@napi-rs/canvas`
+The server-side chart rendering previously used `chartjs-node-canvas` which depends on the native `canvas` C++ module. This worked locally after `npm rebuild canvas` but failed on Vercel Lambda because native C++ addons aren't supported. Migrated to `@napi-rs/canvas`, a Rust-based alternative with prebuilt binaries for all platforms including Vercel's Lambda (Linux x64/arm64).
+
+**Changes:**
+- **`package.json`**: Removed `chartjs-node-canvas` and `canvas`; added `@napi-rs/canvas`.
+- **`src/app/api/dashboard/studio/generate-chart/route.ts`**:
+  - Replaced `ChartJSNodeCanvas` singleton with a `renderChartToBuffer()` function using `@napi-rs/canvas`'s `createCanvas` + Chart.js directly.
+  - Replaced `getLogoImage()` to use `@napi-rs/canvas`'s `loadImage()` (async).
+  - Updated watermark plugin to use a pre-loaded logo variable (since Chart.js plugin hooks are synchronous).
+  - Registered Chart.js components at module level with `Chart.register(…registerables, ChartDataLabels)`.
+- **`next.config.mjs`**: Replaced `canvas`/`chartjs-node-canvas` externals with `@napi-rs/canvas`; removed deprecated `experimental.serverComponentsExternalPackages`.
+
+### 2. Vertical Scroll for Visualization & Data Section
+Added `overflow-y-auto max-h-[80vh]` to the Visualization & Data section (`page.tsx`) so content scrolls independently when it exceeds 80% of viewport height (e.g., chart + customizer + generated image + data table).
+
+## ✅ Phase 3.7: NioPowerSnapshot Studio Support (Complete)
+
+Wired the existing `NioPowerSnapshot` Prisma table into the Studio query generation pipeline so users can ask about NIO swap stations, charging infrastructure, and cumulative usage stats.
+
+### Changes
+- **Keyword gate** (`EV_KEYWORDS`): Added "swap", "charging", "pile", "infrastructure", "power", "station" so infrastructure queries pass the pre-filter.
+- **Allowed tables** (`query-executor.ts`): Added `nioPowerSnapshot` to `ALLOWED_TABLES` and `getTableInfo()` with all 10 fields (`asOfTime`, `totalStations`, `swapStations`, `highwaySwapStations`, `cumulativeSwaps`, `chargingStations`, `chargingPiles`, `cumulativeCharges`, `thirdPartyPiles`, `thirdPartyUsagePercent`).
+- **Table name normalization** (`table-name.ts`): Added canonical entry and aliases (`niopowersnapshot`, `nio_power_snapshot`, `nio_power`, `power_snapshot`).
+- **Live DB hints** (`getLiveHints()`): Added a query to fetch the `NioPowerSnapshot` date range (`MIN`/`MAX` of `asOfTime`) and include it in the AI system prompt.
+
+### Example queries now supported
+- "NIO swap stations trend"
+- "NIO charging piles over time"
+- "How many total swap stations does NIO have?"
+
+## ✅ Phase 3.8: Field Type Registry & Query System Bug Fixes (Complete)
+
+Introduced a field type registry as a single source of truth for all allowed Studio tables, fixing 5 systemic bugs in the query generation and execution pipeline.
+
+### New File: `src/lib/studio/field-registry.ts`
+
+A registry mapping each of the 15 allowed tables to their exact Prisma field types. Key distinctions encoded:
+- `eVMetric.brand` → `Enum(Brand)`, `eVMetric.period` → `Int` (month number 1–12, not a string)
+- `plantExports.brand` → `String` (not the Brand enum)
+- `batteryMakerRankings.periodType` → `String` (not the PeriodType enum)
+- `nioPowerSnapshot.cumulativeSwaps/cumulativeCharges` → `BigInt`
+- `nioPowerSnapshot.asOfTime` → `DateTime`
+
+Exported utilities: `ALLOWED_TABLE_NAMES`, `getTableDef`, `getFieldNames`, `isStringField`, `getBigIntFields`, `convertBigIntsToNumbers`, `formatFieldsForPrompt`, `getAllowedTablesList`.
+
+### Bug Fixes
+
+**Bug 1: `mode: "insensitive"` on non-String fields (Prisma crash)**
+- Replaced `addInsensitiveMode` / `applyCaseInsensitive` (which blindly wrapped all string values) with schema-aware `coerceWhereClause` / `applyQueryCoercion`.
+- Now only fields typed `String` in the registry receive `mode: "insensitive"`. Enum fields (`brand`, `metric`, `periodType`, `vehicleType`), DateTime fields, and other non-String fields pass through unchanged.
+
+**Bug 2: BigInt JSON serialization crash**
+- `nioPowerSnapshot.cumulativeSwaps` and `cumulativeCharges` are `BigInt`. `JSON.stringify` (used inside `NextResponse.json()`) throws a `TypeError` on BigInt values.
+- Fixed by calling `convertBigIntsToNumbers(table, rows)` from the registry before both Mode 0 and Mode 1 `NextResponse.json()` responses.
+
+**Bug 3: `detectYField` ignores BigInt**
+- `detectYField` used `typeof v === "number"` which misses `typeof v === "bigint"`, causing chart Y-axis auto-detection to fail for `nioPowerSnapshot`.
+- Added `isNumericValue(v)` helper (`typeof v === "number" || typeof v === "bigint"`) and replaced all `typeof === "number"` checks in `detectYField`.
+
+**Bug 4: AI has no date context**
+- AI system prompt now includes `Today's date: ${today}` and a new rule 13 instructing the AI to compute actual ISO dates from relative expressions ("last 30 days", "past month", etc.).
+
+**Bug 5: AI doesn't know field types or enum values**
+- `tableDoc` now uses `formatFieldsForPrompt(table.name)` instead of `table.fields.join(", ")`, giving the AI rich type information, e.g.:
+  `brand: Enum(Brand) [BYD, NIO, XPENG, ...], metric: Enum(MetricType) [...], year: Int, period: Int`
+- New rule 14 reinforces strict type adherence, clarifies `eVMetric.period` is a number, and explains that String fields receive automatic case-insensitive matching.
+- Updated the query example from `"brand":"Tesla"` to `"brand":"TESLA_CHINA"` to reinforce correct enum value usage.
+
+### Refactor: `src/lib/query-executor.ts`
+
+- Removed the hardcoded `ALLOWED_TABLES` array and `AllowedTable` type (180+ lines of duplicate data).
+- `getTableInfo()` and `getAllowedTables()` now delegate to the registry, ensuring a single source of truth.
 
 ## 🚀 Next Steps (Phase 4)
 
