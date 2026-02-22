@@ -12,6 +12,7 @@ const STATUS_STYLES: Record<string, string> = {
   POSTED: "bg-green-100 text-green-800",
   SKIPPED: "bg-slate-100 text-slate-600",
   SENT_TO_TELEGRAM: "bg-purple-100 text-purple-800",
+  POSTED_T: "bg-teal-100 text-teal-800",
   DISCARDED: "bg-slate-100 text-slate-500",
 };
 
@@ -21,6 +22,7 @@ interface StatusBadgeProps {
 
 const STATUS_LABELS: Record<string, string> = {
   SENT_TO_TELEGRAM: "Telegram",
+  POSTED_T: "Posted (T)",
   DISCARDED: "Discarded",
 };
 

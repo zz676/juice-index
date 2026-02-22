@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
   const newStatus =
     action === "posted"
-      ? EngagementReplyStatus.POSTED
+      ? EngagementReplyStatus.POSTED_T
       : EngagementReplyStatus.DISCARDED;
 
   try {

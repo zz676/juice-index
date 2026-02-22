@@ -71,7 +71,7 @@ export async function PATCH(
   if (action === "mark-posted") {
     const updated = await prisma.engagementReply.update({
       where: { id },
-      data: { status: EngagementReplyStatus.POSTED },
+      data: { status: EngagementReplyStatus.POSTED_T },
       select: REPLY_SELECT,
     });
     return NextResponse.json({ reply: updated });
@@ -132,7 +132,7 @@ export async function PATCH(
     const updated = await prisma.engagementReply.update({
       where: { id },
       data: {
-        status: EngagementReplyStatus.POSTED,
+        status: EngagementReplyStatus.POSTED_T,
         replyTweetId: postedTweet.id,
         replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
         lastError: null,
