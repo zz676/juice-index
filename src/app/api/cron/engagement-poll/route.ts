@@ -166,17 +166,11 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // Skip if within an active pause schedule window (unless user has overridden it)
-    if (
+    // Compute whether a schedule window is currently active for this user
+    const scheduleActive =
       !config?.scheduleOverride &&
-      config?.PauseSchedules?.length &&
-      isWithinPauseSchedule(config.PauseSchedules, config.timezone ?? "America/New_York", now)
-    ) {
-      console.log(`[cron] ↳ SKIP: scheduled pause active`);
-      skipped += accounts.length;
-      skipReasons.scheduledPause += accounts.length;
-      continue;
-    }
+      !!config?.PauseSchedules?.length &&
+      isWithinPauseSchedule(config.PauseSchedules, config.timezone ?? "America/New_York", now);
 
     // Check tier
     if (!hasTier(tier, "STARTER")) {
@@ -430,6 +424,14 @@ export async function POST(request: NextRequest) {
 
     // Process each monitored account for this user
     for (const account of accounts) {
+      // Skip if schedule is active and this account hasn't opted out of it
+      if (scheduleActive && !account.ignorePauseSchedule) {
+        console.log(`[cron]   @${account.username}: SKIP: scheduled pause active`);
+        skipped++;
+        skipReasons.scheduledPause++;
+        continue;
+      }
+
       const interval = account.pollInterval ?? 5;
       if (interval > 5 && account.lastCheckedAt) {
         const elapsedMs = Date.now() - account.lastCheckedAt.getTime();

@@ -14,6 +14,7 @@ export interface MonitoredAccountRow {
   imageFrequency: number;
   enabled: boolean;
   autoPost: boolean;
+  ignorePauseSchedule: boolean;
   accountContext: string | null;
   toneWeights: Record<string, number> | null;
   temperature: number;
@@ -226,6 +227,31 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
           <div
             className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
               account.autoPost ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
+        </div>
+      </div>
+
+      {/* Ignore Pause Schedule toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-slate-custom-700">Ignore Pause Schedule</p>
+          <p className="text-[11px] text-slate-custom-400">
+            {account.ignorePauseSchedule ? "Runs during scheduled pauses" : "Respects scheduled pauses"}
+          </p>
+        </div>
+        <div
+          role="switch"
+          aria-checked={account.ignorePauseSchedule}
+          aria-label={account.ignorePauseSchedule ? "Disable ignore pause schedule" : "Enable ignore pause schedule"}
+          onClick={!loading ? () => patch({ ignorePauseSchedule: !account.ignorePauseSchedule }) : undefined}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+            account.ignorePauseSchedule ? "bg-primary" : "bg-slate-custom-200"
+          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          <div
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              account.ignorePauseSchedule ? "translate-x-5" : "translate-x-0"
             }`}
           />
         </div>
