@@ -55,7 +55,7 @@ interface AccountCardProps {
 export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [contextFlash, setContextFlash] = useState(false);
+  const [saveFlash, setSaveFlash] = useState(false);
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(account.toneWeights ?? {});
   const [localTemperature, setLocalTemperature] = useState(Math.min(account.temperature ?? 0.8, 1.0));
   const [localImageFrequency, setLocalImageFrequency] = useState(account.imageFrequency ?? 0);
@@ -67,8 +67,16 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
   const pendingRef = useRef<Record<string, unknown>>({});
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const triggerFlash = useCallback(() => {
+    setSaveFlash(false);
+    requestAnimationFrame(() => {
+      setSaveFlash(true);
+      setTimeout(() => setSaveFlash(false), 1500);
+    });
+  }, []);
+
   const patch = useCallback(
-    async (data: Record<string, unknown>) => {
+    async (data: Record<string, unknown>, flash = true) => {
       setLoading(true);
       try {
         const res = await fetch(`/api/dashboard/engagement/accounts/${account.id}`, {
@@ -79,12 +87,13 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
         if (res.ok) {
           const json = await res.json();
           onUpdate(json.account as MonitoredAccountRow);
+          if (flash) triggerFlash();
         }
       } finally {
         setLoading(false);
       }
     },
-    [account.id, onUpdate],
+    [account.id, onUpdate, triggerFlash],
   );
 
   const handleDelete = async () => {
@@ -106,14 +115,15 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
     if (Object.keys(pendingRef.current).length === 0) return;
     const data = pendingRef.current;
     pendingRef.current = {};
-    patch(data);
+    patch(data, false); // already flashed immediately in scheduleCommit
   }, [patch]);
 
   const scheduleCommit = useCallback((data: Record<string, unknown>) => {
     pendingRef.current = { ...pendingRef.current, ...data };
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(flushPending, 8000);
-  }, [flushPending]);
+    triggerFlash();
+  }, [flushPending, triggerFlash]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -156,18 +166,13 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
     setLocalImageFrequency(value);
   };
 
-  const handleContextBlur = async () => {
+  const handleContextBlur = () => {
     const value = contextRef.current?.value ?? "";
-    await patch({ accountContext: value || null });
-    setContextFlash(false);
-    requestAnimationFrame(() => {
-      setContextFlash(true);
-      setTimeout(() => setContextFlash(false), 1500);
-    });
+    patch({ accountContext: value || null });
   };
 
   return (
-    <div className={`bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${contextFlash ? " card-save-flash" : ""}`}>
+    <div className={`bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${saveFlash ? " card-save-flash" : ""}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {account.avatarUrl ? (
