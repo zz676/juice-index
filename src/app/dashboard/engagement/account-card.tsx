@@ -20,8 +20,8 @@ export interface MonitoredAccountRow {
   pollInterval: number;
 }
 
-const POLL_STEPS = [5, 10, 15, 30, 60, 1440, 10080];
-const POLL_LABELS = ["5 min", "10 min", "15 min", "30 min", "1 hr", "1 day", "7 days"];
+const POLL_STEPS = [5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080];
+const POLL_LABELS = ["5 min", "10 min", "15 min", "30 min", "1 hr", "3.5 hr", "5 hr", "8.5 hr", "11.5 hr", "15.5 hr", "20 hr", "1 day", "7 days"];
 
 const COLOR_DOT: Record<string, string> = {
   slate: "bg-slate-400",
