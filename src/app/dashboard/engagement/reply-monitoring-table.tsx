@@ -22,6 +22,7 @@ type SortField = "createdAt" | "status" | "tone";
 const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
   "All",
   "POSTED",
+  "POSTED_T",
   "SENT_TO_TELEGRAM",
   "PENDING",
   "GENERATING",

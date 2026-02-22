@@ -1586,6 +1586,7 @@ enum EngagementReplyStatus {
   FAILED
   SKIPPED
   SENT_TO_TELEGRAM
+  POSTED_T
   DISCARDED
 }
 
