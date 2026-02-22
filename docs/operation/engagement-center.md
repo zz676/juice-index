@@ -25,6 +25,7 @@ Each run logs per-user context and per-account activity. Key log lines:
 | Log line | Meaning |
 |---|---|
 | `SKIP: globally paused` | User toggled "Pause All" in the dashboard |
+| `SKIP: scheduled pause active` | Current time is within an enabled pause schedule window |
 | `SKIP: insufficient tier (FREE), need STARTER+` | User is on FREE plan |
 | `SKIP: no X account connected` | User hasn't connected X in Settings |
 | `SKIP: X token expired` | OAuth refresh token is expired — user must reconnect |
@@ -38,9 +39,86 @@ The JSON response includes a `skipReasons` breakdown:
   "replied": 3,
   "failed": 0,
   "skipped": 8,
-  "skipReasons": { "globalPaused": 0, "insufficientTier": 8, "noXAccount": 0, "tokenError": 0, "notDueYet": 0 },
+  "skipReasons": { "globalPaused": 0, "scheduledPause": 2, "insufficientTier": 6, "noXAccount": 0, "tokenError": 0, "notDueYet": 0 },
   "durationMs": 4201
 }
+```
+
+---
+
+## Pause Schedules
+
+Pause schedules let users automatically suppress auto-replies during recurring daily time windows
+(e.g., overnight 23:00–07:00) without manual toggling. Schedules are evaluated every cron run.
+
+### How it works
+
+1. Each `EngagementConfig` has zero or more `PauseSchedule` records and a `timezone` field.
+2. At cron time, `isWithinPauseSchedule()` (in `src/lib/engagement/pause-utils.ts`) converts the current UTC time to the user's local timezone and checks whether it falls in any enabled schedule window.
+3. Cross-midnight windows are supported: a schedule with `startTime = "23:00"` and `endTime = "07:00"` is active from 23:00 on one day through 06:59 the next day.
+4. If any schedule matches, all accounts for that user are skipped for the current run with reason `scheduledPause`.
+
+### Priority
+
+| Condition | Behaviour |
+|---|---|
+| `globalPaused = true` | Manual override wins; all accounts skipped regardless of schedules |
+| Schedule window active | Accounts skipped; `globalPaused` remains `false` |
+| Both inactive | Accounts processed normally |
+
+Clicking **Override On** in the banner sets `globalPaused = true`, immediately resuming the system even if a schedule window is currently active. Click **Resume** to clear the manual override.
+
+### Exception dates
+
+Each schedule can have a list of exception dates (`YYYY-MM-DD`). On an exception date the schedule is skipped, allowing auto-replies to run normally during what would otherwise be a paused window.
+
+**Example use case:** overnight pause 23:00–07:00 with exception `2026-12-31` (New Year's Eve — you want replies to go out).
+
+### Limits
+
+| Resource | Limit |
+|---|---|
+| Schedules per user | 10 |
+| Exception dates per schedule | 50 |
+
+### Data model
+
+```
+EngagementConfig
+  timezone       String   -- IANA (e.g. "America/New_York")
+  PauseSchedules PauseSchedule[]
+
+PauseSchedule
+  engagementConfigId String
+  label              String?    -- optional display name
+  startTime          String     -- "HH:mm" 24-hour
+  endTime            String     -- "HH:mm" 24-hour
+  enabled            Boolean
+  PauseExceptions    PauseException[]
+
+PauseException
+  pauseScheduleId String
+  date            String    -- "YYYY-MM-DD"
+  @@unique([pauseScheduleId, date])
+```
+
+### Debugging via SQL
+
+Check a user's current schedules and exceptions:
+```sql
+SELECT
+  ps.id,
+  ps.label,
+  ps."startTime",
+  ps."endTime",
+  ps.enabled,
+  ec.timezone,
+  COUNT(pe.id) AS exceptions
+FROM juice_pause_schedules ps
+JOIN juice_engagement_configs ec ON ec.id = ps."engagementConfigId"
+LEFT JOIN juice_pause_exceptions pe ON pe."pauseScheduleId" = ps.id
+WHERE ec."userId" = '<userId>'
+GROUP BY ps.id, ec.timezone;
 ```
 
 ---

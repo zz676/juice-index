@@ -11,6 +11,7 @@ import { uploadEngagementImage } from "@/lib/supabase/storage";
 import { sendToTelegram } from "@/lib/telegram/send-message";
 import { engagementReplyLimit, engagementImageLimit } from "@/lib/ratelimit";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
+import { isWithinPauseSchedule } from "@/lib/engagement/pause-utils";
 import { computeTotalReplyCost, computeTextGenerationCost } from "@/lib/engagement/cost-utils";
 import { EngagementReplyStatus } from "@prisma/client";
 import type { UserTone, MonitoredAccount } from "@prisma/client";
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
   let skipped = 0;
   const skipReasons: Record<string, number> = {
     globalPaused: 0,
+    scheduledPause: 0,
     insufficientTier: 0,
     noXAccount: 0,
     tokenError: 0,
@@ -127,7 +129,24 @@ export async function POST(request: NextRequest) {
     // Fetch user-level data in parallel
     const [xAccount, config, subscription, userTones] = await Promise.all([
       prisma.xAccount.findUnique({ where: { userId } }),
-      prisma.engagementConfig.findUnique({ where: { userId }, select: { globalPaused: true } }),
+        prisma.engagementConfig.findUnique({
+        where: { userId },
+        select: {
+          globalPaused: true,
+          timezone: true,
+          PauseSchedules: {
+            where: { enabled: true },
+            select: {
+              id: true,
+              label: true,
+              startTime: true,
+              endTime: true,
+              enabled: true,
+              PauseExceptions: { select: { date: true } },
+            },
+          },
+        },
+      }),
       prisma.apiSubscription.findUnique({ where: { userId }, select: { tier: true } }),
       prisma.userTone.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
     ]);
@@ -136,13 +155,24 @@ export async function POST(request: NextRequest) {
     const userToneMap = new Map<string, UserTone>(userTones.map((t) => [t.id, t]));
 
     const tier = normalizeTier(subscription?.tier);
-    console.log(`[cron] User ${userId} | tier=${tier} | accounts=${accounts.length} | xAccount=${!!xAccount} | globalPaused=${config?.globalPaused ?? false}`);
+    console.log(`[cron] User ${userId} | tier=${tier} | accounts=${accounts.length} | xAccount=${!!xAccount} | globalPaused=${config?.globalPaused ?? false} | schedules=${config?.PauseSchedules?.length ?? 0}`);
 
     // Skip if globally paused
     if (config?.globalPaused) {
       console.log(`[cron] ↳ SKIP: globally paused`);
       skipped += accounts.length;
       skipReasons.globalPaused += accounts.length;
+      continue;
+    }
+
+    // Skip if within an active pause schedule window
+    if (
+      config?.PauseSchedules?.length &&
+      isWithinPauseSchedule(config.PauseSchedules, config.timezone ?? "America/New_York", now)
+    ) {
+      console.log(`[cron] ↳ SKIP: scheduled pause active`);
+      skipped += accounts.length;
+      skipReasons.scheduledPause += accounts.length;
       continue;
     }
 

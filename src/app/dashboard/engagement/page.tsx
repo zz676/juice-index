@@ -45,21 +45,10 @@ export default function EngagementPage() {
     }
   }, []);
 
-  const fetchPauseState = useCallback(async () => {
-    try {
-      const res = await fetch("/api/dashboard/engagement/config");
-      const data = await res.json();
-      setGlobalPaused(data.globalPaused ?? false);
-    } catch {
-      // ignore
-    }
-  }, []);
-
   useEffect(() => {
     fetchAccounts();
-    fetchPauseState();
     fetchTones();
-  }, [fetchAccounts, fetchPauseState, fetchTones]);
+  }, [fetchAccounts, fetchTones]);
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +94,7 @@ export default function EngagementPage() {
       </div>
 
       {/* Global pause banner */}
-      <GlobalPauseBanner />
+      <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
 
       {xTokenError && (
         <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
