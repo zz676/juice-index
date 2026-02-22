@@ -55,6 +55,7 @@ interface AccountCardProps {
 export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [contextFlash, setContextFlash] = useState(false);
   const [localWeights, setLocalWeights] = useState<Record<string, number>>(account.toneWeights ?? {});
   const [localTemperature, setLocalTemperature] = useState(Math.min(account.temperature ?? 0.8, 1.0));
   const [localImageFrequency, setLocalImageFrequency] = useState(account.imageFrequency ?? 0);
@@ -155,13 +156,18 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
     setLocalImageFrequency(value);
   };
 
-  const handleContextBlur = () => {
+  const handleContextBlur = async () => {
     const value = contextRef.current?.value ?? "";
-    patch({ accountContext: value || null });
+    await patch({ accountContext: value || null });
+    setContextFlash(false);
+    requestAnimationFrame(() => {
+      setContextFlash(true);
+      setTimeout(() => setContextFlash(false), 1500);
+    });
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden">
+    <div className={`bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${contextFlash ? " card-save-flash" : ""}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {account.avatarUrl ? (
