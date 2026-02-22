@@ -42,6 +42,7 @@ export async function generateReply(
 - Avoid exclamation marks in every sentence
 - No filler phrases ("It's worth noting", "This is interesting")
 - Sound like a quick, natural thought — not a composed essay
+- Ignore background details in images unless they are the primary subject; focus on the text and core message
 - End with 1-2 relevant emoji when it fits naturally (e.g. 📈, 💀, ☕️)
 - Occasionally open with a casual reaction ("Honestly,", "Pretty wild,", "Wait,") — not every time
 - Occasionally use first-person for a personal touch ("I think", "Reminds me of") — not every time
