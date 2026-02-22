@@ -1842,9 +1842,11 @@ model EngagementConfig {
   /// Identifier of the related user.
   userId         String          @unique
   /// Whether all auto-replies are globally paused.
-  globalPaused   Boolean         @default(false)
+  globalPaused      Boolean         @default(false)
+  /// When true, active pause schedule windows are bypassed (force-resume override).
+  scheduleOverride  Boolean         @default(false)
   /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
-  timezone       String          @default("America/New_York")
+  timezone          String          @default("America/New_York")
   /// Timestamp when the record was created.
   createdAt      DateTime        @default(now())
   /// Timestamp when the record was last updated.

@@ -15,6 +15,7 @@ type PauseSchedule = {
 
 type ConfigData = {
   globalPaused: boolean;
+  scheduleOverride: boolean;
   timezone: string;
   schedules: PauseSchedule[];
 };
@@ -105,6 +106,22 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
       const next = { ...config, globalPaused: data.globalPaused };
       setConfig(next);
       onPauseStateChange?.(data.globalPaused);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setScheduleOverride = async (value: boolean) => {
+    if (!config || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/engagement/config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduleOverride: value }),
+      });
+      const data = await res.json();
+      setConfig({ ...config, scheduleOverride: data.scheduleOverride });
     } finally {
       setLoading(false);
     }
@@ -217,7 +234,10 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
   if (!config) return null;
 
   const activeSchedule = getActiveSchedule(config.schedules, config.timezone);
-  const isSchedulePaused = !config.globalPaused && activeSchedule !== null;
+  // A schedule window is active but the user has overridden it → system is running
+  const isScheduleOverridden = !config.globalPaused && activeSchedule !== null && config.scheduleOverride;
+  // A schedule window is active and not overridden → system is paused
+  const isSchedulePaused = !config.globalPaused && activeSchedule !== null && !config.scheduleOverride;
   const isPaused = config.globalPaused || isSchedulePaused;
 
   const bannerBg = isPaused ? "bg-amber-50 border-amber-200" : "bg-green-50 border-green-200";
@@ -227,6 +247,8 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
     ? "Paused (manual override)"
     : isSchedulePaused
     ? `Paused until ${activeSchedule!.endTime}${activeSchedule!.label ? ` · ${activeSchedule!.label}` : ""}`
+    : isScheduleOverridden
+    ? `Active (schedule overridden until ${activeSchedule!.endTime})`
     : "Auto-replies active";
   const statusTextClass = isPaused ? "text-amber-800" : "text-green-700";
 
@@ -259,12 +281,21 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
             </button>
           ) : isSchedulePaused ? (
             <button
-              onClick={toggleGlobalPause}
+              onClick={() => setScheduleOverride(true)}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
             >
               <span className="material-icons-round text-[15px]">play_arrow</span>
               Override On
+            </button>
+          ) : isScheduleOverridden ? (
+            <button
+              onClick={() => setScheduleOverride(false)}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-slate-custom-300 text-slate-custom-600 bg-white rounded-lg hover:bg-slate-custom-50 transition-colors disabled:opacity-50"
+            >
+              <span className="material-icons-round text-[15px]">cancel</span>
+              Cancel Override
             </button>
           ) : (
             <button
