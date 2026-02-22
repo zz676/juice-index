@@ -25,7 +25,16 @@ export async function sendToTelegram({
   }
 
   const baseUrl = `https://api.telegram.org/bot${token}`;
-  const messageText = `💬 Reply for @${authorUsername}\n\n${replyText}\n\n🔗 Original tweet:\n${originalTweetUrl}`;
+
+  const tweetIdMatch = originalTweetUrl.match(/\/status\/(\d+)/);
+  const tweetId = tweetIdMatch?.[1];
+  const webUrl = tweetId ? `https://x.com/i/web/status/${tweetId}` : null;
+
+  const tweetLinks = webUrl
+    ? `🔗 Original tweet: <a href="${originalTweetUrl}">App</a> · <a href="${webUrl}">Web</a>`
+    : `🔗 Original tweet:\n${originalTweetUrl}`;
+
+  const messageText = `💬 Reply for @${authorUsername}\n\n${replyText}\n\n${tweetLinks}`;
 
   const inlineKeyboard = {
     inline_keyboard: [
