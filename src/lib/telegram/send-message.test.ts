@@ -54,4 +54,13 @@ describe("buildMessageText", () => {
     const result = buildMessageText("alice", "Reply", "🔗 my-link");
     expect(result).toContain("🔗 my-link");
   });
+
+  it("does not escape anchor tags in the tweetLinks argument", () => {
+    const result = buildMessageText(
+      "alice",
+      "Reply",
+      '🔗 Original tweet: <a href="https://x.com/i/web/status/123">Web</a>'
+    );
+    expect(result).toContain('<a href="https://x.com/i/web/status/123">Web</a>');
+  });
 });
