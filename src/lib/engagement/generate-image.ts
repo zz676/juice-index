@@ -1,3 +1,4 @@
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 import type { GenerateImageResult } from "./types";
 
 const DALLE3_ENDPOINT = "https://api.openai.com/v1/images/generations";
@@ -28,16 +29,10 @@ Generate an image based on your analysis above.
     * *Example: If the topic is "fate in sports", generate a dramatic, spotlighted arena that feels historic, not just players skating.*
 * **The Mood & Color:** The lighting, atmosphere, and color palette MUST match the emotional tone of [MY REPLY]. (e.g., use cold, moody tones for cynical replies; bright, bold colors for triumphant ones).
 
-**STEP 3: ADD IMPACTFUL TYPOGRAPHY**
-* Overlay a **short, punchy headline (2-5 words maximum)** in the center of the image.
-* This headline should summarize the "punchline" or main point of [MY REPLY].
-* The font style should match the mood (e.g., bold and blocky for strength; elegant for serious topics).
-* *Crucial: Do NOT just copy-paste sentences from the tweets. Synthesize a new headline.*
-
 **NEGATIVE CONSTRAINTS (What to AVOID):**
 * **NEVER generate a user interface screen, dashboard, "builder" tool, or software screenshot.**
 * NO social media icons, fake tweet bubbles, avatars, or reply buttons.
-* NO tiny, illegible text paragraphs. Only the main headline.
+* **NO text, words, letters, or typography of any kind in the image.**
 * Ensure the aspect ratio is square (1:1).`;
 }
 
@@ -62,7 +57,7 @@ export async function generateImage(
       model: "dall-e-3",
       prompt,
       n: 1,
-      size: "1024x1024",
+      size: "1792x1024",
       quality: "standard",
       response_format: "b64_json",
     }),
@@ -80,5 +75,15 @@ export async function generateImage(
     throw new Error("DALL-E returned no image data");
   }
 
-  return { generated: true, imageBase64: b64 };
+  // Resize to 1/3 of the generated resolution (1792x1024 → 597x341)
+  const srcBuf = Buffer.from(b64, "base64");
+  const src = await loadImage(srcBuf);
+  const w = Math.round(src.width / 3);
+  const h = Math.round(src.height / 3);
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(src, 0, 0, w, h);
+  const resizedB64 = canvas.toBuffer("image/png").toString("base64");
+
+  return { generated: true, imageBase64: resizedB64 };
 }
