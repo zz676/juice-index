@@ -13,6 +13,7 @@ export async function GET() {
     where: { userId: user.id },
     select: {
       globalPaused: true,
+      scheduleOverride: true,
       timezone: true,
       PauseSchedules: {
         orderBy: { createdAt: "asc" },
@@ -34,6 +35,7 @@ export async function GET() {
 
   return NextResponse.json({
     globalPaused: config?.globalPaused ?? false,
+    scheduleOverride: config?.scheduleOverride ?? false,
     timezone: config?.timezone ?? "America/New_York",
     schedules: config?.PauseSchedules ?? [],
   });
@@ -56,7 +58,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  let body: { globalPaused?: boolean; timezone?: string };
+  let body: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string };
   try {
     body = await request.json();
   } catch {
@@ -67,6 +69,10 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "BAD_REQUEST", message: "globalPaused must be a boolean" }, { status: 400 });
   }
 
+  if (body.scheduleOverride !== undefined && typeof body.scheduleOverride !== "boolean") {
+    return NextResponse.json({ error: "BAD_REQUEST", message: "scheduleOverride must be a boolean" }, { status: 400 });
+  }
+
   if (body.timezone !== undefined) {
     try {
       Intl.DateTimeFormat(undefined, { timeZone: body.timezone });
@@ -75,8 +81,9 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const updateData: { globalPaused?: boolean; timezone?: string } = {};
+  const updateData: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string } = {};
   if (body.globalPaused !== undefined) updateData.globalPaused = body.globalPaused;
+  if (body.scheduleOverride !== undefined) updateData.scheduleOverride = body.scheduleOverride;
   if (body.timezone !== undefined) updateData.timezone = body.timezone;
 
   if (Object.keys(updateData).length === 0) {
@@ -87,8 +94,8 @@ export async function PATCH(request: NextRequest) {
     where: { userId: user.id },
     update: updateData,
     create: { userId: user.id, ...updateData },
-    select: { globalPaused: true, timezone: true },
+    select: { globalPaused: true, scheduleOverride: true, timezone: true },
   });
 
-  return NextResponse.json({ globalPaused: config.globalPaused, timezone: config.timezone });
+  return NextResponse.json({ globalPaused: config.globalPaused, scheduleOverride: config.scheduleOverride, timezone: config.timezone });
 }

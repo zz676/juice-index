@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
         where: { userId },
         select: {
           globalPaused: true,
+          scheduleOverride: true,
           timezone: true,
           PauseSchedules: {
             where: { enabled: true },
@@ -165,8 +166,9 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    // Skip if within an active pause schedule window
+    // Skip if within an active pause schedule window (unless user has overridden it)
     if (
+      !config?.scheduleOverride &&
       config?.PauseSchedules?.length &&
       isWithinPauseSchedule(config.PauseSchedules, config.timezone ?? "America/New_York", now)
     ) {
