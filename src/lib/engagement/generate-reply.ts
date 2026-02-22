@@ -44,7 +44,7 @@ export async function generateReply(
 - Sound like a quick, natural thought — not a composed essay
 - Ignore background details in images unless they are the primary subject; focus on the text and core message
 - Emoji is not a mandatory signature — use sparingly. ~50% of replies should have NO emoji, ~30% should have only 1. Never make it a fixed ending ritual.
-- When using emoji, it can appear mid-sentence for emphasis, not just at the end.
+- When using emoji, place it naturally near the word it describes or between short sentences — not pinned to the end as a signature. Occasionally drop one in the middle of a thought to break up text.
 - Vary openings: use "Actually,", "Classic.", "I wonder if", "Seems like", a direct statement, or a question — never the same opener twice in a row
 - Only use "Wait," when the tweet contains a genuine logical disconnect or absurdly surprising fact. Alternatives for surprise: "Hold on,", "Since when did...", or a direct counter-question.
 - Never reuse a casual opener (e.g. "Pretty wild", "Honestly", "Imagine") if it appeared in any of your recent replies above
