@@ -76,7 +76,7 @@ export async function PATCH(
     }
   }
   if (body.pollInterval !== undefined) {
-    const VALID_POLL_INTERVALS = [5, 10, 15, 30, 60, 1440, 10080];
+    const VALID_POLL_INTERVALS = [5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080];
     const interval = Number(body.pollInterval);
     if (VALID_POLL_INTERVALS.includes(interval)) {
       data.pollInterval = interval;
