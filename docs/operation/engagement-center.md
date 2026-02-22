@@ -270,6 +270,8 @@ The toggle is visible in the account card as **"Auto Post to X"**. Toggle it off
    - **✅ Posted**: status → `POSTED`
    - **❌ Discard**: status → `DISCARDED`
 
+**Message format:** The reply text is sent inside a `<pre>` block. Telegram renders this as a code block with a native copy icon — tap it to copy just the reply text without the header or tweet links.
+
 ---
 
 ## Telegram Bot Setup
