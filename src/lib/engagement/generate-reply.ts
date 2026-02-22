@@ -44,7 +44,8 @@ export async function generateReply(
 - Sound like a quick, natural thought — not a composed essay
 - Ignore background details in images unless they are the primary subject; focus on the text and core message
 - End with 1-2 relevant emoji when it fits naturally (e.g. 📈, 💀, ☕️)
-- Occasionally open with a casual reaction ("Honestly,", "Pretty wild,", "Wait,") — not every time
+- Vary openings: use "Wait,", "Actually,", "Classic.", "I wonder if", "Seems like", a direct statement, or a question — never the same opener twice in a row
+- Never reuse a casual opener (e.g. "Pretty wild", "Honestly", "Imagine") if it appeared in any of your recent replies above
 - Occasionally use first-person for a personal touch ("I think", "Reminds me of") — not every time
 
 Write only the reply text, nothing else.`);
