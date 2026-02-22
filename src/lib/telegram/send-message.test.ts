@@ -27,7 +27,7 @@ describe("escapeHtml", () => {
 describe("buildMessageText", () => {
   it("wraps reply in pre tags", () => {
     const result = buildMessageText("alice", "Hello!", "🔗 link");
-    expect(result).toContain("<pre>Hello!</pre>");
+    expect(result).toContain('<pre language="text">Hello!</pre>');
   });
 
   it("escapes HTML chars in reply text inside pre", () => {
@@ -56,6 +56,6 @@ describe("buildMessageText", () => {
 
   it("produces the full expected message structure", () => {
     const result = buildMessageText("alice", "Hello!", "🔗 link");
-    expect(result).toBe("💬 Reply for @alice\n\n<pre>Hello!</pre>\n\n🔗 link");
+    expect(result).toBe('💬 Reply for @alice\n\n<pre language="text">Hello!</pre>\n\n🔗 link');
   });
 });

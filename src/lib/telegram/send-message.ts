@@ -15,7 +15,7 @@ export function buildMessageText(
   replyText: string,
   tweetLinks: string
 ): string {
-  return `💬 Reply for @${authorUsername}\n\n<pre>${escapeHtml(replyText)}</pre>\n\n${tweetLinks}`;
+  return `💬 Reply for @${authorUsername}\n\n<pre language="text">${escapeHtml(replyText)}</pre>\n\n${tweetLinks}`;
 }
 
 interface SendToTelegramParams {
