@@ -58,6 +58,7 @@ export async function sendToTelegram({
 
   const inlineKeyboard = {
     inline_keyboard: [
+      [{ text: "📋 Copy Reply", copy_text: { text: replyText } }],
       [
         { text: "✅ Posted", callback_data: `posted:${replyId}` },
         { text: "❌ Discard", callback_data: `discard:${replyId}` },
