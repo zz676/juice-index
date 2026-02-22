@@ -1,3 +1,23 @@
+/**
+ * Escapes characters required by Telegram's HTML parse mode for use inside
+ * text nodes (<pre>, <b>, <i>, <a> content, etc.).
+ * NOT safe for use inside HTML attribute values.
+ */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+export function buildMessageText(
+  authorUsername: string,
+  replyText: string,
+  tweetLinks: string
+): string {
+  return `💬 Reply for @${authorUsername}\n\n<pre>${escapeHtml(replyText)}</pre>\n\n${tweetLinks}`;
+}
+
 interface SendToTelegramParams {
   replyId: string;
   replyText: string;
@@ -34,7 +54,7 @@ export async function sendToTelegram({
     ? `🔗 Original tweet: <a href="${originalTweetUrl}">App</a> · <a href="${webUrl}">Web</a>`
     : `🔗 Original tweet:\n${originalTweetUrl}`;
 
-  const messageText = `💬 Reply for @${authorUsername}\n\n${replyText}\n\n${tweetLinks}`;
+  const messageText = buildMessageText(authorUsername, replyText, tweetLinks);
 
   const inlineKeyboard = {
     inline_keyboard: [
