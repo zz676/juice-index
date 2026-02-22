@@ -20,11 +20,13 @@ interface ConnectedAccountsProps {
         displayName: string | null;
         avatarUrl: string | null;
         isXPremium: boolean;
+        tokenError?: boolean;
     } | null;
     tier: string;
     hasXLoginIdentity: boolean;
     xConnected?: boolean;
     xError?: string | null;
+    xTokenError?: boolean;
 }
 
 const providers = [
@@ -71,6 +73,7 @@ export default function ConnectedAccounts({
     hasXLoginIdentity,
     xConnected,
     xError,
+    xTokenError,
 }: ConnectedAccountsProps) {
     const supabase = useMemo(() => createClient(), []);
     const router = useRouter();
@@ -207,6 +210,22 @@ export default function ConnectedAccounts({
 
                                 {showXPosting ? (
                                     <>
+                                    {xTokenError && (
+                                        <div className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                <span className="material-icons-round text-amber-500 text-sm flex-shrink-0">warning</span>
+                                                <p className="text-xs text-amber-800">
+                                                    X posting token expired. Reconnect to resume posting.
+                                                </p>
+                                            </div>
+                                            <a
+                                                href="/api/x/authorize"
+                                                className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors flex-shrink-0"
+                                            >
+                                                Reconnect
+                                            </a>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between py-2">
                                         <div className="flex items-center gap-2.5">
                                             {xAccount.avatarUrl ? (

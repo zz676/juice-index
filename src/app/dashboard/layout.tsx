@@ -25,6 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
     const [tier, setTier] = useState<string>("FREE");
     const [role, setRole] = useState<string>("USER");
+    const [xTokenError, setXTokenError] = useState<boolean>(false);
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -38,7 +39,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         });
         fetch("/api/dashboard/tier")
             .then((r) => r.json())
-            .then((d) => { if (d.tier) setTier(d.tier); if (d.role) setRole(d.role); })
+            .then((d) => {
+                if (d.tier) setTier(d.tier);
+                if (d.role) setRole(d.role);
+                setXTokenError(d.xTokenError === true);
+            })
             .catch(() => {});
     }, [supabase]);
 
@@ -239,6 +244,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <NotificationBell />
                     </div>
                 </header>
+
+                {/* X Token Error Banner */}
+                {xTokenError && (
+                    <div className="flex items-center justify-between gap-3 px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-sm">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="material-icons-round text-amber-500 text-[18px] flex-shrink-0">warning</span>
+                            <span className="text-amber-800 truncate">
+                                Your X posting token has expired — auto-replies and scheduled posts are paused.
+                            </span>
+                        </div>
+                        <a
+                            href="/dashboard/settings"
+                            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors flex-shrink-0"
+                        >
+                            Reconnect in Settings
+                        </a>
+                    </div>
+                )}
 
                 {/* Page Content */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-2 pb-0">
