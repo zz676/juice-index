@@ -161,11 +161,13 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
               <p className="text-xs font-semibold text-slate-custom-500 mb-1.5 uppercase tracking-wide">
                 Image
               </p>
-              <img
-                src={reply.replyImageUrl}
-                alt="Reply image"
-                className="w-full rounded-lg border border-slate-custom-200 object-cover"
-              />
+              <div className="aspect-[2/1] overflow-hidden rounded-lg border border-slate-custom-200">
+                <img
+                  src={reply.replyImageUrl}
+                  alt="Reply image"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           )}
 

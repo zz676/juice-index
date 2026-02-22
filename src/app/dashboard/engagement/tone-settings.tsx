@@ -434,11 +434,11 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
             </div>
 
             {result.imageBase64 && (
-              <div className="rounded-xl overflow-hidden border border-slate-custom-200">
+              <div className="aspect-[2/1] overflow-hidden rounded-xl border border-slate-custom-200">
                 <img
                   src={`data:image/png;base64,${result.imageBase64}`}
                   alt="Generated reply image"
-                  className="w-full object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             )}
