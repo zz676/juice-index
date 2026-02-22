@@ -3,7 +3,7 @@ import { openai } from "@ai-sdk/openai";
 import type { GenerateReplyResult } from "./types";
 
 const REPLY_MODEL = "gpt-4.1-mini";
-const REPLY_MAX_TOKENS = 120;
+const REPLY_MAX_TOKENS = 80;
 
 export async function generateReply(
   sourceTweetText: string,
@@ -35,13 +35,16 @@ export async function generateReply(
 - Reply in the same language as the tweet
 - Reference what was said in the tweet
 - No hashtags, no markdown formatting
-- Must be 1-2 sentences, under 280 characters
+- Keep it under 25 words. Short punchy sentences or fragments are fine.
 - Write like a real person, not a corporate account or AI
 - Vary sentence structure and openings
 - Never start with generic affirmations ("Great point!", "Absolutely!", "确实", "Indeed")
 - Avoid exclamation marks in every sentence
 - No filler phrases ("It's worth noting", "This is interesting")
 - Sound like a quick, natural thought — not a composed essay
+- End with 1-2 relevant emoji when it fits naturally (e.g. 📈, 💀, ☕️)
+- Occasionally open with a casual reaction ("Honestly,", "Pretty wild,", "Wait,") — not every time
+- Occasionally use first-person for a personal touch ("I think", "Reminds me of") — not every time
 
 Write only the reply text, nothing else.`);
 

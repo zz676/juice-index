@@ -338,10 +338,19 @@ When `alwaysGenerateImage` is enabled on an account, images are generated for **
 ## AI Model
 
 Text replies are generated using **GPT-4.1-mini** (previously gpt-4o-mini). Prompts use a split system/user message structure:
-- **System message:** Tone prompt + account context + recent reply history + anti-AI writing rules
+- **System message:** Tone prompt + account context + recent reply history + reply rules
 - **User message:** The tweet text to reply to
 
 Recent replies (up to 5) are passed to avoid repetitive openings and patterns.
+
+**Reply generation rules (applied globally to all accounts):**
+- Keep replies under 25 words; short punchy sentences or fragments are fine
+- Max output tokens: 80 (approx. 60 words — limits verbosity while giving headroom)
+- End with 1-2 relevant emoji when it fits naturally (e.g. 📈, 💀, ☕️)
+- Occasionally open with a casual reaction ("Honestly,", "Pretty wild,", "Wait,") — not every time
+- Occasionally use first-person for a personal touch ("I think", "Reminds me of") — not every time
+- No filler phrases ("It's worth noting", "This is interesting")
+- Never start with generic affirmations ("Great point!", "Absolutely!")
 
 ---
 
