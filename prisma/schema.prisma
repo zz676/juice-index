@@ -1838,18 +1838,62 @@ model FollowingCache {
 /// Global engagement auto-reply configuration per user.
 model EngagementConfig {
   /// Primary identifier for the record.
-  id           String   @id @default(cuid())
+  id             String          @id @default(cuid())
   /// Identifier of the related user.
-  userId       String   @unique
+  userId         String          @unique
   /// Whether all auto-replies are globally paused.
-  globalPaused Boolean  @default(false)
+  globalPaused   Boolean         @default(false)
+  /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
+  timezone       String          @default("America/New_York")
   /// Timestamp when the record was created.
-  createdAt    DateTime @default(now())
+  createdAt      DateTime        @default(now())
   /// Timestamp when the record was last updated.
-  updatedAt    DateTime @updatedAt
-  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime        @updatedAt
+  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PauseSchedules PauseSchedule[]
 
   @@map("juice_engagement_configs")
+}
+
+/// A daily time window during which auto-replies are automatically paused.
+model PauseSchedule {
+  /// Primary identifier for the record.
+  id                 String           @id @default(cuid())
+  /// Identifier of the related engagement config.
+  engagementConfigId String
+  /// Optional human-friendly label (e.g. "Overnight").
+  label              String?
+  /// Window start time in "HH:mm" 24-hour format.
+  startTime          String
+  /// Window end time in "HH:mm" 24-hour format.
+  endTime            String
+  /// Whether this schedule is active.
+  enabled            Boolean          @default(true)
+  /// Timestamp when the record was created.
+  createdAt          DateTime         @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt          DateTime         @updatedAt
+  EngagementConfig   EngagementConfig @relation(fields: [engagementConfigId], references: [id], onDelete: Cascade)
+  PauseExceptions    PauseException[]
+
+  @@index([engagementConfigId])
+  @@map("juice_pause_schedules")
+}
+
+/// A specific date on which a pause schedule should be skipped.
+model PauseException {
+  /// Primary identifier for the record.
+  id              String        @id @default(cuid())
+  /// Identifier of the related pause schedule.
+  pauseScheduleId String
+  /// The date to skip in "YYYY-MM-DD" format.
+  date            String
+  /// Timestamp when the record was created.
+  createdAt       DateTime      @default(now())
+  PauseSchedule   PauseSchedule @relation(fields: [pauseScheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([pauseScheduleId, date])
+  @@map("juice_pause_exceptions")
 }
 
 /// Per-user editable tone definitions for engagement reply generation.
