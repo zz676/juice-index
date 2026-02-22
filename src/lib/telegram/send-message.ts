@@ -65,69 +65,36 @@ export async function sendToTelegram({
     ],
   };
 
-  if (imageUrl) {
-    if (messageText.length <= 1024) {
-      // Send photo with caption + buttons
-      const res = await fetch(`${baseUrl}/sendPhoto`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: imageUrl,
-          caption: messageText,
-          parse_mode: "HTML",
-          reply_markup: inlineKeyboard,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Telegram sendPhoto error: ${body}`);
-      }
-    } else {
-      // Caption too long: send text with buttons first, then photo separately
-      const textRes = await fetch(`${baseUrl}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: messageText,
-          parse_mode: "HTML",
-          reply_markup: inlineKeyboard,
-        }),
-      });
-      if (!textRes.ok) {
-        const body = await textRes.text();
-        throw new Error(`Telegram sendMessage error: ${body}`);
-      }
+  // Always send text as a message (not a caption) so Telegram renders
+  // the <pre> block with its "Copy" button. When there's an image, follow
+  // up with a separate sendPhoto.
+  const textRes = await fetch(`${baseUrl}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: messageText,
+      parse_mode: "HTML",
+      reply_markup: inlineKeyboard,
+    }),
+  });
+  if (!textRes.ok) {
+    const body = await textRes.text();
+    throw new Error(`Telegram sendMessage error: ${body}`);
+  }
 
-      const photoRes = await fetch(`${baseUrl}/sendPhoto`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: imageUrl,
-        }),
-      });
-      if (!photoRes.ok) {
-        const body = await photoRes.text();
-        throw new Error(`Telegram sendPhoto error: ${body}`);
-      }
-    }
-  } else {
-    // Text only
-    const res = await fetch(`${baseUrl}/sendMessage`, {
+  if (imageUrl) {
+    const photoRes = await fetch(`${baseUrl}/sendPhoto`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: messageText,
-        parse_mode: "HTML",
-        reply_markup: inlineKeyboard,
+        photo: imageUrl,
       }),
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Telegram sendMessage error: ${body}`);
+    if (!photoRes.ok) {
+      const body = await photoRes.text();
+      throw new Error(`Telegram sendPhoto error: ${body}`);
     }
   }
 }
