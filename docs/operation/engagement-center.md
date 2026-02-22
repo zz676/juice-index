@@ -119,13 +119,21 @@ both `since_id` (when set) and `start_time`; tweets must satisfy both filters. T
 
 ## Reply Status Workflow
 
+### Auto-post accounts (`autoPost: true`)
 ```
 PENDING → GENERATING → POSTING → POSTED
                                ↘ FAILED   (permanent after 3 attempts)
          SKIPPED               (quota exhausted, never attempted)
 ```
 
-PENDING replies with `attempts < 3` are automatically retried on the next cron run.
+### Manual-post accounts (`autoPost: false`)
+```
+PENDING → GENERATING → SENT_TO_TELEGRAM  (Telegram notification sent, awaiting user action)
+                       → POSTED          (user tapped "✅ Posted" in Telegram or used dashboard)
+                       → DISCARDED       (user tapped "❌ Discard" or used dashboard)
+```
+
+PENDING replies with `attempts < 3` are automatically retried on the next cron run. For `autoPost: false` accounts, the retry routes to Telegram instead of X.
 
 ---
 
@@ -239,6 +247,68 @@ Replies are generated using a per-user tone library stored in `juice_user_tones`
 **Default tones:** On first access of `/api/dashboard/engagement/tones`, 6 default tones are seeded for the user: Humor, Sarcastic, Huge Fan, Cheers, Neutral, Professional. These can be edited or deleted.
 
 **Tone Settings tab:** The Engagement Center has a 4th tab "Tone Settings" where users can view, edit, and create custom tones with full prompt control.
+
+---
+
+## Per-Account Auto-Post Toggle
+
+Each `MonitoredAccount` has an `autoPost` boolean field (default: `false`).
+
+| `autoPost` | Behavior |
+|---|---|
+| `true` | Reply is generated and posted directly to X via the API (original behavior) |
+| `false` | Reply is generated, image (if any) is uploaded to Supabase Storage, and a Telegram notification is sent with inline "✅ Posted" / "❌ Discard" buttons |
+
+The toggle is visible in the account card as **"Auto Post to X"**. Toggle it off to use the manual Telegram review flow.
+
+**Telegram flow details:**
+1. Cron generates reply text (and image if `imageFrequency > 0`)
+2. If image generated: uploaded to `engagement-images` Supabase Storage bucket (public URL)
+3. `sendToTelegram()` called — sends `sendPhoto` (with caption) or `sendMessage` + separate photo
+4. Reply status set to `SENT_TO_TELEGRAM`, `replyImageUrl` stored
+5. User reviews the Telegram message and taps a button:
+   - **✅ Posted**: status → `POSTED`
+   - **❌ Discard**: status → `DISCARDED`
+
+---
+
+## Telegram Bot Setup
+
+1. Create a bot via [@BotFather](https://t.me/BotFather) and copy the token
+2. Add the bot to your target chat and get the `chat_id` (use `getUpdates` or a helper bot)
+3. Set environment variables: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET`
+4. Register the webhook after deploy:
+
+```bash
+curl "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook?token=<TELEGRAM_WEBHOOK_SECRET>"
+```
+
+5. Create the `engagement-images` bucket in Supabase Storage with **public** read access
+
+---
+
+## Reply Detail Panel
+
+In the Reply Monitoring table, clicking any row opens a slide-out panel showing:
+
+- **Source tweet** text and link to X
+- **Reply text** — editable textarea for `SENT_TO_TELEGRAM` and `DISCARDED` statuses; read-only for `POSTED`
+- **Image preview** (if `replyImageUrl` is set)
+- **Metadata**: tone, cost, generation date
+
+**Available actions (by status):**
+
+| Status | Available actions |
+|---|---|
+| `SENT_TO_TELEGRAM` | Save Edit · Post to X · Mark as Posted · Discard |
+| `DISCARDED` | Save Edit · Post to X · Mark as Posted |
+| `POSTED` | View reply link (if auto-posted via API) |
+| `PENDING` / `FAILED` | Discard |
+
+- **Save Edit**: updates `replyText` in DB via PATCH `/api/dashboard/engagement/replies/[id]`
+- **Post to X**: downloads image from Supabase (if any), uploads to X, posts tweet, sets status to `POSTED`
+- **Mark as Posted**: sets status to `POSTED` without making an X API call (for manually posted replies)
+- **Discard**: sets status to `DISCARDED`
 
 ---
 

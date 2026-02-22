@@ -1585,6 +1585,8 @@ enum EngagementReplyStatus {
   POSTED
   FAILED
   SKIPPED
+  SENT_TO_TELEGRAM
+  DISCARDED
 }
 
 model ApiKey {
@@ -1722,6 +1724,8 @@ model MonitoredAccount {
   imageFrequency      Int               @default(0)
   /// Whether auto-reply is enabled for this account.
   enabled             Boolean           @default(true)
+  /// Whether replies should be auto-posted to X (true) or sent to Telegram for manual posting (false).
+  autoPost            Boolean           @default(false)
   /// Last tweet ID seen from this account (for polling).
   lastSeenTweetId     String?
   /// Timestamp when the account was last polled.

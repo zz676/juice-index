@@ -28,6 +28,7 @@ export async function PATCH(
     customTonePrompt?: string | null;
     imageFrequency?: number;
     enabled?: boolean;
+    autoPost?: boolean;
     accountContext?: string | null;
     toneWeights?: Record<string, number> | null;
     temperature?: number;
@@ -58,6 +59,9 @@ export async function PATCH(
   }
   if (body.enabled !== undefined) {
     data.enabled = Boolean(body.enabled);
+  }
+  if (body.autoPost !== undefined) {
+    data.autoPost = Boolean(body.autoPost);
   }
   if (body.accountContext !== undefined) {
     data.accountContext = body.accountContext ?? null;

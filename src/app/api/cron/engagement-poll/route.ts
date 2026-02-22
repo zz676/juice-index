@@ -7,6 +7,8 @@ import { generateReply } from "@/lib/engagement/generate-reply";
 import { generateImage } from "@/lib/engagement/generate-image";
 import { uploadMedia } from "@/lib/x/upload-media";
 import { postTweet } from "@/lib/x/post-tweet";
+import { uploadEngagementImage } from "@/lib/supabase/storage";
+import { sendToTelegram } from "@/lib/telegram/send-message";
 import { engagementReplyLimit, engagementImageLimit } from "@/lib/ratelimit";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
 import { computeTotalReplyCost, computeTextGenerationCost } from "@/lib/engagement/cost-utils";
@@ -320,29 +322,60 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        await prisma.engagementReply.update({
-          where: { id: reply.id },
-          data: { status: EngagementReplyStatus.POSTING, replyText },
-        });
+        if (account.autoPost) {
+          // ── X posting retry ──────────────────────────────────────────
+          await prisma.engagementReply.update({
+            where: { id: reply.id },
+            data: { status: EngagementReplyStatus.POSTING, replyText },
+          });
 
-        const postedTweet = await postTweet(accessToken, replyText, mediaIds, reply.sourceTweetId);
-        const costs = computeTotalReplyCost(inputTokens, outputTokens, imageGenerated);
+          const postedTweet = await postTweet(accessToken, replyText, mediaIds, reply.sourceTweetId);
+          const costs = computeTotalReplyCost(inputTokens, outputTokens, imageGenerated);
 
-        await prisma.engagementReply.update({
-          where: { id: reply.id },
-          data: {
-            status: EngagementReplyStatus.POSTED,
-            replyTweetId: postedTweet.id,
-            replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
-            textGenerationCost: costs.textCost,
-            imageGenerationCost: costs.imageCost,
-            apiCallCost: costs.apiCost,
-            totalCost: costs.totalCost,
-            lastError: null,
-          },
-        });
+          await prisma.engagementReply.update({
+            where: { id: reply.id },
+            data: {
+              status: EngagementReplyStatus.POSTED,
+              replyTweetId: postedTweet.id,
+              replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+              textGenerationCost: costs.textCost,
+              imageGenerationCost: costs.imageCost,
+              apiCallCost: costs.apiCost,
+              totalCost: costs.totalCost,
+              lastError: null,
+            },
+          });
 
-        console.log(`[cron]   Retry succeeded: reply ${reply.id} → tweet ${postedTweet.id}`);
+          console.log(`[cron]   Retry succeeded (X): reply ${reply.id} → tweet ${postedTweet.id}`);
+        } else {
+          // ── Telegram retry ───────────────────────────────────────────
+          await sendToTelegram({
+            replyId: reply.id,
+            replyText: replyText!,
+            originalTweetUrl:
+              reply.sourceTweetUrl ?? `https://x.com/i/web/status/${reply.sourceTweetId}`,
+            authorUsername: account.username,
+            imageUrl: reply.replyImageUrl ?? undefined,
+          });
+
+          const costs = computeTotalReplyCost(inputTokens, outputTokens, imageGenerated);
+
+          await prisma.engagementReply.update({
+            where: { id: reply.id },
+            data: {
+              status: EngagementReplyStatus.SENT_TO_TELEGRAM,
+              replyText,
+              textGenerationCost: costs.textCost,
+              imageGenerationCost: costs.imageCost,
+              apiCallCost: 0,
+              totalCost: costs.textCost + costs.imageCost,
+              lastError: null,
+            },
+          });
+
+          console.log(`[cron]   Retry succeeded (Telegram): reply ${reply.id}`);
+        }
+
         replied++;
         const retryStat = accountStats.get(reply.monitoredAccountId);
         if (retryStat) retryStat.replied++;
@@ -505,90 +538,166 @@ export async function POST(request: NextRequest) {
               },
             }).catch(() => {});
 
-            // Optionally generate and upload an image
-            let imageGenerated = false;
-            let mediaIds: string[] | undefined;
+            if (account.autoPost) {
+              // ── X posting flow ──────────────────────────────────────
+              let imageGenerated = false;
+              let mediaIds: string[] | undefined;
 
-            if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
-              const imgQuota = await engagementImageLimit(userId, tier, new Date());
-              if (imgQuota.success) {
-                try {
-                  const imgStart = Date.now();
-                  const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
-                  const imgDurationMs = Date.now() - imgStart;
-                  if (imgResult.generated) {
-                    const { mediaId } = await uploadMedia(
-                      accessToken,
-                      `data:image/png;base64,${imgResult.imageBase64}`,
+              if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
+                const imgQuota = await engagementImageLimit(userId, tier, new Date());
+                if (imgQuota.success) {
+                  try {
+                    const imgStart = Date.now();
+                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
+                    const imgDurationMs = Date.now() - imgStart;
+                    if (imgResult.generated) {
+                      const { mediaId } = await uploadMedia(
+                        accessToken,
+                        `data:image/png;base64,${imgResult.imageBase64}`,
+                      );
+                      mediaIds = [mediaId];
+                      imageGenerated = true;
+                      prisma.aIUsage.create({
+                        data: {
+                          type: "image",
+                          model: "dall-e-3",
+                          size: "1024x1024",
+                          source: "engagement-reply",
+                          cost: 0.04,
+                          durationMs: imgDurationMs,
+                          success: true,
+                        },
+                      }).catch(() => {});
+                    }
+                  } catch (imgErr) {
+                    console.warn(
+                      `[cron] Image generation failed for reply ${replyRecord.id}, posting without image:`,
+                      imgErr,
                     );
-                    mediaIds = [mediaId];
-                    imageGenerated = true;
                     prisma.aIUsage.create({
                       data: {
                         type: "image",
                         model: "dall-e-3",
                         size: "1024x1024",
                         source: "engagement-reply",
-                        cost: 0.04,
-                        durationMs: imgDurationMs,
-                        success: true,
+                        cost: 0,
+                        success: false,
+                        errorMsg: imgErr instanceof Error ? imgErr.message : "Image generation failed",
                       },
                     }).catch(() => {});
                   }
-                } catch (imgErr) {
-                  console.warn(
-                    `[cron] Image generation failed for reply ${replyRecord.id}, posting without image:`,
-                    imgErr,
-                  );
-                  prisma.aIUsage.create({
-                    data: {
-                      type: "image",
-                      model: "dall-e-3",
-                      size: "1024x1024",
-                      source: "engagement-reply",
-                      cost: 0,
-                      success: false,
-                      errorMsg: imgErr instanceof Error ? imgErr.message : "Image generation failed",
-                    },
-                  }).catch(() => {});
                 }
               }
+
+              await prisma.engagementReply.update({
+                where: { id: replyRecord.id },
+                data: { status: EngagementReplyStatus.POSTING, replyText: generated.text },
+              });
+
+              const postedTweet = await postTweet(accessToken, generated.text, mediaIds, tweet.id);
+              const costs = computeTotalReplyCost(
+                generated.inputTokens,
+                generated.outputTokens,
+                imageGenerated,
+              );
+
+              await prisma.engagementReply.update({
+                where: { id: replyRecord.id },
+                data: {
+                  status: EngagementReplyStatus.POSTED,
+                  replyTweetId: postedTweet.id,
+                  replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+                  textGenerationCost: costs.textCost,
+                  imageGenerationCost: costs.imageCost,
+                  apiCallCost: costs.apiCost,
+                  totalCost: costs.totalCost,
+                  lastError: null,
+                },
+              });
+
+              console.log(
+                `[cron] Posted reply for @${account.username} tweet ${tweet.id} → reply ${postedTweet.id} (tone: ${selected.toneName})`,
+              );
+            } else {
+              // ── Telegram flow ────────────────────────────────────────
+              let imageUrl: string | undefined;
+              let imageGenerated = false;
+
+              if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
+                const imgQuota = await engagementImageLimit(userId, tier, new Date());
+                if (imgQuota.success) {
+                  try {
+                    const imgStart = Date.now();
+                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
+                    const imgDurationMs = Date.now() - imgStart;
+                    if (imgResult.generated) {
+                      imageUrl = await uploadEngagementImage(replyRecord.id, imgResult.imageBase64);
+                      imageGenerated = true;
+                      prisma.aIUsage.create({
+                        data: {
+                          type: "image",
+                          model: "dall-e-3",
+                          size: "1024x1024",
+                          source: "engagement-reply",
+                          cost: 0.04,
+                          durationMs: imgDurationMs,
+                          success: true,
+                        },
+                      }).catch(() => {});
+                    }
+                  } catch (imgErr) {
+                    console.warn(
+                      `[cron] Image generation/upload failed for reply ${replyRecord.id}, sending to Telegram without image:`,
+                      imgErr,
+                    );
+                    prisma.aIUsage.create({
+                      data: {
+                        type: "image",
+                        model: "dall-e-3",
+                        size: "1024x1024",
+                        source: "engagement-reply",
+                        cost: 0,
+                        success: false,
+                        errorMsg: imgErr instanceof Error ? imgErr.message : "Image generation failed",
+                      },
+                    }).catch(() => {});
+                  }
+                }
+              }
+
+              await sendToTelegram({
+                replyId: replyRecord.id,
+                replyText: generated.text,
+                originalTweetUrl: tweet.url ?? `https://x.com/i/web/status/${tweet.id}`,
+                authorUsername: account.username,
+                imageUrl,
+              });
+
+              const costs = computeTotalReplyCost(
+                generated.inputTokens,
+                generated.outputTokens,
+                imageGenerated,
+              );
+
+              await prisma.engagementReply.update({
+                where: { id: replyRecord.id },
+                data: {
+                  status: EngagementReplyStatus.SENT_TO_TELEGRAM,
+                  replyText: generated.text,
+                  replyImageUrl: imageUrl ?? null,
+                  textGenerationCost: costs.textCost,
+                  imageGenerationCost: costs.imageCost,
+                  apiCallCost: 0,
+                  totalCost: costs.textCost + costs.imageCost,
+                  lastError: null,
+                },
+              });
+
+              console.log(
+                `[cron] Sent to Telegram for @${account.username} tweet ${tweet.id} (tone: ${selected.toneName})`,
+              );
             }
 
-            // Update to POSTING
-            await prisma.engagementReply.update({
-              where: { id: replyRecord.id },
-              data: { status: EngagementReplyStatus.POSTING, replyText: generated.text },
-            });
-
-            // Post the reply tweet
-            const postedTweet = await postTweet(accessToken, generated.text, mediaIds, tweet.id);
-
-            // Compute costs
-            const costs = computeTotalReplyCost(
-              generated.inputTokens,
-              generated.outputTokens,
-              imageGenerated,
-            );
-
-            // Mark as POSTED
-            await prisma.engagementReply.update({
-              where: { id: replyRecord.id },
-              data: {
-                status: EngagementReplyStatus.POSTED,
-                replyTweetId: postedTweet.id,
-                replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
-                textGenerationCost: costs.textCost,
-                imageGenerationCost: costs.imageCost,
-                apiCallCost: costs.apiCost,
-                totalCost: costs.totalCost,
-                lastError: null,
-              },
-            });
-
-            console.log(
-              `[cron] Posted reply for @${account.username} tweet ${tweet.id} → reply ${postedTweet.id} (tone: ${selected.toneName})`,
-            );
             replied++;
             stat.replied++;
           } catch (err) {
