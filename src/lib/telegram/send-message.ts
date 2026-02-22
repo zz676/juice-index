@@ -1,3 +1,8 @@
+/**
+ * Escapes characters required by Telegram's HTML parse mode for use inside
+ * text nodes (<pre>, <b>, <i>, <a> content, etc.).
+ * NOT safe for use inside HTML attribute values.
+ */
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

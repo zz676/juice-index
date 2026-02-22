@@ -53,4 +53,9 @@ describe("buildMessageText", () => {
     );
     expect(result).toContain('<a href="https://x.com/i/web/status/123">Web</a>');
   });
+
+  it("produces the full expected message structure", () => {
+    const result = buildMessageText("alice", "Hello!", "🔗 link");
+    expect(result).toBe("💬 Reply for @alice\n\n<pre>Hello!</pre>\n\n🔗 link");
+  });
 });
