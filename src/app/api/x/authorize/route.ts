@@ -34,8 +34,9 @@ export async function GET() {
   // Check if already connected
   const existing = await prisma.xAccount.findUnique({
     where: { userId: user.id },
+    select: { tokenError: true },
   });
-  if (existing) {
+  if (existing && !existing.tokenError) {
     return NextResponse.json(
       { error: "CONFLICT", message: "An X account is already connected. Disconnect it first." },
       { status: 409 }

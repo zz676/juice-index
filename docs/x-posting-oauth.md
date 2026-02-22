@@ -58,6 +58,37 @@ In the "X Posting Account" card, when a user has an eligible tier but no connect
 - **API**: `GET /api/dashboard/user-posts` queries `juice_accounts` for an `AuthProvider.X` record for the current user and returns `hasXLoginIdentity: boolean` alongside `hasXAccount`.
 - **Settings page**: The server component checks `authUser.identities` for a `"twitter"` or `"x"` provider and passes `hasXLoginIdentity` as a prop to `<XPostingAccount>`.
 
+## Token Invalidation & Recovery
+
+X rotates or revokes the posting refresh token in two situations:
+
+1. **Natural expiry** — tokens have a limited lifetime and must be refreshed via `src/lib/x/refresh-token.ts`.
+2. **Re-authorization** — if the same X OAuth client is used for both login and posting, X revokes the existing posting token when the user re-authorizes via login.
+
+**Root-cause fix:** Separate X OAuth apps are configured for login (in the Supabase dashboard) and for posting (`X_OAUTH_CLIENT_ID` / `X_OAUTH_CLIENT_SECRET` in `.env.local`).
+
+**Defense-in-depth:** Code-level detection and recovery is layered on top.
+
+### Detection
+
+Token breakage is detected in two places:
+
+- **Cron job** (`src/app/api/cron/engagement-poll/route.ts`) — calls `refreshTokenIfNeeded()` per user; catches `XTokenExpiredError` → sets `tokenError: true` and creates a `SYSTEM` notification.
+- **Login callback** (`src/app/auth/callback/route.ts`) — after `syncUser()`, fire-and-forgets `checkXPostingToken(userId)` from `src/lib/auth/check-x-posting-token.ts`. This detects breakage immediately on login rather than waiting for the next cron run.
+
+Both detection paths are deduplicated: `tokenError` is only set, and the notification is only created, when the flag transitions from `false` to `true`.
+
+### Error Visibility
+
+When `tokenError` is `true` on an `XAccount`, the error is surfaced in two places:
+
+- **Global dashboard banner** — a persistent amber banner appears above all dashboard pages (rendered in `src/app/dashboard/layout.tsx`) with a link to Settings.
+- **Settings page** — within the Connected Accounts section, an amber warning banner with a "Reconnect" button appears in place of the normal account display.
+
+### Reconnection
+
+The "Reconnect" button links to `GET /api/x/authorize`. The authorize route allows re-authorization when `tokenError` is `true` (previously it returned 409 for any existing account). The OAuth callback (`/api/x/callback`) already uses `prisma.xAccount.upsert` with `tokenError: false`, so new tokens overwrite the broken ones.
+
 ## Error Visibility
 
 "Publish Now" posts are published synchronously — the API calls the X API directly and returns success or failure immediately. Scheduled posts (with a future `scheduledFor`) are published by the cron job. In both cases, errors are surfaced as follows:
@@ -98,6 +129,11 @@ Required in `.env.local`:
 | `src/app/auth/callback/route.ts` | Modified — calls `syncAccounts()` |
 | `src/lib/auth/sync-user.ts` | Modified — calls `syncAccounts()` |
 | `src/lib/x/refresh-token.ts` | Modified — fixed env var names |
-| `src/app/dashboard/settings/page.tsx` | Modified — added X Posting Account section |
+| `src/app/dashboard/settings/page.tsx` | Modified — added X Posting Account section; added `tokenError` to xAccount query |
 | `src/app/api/dashboard/user-posts/route.ts` | Modified — added `hasXAccount` to response |
 | `src/app/dashboard/posts/page.tsx` | Modified — added X account warning banner |
+| `src/app/api/x/authorize/route.ts` | Modified — allows re-auth when `tokenError=true` |
+| `src/app/dashboard/settings/connected-accounts.tsx` | Modified — shows amber reconnect banner when token is broken |
+| `src/app/api/dashboard/tier/route.ts` | Modified — includes `xTokenError` in response |
+| `src/app/dashboard/layout.tsx` | Modified — renders global token error banner |
+| `src/lib/auth/check-x-posting-token.ts` | New — proactive login-time token validation |
