@@ -4,27 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import type { EngagementReplyStatus } from "@prisma/client";
 import type { MonitoredAccountRow } from "./account-card";
-
-interface ReplyRow {
-  id: string;
-  sourceTweetId: string;
-  sourceTweetText: string | null;
-  sourceTweetUrl: string | null;
-  replyText: string | null;
-  replyTweetId: string | null;
-  replyTweetUrl: string | null;
-  tone: string;
-  status: EngagementReplyStatus;
-  lastError: string | null;
-  totalCost: number;
-  createdAt: string;
-  sourceTweetCreatedAt: string | null;
-  MonitoredAccount: {
-    username: string;
-    displayName: string | null;
-    avatarUrl: string | null;
-  } | null;
-}
+import { ReplyDetailPanel } from "./reply-detail-panel";
+import type { ReplyRow } from "./reply-detail-panel";
 
 interface Pagination {
   page: number;
@@ -41,11 +22,13 @@ type SortField = "createdAt" | "status" | "tone";
 const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
   "All",
   "POSTED",
+  "SENT_TO_TELEGRAM",
   "PENDING",
   "GENERATING",
   "POSTING",
   "FAILED",
   "SKIPPED",
+  "DISCARDED",
 ];
 
 export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
@@ -66,6 +49,7 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
   const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedReply, setSelectedReply] = useState<ReplyRow | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -146,6 +130,11 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
         {sortOrder === "desc" ? "arrow_downward" : "arrow_upward"}
       </span>
     );
+  };
+
+  const handleReplyUpdate = (updated: ReplyRow) => {
+    setReplies((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setSelectedReply(updated);
   };
 
   return (
@@ -324,7 +313,8 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
                 {replies.map((reply) => (
                   <tr
                     key={reply.id}
-                    className="border-b border-slate-custom-50 hover:bg-slate-custom-50/50 transition-colors"
+                    onClick={() => setSelectedReply(reply)}
+                    className="border-b border-slate-custom-50 hover:bg-slate-custom-50/50 transition-colors cursor-pointer"
                   >
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
@@ -340,21 +330,33 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3 max-w-[200px]">
-                      {reply.replyTweetUrl ? (
-                        <a
-                          href={reply.replyTweetUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline text-xs font-medium flex items-center gap-1"
-                        >
-                          <span className="material-icons-round text-[12px]">open_in_new</span>
-                          View reply
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-custom-400 truncate block max-w-[180px]" title={reply.replyText ?? ""}>
-                          {reply.replyText || "—"}
-                        </span>
-                      )}
+                      <div className="flex items-start gap-2">
+                        {reply.replyImageUrl && (
+                          <img
+                            src={reply.replyImageUrl}
+                            alt=""
+                            className="w-8 h-8 rounded object-cover flex-shrink-0 border border-slate-custom-100"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          {reply.replyTweetUrl ? (
+                            <a
+                              href={reply.replyTweetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-primary hover:underline text-xs font-medium flex items-center gap-1"
+                            >
+                              <span className="material-icons-round text-[12px]">open_in_new</span>
+                              View reply
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-custom-400 truncate block max-w-[160px]" title={reply.replyText ?? ""}>
+                              {reply.replyText || "—"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 max-w-[180px]">
                       {reply.sourceTweetUrl ? (
@@ -480,6 +482,14 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {selectedReply && (
+        <ReplyDetailPanel
+          reply={selectedReply}
+          onClose={() => setSelectedReply(null)}
+          onUpdate={handleReplyUpdate}
+        />
       )}
     </div>
   );

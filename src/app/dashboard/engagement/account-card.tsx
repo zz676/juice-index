@@ -13,6 +13,7 @@ export interface MonitoredAccountRow {
   customTonePrompt: string | null;
   imageFrequency: number;
   enabled: boolean;
+  autoPost: boolean;
   accountContext: string | null;
   toneWeights: Record<string, number> | null;
   temperature: number;
@@ -202,6 +203,31 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
               Global pause is active
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Auto Post toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-slate-custom-700">Auto Post to X</p>
+          <p className="text-[11px] text-slate-custom-400">
+            {account.autoPost ? "Posts directly to X" : "Sends to Telegram for review"}
+          </p>
+        </div>
+        <div
+          role="switch"
+          aria-checked={account.autoPost}
+          aria-label={account.autoPost ? "Disable auto-post" : "Enable auto-post"}
+          onClick={!loading ? () => patch({ autoPost: !account.autoPost }) : undefined}
+          className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+            account.autoPost ? "bg-primary" : "bg-slate-custom-200"
+          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        >
+          <div
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              account.autoPost ? "translate-x-5" : "translate-x-0"
+            }`}
+          />
         </div>
       </div>
 
