@@ -72,6 +72,18 @@ Extracted from the cron route. Exports:
 
 Added `fetchTweetById(accessToken, tweetId)` — fetches a single tweet via X API v2 `GET /2/tweets/:id`, returning `FetchedTweet | null`.
 
+## Image Generation (`src/lib/engagement/generate-image.ts`)
+
+When `generateImage` is `true`, the playground calls `generateImage(sourceTweetText, replyText)` which sends a structured prompt to DALL-E 3.
+
+The prompt follows a 3-step cinematic approach:
+
+1. **Analyze core themes** — identifies subject entities (e.g., AI, Politics, Sports), the core conflict or theme (e.g., Hype vs. Reality), and the emotional tone of the reply (e.g., sarcastic, triumphant, cynical).
+2. **Translate into visual metaphors** — generates a dramatic metaphor rather than a literal illustration, with lighting and color palette matching the reply's emotional tone.
+3. **Add impactful typography** — overlays a punchy 2–5 word headline synthesized from the reply's main point; font style matches the mood.
+
+**Constraints enforced in the prompt:** no UI screenshots, no social media chrome (icons, tweet bubbles, avatars), no dense text paragraphs — only the headline. Square (1:1) aspect ratio.
+
 ## Files Changed
 
 | File | Change |
