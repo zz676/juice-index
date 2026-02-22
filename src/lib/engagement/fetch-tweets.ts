@@ -52,6 +52,7 @@ export async function fetchRecentTweets(
   accessToken: string,
   xUserId: string,
   sinceId?: string | null,
+  username?: string,
 ): Promise<FetchedTweet[]> {
   const params = new URLSearchParams({
     max_results: "10",
@@ -86,7 +87,9 @@ export async function fetchRecentTweets(
     return {
       id: t.id,
       text: t.text,
-      url: `https://x.com/i/web/status/${t.id}`,
+      url: username
+        ? `https://x.com/${username}/status/${t.id}`
+        : `https://x.com/i/web/status/${t.id}`,
       ...(quotedTweetText !== undefined && { quotedTweetText }),
       ...(t.created_at !== undefined && { createdAt: t.created_at }),
     };

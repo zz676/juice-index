@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
       const stat = accountStats.get(account.id)!;
       try {
         console.log(`[cron]   Checking @${account.username} (lastSeenTweetId=${account.lastSeenTweetId ?? "none"})`);
-        const tweets = await fetchRecentTweets(accessToken, account.xUserId, account.lastSeenTweetId);
+        const tweets = await fetchRecentTweets(accessToken, account.xUserId, account.lastSeenTweetId, account.username);
 
         if (tweets.length === 0) {
           console.log(`[cron]   @${account.username}: no new tweets`);
