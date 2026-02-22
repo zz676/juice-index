@@ -34,27 +34,24 @@ async function answerCallbackQuery(
   });
 }
 
-async function editMessage(
+async function markMessageDone(
   token: string,
   chatId: number,
   messageId: number,
-  isPhoto: boolean,
-  newSuffix: string,
-  originalText: string,
+  label: string,
 ) {
-  const newText = `${originalText}\n\n${newSuffix}`;
-  const endpoint = isPhoto ? "editMessageCaption" : "editMessageText";
-  const field = isPhoto ? "caption" : "text";
-
-  await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
+  // Replace the action buttons with a single non-clickable status label.
+  // Using editMessageReplyMarkup avoids touching the message text,
+  // which prevents HTML encoding issues with tweet/reply content.
+  await fetch(`https://api.telegram.org/bot${token}/editMessageReplyMarkup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId,
       message_id: messageId,
-      [field]: newText,
-      parse_mode: "HTML",
-      reply_markup: { inline_keyboard: [] },
+      reply_markup: {
+        inline_keyboard: [[{ text: label, callback_data: "noop" }]],
+      },
     }),
   });
 }
@@ -92,6 +89,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // "noop" is used for already-processed status buttons — just dismiss
+  if (action === "noop") {
+    await answerCallbackQuery(botToken, callbackQuery.id, "Already processed");
+    return NextResponse.json({ ok: true });
+  }
+
   if (action !== "posted" && action !== "discard") {
     await answerCallbackQuery(botToken, callbackQuery.id, "Unknown action");
     return NextResponse.json({ ok: true });
@@ -113,18 +116,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const label = action === "posted" ? "✅ Marked as Posted" : "❌ Discarded";
+  const label = action === "posted" ? "✅ Posted on X" : "❌ Discarded";
   await answerCallbackQuery(botToken, callbackQuery.id, label);
 
-  // Edit the original message to reflect the action taken
+  // Replace the action buttons with a static status label
   if (callbackQuery.message) {
-    const { message_id, chat, text, caption, photo } = callbackQuery.message;
-    const isPhoto = Array.isArray(photo) && photo.length > 0;
-    const originalText = caption ?? text ?? "";
+    const { message_id, chat } = callbackQuery.message;
     try {
-      await editMessage(botToken, chat.id, message_id, isPhoto, label, originalText);
+      await markMessageDone(botToken, chat.id, message_id, label);
     } catch (err) {
-      console.warn("[telegram-webhook] Failed to edit message:", err);
+      console.warn("[telegram-webhook] Failed to update message buttons:", err);
     }
   }
 
