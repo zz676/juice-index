@@ -29,6 +29,7 @@ export async function PATCH(
     imageFrequency?: number;
     enabled?: boolean;
     autoPost?: boolean;
+    ignorePauseSchedule?: boolean;
     accountContext?: string | null;
     toneWeights?: Record<string, number> | null;
     temperature?: number;
@@ -62,6 +63,9 @@ export async function PATCH(
   }
   if (body.autoPost !== undefined) {
     data.autoPost = Boolean(body.autoPost);
+  }
+  if (body.ignorePauseSchedule !== undefined) {
+    data.ignorePauseSchedule = Boolean(body.ignorePauseSchedule);
   }
   if (body.accountContext !== undefined) {
     data.accountContext = body.accountContext ?? null;

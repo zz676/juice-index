@@ -1726,7 +1726,9 @@ model MonitoredAccount {
   /// Whether auto-reply is enabled for this account.
   enabled             Boolean           @default(true)
   /// Whether replies should be auto-posted to X (true) or sent to Telegram for manual posting (false).
-  autoPost            Boolean           @default(false)
+  autoPost              Boolean           @default(false)
+  /// When true, this account runs during user-level pause schedule windows.
+  ignorePauseSchedule   Boolean           @default(false)
   /// Last tweet ID seen from this account (for polling).
   lastSeenTweetId     String?
   /// Timestamp when the account was last polled.
