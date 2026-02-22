@@ -50,9 +50,10 @@ interface AccountCardProps {
   globalPaused: boolean;
   onUpdate: (updated: MonitoredAccountRow) => void;
   onDelete: (id: string) => void;
+  onTestPlayground?: (account: MonitoredAccountRow) => void;
 }
 
-export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete }: AccountCardProps) {
+export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete, onTestPlayground }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -390,6 +391,17 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
           <span>100%</span>
         </div>
       </div>
+
+      {/* Test in Playground */}
+      {onTestPlayground && (
+        <button
+          onClick={() => onTestPlayground(account)}
+          className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary/80 transition-colors"
+        >
+          <span className="material-icons-round text-[14px]">science</span>
+          Test in Playground
+        </button>
+      )}
 
       {/* Delete */}
       <button

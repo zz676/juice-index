@@ -8,7 +8,7 @@ import { AccountCard, type MonitoredAccountRow } from "./account-card";
 import { ImportFollowingModal } from "./import-following-modal";
 import { ReplyMonitoringTable } from "./reply-monitoring-table";
 import { AccountAnalyticsChart } from "./account-analytics-chart";
-import { ToneSettings } from "./tone-settings";
+import { ToneSettings, type PlaygroundPreset } from "./tone-settings";
 
 type TabId = "accounts" | "replies" | "analytics" | "tones";
 
@@ -22,6 +22,7 @@ export default function EngagementPage() {
   const [addHandle, setAddHandle] = useState("");
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [playgroundPreset, setPlaygroundPreset] = useState<PlaygroundPreset | null>(null);
 
   const fetchAccounts = useCallback(async () => {
     setLoadingAccounts(true);
@@ -82,6 +83,16 @@ export default function EngagementPage() {
   const handleDelete = (id: string) => {
     setAccounts((prev) => prev.filter((a) => a.id !== id));
   };
+
+  const handleTestPlayground = useCallback((account: MonitoredAccountRow) => {
+    setPlaygroundPreset({
+      toneWeights: account.toneWeights,
+      temperature: account.temperature,
+      accountContext: account.accountContext,
+      imageFrequency: account.imageFrequency,
+    });
+    setActiveTab("tones");
+  }, []);
 
   return (
     <div className="py-8 space-y-6">
@@ -190,6 +201,7 @@ export default function EngagementPage() {
                   globalPaused={globalPaused}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
+                  onTestPlayground={handleTestPlayground}
                 />
               ))}
             </div>
@@ -205,7 +217,7 @@ export default function EngagementPage() {
 
       {/* Tab: Tone Settings */}
       {activeTab === "tones" && (
-        <ToneSettings tones={tones} onTonesChange={setTones} />
+        <ToneSettings tones={tones} onTonesChange={setTones} playgroundPreset={playgroundPreset} />
       )}
     </div>
   );

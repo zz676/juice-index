@@ -128,6 +128,60 @@ export async function fetchFollowingList(
   return { entries, nextToken: data.meta?.next_token };
 }
 
+interface XSingleTweetResponse {
+  data?: {
+    id: string;
+    text: string;
+    created_at?: string;
+    referenced_tweets?: Array<{ type: string; id: string }>;
+  };
+  includes?: { tweets?: Array<{ id: string; text: string }> };
+  errors?: Array<{ message: string }>;
+}
+
+/**
+ * Fetches a single tweet by ID using X API v2.
+ * Returns the tweet with optional quoted tweet text, or null if not found.
+ */
+export async function fetchTweetById(
+  accessToken: string,
+  tweetId: string,
+): Promise<FetchedTweet | null> {
+  const params = new URLSearchParams({
+    "tweet.fields": "text,referenced_tweets,created_at",
+    expansions: "referenced_tweets.id",
+  });
+
+  let data: XSingleTweetResponse;
+  try {
+    data = await xGet<XSingleTweetResponse>(
+      accessToken,
+      `/tweets/${tweetId}?${params}`,
+    );
+  } catch {
+    return null;
+  }
+
+  if (!data.data) return null;
+
+  const t = data.data;
+  const includedTweets = new Map<string, string>();
+  for (const inc of data.includes?.tweets ?? []) {
+    includedTweets.set(inc.id, inc.text);
+  }
+
+  const quotedRef = t.referenced_tweets?.find((r) => r.type === "quoted");
+  const quotedTweetText = quotedRef ? includedTweets.get(quotedRef.id) : undefined;
+
+  return {
+    id: t.id,
+    text: t.text,
+    url: `https://x.com/i/web/status/${t.id}`,
+    ...(quotedTweetText !== undefined && { quotedTweetText }),
+    ...(t.created_at !== undefined && { createdAt: t.created_at }),
+  };
+}
+
 /**
  * Looks up an X user by @handle for validation when adding a monitored account.
  * Returns null if the user is not found.
