@@ -4,7 +4,9 @@ import type { GenerateImageResult } from "./types";
 const DALLE3_ENDPOINT = "https://api.openai.com/v1/images/generations";
 
 function buildImagePrompt(sourceTweetText: string, replyText: string): string {
-  return `You are an expert visual designer for social media. Your task is to generate a compelling, cinematic image to accompany a reply on X (formerly Twitter).
+  return `CRITICAL REQUIREMENT: This image must contain ABSOLUTELY NO TEXT, WORDS, LETTERS, NUMBERS, OR TYPOGRAPHY OF ANY KIND. Pure visual only.
+
+You are an expert visual designer for social media. Your task is to generate a compelling, cinematic image to accompany a reply on X (formerly Twitter).
 
 This image must visually summarize the core essence, conflict, or emotion of the conversation *without* needing manual guidance on specific subjects.
 
@@ -29,11 +31,10 @@ Generate an image based on your analysis above.
     * *Example: If the topic is "fate in sports", generate a dramatic, spotlighted arena that feels historic, not just players skating.*
 * **The Mood & Color:** The lighting, atmosphere, and color palette MUST match the emotional tone of [MY REPLY]. (e.g., use cold, moody tones for cynical replies; bright, bold colors for triumphant ones).
 
-**NEGATIVE CONSTRAINTS (What to AVOID):**
-* **NEVER generate a user interface screen, dashboard, "builder" tool, or software screenshot.**
-* NO social media icons, fake tweet bubbles, avatars, or reply buttons.
-* **NO text, words, letters, or typography of any kind in the image.**
-* Ensure the aspect ratio is square (1:1).`;
+**HARD CONSTRAINTS (No exceptions):**
+* NO text, words, letters, numbers, signs, labels, captions, or typography anywhere in the image.
+* NEVER generate a user interface screen, dashboard, "builder" tool, or software screenshot.
+* NO social media icons, fake tweet bubbles, avatars, or reply buttons.`;
 }
 
 export async function generateImage(
