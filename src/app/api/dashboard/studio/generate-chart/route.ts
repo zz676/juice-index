@@ -20,13 +20,20 @@ import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { isStringField, convertBigIntsToNumbers, formatFieldsForPrompt } from "@/lib/studio/field-registry";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
 import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
+import {
+  buildChartData,
+  toLabel,
+  toNumber,
+  detectXField,
+  detectYField,
+  type DataRow,
+  type PreviewPoint,
+} from "@/lib/studio/build-chart-data";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 type ExplorerChartType = "bar" | "line" | "horizontalBar";
-type DataRow = Record<string, unknown>;
-type PreviewPoint = { label: string; value: number };
 
 type ChartStyleOptions = {
   backgroundColor?: string;
@@ -58,20 +65,6 @@ type ChartStyleOptions = {
 };
 
 const DEFAULT_SOURCE_TEXT = "Powered by juiceindex.io";
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 const QUERY_RESPONSE_SCHEMA = z.object({
   unsupported: z.boolean(),
@@ -274,75 +267,6 @@ const watermarkPlugin: Plugin = {
     ctx.restore();
   },
 };
-
-function detectXField(sample: DataRow): string | null {
-  if (sample.month !== undefined && sample.year !== undefined) return "month";
-  if (sample.brand !== undefined) return "brand";
-  if (sample.maker !== undefined) return "maker";
-  if (sample.automaker !== undefined) return "automaker";
-
-  const keys = Object.keys(sample);
-  const firstText = keys.find((key) => typeof sample[key] === "string");
-  if (firstText) return firstText;
-
-  return keys[0] || null;
-}
-
-function isNumericValue(v: unknown): boolean {
-  return typeof v === "number" || typeof v === "bigint";
-}
-
-function detectYField(sample: DataRow): string | null {
-  if (isNumericValue(sample.value)) return "value";
-  if (isNumericValue(sample.installation)) return "installation";
-  if (isNumericValue(sample.retailSales)) return "retailSales";
-
-  const excluded = new Set(["year", "month", "period", "ranking"]);
-  const keys = Object.keys(sample);
-  const firstNumeric = keys.find(
-    (key) => isNumericValue(sample[key]) && !excluded.has(key)
-  );
-  return firstNumeric || null;
-}
-
-function toLabel(row: DataRow, xField: string): string {
-  if (
-    xField === "month" &&
-    row.month !== undefined &&
-    row.year !== undefined
-  ) {
-    const monthIndex = Number(row.month) - 1;
-    return `${MONTH_NAMES[monthIndex] || row.month} ${row.year}`;
-  }
-  return String(row[xField]);
-}
-
-function toNumber(value: unknown): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function buildPreviewData(rows: DataRow[]): {
-  points: PreviewPoint[];
-  xField: string;
-  yField: string;
-} {
-  if (!rows.length) {
-    return { points: [], xField: "label", yField: "value" };
-  }
-
-  const sample = rows[0];
-  const xField = detectXField(sample) || "label";
-  const yField = detectYField(sample) || "value";
-
-  const points: PreviewPoint[] = rows.slice(0, 120).map((row) => ({
-    label: toLabel(row, xField),
-    value: toNumber(row[yField]),
-  }));
-
-  return { points, xField, yField };
-}
 
 function looksLikeEvQuery(prompt: string): boolean {
   const lower = prompt.toLowerCase();
@@ -925,7 +849,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const preview = buildPreviewData(execution.data);
+      const preview = buildChartData(execution.data);
       const sqlPreview = prismaFindManyToSql({
         table: execution.table,
         query,
@@ -1099,7 +1023,7 @@ export async function POST(req: Request) {
         );
       }
 
-      const preview = buildPreviewData(execution.data);
+      const preview = buildChartData(execution.data);
 
       prisma.apiRequestLog.create({
         data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
