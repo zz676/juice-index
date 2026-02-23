@@ -200,7 +200,7 @@ export default function PricingToggle() {
               key={tier.name}
               className={`relative rounded-2xl p-8 flex flex-col ${
                 tier.highlight && !isCurrent
-                  ? "bg-white border-2 border-primary shadow-lg shadow-primary/10"
+                  ? "bg-white border-2 border-primary shadow-lg shadow-primary/10 pricing-card-shine"
                   : "bg-white border border-slate-custom-200"
               }`}
             >

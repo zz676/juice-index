@@ -53,10 +53,10 @@ export async function GET() {
     ]);
 
     let tier = "FREE";
+    const INACTIVE_STATUSES = ["canceled", "incomplete_expired", "unpaid"];
     if (
       subscription &&
-      (subscription.status.toLowerCase() === "active" ||
-        subscription.status.toLowerCase() === "trialing")
+      !INACTIVE_STATUSES.includes(subscription.status.toLowerCase())
     ) {
       tier = normalizeTier(subscription.tier);
     }

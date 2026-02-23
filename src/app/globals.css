@@ -42,6 +42,25 @@
   }
 }
 
+/* ─── Pricing card recommended shine ─── */
+@keyframes pricing-card-shine {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(106, 218, 27, 0),
+      0 10px 15px -3px rgba(106, 218, 27, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 18px 4px rgba(106, 218, 27, 0.22),
+      0 0 40px 8px rgba(106, 218, 27, 0.10),
+      0 10px 15px -3px rgba(106, 218, 27, 0.15);
+  }
+}
+
+.pricing-card-shine {
+  animation: pricing-card-shine 2.4s ease-in-out infinite;
+}
+
 /* ─── Range input track: soft muted green instead of harsh black ─── */
 input[type="range"]::-webkit-slider-runnable-track {
   background: #d4e4c2;
