@@ -22,10 +22,7 @@ import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
 import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
 import {
   buildChartData,
-  toLabel,
   toNumber,
-  detectXField,
-  detectYField,
   type DataRow,
   type PreviewPoint,
 } from "@/lib/studio/build-chart-data";
