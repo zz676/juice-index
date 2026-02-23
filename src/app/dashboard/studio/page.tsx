@@ -28,6 +28,7 @@ import {
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
+import { buildChartData } from "@/lib/studio/build-chart-data";
 import PublishModal, { type PublishInfo } from "./publish-modal";
 
 type ChartPoint = { label: string; value: number };
@@ -78,6 +79,8 @@ function StudioPageInner() {
   const [tableName, setTableName] = useState("");
   const [xField, setXField] = useState("");
   const [yField, setYField] = useState("");
+  const [columns, setColumns] = useState<string[]>([]);
+  const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [rowCount, setRowCount] = useState(0);
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
   const [analysisExplanation, setAnalysisExplanation] = useState("");
@@ -293,6 +296,18 @@ function StudioPageInner() {
 
       setChartData(previewData);
       setRawData(Array.isArray(data.data) ? (data.data as QueryRow[]) : []);
+      const rows = Array.isArray(data.data) ? (data.data as QueryRow[]) : [];
+      if (rows.length > 0) {
+          const allCols = Object.keys(rows[0]);
+          const numCols = allCols.filter(
+              (k) => typeof rows[0][k] === "number" || typeof rows[0][k] === "bigint"
+          );
+          setColumns(allCols);
+          setNumericColumns(numCols);
+      } else {
+          setColumns([]);
+          setNumericColumns([]);
+      }
       setGeneratedSql(typeof data.sql === "string" ? data.sql : "");
       setTableName(typeof data.table === "string" ? data.table : "");
       setXField(typeof data.xField === "string" ? data.xField : "");
@@ -335,6 +350,16 @@ function StudioPageInner() {
       }, 350);
     },
     [showToast]
+  );
+
+  const handleAxisChange = useCallback(
+    (newXField: string, newYField: string) => {
+      setXField(newXField);
+      setYField(newYField);
+      const { points } = buildChartData(rawData, newXField, newYField);
+      setChartData(points);
+    },
+    [rawData]
   );
 
   const generateRunnableQuery = async () => {
@@ -1974,6 +1999,11 @@ function StudioPageInner() {
             onChange={setChartConfig}
             isOpen={showCustomizer}
             onToggle={() => setShowCustomizer(false)}
+            columns={columns}
+            numericColumns={numericColumns}
+            xField={xField}
+            yField={yField}
+            onAxisChange={handleAxisChange}
           />
         </div>
       </div>
