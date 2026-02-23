@@ -9,8 +9,8 @@ import NotificationBell from "@/components/dashboard/NotificationBell";
 const navItems = [
     { href: "/dashboard", icon: "dashboard", label: "Overview" },
     { href: "/dashboard/studio", icon: "auto_awesome", label: "Juice AI" },
-    { href: "/dashboard/billing", icon: "credit_card", label: "Subscription & Billing" },
     { href: "/dashboard/posts", icon: "article", label: "Posts" },
+    { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
 ];
 
