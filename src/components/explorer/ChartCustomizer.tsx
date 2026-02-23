@@ -158,9 +158,8 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {chartTypes.map((ct) => (
-                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} className={`flex flex-col items-center gap-1 p-3 rounded-lg border text-xs font-medium transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
+                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-3 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
                                         <span className="material-icons-round text-xl">{ct.icon}</span>
-                                        {ct.label}
                                     </button>
                                 ))}
                             </div>
