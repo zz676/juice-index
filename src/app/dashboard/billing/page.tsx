@@ -8,7 +8,6 @@ import ApiUsageCard from "./api-usage-card";
 import PaymentMethodCard from "./payment-method-card";
 import NextBillingCard from "./next-billing-card";
 import InvoiceHistoryCard from "./invoice-history-card";
-import PlanActionsCard from "./plan-actions-card";
 import UpgradePrompt from "./upgrade-prompt";
 import SuccessRefresh from "./success-refresh";
 
@@ -116,9 +115,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           />
         </div>
 
-        <div className="lg:col-span-2">
-          <PlanActionsCard isPaidUser={isPaidUser} tier={tier} />
-        </div>
       </div>
     </div>
   );
