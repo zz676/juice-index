@@ -88,6 +88,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
           currentPeriodStart={subscription?.currentPeriodStart ?? null}
           currentPeriodEnd={subscription?.currentPeriodEnd ?? null}
+          isPaidUser={isPaidUser}
         />
 
         <PaymentMethodCard
