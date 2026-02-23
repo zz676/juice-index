@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { stripe, priceId, type Plan, type Interval } from "@/lib/stripe";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export const runtime = "nodejs";
 
@@ -53,8 +54,13 @@ export async function POST(request: NextRequest) {
   const interval = body.data.interval as Interval;
   const price = priceId(plan, interval);
 
-  const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/+$/, "") || "";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
+  const appUrl = getRedirectBase();
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: "SERVER_CONFIG", message: "Application URL is not configured" },
+      { status: 500 }
+    );
+  }
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",

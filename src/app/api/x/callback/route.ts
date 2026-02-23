@@ -7,6 +7,7 @@ import {
   fetchXUserProfile,
 } from "@/lib/x/oauth";
 import { encryptToken } from "@/lib/crypto";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export const runtime = "nodejs";
 
@@ -59,7 +60,13 @@ export async function GET(request: NextRequest) {
 
   try {
     const { clientId, clientSecret } = getXOAuthClientCredentials();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const siteUrl = getRedirectBase();
+    if (!siteUrl) {
+      settingsUrl.searchParams.set("x_error", "server_config");
+      const response = NextResponse.redirect(settingsUrl);
+      response.cookies.delete("x_oauth_state");
+      return response;
+    }
     const redirectUri = `${siteUrl}/api/x/callback`;
 
     const tokens = await exchangeCodeForTokens({

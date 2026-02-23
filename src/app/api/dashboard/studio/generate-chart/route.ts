@@ -57,7 +57,7 @@ type ChartStyleOptions = {
   yAxisLineWidth?: number;
 };
 
-const DEFAULT_SOURCE_TEXT = "Powered by evjuice.net";
+const DEFAULT_SOURCE_TEXT = "Powered by juiceindex.io";
 const MONTH_NAMES = [
   "Jan",
   "Feb",
