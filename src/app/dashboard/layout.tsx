@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
-    const [tier, setTier] = useState<string>("FREE");
+    const [tier, setTier] = useState<string | null>(null);
     const [role, setRole] = useState<string>("USER");
     const [xTokenError, setXTokenError] = useState<boolean>(false);
 
@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                 {/* Bottom Section */}
                 <div className={`flex flex-col ${collapsed ? "items-center px-2" : "px-4"} pb-4 gap-2`}>
-                    {/* Pro Upgrade — hidden for paid users */}
+                    {/* Pro Upgrade — only shown for confirmed FREE tier (hidden until tier is loaded) */}
                     {tier === "FREE" && (!collapsed ? (
                         <div className="bg-slate-custom-900 rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer mx-1 mb-2">
                             <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all"></div>
