@@ -68,6 +68,41 @@ Changed all rate limiter catch blocks from fail-open to fail-closed:
 - Ran `npm audit fix` — resolved `qs` DoS vulnerability
 - Remaining 8 moderate vulnerabilities are in Prisma dev tooling transitive dependencies (hono, lodash via chevrotain) — not exploitable in application code
 
+### LOW — Site Password Gate (middleware.ts)
+
+A temporary password gate can be enabled to restrict access to the entire site while in pre-launch or maintenance mode.
+
+**How it works**
+
+- When the `SITE_PASSWORD` environment variable is set, all requests are checked for a `_site_pass` cookie whose value matches the password.
+- Requests without the cookie are redirected (307) to `/gate`, a simple password form.
+- On successful submission, the cookie is set for the session and the user proceeds normally.
+- Remove `SITE_PASSWORD` from the environment to disable the gate entirely — no code changes required.
+
+**Bypass list**
+
+Certain routes must remain accessible regardless of the gate (external callers that cannot carry a browser cookie). Current bypass list in `src/middleware.ts`:
+
+| Path | Reason |
+|------|--------|
+| `/gate` | The gate page itself |
+| `/api/gate` | Gate form submission endpoint |
+| `/api/stripe/webhook` | Stripe posts events server-to-server |
+| `/api/cron` (prefix) | GitHub Actions cron jobs (`engagement-poll`, `publish-user-posts`, `prune-usage`) |
+| `/api/telegram/webhook` | Telegram posts button callbacks server-to-server |
+| `/api/v1` (prefix) | Public data API — accessed by external clients without a session |
+| `/api/openapi.json` | Public OpenAPI spec — fetched by external tooling |
+
+**Adding new bypasses**
+
+If you add a new route that is called by an external service (not a browser), add it to `GATE_BYPASS` in `src/middleware.ts`. The `isBypassed()` helper matches both exact paths and any path starting with `<entry>/`.
+
+**Environment variable**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SITE_PASSWORD` | Optional | When set, enables the site-wide password gate. Unset to disable. |
+
 ## New Environment Variables
 
 | Variable | Required | Description |
