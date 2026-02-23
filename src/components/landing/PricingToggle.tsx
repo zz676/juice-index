@@ -199,15 +199,13 @@ export default function PricingToggle() {
             <div
               key={tier.name}
               className={`relative rounded-2xl p-8 flex flex-col ${
-                isCurrent
+                tier.highlight && !isCurrent
                   ? "bg-white border-2 border-primary shadow-lg shadow-primary/10"
-                  : tier.highlight && !isCurrent
-                    ? "bg-white border-2 border-primary shadow-lg shadow-primary/10"
-                    : "bg-white border border-slate-custom-200"
+                  : "bg-white border border-slate-custom-200"
               }`}
             >
               {isCurrent ? (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-primary px-3 py-1 rounded-full">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-custom-500 bg-slate-custom-200 px-3 py-1 rounded-full">
                   Current Plan
                 </span>
               ) : tier.badge && !isCurrent ? (
@@ -249,7 +247,7 @@ export default function PricingToggle() {
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5">
                     <span
-                      className={`material-icons-round text-sm mt-0.5 ${isCurrent || (tier.highlight && !isCurrent) ? "text-primary" : "text-slate-custom-300"}`}
+                      className={`material-icons-round text-sm mt-0.5 ${tier.highlight && !isCurrent ? "text-primary" : "text-slate-custom-300"}`}
                     >
                       check_circle
                     </span>
