@@ -8,6 +8,7 @@ interface NextBillingCardProps {
   currentPeriodEnd: Date | null;
   cancelAtPeriodEnd: boolean;
   isPaidUser: boolean;
+  hasStripeSubscription: boolean;
 }
 
 export default function NextBillingCard({
@@ -15,6 +16,7 @@ export default function NextBillingCard({
   currentPeriodEnd,
   cancelAtPeriodEnd,
   isPaidUser,
+  hasStripeSubscription,
 }: NextBillingCardProps) {
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function NextBillingCard({
       <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
         <span className="material-icons-round text-slate-custom-400">event</span>
         <h3 className="text-base font-semibold text-slate-custom-900">Next Billing</h3>
-        {isPaidUser && (
+        {hasStripeSubscription && (
           <button
             onClick={openPortal}
             disabled={portalLoading}

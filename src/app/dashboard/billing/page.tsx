@@ -106,6 +106,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           currentPeriodEnd={subscription?.currentPeriodEnd ?? null}
           cancelAtPeriodEnd={subscription?.cancelAtPeriodEnd ?? false}
           isPaidUser={isPaidUser}
+          hasStripeSubscription={!!subscription?.stripeCustomerId}
         />
 
         <div className="lg:col-span-2">
