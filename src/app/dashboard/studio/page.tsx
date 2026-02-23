@@ -1113,7 +1113,7 @@ function StudioPageInner() {
                     activeSection === 2 ? "text-slate-custom-900" : "text-slate-custom-500"
                   }`}
                 >
-                  Review / Edit Query
+                  Review Query
                 </h3>
               </div>
 
@@ -1151,7 +1151,7 @@ function StudioPageInner() {
                   </div>
                 </div>
                 <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
-                  {analysisExplanation || "Generate a query, review/edit JSON, then run it."}
+                  {analysisExplanation || "Generate a query, review it, then run it."}
                 </div>
                 <div className="px-3 pb-3">
                   <div>
@@ -1172,9 +1172,9 @@ function StudioPageInner() {
                     </div>
                     <textarea
                       value={generatedSql || ""}
-                      onChange={(e) => setGeneratedSql(e.target.value)}
+                      readOnly
                       placeholder="SELECT * FROM ..."
-                      className="w-full h-[64px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+                      className="w-full h-[64px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none cursor-default"
                     />
                   </div>
                 </div>
