@@ -86,6 +86,36 @@ function handleCors(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Site password gate (temporary — remove SITE_PASSWORD to disable)  */
+/* ------------------------------------------------------------------ */
+
+const GATE_COOKIE = "_site_pass";
+const GATE_PATH = "/gate";
+const GATE_API = "/api/gate";
+// Paths that must remain accessible regardless of gate
+const GATE_BYPASS = [GATE_PATH, GATE_API, "/api/stripe/webhook"];
+
+function isBypassed(pathname: string): boolean {
+  return GATE_BYPASS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+function checkPasswordGate(request: NextRequest): NextResponse | null {
+  const sitePassword = process.env.SITE_PASSWORD;
+  if (!sitePassword) return null; // gate disabled
+
+  const { pathname } = request.nextUrl;
+  if (isBypassed(pathname)) return null;
+
+  const cookie = request.cookies.get(GATE_COOKIE)?.value;
+  if (cookie === sitePassword) return null; // already authenticated
+
+  const gateUrl = request.nextUrl.clone();
+  gateUrl.pathname = GATE_PATH;
+  gateUrl.search = "";
+  return NextResponse.redirect(gateUrl);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main middleware                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -97,6 +127,10 @@ export async function middleware(request: NextRequest) {
     applySecurityHeaders(preflightResponse);
     return preflightResponse;
   }
+
+  // Password gate check
+  const gateRedirect = checkPasswordGate(request);
+  if (gateRedirect) return gateRedirect;
 
   const response = await updateSession(request);
   handleCors(request, response);
