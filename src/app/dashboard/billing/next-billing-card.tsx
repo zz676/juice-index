@@ -57,7 +57,7 @@ export default function NextBillingCard({
           <button
             onClick={openPortal}
             disabled={portalLoading}
-            className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-lg border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center px-4 py-1.5 text-sm font-medium rounded-lg border border-primary text-slate-custom-700 hover:bg-primary/10 disabled:opacity-50 transition-colors"
           >
             {portalLoading ? (
               <>
