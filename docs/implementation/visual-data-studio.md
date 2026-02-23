@@ -157,6 +157,36 @@ Exported utilities: `ALLOWED_TABLE_NAMES`, `getTableDef`, `getFieldNames`, `isSt
 - Removed the hardcoded `ALLOWED_TABLES` array and `AllowedTable` type (180+ lines of duplicate data).
 - `getTableInfo()` and `getAllowedTables()` now delegate to the registry, ensuring a single source of truth.
 
+## ✅ Phase 3.9: Axis Column Selection in ChartCustomizer (Complete)
+
+Added an **Axes** section to `ChartCustomizer` so users can change which columns are used for the X and Y axes without re-prompting.
+
+### Architecture
+
+**Shared utility** (`src/lib/studio/build-chart-data.ts`):
+- Extracted from the generate-chart API route: `toNumber`, `toLabel`, `detectXField`, `detectYField`, `buildChartData`, `deriveColumns`.
+- Safe for both server and client import (no server-only dependencies).
+- `buildChartData(rows, xField?, yField?)` accepts optional axis overrides; falls back to auto-detection when not supplied.
+- `deriveColumns(rows)` returns `{ columns, numericColumns }` from the first row of a result set.
+
+**ChartCustomizer** (`src/components/explorer/ChartCustomizer.tsx`):
+- New optional props: `columns`, `numericColumns`, `xField`, `yField`, `onAxisChange`.
+- New **Axes** tab (first tab, `swap_horiz` icon) — only shown when `columns.length > 1`.
+- X Axis `<select>` populated from all `columns`; Y Axis `<select>` restricted to `numericColumns`.
+- `useEffect` resets active section to "type" when the Axes tab disappears (e.g., after a single-column query).
+
+**Studio page** (`src/app/dashboard/studio/page.tsx`):
+- Derives `columns`/`numericColumns` via `deriveColumns()` on each query result and on share-state restore.
+- Resets `columns`/`numericColumns` to `[]` when a new query plan is generated (before the query runs).
+- `handleAxisChange` callback calls `buildChartData(rawData, newXField, newYField)` client-side — no new API call.
+- Passes all five new props to `ChartCustomizer`.
+
+**generate-chart route** (`src/app/api/dashboard/studio/generate-chart/route.ts`):
+- Refactored to import `buildChartData`, `toNumber`, `PreviewPoint` from the shared utility; removed ~87 lines of duplicate inline code.
+
+### Design doc
+See [`docs/plans/2026-02-23-axis-column-selection-design.md`](../plans/2026-02-23-axis-column-selection-design.md).
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment

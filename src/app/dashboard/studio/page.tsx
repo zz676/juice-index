@@ -28,6 +28,7 @@ import {
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
+import { buildChartData, deriveColumns } from "@/lib/studio/build-chart-data";
 import PublishModal, { type PublishInfo } from "./publish-modal";
 
 type ChartPoint = { label: string; value: number };
@@ -78,6 +79,8 @@ function StudioPageInner() {
   const [tableName, setTableName] = useState("");
   const [xField, setXField] = useState("");
   const [yField, setYField] = useState("");
+  const [columns, setColumns] = useState<string[]>([]);
+  const [numericColumns, setNumericColumns] = useState<string[]>([]);
   const [rowCount, setRowCount] = useState(0);
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
   const [analysisExplanation, setAnalysisExplanation] = useState("");
@@ -205,6 +208,9 @@ function StudioPageInner() {
         setXField(s.xField);
         setYField(s.yField);
         setRawData(s.rawData);
+        const { columns: restCols, numericColumns: restNumCols } = deriveColumns(s.rawData);
+        setColumns(restCols);
+        setNumericColumns(restNumCols);
         setChartData(s.chartData);
         setChartConfig(s.chartConfig);
         if (s.postDraft) setPostDraft(s.postDraft);
@@ -292,7 +298,11 @@ function StudioPageInner() {
         : [];
 
       setChartData(previewData);
-      setRawData(Array.isArray(data.data) ? (data.data as QueryRow[]) : []);
+      const rows = Array.isArray(data.data) ? (data.data as QueryRow[]) : [];
+      setRawData(rows);
+      const { columns: allCols, numericColumns: numCols } = deriveColumns(rows);
+      setColumns(allCols);
+      setNumericColumns(numCols);
       setGeneratedSql(typeof data.sql === "string" ? data.sql : "");
       setTableName(typeof data.table === "string" ? data.table : "");
       setXField(typeof data.xField === "string" ? data.xField : "");
@@ -335,6 +345,16 @@ function StudioPageInner() {
       }, 350);
     },
     [showToast]
+  );
+
+  const handleAxisChange = useCallback(
+    (newXField: string, newYField: string) => {
+      setXField(newXField);
+      setYField(newYField);
+      const { points } = buildChartData(rawData, newXField, newYField);
+      setChartData(points);
+    },
+    [rawData]
   );
 
   const generateRunnableQuery = async () => {
@@ -385,6 +405,8 @@ function StudioPageInner() {
       );
       setChartData([]);
       setRawData([]);
+      setColumns([]);
+      setNumericColumns([]);
       setXField("");
       setYField("");
       setRowCount(0);
@@ -1974,6 +1996,11 @@ function StudioPageInner() {
             onChange={setChartConfig}
             isOpen={showCustomizer}
             onToggle={() => setShowCustomizer(false)}
+            columns={columns}
+            numericColumns={numericColumns}
+            xField={xField}
+            yField={yField}
+            onAxisChange={handleAxisChange}
           />
         </div>
       </div>
