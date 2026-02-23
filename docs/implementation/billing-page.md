@@ -6,7 +6,7 @@ The `/dashboard/billing` page is the single source of truth for all billing and 
 
 ## Architecture
 
-**Server Component** (`page.tsx`) handles auth, data fetching, and composes six card components. Only two cards are client components (`PlanActionsCard`, `SuccessRefresh`) — the rest are server components.
+**Server Component** (`page.tsx`) handles auth, data fetching, and composes five card components. Two cards are client components (`NextBillingCard`, `SuccessRefresh`) — the rest are server components.
 
 ### Data Flow
 
@@ -48,8 +48,9 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 ### 1. Current Plan (`current-plan-card.tsx`)
 - Icon: `workspace_premium`
 - Displays tier display name (mapped via `getTierDisplayName`), status badge (green/yellow/red), billing period dates
-- **Server component** with a universal "Change Plan" button for all tiers
-- "Change Plan" navigates to `/?current={tier}#pricing`, which loads the landing page pricing section with the user's current plan visually marked
+- **Server component**
+- FREE users see an **"Upgrade"** button linking to `/?current={tier}#pricing`
+- Paid users see no button — plan changes are handled through the Stripe Customer Portal via "Manage Billing" in the Next Billing card
 - Shows cancellation warning banner when `cancelAtPeriodEnd` is true
 
 ### 2. API Usage (`api-usage-card.tsx`)
@@ -62,22 +63,19 @@ After a successful checkout, the Stripe webhook may not have updated the databas
 - Displays card brand, last 4 digits, expiry when available
 - Empty state for free users or missing payment method
 
-### 4. Next Billing (`next-billing-card.tsx`)
+### 4. Next Billing (`next-billing-card.tsx`) — Client Component
 - Icon: `event`
 - Shows next charge date + amount from Stripe upcoming invoice
 - Handles canceling subscriptions ("Cancels on {date}") and free users ("No upcoming charges")
+- **"Manage Billing"** button in the card header (right-aligned) → `POST /api/billing/portal`
+  - Only shown when `hasStripeSubscription` is true (i.e., user has a `stripeCustomerId`)
+  - Hidden for enterprise users provisioned without a Stripe subscription
+  - Opens the Stripe Customer Portal for cancellation and plan switching
 
 ### 5. Invoice History (`invoice-history-card.tsx`)
 - Icon: `receipt_long`
 - Table: Date, Amount, Status badge (paid/open/void/etc.), PDF download link
 - Empty state when no invoices
-
-### 6. Plan Actions (`plan-actions-card.tsx`) — Client Component
-- Icon: `tune`
-- "Manage Billing" → `POST /api/billing/portal` with loading spinner (same pattern as the old `subscription-section.tsx`)
-- Hidden entirely for free users (returns `null` when `!isPaidUser`)
-- Error display banner
-- Note: Plan changes are handled via the pricing page. The Current Plan card has a "Change Plan" link that navigates to the pricing section with the current plan marked. Pro users can also use "Manage Billing" to access Stripe portal for cancellation.
 
 ## Query Parameters
 
@@ -110,7 +108,7 @@ The page uses a responsive 2-column CSS Grid (`grid grid-cols-1 lg:grid-cols-2 g
 
 - **Row 1:** Current Plan | Payment Method
 - **Row 2:** API Usage | Next Billing
-- **Full-width:** Invoice History (`lg:col-span-2`), Plan Actions (`lg:col-span-2`)
+- **Full-width:** Invoice History (`lg:col-span-2`)
 
 Success/canceled banners sit above the grid and are unaffected by the grid layout. At viewport widths below `lg` (1024px), all cards stack into a single column.
 
@@ -131,12 +129,11 @@ All cards follow the Settings page design system:
 | `types.ts` | Types | SubscriptionData, PaymentMethodInfo, InvoiceInfo, UpcomingInvoiceInfo |
 | `tier-display.ts` | Utility | Tier display names and API limits |
 | `data.ts` | Data layer | getSubscription, getUsageCount, getStripeData |
-| `current-plan-card.tsx` | Server component | Plan name, status, period, "Change Plan" link |
+| `current-plan-card.tsx` | Server component | Plan name, status, period, "Upgrade" link (FREE only) |
 | `api-usage-card.tsx` | Server component | Usage progress bar |
 | `payment-method-card.tsx` | Server component | Card on file |
-| `next-billing-card.tsx` | Server component | Upcoming charge info |
+| `next-billing-card.tsx` | Client component | Upcoming charge info + "Manage Billing" portal button |
 | `invoice-history-card.tsx` | Server component | Invoice table with PDF links |
-| `plan-actions-card.tsx` | Client component | Change plan + Stripe portal |
 | `upgrade-prompt.tsx` | Client component | Upgrade CTA shown when `?plan=` is present |
 | `success-refresh.tsx` | Client component | Polls and refreshes page after successful checkout until tier updates |
 
@@ -146,7 +143,7 @@ The pricing CTA behavior on the landing page (`/#pricing`) depends on authentica
 
 ### Current Plan Marking
 
-When a user navigates from the billing page "Change Plan" link, the URL includes `?current={tier}#pricing`. The `PricingToggle` component:
+When a FREE user clicks "Upgrade" on the billing page, the URL includes `?current={tier}#pricing`. Paid users manage plan changes through the Stripe Customer Portal ("Manage Billing"). The `PricingToggle` component:
 
 1. Reads the `?current=` search param via `useSearchParams()` (wrapped in `<Suspense>` on the landing page)
 2. For logged-in users, also fetches the tier via `GET /api/dashboard/tier` (takes priority over URL param)
@@ -175,10 +172,14 @@ For logged-out users clicking "Get Started", the `?plan=` parameter is preserved
 
 Note: The standalone `/pricing` page has been retired and now returns a 308 permanent redirect to `/#pricing`. All dashboard-context upgrade links point to `/dashboard/billing` directly.
 
+## Sidebar Nav
+
+The billing page is accessible from the sidebar as **"Billing"** (previously "Subscription & Billing"), positioned after "Posts".
+
 ## Related
 
 - Settings page now has a "Go to Billing" link instead of inline subscription management (see [settings-page.md](settings-page.md))
 - Stripe portal API: `src/app/api/billing/portal/route.ts`
-- Plan switch API: `src/app/api/billing/switch-plan/route.ts` — updates Stripe subscription price with proration
+- Plan switch API: `src/app/api/billing/switch-plan/route.ts` — updates Stripe subscription price with proration (exists but not yet exposed in UI; plan changes go through the Stripe Customer Portal)
 - Stripe client: `src/lib/stripe.ts`
 - Pricing page: `src/app/pricing/page.tsx` — permanent redirect (308) to `/#pricing`
