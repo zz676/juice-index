@@ -28,7 +28,7 @@ import {
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
-import { buildChartData } from "@/lib/studio/build-chart-data";
+import { buildChartData, deriveColumns } from "@/lib/studio/build-chart-data";
 import PublishModal, { type PublishInfo } from "./publish-modal";
 
 type ChartPoint = { label: string; value: number };
@@ -208,13 +208,9 @@ function StudioPageInner() {
         setXField(s.xField);
         setYField(s.yField);
         setRawData(s.rawData);
-        if (s.rawData.length > 0) {
-          const allCols = Object.keys(s.rawData[0]);
-          setColumns(allCols);
-          setNumericColumns(allCols.filter(
-            (k) => typeof s.rawData[0][k] === "number" || typeof s.rawData[0][k] === "bigint"
-          ));
-        }
+        const { columns: restCols, numericColumns: restNumCols } = deriveColumns(s.rawData);
+        setColumns(restCols);
+        setNumericColumns(restNumCols);
         setChartData(s.chartData);
         setChartConfig(s.chartConfig);
         if (s.postDraft) setPostDraft(s.postDraft);
@@ -304,17 +300,9 @@ function StudioPageInner() {
       setChartData(previewData);
       const rows = Array.isArray(data.data) ? (data.data as QueryRow[]) : [];
       setRawData(rows);
-      if (rows.length > 0) {
-        const allCols = Object.keys(rows[0]);
-        const numCols = allCols.filter(
-          (k) => typeof rows[0][k] === "number" || typeof rows[0][k] === "bigint"
-        );
-        setColumns(allCols);
-        setNumericColumns(numCols);
-      } else {
-        setColumns([]);
-        setNumericColumns([]);
-      }
+      const { columns: allCols, numericColumns: numCols } = deriveColumns(rows);
+      setColumns(allCols);
+      setNumericColumns(numCols);
       setGeneratedSql(typeof data.sql === "string" ? data.sql : "");
       setTableName(typeof data.table === "string" ? data.table : "");
       setXField(typeof data.xField === "string" ? data.xField : "");

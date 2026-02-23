@@ -132,16 +132,17 @@ export function ChartCustomizer({
         { id: "source", icon: "copyright", label: "Source" },
     ];
 
-    const visibleSections = columns.length > 1
+    const hasMultipleColumns = columns.length > 1;
+    const visibleSections = hasMultipleColumns
         ? sections
         : sections.filter((s) => s.id !== "axes");
 
-    // Reset to "type" if the active section becomes hidden (e.g., user runs a single-column query while on Axes tab)
+    // Reset to "type" if the Axes tab disappears (e.g., user runs a single-column query while on Axes tab)
     useEffect(() => {
-        if (!visibleSections.some((s) => s.id === activeSection)) {
+        if (!hasMultipleColumns && activeSection === "axes") {
             setActiveSection("type");
         }
-    }, [visibleSections, activeSection]);
+    }, [hasMultipleColumns, activeSection]);
 
     if (!isOpen) return null;
 

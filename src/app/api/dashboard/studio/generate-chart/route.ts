@@ -23,7 +23,6 @@ import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/
 import {
   buildChartData,
   toNumber,
-  type DataRow,
   type PreviewPoint,
 } from "@/lib/studio/build-chart-data";
 

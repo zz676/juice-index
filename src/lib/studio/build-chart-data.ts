@@ -53,6 +53,14 @@ export function detectYField(sample: DataRow): string | null {
   return firstNumeric || null;
 }
 
+/** Returns all column names and the numeric-only subset from the first row of a result set. */
+export function deriveColumns(rows: DataRow[]): { columns: string[]; numericColumns: string[] } {
+  if (!rows.length) return { columns: [], numericColumns: [] };
+  const columns = Object.keys(rows[0]);
+  const numericColumns = columns.filter((k) => isNumericValue(rows[0][k]));
+  return { columns, numericColumns };
+}
+
 export function buildChartData(
   rows: DataRow[],
   xField?: string,
