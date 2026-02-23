@@ -201,7 +201,7 @@ export default function PricingToggle() {
               className={`relative rounded-2xl p-8 flex flex-col ${
                 isCurrent
                   ? "bg-white border-2 border-primary shadow-lg shadow-primary/10"
-                  : tier.highlight && !activeTier
+                  : tier.highlight && !isCurrent
                     ? "bg-white border-2 border-primary shadow-lg shadow-primary/10"
                     : "bg-white border border-slate-custom-200"
               }`}
@@ -210,7 +210,7 @@ export default function PricingToggle() {
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-primary px-3 py-1 rounded-full">
                   Current Plan
                 </span>
-              ) : tier.badge && !activeTier ? (
+              ) : tier.badge && !isCurrent ? (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-custom-900 bg-primary px-3 py-1 rounded-full">
                   {tier.badge}
                 </span>
@@ -224,7 +224,7 @@ export default function PricingToggle() {
               <div className="mt-6 mb-6">
                 {tier.monthlyPrice !== null ? (
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-extrabold text-slate-custom-900">
+                    <span className={`text-4xl font-extrabold ${!isAnnual && tier.monthlyPrice > 0 ? "line-through text-slate-custom-400" : "text-slate-custom-900"}`}>
                       ${isAnnual ? tier.annualPrice : tier.monthlyPrice}
                     </span>
                     <span className="text-slate-custom-500 ml-1">/mo</span>
@@ -233,6 +233,11 @@ export default function PricingToggle() {
                   <span className="text-3xl font-extrabold text-slate-custom-900">
                     Custom
                   </span>
+                )}
+                {!isAnnual && tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
+                  <p className="text-xs font-semibold text-primary mt-1">
+                    First month ${(tier.monthlyPrice * 0.5).toFixed(2)}
+                  </p>
                 )}
                 {tier.monthlyPrice !== null && tier.monthlyPrice > 0 && (
                   <p className="text-xs text-slate-custom-400 mt-1">
@@ -244,7 +249,7 @@ export default function PricingToggle() {
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5">
                     <span
-                      className={`material-icons-round text-sm mt-0.5 ${isCurrent || (tier.highlight && !activeTier) ? "text-primary" : "text-slate-custom-300"}`}
+                      className={`material-icons-round text-sm mt-0.5 ${isCurrent || (tier.highlight && !isCurrent) ? "text-primary" : "text-slate-custom-300"}`}
                     >
                       check_circle
                     </span>
@@ -281,7 +286,7 @@ export default function PricingToggle() {
                 <Link
                   href={tier.ctaHref}
                   className={`block w-full text-center py-3 text-sm font-semibold rounded-full transition-colors ${
-                    tier.highlight && !activeTier
+                    tier.highlight
                       ? "bg-slate-custom-900 text-white hover:bg-slate-custom-800"
                       : "bg-slate-custom-50 text-slate-custom-700 hover:bg-slate-custom-100 border border-slate-custom-200"
                   }`}
