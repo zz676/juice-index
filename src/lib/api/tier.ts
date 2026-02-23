@@ -5,6 +5,7 @@ export type ApiTier = "FREE" | "STARTER" | "PRO" | "ENTERPRISE";
 export function normalizeTier(value: string | null | undefined): ApiTier {
   const v = (value || "").toUpperCase();
   if (v === "STARTER" || v === "PRO" || v === "ENTERPRISE") return v;
+  if (v === "INSTITUTIONAL") return "ENTERPRISE";
   return "FREE";
 }
 

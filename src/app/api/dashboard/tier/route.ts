@@ -37,7 +37,7 @@ export async function GET() {
       return NextResponse.json({ tier: "FREE", role: "USER" }, { status: 200 });
     }
 
-    const [subscription, dbUser, xAccount] = await Promise.all([
+    const [subscription, dbUser] = await Promise.all([
       prisma.apiSubscription.findUnique({
         where: { userId: user.id },
         select: { tier: true, status: true },
@@ -46,23 +46,19 @@ export async function GET() {
         where: { id: user.id },
         select: { role: true },
       }),
-      prisma.xAccount.findUnique({
-        where: { userId: user.id },
-        select: { tokenError: true },
-      }),
     ]);
 
     let tier = "FREE";
+    const INACTIVE_STATUSES = ["canceled", "incomplete_expired", "unpaid"];
     if (
       subscription &&
-      (subscription.status.toLowerCase() === "active" ||
-        subscription.status.toLowerCase() === "trialing")
+      !INACTIVE_STATUSES.includes(subscription.status.toLowerCase())
     ) {
       tier = normalizeTier(subscription.tier);
     }
 
     return NextResponse.json(
-      { tier, role: dbUser?.role ?? "USER", xTokenError: xAccount?.tokenError ?? false },
+      { tier, role: dbUser?.role ?? "USER", xTokenError: false },
       {
         status: 200,
         headers: { "Cache-Control": "private, max-age=60" },
