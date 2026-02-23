@@ -73,6 +73,12 @@ interface ChartCustomizerProps {
     onChange: (config: ChartConfig) => void;
     isOpen: boolean;
     onToggle: () => void;
+    // Axis selection (only rendered when columns.length > 1)
+    columns?: string[];
+    numericColumns?: string[];
+    xField?: string;
+    yField?: string;
+    onAxisChange?: (xField: string, yField: string) => void;
 }
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
@@ -103,7 +109,11 @@ function NumberInput({ label, value, onChange, placeholder, min, max }: { label:
     );
 }
 
-export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCustomizerProps) {
+export function ChartCustomizer({
+    config, onChange, isOpen, onToggle,
+    columns = [], numericColumns = [], xField = "", yField = "",
+    onAxisChange,
+}: ChartCustomizerProps) {
     const [activeSection, setActiveSection] = useState<string>("type");
 
     const update = (partial: Partial<ChartConfig>) => onChange({ ...config, ...partial });
@@ -115,11 +125,16 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
     ];
 
     const sections = [
+        { id: "axes", icon: "swap_horiz", label: "Axes" },
         { id: "type", icon: "dashboard", label: "Type" },
         { id: "colors", icon: "palette", label: "Colors" },
         { id: "typography", icon: "text_fields", label: "Text" },
         { id: "source", icon: "copyright", label: "Source" },
     ];
+
+    const visibleSections = columns.length > 1
+        ? sections
+        : sections.filter((s) => s.id !== "axes");
 
     if (!isOpen) return null;
 
@@ -138,7 +153,7 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
 
             {/* Section Tabs */}
             <div className="flex border-b border-slate-100 px-2 py-1">
-                {sections.map((s) => (
+                {visibleSections.map((s) => (
                     <button
                         key={s.id}
                         onClick={() => setActiveSection(s.id)}
@@ -152,6 +167,35 @@ export function ChartCustomizer({ config, onChange, isOpen, onToggle }: ChartCus
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {activeSection === "axes" && columns.length > 1 && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">X Axis</label>
+                            <select
+                                value={xField}
+                                onChange={(e) => onAxisChange?.(e.target.value, yField)}
+                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {columns.map((col) => (
+                                    <option key={col} value={col}>{col}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Y Axis</label>
+                            <select
+                                value={yField}
+                                onChange={(e) => onAxisChange?.(xField, e.target.value)}
+                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {numericColumns.map((col) => (
+                                    <option key={col} value={col}>{col}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                )}
+
                 {activeSection === "type" && (
                     <div className="space-y-4">
                         <div>
