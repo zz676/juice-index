@@ -62,9 +62,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const firstMonthCoupon = process.env.STRIPE_FIRST_MONTH_COUPON;
+  const discounts = firstMonthCoupon && interval === "month"
+    ? [{ coupon: firstMonthCoupon }]
+    : undefined;
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price, quantity: 1 }],
+    ...(discounts && { discounts }),
     success_url: `${appUrl}/dashboard/billing?success=1`,
     cancel_url: `${appUrl}/dashboard/billing?canceled=1`,
     client_reference_id: user.id,
