@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export const runtime = "nodejs";
 
@@ -49,8 +50,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "NO_SUBSCRIPTION", code: "NO_SUBSCRIPTION", message: "No subscription found" }, { status: 400 });
   }
 
-  const origin = request.headers.get("origin") || request.headers.get("referer")?.replace(/\/+$/, "") || "";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "http://localhost:3000";
+  const appUrl = getRedirectBase();
+  if (!appUrl) {
+    return NextResponse.json(
+      { error: "SERVER_CONFIG", message: "Application URL is not configured" },
+      { status: 500 }
+    );
+  }
   const session = await stripe.billingPortal.sessions.create({
     customer: sub.stripeCustomerId,
     return_url: `${appUrl}/dashboard/billing`,

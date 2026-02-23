@@ -37,11 +37,17 @@ A critical part of our architecture is the synchronization between Supabase `aut
 - `src/app/auth/reset-password/page.tsx`: Password update form (authenticated state).
 
 ### 4. Redirect Base URL
-Auth pages (login, forgot-password) use `getRedirectBase()` (`src/lib/auth/redirect-base.ts`) to construct OAuth and magic link redirect URLs. This reads `NEXT_PUBLIC_APP_URL` and falls back to `window.location.origin`, ensuring correct behavior when the app is deployed behind a different public URL (e.g., on Vercel).
+Auth pages (login, forgot-password) and API routes (X OAuth, Stripe billing) use `getRedirectBase()` (`src/lib/auth/redirect-base.ts`) to construct redirect URLs. It checks env vars in this order:
+1. `NEXT_PUBLIC_SITE_URL` (highest precedence — matches middleware CORS config)
+2. `NEXT_PUBLIC_APP_URL` (fallback)
+3. The `fallback` argument passed to the function (defaults to `""`)
+
+API routes that require a configured URL (X OAuth authorize/callback, Stripe checkout/portal) return a 500 error if neither env var is set, preventing silent localhost fallback in production.
 
 ## Configuration
 Requires the following environment variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_APP_URL` — Public-facing app URL for auth redirects (falls back to `window.location.origin` if unset).
+- `NEXT_PUBLIC_SITE_URL` — Primary public-facing URL. Takes precedence over `NEXT_PUBLIC_APP_URL` for all redirect URL construction. Required in production (X OAuth and Stripe will return 500 if unset).
+- `NEXT_PUBLIC_APP_URL` — Fallback public-facing URL if `NEXT_PUBLIC_SITE_URL` is not set.
 - OAuth Provider Client IDs/Secrets (configured in Supabase Dashboard).

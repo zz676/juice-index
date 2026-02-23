@@ -9,6 +9,7 @@ import {
   generatePKCE,
   buildAuthorizationUrl,
 } from "@/lib/x/oauth";
+import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export const runtime = "nodejs";
 
@@ -46,7 +47,13 @@ export async function GET() {
   const { codeVerifier, codeChallenge } = generatePKCE();
   const state = crypto.randomBytes(16).toString("hex");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const siteUrl = getRedirectBase();
+  if (!siteUrl) {
+    return NextResponse.json(
+      { error: "SERVER_CONFIG", message: "Application URL is not configured" },
+      { status: 500 }
+    );
+  }
   const redirectUri = `${siteUrl}/api/x/callback`;
 
   const authorizeUrl = buildAuthorizationUrl({
