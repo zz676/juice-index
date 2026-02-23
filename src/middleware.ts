@@ -93,7 +93,7 @@ const GATE_COOKIE = "_site_pass";
 const GATE_PATH = "/gate";
 const GATE_API = "/api/gate";
 // Paths that must remain accessible regardless of gate
-const GATE_BYPASS = [GATE_PATH, GATE_API, "/api/stripe/webhook"];
+const GATE_BYPASS = [GATE_PATH, GATE_API, "/api/stripe/webhook", "/api/cron"];
 
 function isBypassed(pathname: string): boolean {
   return GATE_BYPASS.some((p) => pathname === p || pathname.startsWith(p + "/"));
