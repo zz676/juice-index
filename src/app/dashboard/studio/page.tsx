@@ -208,6 +208,13 @@ function StudioPageInner() {
         setXField(s.xField);
         setYField(s.yField);
         setRawData(s.rawData);
+        if (s.rawData.length > 0) {
+          const allCols = Object.keys(s.rawData[0]);
+          setColumns(allCols);
+          setNumericColumns(allCols.filter(
+            (k) => typeof s.rawData[0][k] === "number" || typeof s.rawData[0][k] === "bigint"
+          ));
+        }
         setChartData(s.chartData);
         setChartConfig(s.chartConfig);
         if (s.postDraft) setPostDraft(s.postDraft);
@@ -295,18 +302,18 @@ function StudioPageInner() {
         : [];
 
       setChartData(previewData);
-      setRawData(Array.isArray(data.data) ? (data.data as QueryRow[]) : []);
       const rows = Array.isArray(data.data) ? (data.data as QueryRow[]) : [];
+      setRawData(rows);
       if (rows.length > 0) {
-          const allCols = Object.keys(rows[0]);
-          const numCols = allCols.filter(
-              (k) => typeof rows[0][k] === "number" || typeof rows[0][k] === "bigint"
-          );
-          setColumns(allCols);
-          setNumericColumns(numCols);
+        const allCols = Object.keys(rows[0]);
+        const numCols = allCols.filter(
+          (k) => typeof rows[0][k] === "number" || typeof rows[0][k] === "bigint"
+        );
+        setColumns(allCols);
+        setNumericColumns(numCols);
       } else {
-          setColumns([]);
-          setNumericColumns([]);
+        setColumns([]);
+        setNumericColumns([]);
       }
       setGeneratedSql(typeof data.sql === "string" ? data.sql : "");
       setTableName(typeof data.table === "string" ? data.table : "");
@@ -410,6 +417,8 @@ function StudioPageInner() {
       );
       setChartData([]);
       setRawData([]);
+      setColumns([]);
+      setNumericColumns([]);
       setXField("");
       setYField("");
       setRowCount(0);
