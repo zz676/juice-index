@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type ChartType = "bar" | "line" | "horizontalBar";
 
@@ -135,6 +135,13 @@ export function ChartCustomizer({
     const visibleSections = columns.length > 1
         ? sections
         : sections.filter((s) => s.id !== "axes");
+
+    // Reset to "type" if the active section becomes hidden (e.g., user runs a single-column query while on Axes tab)
+    useEffect(() => {
+        if (!visibleSections.some((s) => s.id === activeSection)) {
+            setActiveSection("type");
+        }
+    }, [visibleSections, activeSection]);
 
     if (!isOpen) return null;
 
