@@ -19,6 +19,8 @@ function makeSchedule(
     startTime,
     endTime,
     label: null,
+    frequencyOverride: false,
+    overridePollInterval: 5,
     PauseExceptions: [],
     ...opts,
   };

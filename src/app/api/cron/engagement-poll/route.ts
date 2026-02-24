@@ -11,7 +11,7 @@ import { uploadEngagementImage } from "@/lib/supabase/storage";
 import { sendToTelegram } from "@/lib/telegram/send-message";
 import { engagementReplyLimit, engagementImageLimit } from "@/lib/ratelimit";
 import { normalizeTier, hasTier } from "@/lib/api/tier";
-import { isWithinPauseSchedule } from "@/lib/engagement/pause-utils";
+import { getActivePauseSchedule } from "@/lib/engagement/pause-utils";
 import { computeTotalReplyCost, computeTextGenerationCost } from "@/lib/engagement/cost-utils";
 import { pickUserTone } from "@/lib/engagement/pick-tone";
 import { EngagementReplyStatus } from "@prisma/client";
@@ -115,10 +115,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Compute whether a schedule window is currently active for this user
-    const scheduleActive =
-      !config?.scheduleOverride &&
-      !!config?.PauseSchedules?.length &&
-      isWithinPauseSchedule(config.PauseSchedules, config.timezone ?? "America/New_York", now);
+    const activeSchedule = config?.scheduleOverride
+      ? null
+      : getActivePauseSchedule(
+          config?.PauseSchedules ?? [],
+          config?.timezone ?? "America/New_York",
+          now,
+        );
 
     // Check tier
     if (!hasTier(tier, "STARTER")) {
@@ -373,23 +376,18 @@ export async function POST(request: NextRequest) {
     // Process each monitored account for this user
     for (const account of accounts) {
       // Skip if schedule is active and this account hasn't opted out of it
-      if (scheduleActive && !account.ignorePauseSchedule) {
-        console.log(`[cron]   @${account.username}: SKIP: scheduled pause active`);
-        skipped++;
-        skipReasons.scheduledPause++;
-        continue;
+      if (activeSchedule && !account.ignorePauseSchedule) {
+        if (!activeSchedule.frequencyOverride) {
+          console.log(`[cron]   @${account.username}: SKIP: scheduled pause active`);
+          skipped++;
+          skipReasons.scheduledPause++;
+          continue;
+        }
+        // Schedule has frequency override — don't pause, use override interval instead
       }
 
-      const activeFreqSchedule = config?.PauseSchedules
-        ? config.PauseSchedules.find(
-            (s) =>
-              s.frequencyOverride &&
-              s.enabled &&
-              isWithinPauseSchedule([s], config.timezone ?? "America/New_York", now),
-          )
-        : undefined;
-      const interval = activeFreqSchedule
-        ? (activeFreqSchedule.overridePollInterval ?? 5)
+      const interval = (activeSchedule?.frequencyOverride && !account.ignorePauseSchedule)
+        ? (activeSchedule.overridePollInterval ?? 5)
         : (account.pollInterval ?? 5);
       if (interval > 5 && account.lastCheckedAt) {
         const elapsedMs = Date.now() - account.lastCheckedAt.getTime();

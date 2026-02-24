@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { UserTone } from "@prisma/client";
 import { GlobalPauseBanner } from "./global-pause-banner";
 import { UsageBar } from "./usage-bar";
-import { AccountCard, type MonitoredAccountRow } from "./account-card";
+import { AccountCard, DEFAULT_TONES, type MonitoredAccountRow } from "./account-card";
 import { ImportFollowingModal } from "./import-following-modal";
 import { ReplyMonitoringTable } from "./reply-monitoring-table";
 import { AccountAnalyticsChart } from "./account-analytics-chart";
@@ -18,8 +18,6 @@ export default function EngagementPage() {
   const [tones, setTones] = useState<UserTone[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
-  const [globalFrequencyOverride, setGlobalFrequencyOverride] = useState(false);
-  const [globalPollInterval, setGlobalPollInterval] = useState(5);
   const [xTokenError, setXTokenError] = useState(false);
   const [addHandle, setAddHandle] = useState("");
   const [addLoading, setAddLoading] = useState(false);
@@ -97,6 +95,9 @@ export default function EngagementPage() {
   }, []);
 
   const handleExportConfig = () => {
+    const effectiveTones = tones.length > 0 ? tones : DEFAULT_TONES;
+    const idToName = new Map(effectiveTones.map((t) => [t.id, t.name]));
+
     const config = accounts.map((a) => ({
       username: a.username,
       enabled: a.enabled,
@@ -105,7 +106,11 @@ export default function EngagementPage() {
       pollInterval: a.pollInterval,
       temperature: a.temperature,
       imageFrequency: a.imageFrequency,
-      toneWeights: a.toneWeights ?? null,
+      toneWeights: a.toneWeights
+        ? Object.fromEntries(
+            Object.entries(a.toneWeights).map(([id, w]) => [idToName.get(id) ?? id, w])
+          )
+        : null,
       accountContext: a.accountContext ?? null,
     }));
     const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
@@ -136,13 +141,31 @@ export default function EngagementPage() {
         return;
       }
 
+      // Convert name-keyed toneWeights back to ID-keyed before sending to API
+      const effectiveTones = tones.length > 0 ? tones : DEFAULT_TONES;
+      const nameToId = new Map(effectiveTones.map((t) => [t.name, t.id]));
+      const converted = Array.isArray(parsed)
+        ? parsed.map((item: Record<string, unknown>) => ({
+            ...item,
+            toneWeights:
+              item.toneWeights && typeof item.toneWeights === "object"
+                ? Object.fromEntries(
+                    Object.entries(item.toneWeights as Record<string, number>).map(([key, w]) => [
+                      nameToId.get(key) ?? key,
+                      w,
+                    ])
+                  )
+                : item.toneWeights,
+          }))
+        : parsed;
+
       setImportLoading(true);
       setImportResult(null);
       try {
         const res = await fetch("/api/dashboard/engagement/accounts/bulk", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accounts: parsed }),
+          body: JSON.stringify({ accounts: converted }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -169,9 +192,7 @@ export default function EngagementPage() {
       </div>
 
       {/* Global pause banner */}
-      <GlobalPauseBanner
-        onPauseStateChange={setGlobalPaused}
-      />
+      <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
 
       {xTokenError && (
         <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
@@ -291,8 +312,6 @@ export default function EngagementPage() {
                   account={account}
                   tones={tones}
                   globalPaused={globalPaused}
-                  globalFrequencyOverride={globalFrequencyOverride}
-                  globalPollInterval={globalPollInterval}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
                   onTestPlayground={handleTestPlayground}

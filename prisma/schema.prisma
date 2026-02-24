@@ -1843,25 +1843,21 @@ model FollowingCache {
 /// Global engagement auto-reply configuration per user.
 model EngagementConfig {
   /// Primary identifier for the record.
-  id                      String          @id @default(cuid())
+  id               String          @id @default(cuid())
   /// Identifier of the related user.
-  userId                  String          @unique
+  userId           String          @unique
   /// Whether all auto-replies are globally paused.
-  globalPaused            Boolean         @default(false)
+  globalPaused     Boolean         @default(false)
   /// When true, active pause schedule windows are bypassed (force-resume override).
-  scheduleOverride        Boolean         @default(false)
+  scheduleOverride Boolean         @default(false)
   /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
-  timezone                String          @default("America/New_York")
-  /// When true, all monitored accounts use globalPollInterval instead of their own pollInterval.
-  globalFrequencyOverride Boolean         @default(false)
-  /// Poll interval (minutes) applied to all accounts when globalFrequencyOverride is true.
-  globalPollInterval      Int             @default(5)
+  timezone         String          @default("America/New_York")
   /// Timestamp when the record was created.
-  createdAt               DateTime        @default(now())
+  createdAt        DateTime        @default(now())
   /// Timestamp when the record was last updated.
-  updatedAt               DateTime        @updatedAt
-  User                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  PauseSchedules          PauseSchedule[]
+  updatedAt        DateTime        @updatedAt
+  User             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PauseSchedules   PauseSchedule[]
 
   @@map("juice_engagement_configs")
 }
@@ -1869,23 +1865,27 @@ model EngagementConfig {
 /// A daily time window during which auto-replies are automatically paused.
 model PauseSchedule {
   /// Primary identifier for the record.
-  id                 String           @id @default(cuid())
+  id                   String           @id @default(cuid())
   /// Identifier of the related engagement config.
-  engagementConfigId String
+  engagementConfigId   String
   /// Optional human-friendly label (e.g. "Overnight").
-  label              String?
+  label                String?
   /// Window start time in "HH:mm" 24-hour format.
-  startTime          String
+  startTime            String
   /// Window end time in "HH:mm" 24-hour format.
-  endTime            String
+  endTime              String
   /// Whether this schedule is active.
-  enabled            Boolean          @default(true)
+  enabled              Boolean          @default(true)
+  /// When true, accounts use overridePollInterval during this window instead of being paused.
+  frequencyOverride    Boolean          @default(false)
+  /// Poll interval (minutes) to use when frequencyOverride is true (replaces pause behavior).
+  overridePollInterval Int              @default(5)
   /// Timestamp when the record was created.
-  createdAt          DateTime         @default(now())
+  createdAt            DateTime         @default(now())
   /// Timestamp when the record was last updated.
-  updatedAt          DateTime         @updatedAt
-  EngagementConfig   EngagementConfig @relation(fields: [engagementConfigId], references: [id], onDelete: Cascade)
-  PauseExceptions    PauseException[]
+  updatedAt            DateTime         @updatedAt
+  EngagementConfig     EngagementConfig @relation(fields: [engagementConfigId], references: [id], onDelete: Cascade)
+  PauseExceptions      PauseException[]
 
   @@index([engagementConfigId])
   @@map("juice_pause_schedules")

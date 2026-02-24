@@ -35,7 +35,7 @@ const COLOR_DOT: Record<string, string> = {
   teal: "bg-teal-500",
 };
 
-const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
+export const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
   { id: "default-neutral", name: "Neutral", color: "slate" },
   { id: "default-professional", name: "Professional", color: "blue" },
   { id: "default-humor", name: "Humor", color: "yellow" },
@@ -48,14 +48,12 @@ interface AccountCardProps {
   account: MonitoredAccountRow;
   tones: UserTone[];
   globalPaused: boolean;
-  globalFrequencyOverride?: boolean;
-  globalPollInterval?: number;
   onUpdate: (updated: MonitoredAccountRow) => void;
   onDelete: (id: string) => void;
   onTestPlayground?: (account: MonitoredAccountRow) => void;
 }
 
-export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, globalFrequencyOverride, globalPollInterval, onUpdate, onDelete, onTestPlayground }: AccountCardProps) {
+export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete, onTestPlayground }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -335,9 +333,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
         <p className="text-xs font-medium text-slate-custom-500 mb-2">
           Check Frequency
           <span className="ml-1 font-normal text-slate-custom-400">
-            {globalFrequencyOverride
-              ? `(${POLL_LABELS[Math.max(0, POLL_STEPS.indexOf(globalPollInterval ?? 5))] ?? "?"} · global)`
-              : `(${POLL_LABELS[localPollInterval]})`}
+            ({POLL_LABELS[localPollInterval]})
           </span>
         </p>
         <input
@@ -345,28 +341,16 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
           min={0}
           max={POLL_STEPS.length - 1}
           step={1}
-          value={globalFrequencyOverride
-            ? Math.max(0, POLL_STEPS.indexOf(globalPollInterval ?? 5))
-            : localPollInterval}
-          onChange={(e) => {
-            if (!globalFrequencyOverride) setLocalPollInterval(Number(e.target.value));
-          }}
-          onPointerUp={(e) => {
-            if (!globalFrequencyOverride)
-              scheduleCommit({ pollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)] });
-          }}
-          className="w-full h-1.5 accent-primary disabled:opacity-40"
-          disabled={loading || !!globalFrequencyOverride}
+          value={localPollInterval}
+          onChange={(e) => setLocalPollInterval(Number(e.target.value))}
+          onPointerUp={(e) => scheduleCommit({ pollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)] })}
+          className="w-full h-1.5 accent-primary"
+          disabled={loading}
         />
         <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
           <span>Frequent</span>
           <span>Rare</span>
         </div>
-        {globalFrequencyOverride && (
-          <p className="text-[10px] text-slate-custom-400 mt-1">
-            Global frequency override is active
-          </p>
-        )}
       </div>
 
       {/* Account context textarea */}
