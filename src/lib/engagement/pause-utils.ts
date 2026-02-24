@@ -11,8 +11,10 @@ export type PauseScheduleLike = {
   id: string;
   enabled: boolean;
   startTime: string; // "HH:mm"
-  endTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
   label?: string | null;
+  frequencyOverride: boolean;
+  overridePollInterval: number;
   PauseExceptions: PauseExceptionLike[];
 };
 
