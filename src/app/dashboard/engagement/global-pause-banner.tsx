@@ -17,11 +17,14 @@ type ConfigData = {
   globalPaused: boolean;
   scheduleOverride: boolean;
   timezone: string;
+  globalFrequencyOverride: boolean;
+  globalPollInterval: number;
   schedules: PauseSchedule[];
 };
 
 type Props = {
   onPauseStateChange?: (paused: boolean) => void;
+  onFrequencyOverrideChange?: (overrideOn: boolean, interval: number) => void;
 };
 
 // All IANA timezones supported by the runtime
@@ -32,6 +35,9 @@ const TIMEZONES: string[] = (() => {
     return ["America/New_York", "America/Los_Angeles", "America/Chicago", "UTC", "Europe/London"];
   }
 })();
+
+const POLL_STEPS = [5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080];
+const POLL_LABELS = ["5 min", "10 min", "15 min", "30 min", "1 hr", "3.5 hr", "5 hr", "8.5 hr", "11.5 hr", "15.5 hr", "20 hr", "1 day", "7 days"];
 
 function isWithinWindow(now: Date, timezone: string, schedule: PauseSchedule): boolean {
   const dateParts = new Intl.DateTimeFormat("en-CA", {
@@ -67,10 +73,11 @@ function getActiveSchedule(schedules: PauseSchedule[], timezone: string): PauseS
   return schedules.find((sc) => sc.enabled && isWithinWindow(now, timezone, sc)) ?? null;
 }
 
-export function GlobalPauseBanner({ onPauseStateChange }: Props) {
+export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChange }: Props) {
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [localGlobalInterval, setLocalGlobalInterval] = useState<number>(0);
 
   // New schedule form state
   const [newLabel, setNewLabel] = useState("");
@@ -84,10 +91,13 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
       const data: ConfigData = await res.json();
       setConfig(data);
       onPauseStateChange?.(data.globalPaused);
+      const idx = POLL_STEPS.indexOf(data.globalPollInterval ?? 5);
+      setLocalGlobalInterval(idx >= 0 ? idx : 0);
+      onFrequencyOverrideChange?.(data.globalFrequencyOverride ?? false, data.globalPollInterval ?? 5);
     } catch {
       // keep existing state
     }
-  }, [onPauseStateChange]);
+  }, [onPauseStateChange, onFrequencyOverrideChange]);
 
   useEffect(() => {
     fetchConfig();
@@ -135,6 +145,35 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ timezone: tz }),
     });
+  };
+
+  const toggleGlobalFrequency = async (enabled: boolean) => {
+    if (!config || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/engagement/config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ globalFrequencyOverride: enabled }),
+      });
+      const data = await res.json();
+      setConfig((prev) => prev ? { ...prev, globalFrequencyOverride: data.globalFrequencyOverride } : prev);
+      onFrequencyOverrideChange?.(data.globalFrequencyOverride, config.globalPollInterval ?? 5);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const commitGlobalPollInterval = async (stepIndex: number) => {
+    if (!config) return;
+    const interval = POLL_STEPS[stepIndex];
+    await fetch("/api/dashboard/engagement/config", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ globalPollInterval: interval }),
+    });
+    setConfig((prev) => prev ? { ...prev, globalPollInterval: interval } : prev);
+    onFrequencyOverrideChange?.(config.globalFrequencyOverride ?? false, interval);
   };
 
   const toggleScheduleEnabled = async (schedule: PauseSchedule) => {
@@ -327,6 +366,56 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
       {/* ── Expanded panel ── */}
       {expanded && (
         <div className="border-t border-slate-custom-100 bg-white px-4 py-4 space-y-4">
+          {/* Global Frequency Override */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-custom-700">Global Frequency Override</p>
+                <p className="text-[11px] text-slate-custom-400 mt-0.5">
+                  {config.globalFrequencyOverride
+                    ? `All accounts polled every ${POLL_LABELS[localGlobalInterval]}`
+                    : "Each account uses its own check frequency"}
+                </p>
+              </div>
+              <button
+                onClick={() => toggleGlobalFrequency(!config.globalFrequencyOverride)}
+                disabled={loading}
+                className={`w-10 h-6 rounded-full relative transition-colors shrink-0 disabled:opacity-50 ${
+                  config.globalFrequencyOverride ? "bg-primary" : "bg-slate-custom-300"
+                }`}
+                aria-label={config.globalFrequencyOverride ? "Disable global frequency override" : "Enable global frequency override"}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                    config.globalFrequencyOverride ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {config.globalFrequencyOverride && (
+              <div className="pt-1">
+                <input
+                  type="range"
+                  min={0}
+                  max={POLL_STEPS.length - 1}
+                  step={1}
+                  value={localGlobalInterval}
+                  onChange={(e) => setLocalGlobalInterval(Number(e.target.value))}
+                  onPointerUp={(e) =>
+                    commitGlobalPollInterval(Number((e.target as HTMLInputElement).value))
+                  }
+                  className="w-full h-1.5 accent-primary"
+                  disabled={loading}
+                />
+                <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
+                  <span>Frequent</span>
+                  <span>Rare</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Timezone */}
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-slate-custom-500 w-20 shrink-0">Timezone</span>
