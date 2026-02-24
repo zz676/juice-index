@@ -401,11 +401,71 @@ Each `MonitoredAccount` has personalization fields:
 | `toneWeights` | JSON map of `{ userToneId: weight }`. Weights are arbitrary numbers — only the ratio matters. Null = fall back to legacy `tone` enum. |
 | `temperature` | Float 0.1–1.0, default 0.8. Controls reply creativity/randomness. |
 | `accountContext` | Free-text description shown to the AI (e.g. "Tech blogger covering AI startups"). |
-| `pollInterval` | Int (minutes), default 5. Allowed values: 5, 10, 15, 30, 60, 1440, 10080. Accounts with interval > 5 are skipped by the cron if `lastCheckedAt` is within the interval window. |
+| `pollInterval` | Int (minutes), default 5. Allowed values: 5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080. Accounts with interval > 5 are skipped by the cron if `lastCheckedAt` is within the interval window. |
 
 **Weighted random tone selection:** At reply generation time, `pickUserTone()` picks a tone proportional to its weight. A weight of 0 excludes that tone. Example: Humor=40, Neutral=60 → Neutral picked ~60% of the time.
 
 **Legacy fallback:** If `toneWeights` is null (pre-existing accounts), the legacy `tone` enum is used with the corresponding default prompt.
+
+---
+
+## Bulk Account Config Export / Import
+
+The Engagement Center accounts tab includes **Export JSON** and **Import JSON** buttons (visible when at least one account exists) for bulk-updating settings across all monitored accounts without editing each card individually.
+
+### Export
+
+Clicking **Export JSON** downloads `accounts-config.json` — a snapshot of every monitored account's current settings:
+
+```json
+[
+  {
+    "username": "alice",
+    "enabled": true,
+    "autoPost": false,
+    "ignorePauseSchedule": false,
+    "pollInterval": 60,
+    "temperature": 0.8,
+    "imageFrequency": 10,
+    "toneWeights": { "<userToneId>": 100 },
+    "accountContext": "Tech blogger covering AI startups"
+  }
+]
+```
+
+### Import
+
+Edit the file (delete any fields you don't want to change — only present fields are updated), then click **Import JSON** and select the file. The UI shows `Updated N accounts · skipped: <usernames>` on completion.
+
+**API:** `POST /api/dashboard/engagement/accounts/bulk`
+
+Request body:
+```json
+{ "accounts": [ { "username": "alice", "pollInterval": 30 }, ... ] }
+```
+
+Response:
+```json
+{ "updated": 2, "skipped": ["ghost"] }
+```
+
+### Validation rules
+
+| Field | Validation |
+|---|---|
+| `pollInterval` | Must be one of: 5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080 — silently ignored otherwise |
+| `temperature` | Float 0.1–1.0 — silently ignored if out of range |
+| `imageFrequency` | Integer 0–100 — silently ignored if out of range |
+| `toneWeights` | Pass `null` to clear (reverts to legacy tone enum) |
+| `accountContext` | Pass `null` to clear |
+| `enabled`, `autoPost`, `ignorePauseSchedule` | Coerced to boolean |
+| Unknown username | Skipped; listed in `skipped[]` response |
+
+### Common use cases
+
+- **Quick frequency adjustment**: export → change all `pollInterval` values → import. No need to touch other fields.
+- **Bulk enable/disable**: set `"enabled": false` for all accounts to pause without using global pause.
+- **Reset tone weights**: set `"toneWeights": null` across all accounts to revert to legacy tones.
 
 ---
 
