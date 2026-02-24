@@ -506,6 +506,7 @@ model UserPreference {
   /// Timestamp when the record was last updated.
   updatedAt       DateTime
   User            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("juice_user_preferences")
 }
 
@@ -582,6 +583,7 @@ model XAccount {
   /// Timestamp when the record was last updated.
   updatedAt      DateTime @updatedAt
   User           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("juice_x_accounts")
 }
 
@@ -1604,8 +1606,8 @@ model ApiKey {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  User              User      @relation(fields: [userId], references: [id])
-  ApiRequestLog     ApiRequestLog[]
+  User          User            @relation(fields: [userId], references: [id])
+  ApiRequestLog ApiRequestLog[]
 
   @@index([keyHash])
   @@index([userId])
@@ -1613,18 +1615,18 @@ model ApiKey {
 }
 
 model ApiRequestLog {
-  id             String   @id @default(cuid())
-  apiKeyId       String?
-  userId         String
-  endpoint       String
-  method         String
-  statusCode     Int
-  durationMs     Int?
-  requestId      String?
-  tierAtRequest  String?
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  apiKeyId      String?
+  userId        String
+  endpoint      String
+  method        String
+  statusCode    Int
+  durationMs    Int?
+  requestId     String?
+  tierAtRequest String?
+  createdAt     DateTime @default(now())
 
-  ApiKey         ApiKey?  @relation(fields: [apiKeyId], references: [id])
+  ApiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
 
   @@index([apiKeyId])
   @@index([userId])
@@ -1645,7 +1647,8 @@ model ApiSubscription {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  User                 User      @relation(fields: [userId], references: [id])
+  User User @relation(fields: [userId], references: [id])
+
   @@map("juice_api_subscriptions")
 }
 
@@ -1726,9 +1729,9 @@ model MonitoredAccount {
   /// Whether auto-reply is enabled for this account.
   enabled             Boolean           @default(true)
   /// Whether replies should be auto-posted to X (true) or sent to Telegram for manual posting (false).
-  autoPost              Boolean           @default(false)
+  autoPost            Boolean           @default(false)
   /// When true, this account runs during user-level pause schedule windows.
-  ignorePauseSchedule   Boolean           @default(false)
+  ignorePauseSchedule Boolean           @default(false)
   /// Last tweet ID seen from this account (for polling).
   lastSeenTweetId     String?
   /// Timestamp when the account was last polled.
@@ -1757,53 +1760,53 @@ model MonitoredAccount {
 /// Auto-generated reply to a monitored account's tweet.
 model EngagementReply {
   /// Primary identifier for the record.
-  id                  String                @id @default(cuid())
+  id                   String                @id @default(cuid())
   /// Identifier of the related user.
-  userId              String
+  userId               String
   /// Identifier of the monitored account that triggered this reply.
-  monitoredAccountId  String
+  monitoredAccountId   String
   /// X tweet ID that was replied to.
-  sourceTweetId       String
+  sourceTweetId        String
   /// Text content of the source tweet.
-  sourceTweetText     String?
+  sourceTweetText      String?
   /// URL of the source tweet.
-  sourceTweetUrl      String?
+  sourceTweetUrl       String?
   /// Timestamp when the source tweet was published on X.
   sourceTweetCreatedAt DateTime?
   /// Generated reply text.
-  replyText           String?
+  replyText            String?
   /// URL of the generated reply image.
-  replyImageUrl       String?
+  replyImageUrl        String?
   /// Tone used for this reply (legacy enum, kept for existing records).
-  tone                ReplyTone
+  tone                 ReplyTone
   /// UserTone id used for this reply (new system).
-  userToneId          String?
+  userToneId           String?
   /// Snapshot of the tone name at generation time.
-  userToneName        String?
+  userToneName         String?
   /// Workflow status for the record.
-  status              EngagementReplyStatus @default(PENDING)
+  status               EngagementReplyStatus @default(PENDING)
   /// X tweet ID of the posted reply.
-  replyTweetId        String?
+  replyTweetId         String?
   /// URL of the posted reply on X.
-  replyTweetUrl       String?
+  replyTweetUrl        String?
   /// Error message if the reply failed.
-  lastError           String?
+  lastError            String?
   /// Number of posting attempts.
-  attempts            Int                   @default(0)
+  attempts             Int                   @default(0)
   /// AI text generation cost in USD.
-  textGenerationCost  Float                 @default(0)
+  textGenerationCost   Float                 @default(0)
   /// Image generation cost in USD.
-  imageGenerationCost Float                 @default(0)
+  imageGenerationCost  Float                 @default(0)
   /// X API call cost in USD.
-  apiCallCost         Float                 @default(0)
+  apiCallCost          Float                 @default(0)
   /// Total cost in USD.
-  totalCost           Float                 @default(0)
+  totalCost            Float                 @default(0)
   /// Timestamp when the record was created.
-  createdAt           DateTime              @default(now())
+  createdAt            DateTime              @default(now())
   /// Timestamp when the record was last updated.
-  updatedAt           DateTime              @updatedAt
-  User                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  MonitoredAccount    MonitoredAccount      @relation(fields: [monitoredAccountId], references: [id], onDelete: Cascade)
+  updatedAt            DateTime              @updatedAt
+  User                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  MonitoredAccount     MonitoredAccount      @relation(fields: [monitoredAccountId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
   @@index([userId, createdAt(sort: Desc)])
@@ -1840,25 +1843,25 @@ model FollowingCache {
 /// Global engagement auto-reply configuration per user.
 model EngagementConfig {
   /// Primary identifier for the record.
-  id             String          @id @default(cuid())
+  id                      String          @id @default(cuid())
   /// Identifier of the related user.
-  userId         String          @unique
+  userId                  String          @unique
   /// Whether all auto-replies are globally paused.
-  globalPaused      Boolean         @default(false)
+  globalPaused            Boolean         @default(false)
   /// When true, active pause schedule windows are bypassed (force-resume override).
-  scheduleOverride  Boolean         @default(false)
+  scheduleOverride        Boolean         @default(false)
   /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
-  timezone          String          @default("America/New_York")
+  timezone                String          @default("America/New_York")
   /// When true, all monitored accounts use globalPollInterval instead of their own pollInterval.
-  globalFrequencyOverride Boolean   @default(false)
+  globalFrequencyOverride Boolean         @default(false)
   /// Poll interval (minutes) applied to all accounts when globalFrequencyOverride is true.
-  globalPollInterval Int            @default(5)
+  globalPollInterval      Int             @default(5)
   /// Timestamp when the record was created.
-  createdAt      DateTime        @default(now())
+  createdAt               DateTime        @default(now())
   /// Timestamp when the record was last updated.
-  updatedAt      DateTime        @updatedAt
-  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  PauseSchedules PauseSchedule[]
+  updatedAt               DateTime        @updatedAt
+  User                    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PauseSchedules          PauseSchedule[]
 
   @@map("juice_engagement_configs")
 }
@@ -1943,7 +1946,7 @@ model LegacyAIUsage {
   inputTokens  Int?
   outputTokens Int?
   durationMs   Int?
-  
+
   @@index([createdAt])
   @@index([postId])
   @@index([source])
@@ -1990,10 +1993,10 @@ model LegacyDigestContent {
 }
 
 model LegacyEmailEvent {
-  id                String            @id
+  id                String                  @id
   notificationId    String
   event             EmailEventType
-  timestamp         DateTime          @default(now())
+  timestamp         DateTime                @default(now())
   metadata          Json?
   EmailNotification LegacyEmailNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
 
@@ -2003,18 +2006,18 @@ model LegacyEmailEvent {
 }
 
 model LegacyEmailNotification {
-  id         String       @id
+  id         String             @id
   userId     String
   type       EmailType
   subject    String
   postIds    String[]
-  status     EmailStatus  @default(PENDING)
+  status     EmailStatus        @default(PENDING)
   messageId  String?
   error      String?
   sentAt     DateTime?
-  createdAt  DateTime     @default(now())
+  createdAt  DateTime           @default(now())
   EmailEvent LegacyEmailEvent[]
-  User       LegacyUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User       LegacyUser         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([type, sentAt])
@@ -2093,16 +2096,16 @@ model LegacySubscriber {
 }
 
 model LegacyUser {
-  id                String              @id
-  email             String              @unique
+  id                String                    @id
+  email             String                    @unique
   name              String?
   avatarUrl         String?
   passwordHash      String?
-  emailVerified     Boolean             @default(false)
+  emailVerified     Boolean                   @default(false)
   emailVerifyToken  String?
-  createdAt         DateTime            @default(now())
+  createdAt         DateTime                  @default(now())
   updatedAt         DateTime
-  role              UserRole            @default(USER)
+  role              UserRole                  @default(USER)
   Account           LegacyAccount[]
   EmailNotification LegacyEmailNotification[]
   SavedPost         LegacySavedPost[]
@@ -2116,11 +2119,11 @@ model LegacyUser {
 }
 
 model LegacySavedPost {
-  id      String   @id
+  id      String     @id
   userId  String
   postId  String
-  savedAt DateTime @default(now())
-  User    LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savedAt DateTime   @default(now())
+  User    LegacyUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
@@ -2130,13 +2133,13 @@ model LegacySavedPost {
 }
 
 model LegacySession {
-  id           String   @id
+  id           String     @id
   userId       String
-  sessionToken String   @unique
+  sessionToken String     @unique
   expires      DateTime
-  createdAt    DateTime @default(now())
+  createdAt    DateTime   @default(now())
   updatedAt    DateTime
-  User         LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User         LegacyUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("Session")
@@ -2144,18 +2147,18 @@ model LegacySession {
 }
 
 model LegacyUserPreference {
-  id              String    @id
-  userId          String    @unique
+  id              String     @id
+  userId          String     @unique
   brands          Brand[]
   topics          Topic[]
-  digestFrequency Frequency @default(DAILY)
-  alertsEnabled   Boolean   @default(true)
-  alertThreshold  Int       @default(80)
-  language        Language  @default(EN)
-  createdAt       DateTime  @default(now())
+  digestFrequency Frequency  @default(DAILY)
+  alertsEnabled   Boolean    @default(true)
+  alertThreshold  Int        @default(80)
+  language        Language   @default(EN)
+  createdAt       DateTime   @default(now())
   updatedAt       DateTime
-  User            LegacyUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  User            LegacyUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("UserPreference")
   @@ignore
 }
@@ -2186,19 +2189,19 @@ model LegacyXPublication {
 }
 
 model LegacyXAccount {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  xUserId        String   @unique
+  id             String     @id @default(cuid())
+  userId         String     @unique
+  xUserId        String     @unique
   username       String
   displayName    String?
   avatarUrl      String?
   accessToken    String
   refreshToken   String
   tokenExpiresAt DateTime
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  User           LegacyUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  User           LegacyUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("XAccount")
   @@ignore
 }
