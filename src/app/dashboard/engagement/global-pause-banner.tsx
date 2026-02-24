@@ -493,11 +493,7 @@ function ScheduleRow({
         {/* Col 2: Frequency override */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] text-slate-custom-500 leading-none">
-              {schedule.frequencyOverride
-                ? `Poll every ${POLL_LABELS[localInterval]}`
-                : "Pause during window"}
-            </p>
+            <p className="text-[11px] font-medium text-slate-custom-600 leading-none">Freq Override</p>
             <button
               onClick={() => onFrequencyUpdate({ frequencyOverride: !schedule.frequencyOverride })}
               className={`w-8 h-5 rounded-full relative transition-colors shrink-0 ${
@@ -512,21 +508,28 @@ function ScheduleRow({
               />
             </button>
           </div>
-          {schedule.frequencyOverride && (
-            <input
-              type="range"
-              min={0}
-              max={POLL_STEPS.length - 1}
-              step={1}
-              value={localInterval}
-              onChange={(e) => setLocalInterval(Number(e.target.value))}
-              onPointerUp={(e) =>
-                onFrequencyUpdate({
-                  overridePollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)],
-                })
-              }
-              className="w-full h-1.5 accent-primary"
-            />
+          {schedule.frequencyOverride ? (
+            <div className="space-y-1">
+              <p className="text-[11px] text-slate-custom-500">
+                Every {POLL_LABELS[localInterval]}
+              </p>
+              <input
+                type="range"
+                min={0}
+                max={POLL_STEPS.length - 1}
+                step={1}
+                value={localInterval}
+                onChange={(e) => setLocalInterval(Number(e.target.value))}
+                onPointerUp={(e) =>
+                  onFrequencyUpdate({
+                    overridePollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)],
+                  })
+                }
+                className="w-full h-1.5 accent-primary"
+              />
+            </div>
+          ) : (
+            <p className="text-[11px] text-slate-custom-400">Off · pauses during window</p>
           )}
         </div>
 
