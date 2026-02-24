@@ -1850,9 +1850,9 @@ model EngagementConfig {
   /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
   timezone          String          @default("America/New_York")
   /// When true, all monitored accounts use globalPollInterval instead of their own pollInterval.
-  globalFrequencyOverride Boolean @default(false)
+  globalFrequencyOverride Boolean   @default(false)
   /// Poll interval (minutes) applied to all accounts when globalFrequencyOverride is true.
-  globalPollInterval      Int     @default(5)
+  globalPollInterval Int            @default(5)
   /// Timestamp when the record was created.
   createdAt      DateTime        @default(now())
   /// Timestamp when the record was last updated.
