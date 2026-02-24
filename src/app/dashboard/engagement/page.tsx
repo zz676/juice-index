@@ -171,10 +171,6 @@ export default function EngagementPage() {
       {/* Global pause banner */}
       <GlobalPauseBanner
         onPauseStateChange={setGlobalPaused}
-        onFrequencyOverrideChange={(on, interval) => {
-          setGlobalFrequencyOverride(on);
-          setGlobalPollInterval(interval);
-        }}
       />
 
       {xTokenError && (

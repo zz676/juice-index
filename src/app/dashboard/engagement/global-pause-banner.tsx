@@ -10,6 +10,8 @@ type PauseSchedule = {
   startTime: string;
   endTime: string;
   enabled: boolean;
+  frequencyOverride: boolean;
+  overridePollInterval: number;
   PauseExceptions: PauseException[];
 };
 
@@ -17,14 +19,11 @@ type ConfigData = {
   globalPaused: boolean;
   scheduleOverride: boolean;
   timezone: string;
-  globalFrequencyOverride: boolean;
-  globalPollInterval: number;
   schedules: PauseSchedule[];
 };
 
 type Props = {
   onPauseStateChange?: (paused: boolean) => void;
-  onFrequencyOverrideChange?: (overrideOn: boolean, interval: number) => void;
 };
 
 // All IANA timezones supported by the runtime
@@ -73,11 +72,10 @@ function getActiveSchedule(schedules: PauseSchedule[], timezone: string): PauseS
   return schedules.find((sc) => sc.enabled && isWithinWindow(now, timezone, sc)) ?? null;
 }
 
-export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChange }: Props) {
+export function GlobalPauseBanner({ onPauseStateChange }: Props) {
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [localGlobalInterval, setLocalGlobalInterval] = useState<number>(0);
 
   // New schedule form state
   const [newLabel, setNewLabel] = useState("");
@@ -91,13 +89,10 @@ export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChang
       const data: ConfigData = await res.json();
       setConfig(data);
       onPauseStateChange?.(data.globalPaused);
-      const idx = POLL_STEPS.indexOf(data.globalPollInterval ?? 5);
-      setLocalGlobalInterval(idx >= 0 ? idx : 0);
-      onFrequencyOverrideChange?.(data.globalFrequencyOverride ?? false, data.globalPollInterval ?? 5);
     } catch {
       // keep existing state
     }
-  }, [onPauseStateChange, onFrequencyOverrideChange]);
+  }, [onPauseStateChange]);
 
   useEffect(() => {
     fetchConfig();
@@ -147,35 +142,6 @@ export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChang
     });
   };
 
-  const toggleGlobalFrequency = async (enabled: boolean) => {
-    if (!config || loading) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/dashboard/engagement/config", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ globalFrequencyOverride: enabled }),
-      });
-      const data = await res.json();
-      setConfig((prev) => prev ? { ...prev, globalFrequencyOverride: data.globalFrequencyOverride } : prev);
-      onFrequencyOverrideChange?.(data.globalFrequencyOverride, config.globalPollInterval ?? 5);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const commitGlobalPollInterval = async (stepIndex: number) => {
-    if (!config) return;
-    const interval = POLL_STEPS[stepIndex];
-    await fetch("/api/dashboard/engagement/config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ globalPollInterval: interval }),
-    });
-    setConfig((prev) => prev ? { ...prev, globalPollInterval: interval } : prev);
-    onFrequencyOverrideChange?.(config.globalFrequencyOverride ?? false, interval);
-  };
-
   const toggleScheduleEnabled = async (schedule: PauseSchedule) => {
     const res = await fetch(`/api/dashboard/engagement/schedules/${schedule.id}`, {
       method: "PATCH",
@@ -197,6 +163,25 @@ export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChang
     if (res.ok) {
       setConfig((prev) =>
         prev ? { ...prev, schedules: prev.schedules.filter((s) => s.id !== id) } : prev
+      );
+    }
+  };
+
+  const updateScheduleFrequency = async (
+    scheduleId: string,
+    patch: { frequencyOverride?: boolean; overridePollInterval?: number },
+  ) => {
+    const res = await fetch(`/api/dashboard/engagement/schedules/${scheduleId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setConfig((prev) =>
+        prev
+          ? { ...prev, schedules: prev.schedules.map((s) => (s.id === scheduleId ? data.schedule : s)) }
+          : prev,
       );
     }
   };
@@ -366,56 +351,6 @@ export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChang
       {/* ── Expanded panel ── */}
       {expanded && (
         <div className="border-t border-slate-custom-100 bg-white px-4 py-4 space-y-4">
-          {/* Global Frequency Override */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-custom-700">Global Frequency Override</p>
-                <p className="text-[11px] text-slate-custom-400 mt-0.5">
-                  {config.globalFrequencyOverride
-                    ? `All accounts polled every ${POLL_LABELS[localGlobalInterval]}`
-                    : "Each account uses its own check frequency"}
-                </p>
-              </div>
-              <button
-                onClick={() => toggleGlobalFrequency(!config.globalFrequencyOverride)}
-                disabled={loading}
-                className={`w-10 h-6 rounded-full relative transition-colors shrink-0 disabled:opacity-50 ${
-                  config.globalFrequencyOverride ? "bg-primary" : "bg-slate-custom-300"
-                }`}
-                aria-label={config.globalFrequencyOverride ? "Disable global frequency override" : "Enable global frequency override"}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                    config.globalFrequencyOverride ? "translate-x-5" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-
-            {config.globalFrequencyOverride && (
-              <div className="pt-1">
-                <input
-                  type="range"
-                  min={0}
-                  max={POLL_STEPS.length - 1}
-                  step={1}
-                  value={localGlobalInterval}
-                  onChange={(e) => setLocalGlobalInterval(Number(e.target.value))}
-                  onPointerUp={(e) =>
-                    commitGlobalPollInterval(Number((e.target as HTMLInputElement).value))
-                  }
-                  className="w-full h-1.5 accent-primary"
-                  disabled={loading}
-                />
-                <div className="flex justify-between text-[10px] text-slate-custom-400 mt-0.5">
-                  <span>Frequent</span>
-                  <span>Rare</span>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Timezone */}
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-slate-custom-500 w-20 shrink-0">Timezone</span>
@@ -441,6 +376,7 @@ export function GlobalPauseBanner({ onPauseStateChange, onFrequencyOverrideChang
                   schedule={schedule}
                   onToggle={() => toggleScheduleEnabled(schedule)}
                   onDelete={() => deleteSchedule(schedule.id)}
+                  onFrequencyUpdate={(patch) => updateScheduleFrequency(schedule.id, patch)}
                   onAddException={(date) => addException(schedule.id, date)}
                   onDeleteException={(exId) => deleteException(schedule.id, exId)}
                 />
@@ -504,44 +440,98 @@ type ScheduleRowProps = {
   schedule: PauseSchedule;
   onToggle: () => void;
   onDelete: () => void;
+  onFrequencyUpdate: (patch: { frequencyOverride?: boolean; overridePollInterval?: number }) => void;
   onAddException: (date: string) => void;
   onDeleteException: (exId: string) => void;
 };
 
-function ScheduleRow({ schedule, onToggle, onDelete, onAddException, onDeleteException }: ScheduleRowProps) {
+function ScheduleRow({
+  schedule,
+  onToggle,
+  onDelete,
+  onFrequencyUpdate,
+  onAddException,
+  onDeleteException,
+}: ScheduleRowProps) {
   const [showExceptions, setShowExceptions] = useState(false);
   const [newExDate, setNewExDate] = useState("");
+  const [localInterval, setLocalInterval] = useState(() => {
+    const idx = POLL_STEPS.indexOf(schedule.overridePollInterval ?? 5);
+    return idx >= 0 ? idx : 0;
+  });
 
   return (
-    <div className="border border-slate-custom-200 rounded-lg p-3 bg-slate-custom-50">
-      <div className="flex items-center gap-3">
-        {/* Enabled toggle */}
-        <button
-          onClick={onToggle}
-          className={`w-8 h-5 rounded-full relative transition-colors shrink-0 ${
-            schedule.enabled ? "bg-green-500" : "bg-slate-custom-300"
-          }`}
-          aria-label={schedule.enabled ? "Disable schedule" : "Enable schedule"}
-        >
-          <span
-            className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-              schedule.enabled ? "translate-x-3" : "translate-x-0.5"
+    <div className="border border-slate-custom-200 rounded-lg p-3 bg-slate-custom-50 space-y-2">
+      {/* 3-column row */}
+      <div className="grid grid-cols-3 gap-3 items-start">
+
+        {/* Col 1: Enable toggle + time + label */}
+        <div className="flex items-center gap-2 min-w-0">
+          <button
+            onClick={onToggle}
+            className={`w-8 h-5 rounded-full relative transition-colors shrink-0 ${
+              schedule.enabled ? "bg-green-500" : "bg-slate-custom-300"
             }`}
-          />
-        </button>
+            aria-label={schedule.enabled ? "Disable schedule" : "Enable schedule"}
+          >
+            <span
+              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                schedule.enabled ? "translate-x-3" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+          <div className="min-w-0">
+            <p className="text-xs font-mono text-slate-custom-700 truncate">
+              {schedule.startTime} → {schedule.endTime}
+            </p>
+            {schedule.label && (
+              <p className="text-[11px] text-slate-custom-500 truncate">{schedule.label}</p>
+            )}
+          </div>
+        </div>
 
-        {/* Time range */}
-        <span className="text-sm font-mono text-slate-custom-700">
-          {schedule.startTime} → {schedule.endTime}
-        </span>
+        {/* Col 2: Frequency override */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-slate-custom-500 leading-none">
+              {schedule.frequencyOverride
+                ? `Poll every ${POLL_LABELS[localInterval]}`
+                : "Pause during window"}
+            </p>
+            <button
+              onClick={() => onFrequencyUpdate({ frequencyOverride: !schedule.frequencyOverride })}
+              className={`w-8 h-5 rounded-full relative transition-colors shrink-0 ${
+                schedule.frequencyOverride ? "bg-primary" : "bg-slate-custom-300"
+              }`}
+              aria-label={schedule.frequencyOverride ? "Disable frequency override" : "Enable frequency override"}
+            >
+              <span
+                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  schedule.frequencyOverride ? "translate-x-3" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </div>
+          {schedule.frequencyOverride && (
+            <input
+              type="range"
+              min={0}
+              max={POLL_STEPS.length - 1}
+              step={1}
+              value={localInterval}
+              onChange={(e) => setLocalInterval(Number(e.target.value))}
+              onPointerUp={(e) =>
+                onFrequencyUpdate({
+                  overridePollInterval: POLL_STEPS[Number((e.target as HTMLInputElement).value)],
+                })
+              }
+              className="w-full h-1.5 accent-primary"
+            />
+          )}
+        </div>
 
-        {/* Label */}
-        {schedule.label && (
-          <span className="text-xs text-slate-custom-500 truncate flex-1">{schedule.label}</span>
-        )}
-
-        <div className="ml-auto flex items-center gap-2 shrink-0">
-          {/* Exceptions toggle */}
+        {/* Col 3: Actions */}
+        <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => setShowExceptions((v) => !v)}
             className="flex items-center gap-0.5 text-xs text-slate-custom-500 hover:text-slate-custom-700 transition-colors"
@@ -555,8 +545,6 @@ function ScheduleRow({ schedule, onToggle, onDelete, onAddException, onDeleteExc
               {showExceptions ? "expand_less" : "expand_more"}
             </span>
           </button>
-
-          {/* Delete */}
           <button
             onClick={onDelete}
             className="text-slate-custom-400 hover:text-red-500 transition-colors"
@@ -569,7 +557,7 @@ function ScheduleRow({ schedule, onToggle, onDelete, onAddException, onDeleteExc
 
       {/* Exceptions panel */}
       {showExceptions && (
-        <div className="mt-3 pt-3 border-t border-slate-custom-200 space-y-2">
+        <div className="pt-2 border-t border-slate-custom-200 space-y-2">
           {schedule.PauseExceptions.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {schedule.PauseExceptions.map((ex) => (

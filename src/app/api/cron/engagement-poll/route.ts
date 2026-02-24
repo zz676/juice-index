@@ -80,8 +80,6 @@ export async function POST(request: NextRequest) {
         select: {
           globalPaused: true,
           scheduleOverride: true,
-          globalFrequencyOverride: true,
-          globalPollInterval: true,
           timezone: true,
           PauseSchedules: {
             where: { enabled: true },
@@ -91,6 +89,8 @@ export async function POST(request: NextRequest) {
               startTime: true,
               endTime: true,
               enabled: true,
+              frequencyOverride: true,
+              overridePollInterval: true,
               PauseExceptions: { select: { date: true } },
             },
           },
@@ -380,8 +380,16 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const interval = config?.globalFrequencyOverride
-        ? (config.globalPollInterval ?? 5)
+      const activeFreqSchedule = config?.PauseSchedules
+        ? config.PauseSchedules.find(
+            (s) =>
+              s.frequencyOverride &&
+              s.enabled &&
+              isWithinPauseSchedule([s], config.timezone ?? "America/New_York", now),
+          )
+        : undefined;
+      const interval = activeFreqSchedule
+        ? (activeFreqSchedule.overridePollInterval ?? 5)
         : (account.pollInterval ?? 5);
       if (interval > 5 && account.lastCheckedAt) {
         const elapsedMs = Date.now() - account.lastCheckedAt.getTime();
