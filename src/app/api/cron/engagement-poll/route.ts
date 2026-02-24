@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
         select: {
           globalPaused: true,
           scheduleOverride: true,
+          globalFrequencyOverride: true,
+          globalPollInterval: true,
           timezone: true,
           PauseSchedules: {
             where: { enabled: true },
@@ -378,7 +380,9 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const interval = account.pollInterval ?? 5;
+      const interval = config?.globalFrequencyOverride
+        ? (config.globalPollInterval ?? 5)
+        : (account.pollInterval ?? 5);
       if (interval > 5 && account.lastCheckedAt) {
         const elapsedMs = Date.now() - account.lastCheckedAt.getTime();
         if (elapsedMs < interval * 60 * 1000) {
