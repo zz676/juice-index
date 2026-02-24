@@ -18,6 +18,8 @@ export default function EngagementPage() {
   const [tones, setTones] = useState<UserTone[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
+  const [globalFrequencyOverride, setGlobalFrequencyOverride] = useState(false);
+  const [globalPollInterval, setGlobalPollInterval] = useState(5);
   const [xTokenError, setXTokenError] = useState(false);
   const [addHandle, setAddHandle] = useState("");
   const [addLoading, setAddLoading] = useState(false);
@@ -105,7 +107,13 @@ export default function EngagementPage() {
       </div>
 
       {/* Global pause banner */}
-      <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
+      <GlobalPauseBanner
+        onPauseStateChange={setGlobalPaused}
+        onFrequencyOverrideChange={(on, interval) => {
+          setGlobalFrequencyOverride(on);
+          setGlobalPollInterval(interval);
+        }}
+      />
 
       {xTokenError && (
         <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
@@ -199,6 +207,8 @@ export default function EngagementPage() {
                   account={account}
                   tones={tones}
                   globalPaused={globalPaused}
+                  globalFrequencyOverride={globalFrequencyOverride}
+                  globalPollInterval={globalPollInterval}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
                   onTestPlayground={handleTestPlayground}
