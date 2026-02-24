@@ -15,6 +15,8 @@ export async function GET() {
       globalPaused: true,
       scheduleOverride: true,
       timezone: true,
+      globalFrequencyOverride: true,
+      globalPollInterval: true,
       PauseSchedules: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -37,6 +39,8 @@ export async function GET() {
     globalPaused: config?.globalPaused ?? false,
     scheduleOverride: config?.scheduleOverride ?? false,
     timezone: config?.timezone ?? "America/New_York",
+    globalFrequencyOverride: config?.globalFrequencyOverride ?? false,
+    globalPollInterval: config?.globalPollInterval ?? 5,
     schedules: config?.PauseSchedules ?? [],
   });
 }
@@ -58,7 +62,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  let body: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string };
+  let body: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string; globalFrequencyOverride?: boolean; globalPollInterval?: number };
   try {
     body = await request.json();
   } catch {
@@ -81,10 +85,23 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const updateData: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string } = {};
+  if (body.globalFrequencyOverride !== undefined && typeof body.globalFrequencyOverride !== "boolean") {
+    return NextResponse.json({ error: "BAD_REQUEST", message: "globalFrequencyOverride must be a boolean" }, { status: 400 });
+  }
+
+  if (body.globalPollInterval !== undefined) {
+    const VALID_POLL_INTERVALS = [5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080];
+    if (!VALID_POLL_INTERVALS.includes(Number(body.globalPollInterval))) {
+      return NextResponse.json({ error: "BAD_REQUEST", message: "Invalid globalPollInterval value" }, { status: 400 });
+    }
+  }
+
+  const updateData: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string; globalFrequencyOverride?: boolean; globalPollInterval?: number } = {};
   if (body.globalPaused !== undefined) updateData.globalPaused = body.globalPaused;
   if (body.scheduleOverride !== undefined) updateData.scheduleOverride = body.scheduleOverride;
   if (body.timezone !== undefined) updateData.timezone = body.timezone;
+  if (body.globalFrequencyOverride !== undefined) updateData.globalFrequencyOverride = body.globalFrequencyOverride;
+  if (body.globalPollInterval !== undefined) updateData.globalPollInterval = Number(body.globalPollInterval);
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "BAD_REQUEST", message: "No fields to update" }, { status: 400 });
@@ -94,8 +111,14 @@ export async function PATCH(request: NextRequest) {
     where: { userId: user.id },
     update: updateData,
     create: { userId: user.id, ...updateData },
-    select: { globalPaused: true, scheduleOverride: true, timezone: true },
+    select: { globalPaused: true, scheduleOverride: true, timezone: true, globalFrequencyOverride: true, globalPollInterval: true },
   });
 
-  return NextResponse.json({ globalPaused: config.globalPaused, scheduleOverride: config.scheduleOverride, timezone: config.timezone });
+  return NextResponse.json({
+    globalPaused: config.globalPaused,
+    scheduleOverride: config.scheduleOverride,
+    timezone: config.timezone,
+    globalFrequencyOverride: config.globalFrequencyOverride,
+    globalPollInterval: config.globalPollInterval,
+  });
 }
