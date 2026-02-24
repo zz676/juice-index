@@ -96,6 +96,68 @@ export default function EngagementPage() {
     setActiveTab("tones");
   }, []);
 
+  const handleExportConfig = () => {
+    const config = accounts.map((a) => ({
+      username: a.username,
+      enabled: a.enabled,
+      autoPost: a.autoPost,
+      ignorePauseSchedule: a.ignorePauseSchedule,
+      pollInterval: a.pollInterval,
+      temperature: a.temperature,
+      imageFrequency: a.imageFrequency,
+      toneWeights: a.toneWeights ?? null,
+      accountContext: a.accountContext ?? null,
+    }));
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "accounts-config.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState<{ updated: number; skipped: string[] } | null>(null);
+
+  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(ev.target?.result as string);
+      } catch {
+        setImportResult(null);
+        alert("Invalid JSON file.");
+        return;
+      }
+
+      setImportLoading(true);
+      setImportResult(null);
+      try {
+        const res = await fetch("/api/dashboard/engagement/accounts/bulk", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ accounts: parsed }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.message ?? "Import failed.");
+          return;
+        }
+        setImportResult(data);
+        await fetchAccounts();
+      } finally {
+        setImportLoading(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="py-8 space-y-6">
       {/* Header */}
@@ -181,6 +243,32 @@ export default function EngagementPage() {
               <ImportFollowingModal onAdded={fetchAccounts} />
             </form>
             {addError && <p className="mt-2 text-xs text-red-500">{addError}</p>}
+
+            {/* Bulk config export / import */}
+            {accounts.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-custom-100 flex items-center gap-2">
+                <span className="text-xs text-slate-custom-400 mr-1">Bulk config:</span>
+                <button
+                  type="button"
+                  onClick={handleExportConfig}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 transition-colors"
+                >
+                  <span className="material-icons-round text-[14px]">download</span>
+                  Export JSON
+                </button>
+                <label className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 transition-colors cursor-pointer ${importLoading ? "opacity-50 pointer-events-none" : ""}`}>
+                  <span className="material-icons-round text-[14px]">upload</span>
+                  {importLoading ? "Importing..." : "Import JSON"}
+                  <input type="file" accept=".json,application/json" className="hidden" onChange={handleImportConfig} />
+                </label>
+                {importResult && (
+                  <span className="text-xs text-slate-custom-500">
+                    Updated {importResult.updated} account{importResult.updated !== 1 ? "s" : ""}
+                    {importResult.skipped.length > 0 && ` · skipped: ${importResult.skipped.join(", ")}`}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Account grid */}
