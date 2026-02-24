@@ -35,7 +35,7 @@ const COLOR_DOT: Record<string, string> = {
   teal: "bg-teal-500",
 };
 
-const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
+export const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
   { id: "default-neutral", name: "Neutral", color: "slate" },
   { id: "default-professional", name: "Professional", color: "blue" },
   { id: "default-humor", name: "Humor", color: "yellow" },
