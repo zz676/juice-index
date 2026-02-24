@@ -27,7 +27,7 @@ export async function PATCH(
     return NextResponse.json({ error: "NOT_FOUND", message: "Schedule not found" }, { status: 404 });
   }
 
-  let body: { label?: string; startTime?: string; endTime?: string; enabled?: boolean };
+  let body: { label?: string; startTime?: string; endTime?: string; enabled?: boolean; frequencyOverride?: boolean; overridePollInterval?: number };
   try {
     body = await request.json();
   } catch {
@@ -43,12 +43,23 @@ export async function PATCH(
   if (body.enabled !== undefined && typeof body.enabled !== "boolean") {
     return NextResponse.json({ error: "BAD_REQUEST", message: "enabled must be a boolean" }, { status: 400 });
   }
+  if (body.frequencyOverride !== undefined && typeof body.frequencyOverride !== "boolean") {
+    return NextResponse.json({ error: "BAD_REQUEST", message: "frequencyOverride must be a boolean" }, { status: 400 });
+  }
+  if (body.overridePollInterval !== undefined) {
+    const VALID_POLL_INTERVALS = [5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080];
+    if (!VALID_POLL_INTERVALS.includes(Number(body.overridePollInterval))) {
+      return NextResponse.json({ error: "BAD_REQUEST", message: "Invalid overridePollInterval value" }, { status: 400 });
+    }
+  }
 
-  const data: Record<string, string | boolean | null> = {};
+  const data: Record<string, string | boolean | number | null> = {};
   if (body.label !== undefined) data.label = body.label.trim() || null;
   if (body.startTime !== undefined) data.startTime = body.startTime;
   if (body.endTime !== undefined) data.endTime = body.endTime;
   if (body.enabled !== undefined) data.enabled = body.enabled;
+  if (body.frequencyOverride !== undefined) data.frequencyOverride = body.frequencyOverride;
+  if (body.overridePollInterval !== undefined) data.overridePollInterval = Number(body.overridePollInterval);
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "BAD_REQUEST", message: "No fields to update" }, { status: 400 });
@@ -64,6 +75,8 @@ export async function PATCH(
       endTime: true,
       enabled: true,
       createdAt: true,
+      frequencyOverride: true,
+      overridePollInterval: true,
       PauseExceptions: { select: { id: true, date: true }, orderBy: { date: "asc" } },
     },
   });
