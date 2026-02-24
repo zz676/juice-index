@@ -258,10 +258,8 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
   if (!config) return null;
 
   const activeSchedule = getActiveSchedule(config.schedules, config.timezone);
-  // A schedule window is active but the user has overridden it → system is running
   const isScheduleOverridden = !config.globalPaused && activeSchedule !== null && config.scheduleOverride;
-  // A schedule window is active and not overridden → system is paused
-  const isSchedulePaused = !config.globalPaused && activeSchedule !== null && !config.scheduleOverride;
+  const isSchedulePaused = !config.globalPaused && activeSchedule !== null && !config.scheduleOverride && !activeSchedule.frequencyOverride;
   const isPaused = config.globalPaused || isSchedulePaused;
 
   const bannerBg = isPaused ? "bg-amber-50 border-amber-200" : "bg-green-50 border-green-200";
@@ -273,6 +271,8 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
     ? `Paused until ${activeSchedule!.endTime}${activeSchedule!.label ? ` · ${activeSchedule!.label}` : ""}`
     : isScheduleOverridden
     ? `Active (schedule overridden until ${activeSchedule!.endTime})`
+    : activeSchedule?.frequencyOverride
+    ? `Polling every ${POLL_LABELS[Math.max(0, POLL_STEPS.indexOf(activeSchedule.overridePollInterval))]}${activeSchedule.label ? ` · ${activeSchedule.label}` : ""}`
     : "Auto-replies active";
   const statusTextClass = isPaused ? "text-amber-800" : "text-green-700";
 

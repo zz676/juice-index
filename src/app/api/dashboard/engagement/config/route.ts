@@ -26,8 +26,6 @@ export async function GET() {
           frequencyOverride: true,
           overridePollInterval: true,
           createdAt: true,
-          frequencyOverride: true,
-          overridePollInterval: true,
           PauseExceptions: {
             select: { id: true, date: true },
             orderBy: { date: "asc" },
