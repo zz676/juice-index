@@ -6,6 +6,7 @@ export interface FieldDef {
   type: FieldType;
   enumName?: string;
   enumValues?: readonly string[];
+  description?: string;
 }
 
 export interface TableDef {
@@ -22,241 +23,297 @@ const VEHICLE_TYPE_VALUES = Object.values(VehicleType) as readonly string[];
 const REGISTRY: Record<string, TableDef> = {
   eVMetric: {
     name: "eVMetric",
-    description: "Brand delivery/sales data",
+    description:
+      "Per-brand EV delivery/sales metrics (deliveries, wholesale, retail) by model, region, and period. " +
+      "Sources vary by brand (CPCA, CAAM, company announcements). Monthly or weekly cadence. " +
+      "value = number of vehicles for most metrics; unit field clarifies when different. " +
+      "Use this table when you need brand-specific breakdowns; use caamNevSales/cpcaNevRetail for market totals.",
     fields: {
-      brand:        { type: "Enum", enumName: "Brand", enumValues: BRAND_VALUES },
-      metric:       { type: "Enum", enumName: "MetricType", enumValues: METRIC_TYPE_VALUES },
-      periodType:   { type: "Enum", enumName: "PeriodType", enumValues: PERIOD_TYPE_VALUES },
-      year:         { type: "Int" },
-      period:       { type: "Int" },
-      vehicleModel: { type: "String" },
-      region:       { type: "String" },
-      category:     { type: "String" },
-      dataSource:   { type: "String" },
-      value:        { type: "Float" },
-      unit:         { type: "String" },
-      yoyChange:    { type: "Float" },
-      momChange:    { type: "Float" },
-      marketShare:  { type: "Float" },
-      ranking:      { type: "Int" },
+      brand:        { type: "Enum", enumName: "Brand", enumValues: BRAND_VALUES, description: "EV brand/automaker" },
+      metric:       { type: "Enum", enumName: "MetricType", enumValues: METRIC_TYPE_VALUES, description: "Metric type (e.g., DELIVERIES, WHOLESALE, RETAIL)" },
+      periodType:   { type: "Enum", enumName: "PeriodType", enumValues: PERIOD_TYPE_VALUES, description: "Period granularity (MONTHLY, WEEKLY, YEARLY, etc.)" },
+      year:         { type: "Int", description: "Calendar year" },
+      period:       { type: "Int", description: "Period number — for MONTHLY: 1-12 (1=Jan, 12=Dec); for WEEKLY: ISO week number" },
+      vehicleModel: { type: "String", description: "Specific vehicle model (null = brand-level aggregate)" },
+      region:       { type: "String", description: "Geographic region (null = China total)" },
+      category:     { type: "String", description: "Vehicle category filter (null = all NEV)" },
+      dataSource:   { type: "String", description: "Data source organization (e.g., CPCA, CAAM, company announcement)" },
+      value:        { type: "Float", description: "Metric quantity — typically vehicles delivered/sold; see unit field for exceptions" },
+      unit:         { type: "String", description: "Unit of measure (vehicles, percent, etc.)" },
+      yoyChange:    { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15% growth)" },
+      momChange:    { type: "Float", description: "Month-over-month % change as decimal" },
+      marketShare:  { type: "Float", description: "Market share as decimal (0.25 = 25% share)" },
+      ranking:      { type: "Int", description: "Sales/delivery rank among tracked brands (#1 = top seller)" },
     },
   },
 
   automakerRankings: {
     name: "automakerRankings",
-    description: "Monthly automaker sales rankings",
+    description:
+      "Monthly ranking of top-selling automakers in China by total vehicle sales. " +
+      "Sources: CPCA (passenger cars) or CAAM (all vehicles). Monthly cadence. " +
+      "value = total vehicles sold by that automaker in that month. " +
+      "Use for competitive market share analysis across all automakers, not brand-specific EV metrics.",
     fields: {
-      dataSource:  { type: "String" },
-      year:        { type: "Int" },
-      month:       { type: "Int" },
-      ranking:     { type: "Int" },
-      automaker:   { type: "String" },
-      value:       { type: "Float" },
-      unit:        { type: "String" },
-      yoyChange:   { type: "Float" },
-      momChange:   { type: "Float" },
-      marketShare: { type: "Float" },
+      dataSource:  { type: "String", description: "Source organization (CPCA = passenger, CAAM = all vehicles)" },
+      year:        { type: "Int", description: "Calendar year" },
+      month:       { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      ranking:     { type: "Int", description: "Sales rank (#1 = top-selling automaker)" },
+      automaker:   { type: "String", description: "Automaker/manufacturer name (e.g., BYD, Geely, SAIC)" },
+      value:       { type: "Float", description: "Total vehicles sold by this automaker (units)" },
+      unit:        { type: "String", description: "Unit of measure (default: vehicles)" },
+      yoyChange:   { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange:   { type: "Float", description: "Month-over-month % change as decimal" },
+      marketShare: { type: "Float", description: "Market share as decimal (0.25 = 25%)" },
     },
   },
 
   caamNevSales: {
     name: "caamNevSales",
-    description: "CAAM official NEV sales",
+    description:
+      "Monthly total NEV sales for all of China from CAAM (China Association of Automobile Manufacturers). " +
+      "CAAM is the official government-affiliated industry body; data includes domestic sales + exports. " +
+      "Monthly cadence. value = total NEV units sold (vehicles). " +
+      "Use for total market size; compare with cpcaNevRetail (retail-only, passenger-only) to assess channel dynamics.",
     fields: {
-      year:      { type: "Int" },
-      month:     { type: "Int" },
-      value:     { type: "Float" },
-      unit:      { type: "String" },
-      yoyChange: { type: "Float" },
-      momChange: { type: "Float" },
+      year:      { type: "Int", description: "Calendar year" },
+      month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value:     { type: "Float", description: "Total NEV units sold nationwide (vehicles) — includes domestic sales and exports" },
+      unit:      { type: "String", description: "Unit of measure (default: vehicles)" },
+      yoyChange: { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange: { type: "Float", description: "Month-over-month % change as decimal" },
     },
   },
 
   cpcaNevRetail: {
     name: "cpcaNevRetail",
-    description: "CPCA NEV retail sales",
+    description:
+      "Monthly NEV retail sales to end consumers from CPCA (China Passenger Car Association). " +
+      "Retail = units registered by end buyers; passenger vehicles only, excludes commercial vehicles. " +
+      "Monthly cadence. value = NEV units sold to consumers (vehicles). " +
+      "Use for consumer demand signals; compare with cpcaNevProduction to assess inventory build/draw.",
     fields: {
-      year:      { type: "Int" },
-      month:     { type: "Int" },
-      value:     { type: "Float" },
-      unit:      { type: "String" },
-      yoyChange: { type: "Float" },
-      momChange: { type: "Float" },
+      year:      { type: "Int", description: "Calendar year" },
+      month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value:     { type: "Float", description: "NEV units sold to end consumers (retail vehicles) — passenger cars only" },
+      unit:      { type: "String", description: "Unit of measure (default: vehicles)" },
+      yoyChange: { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange: { type: "Float", description: "Month-over-month % change as decimal" },
     },
   },
 
   cpcaNevProduction: {
     name: "cpcaNevProduction",
-    description: "CPCA NEV production volume",
+    description:
+      "Monthly NEV production (manufacturing output) from CPCA (China Passenger Car Association). " +
+      "Production = units manufactured; typically leads sales data by weeks. " +
+      "Monthly cadence. value = NEV units manufactured (vehicles), passenger cars only. " +
+      "Use to predict future supply or compare production vs retail sales for inventory trend.",
     fields: {
-      year:      { type: "Int" },
-      month:     { type: "Int" },
-      value:     { type: "Float" },
-      unit:      { type: "String" },
-      yoyChange: { type: "Float" },
-      momChange: { type: "Float" },
+      year:      { type: "Int", description: "Calendar year" },
+      month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value:     { type: "Float", description: "NEV units manufactured during the month (vehicles) — passenger cars only" },
+      unit:      { type: "String", description: "Unit of measure (default: vehicles)" },
+      yoyChange: { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange: { type: "Float", description: "Month-over-month % change as decimal" },
     },
   },
 
   chinaPassengerInventory: {
     name: "chinaPassengerInventory",
-    description: "Dealer + factory inventory levels",
+    description:
+      "Monthly total passenger vehicle inventory across China (dealer + factory stock combined). " +
+      "Monthly cadence. value = total inventory in million units. " +
+      "Use alongside chinaDealerInventoryFactor for a full picture of channel inventory pressure.",
     fields: {
-      year:  { type: "Int" },
-      month: { type: "Int" },
-      value: { type: "Float" },
-      unit:  { type: "String" },
+      year:  { type: "Int", description: "Calendar year" },
+      month: { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value: { type: "Float", description: "Total passenger vehicle inventory (million units)" },
+      unit:  { type: "String", description: "Unit of measure (default: million_units)" },
     },
   },
 
   chinaDealerInventoryFactor: {
     name: "chinaDealerInventoryFactor",
-    description: "Dealer inventory coefficient",
+    description:
+      "Monthly dealer inventory coefficient (库存系数) — months of stock at dealerships. Source: CADA (China Automobile Dealers Association). " +
+      "Monthly cadence. value = ratio (months of inventory). " +
+      "Interpretation: 1.0 = 1 month stock (neutral); >1.5 = oversupply/weak demand; <0.8 = shortage/strong demand. Healthy range: 0.8-1.2.",
     fields: {
-      year:  { type: "Int" },
-      month: { type: "Int" },
-      value: { type: "Float" },
+      year:  { type: "Int", description: "Calendar year" },
+      month: { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value: { type: "Float", description: "Inventory coefficient (ratio = months of stock); >1.5 oversupply, <0.8 shortage, 0.8-1.2 healthy" },
     },
   },
 
   chinaViaIndex: {
     name: "chinaViaIndex",
-    description: "Vehicle Inventory Alert Index",
+    description:
+      "Monthly Vehicle Inventory Alert (VIA) Index — dealer sentiment and inventory pressure indicator. Source: CADA. " +
+      "Works like inverse PMI: >50% = dealer stress/market contraction; <50% = healthy/optimistic. " +
+      "Monthly cadence. value = index level as a percentage. " +
+      "Use for dealer confidence signals and market trend prediction.",
     fields: {
-      year:  { type: "Int" },
-      month: { type: "Int" },
-      value: { type: "Float" },
-      unit:  { type: "String" },
+      year:  { type: "Int", description: "Calendar year" },
+      month: { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value: { type: "Float", description: "VIA Index level (percent); >50 = dealer stress/contraction; <50 = healthy/optimistic" },
+      unit:  { type: "String", description: "Unit of measure (default: percent)" },
     },
   },
 
   chinaBatteryInstallation: {
     name: "chinaBatteryInstallation",
-    description: "Total battery installation & production",
+    description:
+      "Monthly China power battery installation and production totals for the entire industry. Source: CABIA (China Automotive Battery Innovation Alliance). " +
+      "Monthly cadence. installation and production are in GWh. " +
+      "Installation = batteries fitted into vehicles; production = total manufactured (may be exported/stockpiled). " +
+      "Use for macro EV battery industry trends; use batteryMakerMonthly for per-company breakdown.",
     fields: {
-      year:         { type: "Int" },
-      month:        { type: "Int" },
-      installation: { type: "Float" },
-      production:   { type: "Float" },
-      unit:         { type: "String" },
+      year:         { type: "Int", description: "Calendar year" },
+      month:        { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      installation: { type: "Float", description: "Battery capacity installed into vehicles during the month (GWh)" },
+      production:   { type: "Float", description: "Total battery capacity manufactured during the month (GWh) — may differ from installation due to exports/stockpiling" },
+      unit:         { type: "String", description: "Unit of measure (default: GWh)" },
     },
   },
 
   batteryMakerMonthly: {
     name: "batteryMakerMonthly",
-    description: "Battery maker monthly performance",
+    description:
+      "Monthly battery installation and production by individual battery manufacturer. Sources: CABIA (China), SNE Research (Global). " +
+      "Monthly cadence. installation and production are in GWh. " +
+      "Major makers: CATL, BYD, LG Energy Solution, SK On, Panasonic, CALB, Gotion, EVE, Sunwoda. " +
+      "Use for per-company performance; use batteryMakerRankings for ranked market share view.",
     fields: {
-      maker:        { type: "String" },
-      year:         { type: "Int" },
-      month:        { type: "Int" },
-      installation: { type: "Float" },
-      production:   { type: "Float" },
-      unit:         { type: "String" },
-      yoyChange:    { type: "Float" },
-      momChange:    { type: "Float" },
+      maker:        { type: "String", description: "Battery manufacturer name (e.g., CATL, BYD, LG Energy Solution)" },
+      year:         { type: "Int", description: "Calendar year" },
+      month:        { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      installation: { type: "Float", description: "Battery capacity this maker installed into vehicles during the month (GWh)" },
+      production:   { type: "Float", description: "Battery capacity this maker manufactured during the month (GWh)" },
+      unit:         { type: "String", description: "Unit of measure (default: GWh)" },
+      yoyChange:    { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange:    { type: "Float", description: "Month-over-month % change as decimal" },
     },
   },
 
   batteryMakerRankings: {
     name: "batteryMakerRankings",
-    description: "Battery maker market share rankings",
+    description:
+      "Ranked battery manufacturer market share table — monthly, YTD, or yearly snapshots. " +
+      "Sources: CABIA (China domestic market), SNE Research (Global market). " +
+      "value = battery capacity shipped/installed (GWh). " +
+      "scope distinguishes 'China' vs 'Global' rankings; periodType distinguishes MONTHLY vs YTD vs YEARLY.",
     fields: {
-      dataSource:       { type: "String" },
-      scope:            { type: "String" },
+      dataSource:       { type: "String", description: "Source organization (CABIA = China domestic, SNE Research = Global)" },
+      scope:            { type: "String", description: "Market scope — 'China' for domestic market, 'Global' for worldwide rankings" },
       // periodType is String in schema (not the PeriodType enum)
-      periodType:       { type: "String" },
-      year:             { type: "Int" },
-      month:            { type: "Int" },
-      ranking:          { type: "Int" },
-      maker:            { type: "String" },
-      value:            { type: "Float" },
-      unit:             { type: "String" },
-      yoyChange:        { type: "Float" },
-      marketShare:      { type: "Float" },
-      shareVsPrevMonth: { type: "Float" },
+      periodType:       { type: "String", description: "Reporting period type — 'MONTHLY', 'YTD' (year-to-date cumulative), or 'YEARLY'" },
+      year:             { type: "Int", description: "Calendar year" },
+      month:            { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec); null for yearly totals" },
+      ranking:          { type: "Int", description: "Market share rank (#1 = largest battery supplier)" },
+      maker:            { type: "String", description: "Battery manufacturer name" },
+      value:            { type: "Float", description: "Battery capacity shipped/installed (GWh)" },
+      unit:             { type: "String", description: "Unit of measure (default: GWh)" },
+      yoyChange:        { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      marketShare:      { type: "Float", description: "Market share as decimal (0.25 = 25%)" },
+      shareVsPrevMonth: { type: "Float", description: "Change in market share vs previous month as decimal" },
     },
   },
 
   plantExports: {
     name: "plantExports",
-    description: "Exports by manufacturing plant",
+    description:
+      "Monthly vehicle export volumes by individual manufacturing plant. Sources: China Customs, company announcements. " +
+      "Monthly cadence. value = vehicles exported from that plant (units). " +
+      "Key plants: Tesla Gigafactory Shanghai, BYD Shenzhen, NIO Hefei, etc. " +
+      "Use for factory-level export analysis and production hub strategy insights.",
     fields: {
-      plant:     { type: "String" },
+      plant:     { type: "String", description: "Manufacturing plant name (e.g., 'Tesla Gigafactory Shanghai')" },
       // brand is String in PlantExports (not the Brand enum)
-      brand:     { type: "String" },
-      year:      { type: "Int" },
-      month:     { type: "Int" },
-      value:     { type: "Float" },
-      unit:      { type: "String" },
-      yoyChange: { type: "Float" },
-      momChange: { type: "Float" },
+      brand:     { type: "String", description: "Brand produced at this plant" },
+      year:      { type: "Int", description: "Calendar year" },
+      month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
+      value:     { type: "Float", description: "Vehicles exported from this plant during the month (units)" },
+      unit:      { type: "String", description: "Unit of measure (default: vehicles)" },
+      yoyChange: { type: "Float", description: "Year-over-year % change as decimal (0.15 = +15%)" },
+      momChange: { type: "Float", description: "Month-over-month % change as decimal" },
     },
   },
 
   vehicleSpec: {
     name: "vehicleSpec",
-    description: "Vehicle specifications",
+    description:
+      "Static vehicle specification sheet per model variant — dimensions, powertrain, battery, range, pricing. " +
+      "Not time-series data; one row per brand+model+variant combination. " +
+      "Prices in CNY (10,000 RMB units). Range in km. Power in kW. Dimensions in mm. " +
+      "Use for vehicle comparisons, specs lookup, or filtering models by technical criteria.",
     fields: {
-      brand:              { type: "Enum", enumName: "Brand", enumValues: BRAND_VALUES },
-      model:              { type: "String" },
-      variant:            { type: "String" },
-      launchDate:         { type: "String" },
-      vehicleType:        { type: "Enum", enumName: "VehicleType", enumValues: VEHICLE_TYPE_VALUES },
-      segment:            { type: "String" },
-      startingPrice:      { type: "Float" },
-      currentPrice:       { type: "Float" },
-      lengthMm:           { type: "Int" },
-      widthMm:            { type: "Int" },
-      heightMm:           { type: "Int" },
-      wheelbaseMm:        { type: "Int" },
-      acceleration:       { type: "Float" },
-      topSpeed:           { type: "Int" },
-      motorPowerKw:       { type: "Int" },
-      motorTorqueNm:      { type: "Int" },
-      batteryCapacity:    { type: "Float" },
-      rangeCltc:          { type: "Int" },
-      rangeWltp:          { type: "Int" },
-      rangeEpa:           { type: "Int" },
-      fuelTankVolume:     { type: "Float" },
-      engineDisplacement: { type: "Float" },
-      maxChargingPower:   { type: "Int" },
-      chargingTime10To80: { type: "Int" },
+      brand:              { type: "Enum", enumName: "Brand", enumValues: BRAND_VALUES, description: "Brand/automaker" },
+      model:              { type: "String", description: "Model name (e.g., Model 3, Han EV, ET7)" },
+      variant:            { type: "String", description: "Specific trim/variant name within the model" },
+      launchDate:         { type: "String", description: "Official launch date string" },
+      vehicleType:        { type: "Enum", enumName: "VehicleType", enumValues: VEHICLE_TYPE_VALUES, description: "Powertrain type (BEV, PHEV, EREV, etc.)" },
+      segment:            { type: "String", description: "Market segment (e.g., sedan, SUV, pickup, MPV)" },
+      startingPrice:      { type: "Float", description: "Starting/lowest price in CNY 10,000 units (e.g., 23.99 = 239,900 RMB)" },
+      currentPrice:       { type: "Float", description: "Current price in CNY 10,000 units" },
+      lengthMm:           { type: "Int", description: "Body length in millimeters" },
+      widthMm:            { type: "Int", description: "Body width in millimeters" },
+      heightMm:           { type: "Int", description: "Body height in millimeters" },
+      wheelbaseMm:        { type: "Int", description: "Wheelbase in millimeters" },
+      acceleration:       { type: "Float", description: "0-100 km/h acceleration time in seconds" },
+      topSpeed:           { type: "Int", description: "Maximum speed in km/h" },
+      motorPowerKw:       { type: "Int", description: "Total motor power output in kilowatts" },
+      motorTorqueNm:      { type: "Int", description: "Total motor torque in Newton-meters" },
+      batteryCapacity:    { type: "Float", description: "Battery pack capacity in kWh" },
+      rangeCltc:          { type: "Int", description: "CLTC-rated range in kilometers (Chinese standard)" },
+      rangeWltp:          { type: "Int", description: "WLTP-rated range in kilometers (European standard)" },
+      rangeEpa:           { type: "Int", description: "EPA-rated range in kilometers (US standard)" },
+      fuelTankVolume:     { type: "Float", description: "Fuel tank volume in liters (PHEVs/EREVs only)" },
+      engineDisplacement: { type: "Float", description: "Engine displacement in liters (PHEVs/EREVs only)" },
+      maxChargingPower:   { type: "Int", description: "Maximum DC fast charging power in kilowatts" },
+      chargingTime10To80: { type: "Int", description: "DC fast charge time from 10% to 80% in minutes" },
     },
   },
 
   nevSalesSummary: {
     name: "nevSalesSummary",
-    description: "Weekly/bi-weekly sales flash reports",
+    description:
+      "Weekly or bi-weekly NEV sales flash reports from CPCA — early month-to-date estimates before full monthly data. " +
+      "Each row covers a date range (startDate to endDate). Contains both retail (to consumers) and wholesale (to dealers) figures. " +
+      "retailSales and wholesaleSales in vehicles. Retail-wholesale gap indicates channel inventory change. " +
+      "Use for intra-month trend tracking; use cpcaNevRetail for finalized monthly totals.",
     fields: {
-      dataSource:     { type: "String" },
-      year:           { type: "Int" },
-      startDate:      { type: "String" },
-      endDate:        { type: "String" },
-      retailSales:    { type: "Float" },
-      retailYoy:      { type: "Float" },
-      retailMom:      { type: "Float" },
-      wholesaleSales: { type: "Float" },
-      wholesaleYoy:   { type: "Float" },
-      wholesaleMom:   { type: "Float" },
-      unit:           { type: "String" },
+      dataSource:     { type: "String", description: "Source organization (default: CPCA)" },
+      year:           { type: "Int", description: "Calendar year" },
+      startDate:      { type: "String", description: "Period start date (YYYY-MM-DD format)" },
+      endDate:        { type: "String", description: "Period end date (YYYY-MM-DD format)" },
+      retailSales:    { type: "Float", description: "NEV units sold to end consumers during this period (vehicles)" },
+      retailYoy:      { type: "Float", description: "Retail year-over-year % change as decimal (0.15 = +15%)" },
+      retailMom:      { type: "Float", description: "Retail month-over-month % change as decimal" },
+      wholesaleSales: { type: "Float", description: "NEV units sold from manufacturers to dealers during this period (vehicles)" },
+      wholesaleYoy:   { type: "Float", description: "Wholesale year-over-year % change as decimal" },
+      wholesaleMom:   { type: "Float", description: "Wholesale month-over-month % change as decimal" },
+      unit:           { type: "String", description: "Unit of measure (default: vehicles)" },
     },
   },
 
   nioPowerSnapshot: {
     name: "nioPowerSnapshot",
     description:
-      "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access",
+      "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access. " +
+      "Each row is a point-in-time snapshot (asOfTime). Cumulative counts grow monotonically. " +
+      "Use for tracking NIO's charging/swap network expansion over time.",
     fields: {
-      asOfTime:               { type: "DateTime" },
-      totalStations:          { type: "Int" },
-      swapStations:           { type: "Int" },
-      highwaySwapStations:    { type: "Int" },
-      cumulativeSwaps:        { type: "BigInt" },
-      chargingStations:       { type: "Int" },
-      chargingPiles:          { type: "Int" },
-      cumulativeCharges:      { type: "BigInt" },
-      thirdPartyPiles:        { type: "Int" },
-      thirdPartyUsagePercent: { type: "Float" },
+      asOfTime:               { type: "DateTime", description: "Timestamp when this snapshot was recorded" },
+      totalStations:          { type: "Int", description: "Total NIO power stations (swap + charging combined)" },
+      swapStations:           { type: "Int", description: "Number of battery swap stations" },
+      highwaySwapStations:    { type: "Int", description: "Number of swap stations located on highways" },
+      cumulativeSwaps:        { type: "BigInt", description: "All-time cumulative battery swap sessions since NIO launched" },
+      chargingStations:       { type: "Int", description: "Number of NIO charging stations" },
+      chargingPiles:          { type: "Int", description: "Number of individual NIO charging pile units" },
+      cumulativeCharges:      { type: "BigInt", description: "All-time cumulative charging sessions since NIO launched" },
+      thirdPartyPiles:        { type: "Int", description: "Third-party charging piles accessible via NIO app" },
+      thirdPartyUsagePercent: { type: "Float", description: "Share of NIO users using third-party charging as decimal (0.25 = 25%)" },
     },
   },
 };
@@ -312,7 +369,10 @@ export function convertBigIntsToNumbers(
 
 /**
  * Formats the fields of a table for inclusion in the AI system prompt.
- * Example output: `brand: Enum(Brand) [BYD, NIO, ...], year: Int, value: Float`
+ * Example output:
+ *   brand: Enum(Brand) [BYD, NIO, ...],
+ *   year: Int — calendar year,
+ *   value: Float — total NEV units sold (vehicles)
  */
 export function formatFieldsForPrompt(table: string): string {
   const def = REGISTRY[table];
@@ -320,13 +380,16 @@ export function formatFieldsForPrompt(table: string): string {
 
   return Object.entries(def.fields)
     .map(([name, fd]) => {
+      let typeStr: string;
       if (fd.type === "Enum" && fd.enumValues) {
         const values = fd.enumValues.join(", ");
-        return `${name}: Enum(${fd.enumName ?? fd.type}) [${values}]`;
+        typeStr = `Enum(${fd.enumName ?? fd.type}) [${values}]`;
+      } else {
+        typeStr = fd.type;
       }
-      return `${name}: ${fd.type}`;
+      return fd.description ? `${name}: ${typeStr} — ${fd.description}` : `${name}: ${typeStr}`;
     })
-    .join(", ");
+    .join(",\n   ");
 }
 
 /**

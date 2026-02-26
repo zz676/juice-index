@@ -152,6 +152,36 @@ Exported utilities: `ALLOWED_TABLE_NAMES`, `getTableDef`, `getFieldNames`, `isSt
 - New rule 14 reinforces strict type adherence, clarifies `eVMetric.period` is a number, and explains that String fields receive automatic case-insensitive matching.
 - Updated the query example from `"brand":"Tesla"` to `"brand":"TESLA_CHINA"` to reinforce correct enum value usage.
 
+### Enhancement: Rich Table & Field Descriptions in `field-registry.ts`
+
+All 15 tables and every field now carry LLM-optimized descriptions surfaced directly in the system prompt.
+
+**`FieldDef` interface** — new optional `description?: string` field.
+
+**Table descriptions** now include:
+- What the table tracks and its data source (CAAM, CPCA, CABIA, SNE Research, etc.)
+- Reporting frequency (monthly, weekly, snapshot)
+- What `value` means in each table (vehicles / GWh / ratio / percent)
+- When to use this table vs similar tables
+
+**Field descriptions** cover the most ambiguous columns:
+- `value` — clarifies units per table (vehicles, GWh, ratio, percent)
+- `period` / `month` — "1-12 (1=Jan, 12=Dec)"
+- `installation` vs `production` in battery tables
+- `retailSales` vs `wholesaleSales` in `nevSalesSummary`
+- `scope` in `batteryMakerRankings` — "China" vs "Global"
+- `yoyChange` / `momChange` — "decimal (0.15 = +15%)"
+- `marketShare` — "decimal (0.25 = 25%)"
+- `startDate` / `endDate` — "YYYY-MM-DD format"
+
+**`formatFieldsForPrompt()` output** changed from compact CSV to one-field-per-line with `—` description suffix:
+```
+year: Int — Calendar year,
+   value: Float — Total NEV units sold nationwide (vehicles) — includes domestic sales and exports,
+   yoyChange: Float — Year-over-year % change as decimal (0.15 = +15%)
+```
+Fields without descriptions are unchanged. See `src/lib/studio/field-registry.ts`.
+
 ### Refactor: `src/lib/query-executor.ts`
 
 - Removed the hardcoded `ALLOWED_TABLES` array and `AllowedTable` type (180+ lines of duplicate data).
