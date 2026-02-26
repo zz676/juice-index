@@ -24,6 +24,7 @@ A new `PlaygroundSection` component is rendered below the Tone Library grid. It 
 | Creativity | Slider 0.1–1.0 |
 | Account Context | Textarea |
 | Generate Image | Toggle — enables DALL-E image generation |
+| Image Style | Dropdown (shown when image is enabled) — selects which `UserImageStyle` prompt to use |
 | Generate button | Calls `POST /api/dashboard/engagement/playground` |
 | Output card | Displays reply text, tone used, optional image, cost breakdown, Regenerate button |
 
@@ -43,6 +44,7 @@ File: `src/app/api/dashboard/engagement/playground/route.ts`
   temperature?: number;          // 0.1–1.0, default 0.8
   accountContext?: string;
   generateImage?: boolean;
+  imageStyleId?: string;         // UserImageStyle.id — falls back to user's first seeded style
 }
 ```
 
@@ -52,9 +54,9 @@ File: `src/app/api/dashboard/engagement/playground/route.ts`
 2. If `tweetInput` matches `x.com/*/status/*` or `twitter.com/*/status/*`, extract tweet ID and call `fetchTweetById()` using the user's XAccount credentials
 3. Resolve tone: `toneId` → UserTone lookup; `toneWeights` → `pickToneByWeights()`; neither → Neutral fallback
 4. Call `generateReply()` with tweet text, tone prompt, temperature, account context
-5. Optionally call `generateImage()` if `generateImage` is true
+5. If `generateImage` is true: resolve `imageStyleId` → look up `UserImageStyle.prompt` → call `generateImage(tweetText, replyText, stylePrompt)`
 6. Compute costs via `computeTotalReplyCost()`
-7. Return `{ replyText, toneUsed, inputTokens, outputTokens, costs, imageBase64? }`
+7. Return `{ replyText, toneUsed, inputTokens, outputTokens, costs, imageBase64?, imageStyleName? }`
 
 **No database writes** — pure preview.
 
@@ -74,15 +76,27 @@ Added `fetchTweetById(accessToken, tweetId)` — fetches a single tweet via X AP
 
 ## Image Generation (`src/lib/engagement/generate-image.ts`)
 
-When `generateImage` is `true`, the playground calls `generateImage(sourceTweetText, replyText)` which sends a structured prompt to DALL-E 3.
+Signature: `generateImage(sourceTweetText, replyText, stylePrompt?)`
 
-The prompt follows a 3-step cinematic approach:
+When `generateImage` is `true`, the playground resolves the active `UserImageStyle` and calls `generateImage()`. The `buildImagePrompt()` helper appends conversation context to the style's prompt:
 
-1. **Analyze core themes** — identifies subject entities (e.g., AI, Politics, Sports), the core conflict or theme (e.g., Hype vs. Reality), and the emotional tone of the reply (e.g., sarcastic, triumphant, cynical).
-2. **Translate into visual metaphors** — generates a dramatic metaphor rather than a literal illustration, with lighting and color palette matching the reply's emotional tone.
-3. **Add impactful typography** — overlays a punchy 2–5 word headline synthesized from the reply's main point; font style matches the mood.
+```
+${stylePrompt}
 
-**Constraints enforced in the prompt:** no UI screenshots, no social media chrome (icons, tweet bubbles, avatars), no dense text paragraphs — only the headline. Square (1:1) aspect ratio.
+Here is the context of the conversation:
+[SOURCE TWEET]: "<first 200 chars>"
+[MY REPLY]: "<first 200 chars>"
+```
+
+If no `stylePrompt` is provided, the function falls back to the built-in "Cyber / Futuristic" cinematic prompt (no text, visual metaphor). The three seeded default styles are:
+
+| Style | Character |
+|---|---|
+| Cyber / Futuristic | Cinematic metaphor, absolutely no text, mood-matched lighting |
+| Editorial Cartoon | Bold outlines, direct storytelling, speech bubbles and labels allowed |
+| Close to Reality | Photorealistic/documentary, no text, literal scene depiction |
+
+DALL-E 3 is called with `size: "1792x1024"` (wide/landscape, matching the 2:1 image preview aspect ratio in the UI).
 
 ## Files Changed
 

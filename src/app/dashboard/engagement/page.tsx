@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { UserTone } from "@prisma/client";
+import type { UserTone, UserImageStyle } from "@prisma/client";
 import { GlobalPauseBanner } from "./global-pause-banner";
 import { UsageBar } from "./usage-bar";
 import { AccountCard, DEFAULT_TONES, type MonitoredAccountRow } from "./account-card";
@@ -16,6 +16,7 @@ export default function EngagementPage() {
   const [activeTab, setActiveTab] = useState<TabId>("accounts");
   const [accounts, setAccounts] = useState<MonitoredAccountRow[]>([]);
   const [tones, setTones] = useState<UserTone[]>([]);
+  const [imageStyles, setImageStyles] = useState<UserImageStyle[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
   const [xTokenError, setXTokenError] = useState(false);
@@ -46,10 +47,21 @@ export default function EngagementPage() {
     }
   }, []);
 
+  const fetchImageStyles = useCallback(async () => {
+    try {
+      const res = await fetch("/api/dashboard/engagement/image-styles");
+      const data = await res.json();
+      setImageStyles(data.imageStyles ?? []);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     fetchAccounts();
     fetchTones();
-  }, [fetchAccounts, fetchTones]);
+    fetchImageStyles();
+  }, [fetchAccounts, fetchTones, fetchImageStyles]);
 
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +102,7 @@ export default function EngagementPage() {
       temperature: account.temperature,
       accountContext: account.accountContext,
       imageFrequency: account.imageFrequency,
+      imageStyleId: account.imageStyleId,
     });
     setActiveTab("tones");
   }, []);
@@ -106,6 +119,7 @@ export default function EngagementPage() {
       pollInterval: a.pollInterval,
       temperature: a.temperature,
       imageFrequency: a.imageFrequency,
+      imageStyleName: a.imageStyleName ?? null,
       toneWeights: a.toneWeights
         ? Object.fromEntries(
             Object.entries(a.toneWeights).map(([id, w]) => [idToName.get(id) ?? id, w])
@@ -311,6 +325,7 @@ export default function EngagementPage() {
                   key={account.id}
                   account={account}
                   tones={tones}
+                  imageStyles={imageStyles}
                   globalPaused={globalPaused}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
@@ -323,14 +338,20 @@ export default function EngagementPage() {
       )}
 
       {/* Tab: Reply Monitoring */}
-      {activeTab === "replies" && <ReplyMonitoringTable accounts={accounts} />}
+      {activeTab === "replies" && <ReplyMonitoringTable accounts={accounts} imageStyles={imageStyles} />}
 
       {/* Tab: Account Analytics */}
       {activeTab === "analytics" && <AccountAnalyticsChart accounts={accounts} />}
 
       {/* Tab: Tone Settings */}
       {activeTab === "tones" && (
-        <ToneSettings tones={tones} onTonesChange={setTones} playgroundPreset={playgroundPreset} />
+        <ToneSettings
+          tones={tones}
+          onTonesChange={setTones}
+          imageStyles={imageStyles}
+          onImageStylesChange={setImageStyles}
+          playgroundPreset={playgroundPreset}
+        />
       )}
     </div>
   );

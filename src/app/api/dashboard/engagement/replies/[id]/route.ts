@@ -20,6 +20,8 @@ const REPLY_SELECT = {
   sourceTweetUrl: true,
   replyText: true,
   replyImageUrl: true,
+  imageStyleId: true,
+  imageStyleName: true,
   replyTweetId: true,
   replyTweetUrl: true,
   tone: true,
@@ -49,7 +51,7 @@ export async function PATCH(
     return NextResponse.json({ error: "NOT_FOUND", message: "Reply not found" }, { status: 404 });
   }
 
-  let body: { action: string; replyText?: string; withImage?: boolean };
+  let body: { action: string; replyText?: string; withImage?: boolean; imageStyleId?: string | null };
   try {
     body = await request.json();
   } catch {
@@ -159,7 +161,7 @@ export async function PATCH(
 
     const account = await prisma.monitoredAccount.findUnique({
       where: { id: reply.monitoredAccountId },
-      select: { tone: true, toneWeights: true, temperature: true, accountContext: true },
+      select: { tone: true, toneWeights: true, temperature: true, accountContext: true, imageStyleId: true },
     });
 
     if (!account) {
@@ -190,11 +192,42 @@ export async function PATCH(
       temperature: account.temperature ?? 0.8,
     });
 
+    // Resolve image style: use body override, fall back to account's default
+    let resolvedImageStyleId: string | null = null;
+    let resolvedImageStyleName: string | null = null;
+    let imageStylePrompt: string | undefined;
+
+    if (withImage) {
+      const styleId = body.imageStyleId !== undefined ? body.imageStyleId : account.imageStyleId;
+      if (styleId) {
+        const imageStyle = await prisma.userImageStyle.findFirst({
+          where: { id: styleId, userId: user.id },
+        });
+        if (imageStyle) {
+          resolvedImageStyleId = imageStyle.id;
+          resolvedImageStyleName = imageStyle.name;
+          imageStylePrompt = imageStyle.prompt;
+        }
+      }
+      // If no style resolved, fall back to first seeded style
+      if (!imageStylePrompt) {
+        const firstStyle = await prisma.userImageStyle.findFirst({
+          where: { userId: user.id },
+          orderBy: { createdAt: "asc" },
+        });
+        if (firstStyle) {
+          resolvedImageStyleId = firstStyle.id;
+          resolvedImageStyleName = firstStyle.name;
+          imageStylePrompt = firstStyle.prompt;
+        }
+      }
+    }
+
     let newImageUrl: string | null = null;
     let imageGenerated = false;
     if (withImage) {
       try {
-        const imgResult = await generateImage(reply.sourceTweetText, generated.text);
+        const imgResult = await generateImage(reply.sourceTweetText, generated.text, imageStylePrompt);
         if (imgResult.generated) {
           newImageUrl = await uploadEngagementImage(id, imgResult.imageBase64);
           imageGenerated = true;
@@ -211,6 +244,8 @@ export async function PATCH(
       data: {
         replyText: generated.text,
         replyImageUrl: withImage ? newImageUrl : null,
+        imageStyleId: withImage ? resolvedImageStyleId : null,
+        imageStyleName: withImage ? resolvedImageStyleName : null,
         userToneId: picked.toneId ?? null,
         userToneName: picked.toneName,
         status: EngagementReplyStatus.SENT_TO_TELEGRAM,

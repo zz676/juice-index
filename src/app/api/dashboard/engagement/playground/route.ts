@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
     temperature?: number;
     accountContext?: string;
     generateImage?: boolean;
+    imageStyleId?: string;
   };
 
   try {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { tweetInput, toneId, toneWeights, temperature, accountContext, generateImage: doImage } = body;
+  const { tweetInput, toneId, toneWeights, temperature, accountContext, generateImage: doImage, imageStyleId } = body;
 
   if (!tweetInput?.trim()) {
     return NextResponse.json({ message: "tweetInput is required" }, { status: 400 });
@@ -117,10 +118,34 @@ export async function POST(request: NextRequest) {
   // --- Optionally generate image ---
   let imageBase64: string | undefined;
   let imageGenerated = false;
+  let imageStyleName: string | undefined;
 
   if (doImage) {
+    // Resolve image style prompt
+    let imageStylePrompt: string | undefined;
+    if (imageStyleId) {
+      const imageStyle = await prisma.userImageStyle.findFirst({
+        where: { id: imageStyleId, userId },
+      });
+      if (imageStyle) {
+        imageStylePrompt = imageStyle.prompt;
+        imageStyleName = imageStyle.name;
+      }
+    }
+    // Fall back to first seeded style if none resolved
+    if (!imageStylePrompt) {
+      const firstStyle = await prisma.userImageStyle.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      });
+      if (firstStyle) {
+        imageStylePrompt = firstStyle.prompt;
+        imageStyleName = firstStyle.name;
+      }
+    }
+
     try {
-      const imgResult = await generateImage(tweetText, generated.text);
+      const imgResult = await generateImage(tweetText, generated.text, imageStylePrompt);
       if (imgResult.generated) {
         imageBase64 = imgResult.imageBase64;
         imageGenerated = true;
@@ -140,5 +165,6 @@ export async function POST(request: NextRequest) {
     outputTokens: generated.outputTokens,
     costs,
     ...(imageBase64 !== undefined && { imageBase64 }),
+    ...(imageStyleName !== undefined && { imageStyleName }),
   });
 }

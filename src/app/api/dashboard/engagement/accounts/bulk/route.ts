@@ -12,6 +12,7 @@ type AccountConfig = {
   temperature?: number;
   toneWeights?: Record<string, number> | null;
   imageFrequency?: number;
+  imageStyleName?: string | null;
   autoPost?: boolean;
   ignorePauseSchedule?: boolean;
   enabled?: boolean;
@@ -35,11 +36,18 @@ export async function POST(request: NextRequest) {
 
   const configs = body.accounts as AccountConfig[];
 
-  // Load all accounts for this user once
-  const existing = await prisma.monitoredAccount.findMany({
-    where: { userId: user.id },
-    select: { id: true, username: true },
-  });
+  // Load all accounts and image styles for this user once
+  const [existing, userImageStyles] = await Promise.all([
+    prisma.monitoredAccount.findMany({
+      where: { userId: user.id },
+      select: { id: true, username: true },
+    }),
+    prisma.userImageStyle.findMany({
+      where: { userId: user.id },
+      select: { id: true, name: true },
+    }),
+  ]);
+  const imageStyleByName = new Map(userImageStyles.map((s) => [s.name.toLowerCase(), s]));
 
   const byUsername = new Map(existing.map((a) => [a.username.toLowerCase(), a.id]));
 
@@ -94,6 +102,19 @@ export async function POST(request: NextRequest) {
 
     if (config.accountContext !== undefined) {
       data.accountContext = config.accountContext ?? null;
+    }
+
+    if (config.imageStyleName !== undefined) {
+      if (config.imageStyleName === null) {
+        data.imageStyleId = null;
+        data.imageStyleName = null;
+      } else {
+        const style = imageStyleByName.get(config.imageStyleName.toLowerCase());
+        if (style) {
+          data.imageStyleId = style.id;
+          data.imageStyleName = style.name;
+        }
+      }
     }
 
     await prisma.monitoredAccount.update({ where: { id: accountId }, data });

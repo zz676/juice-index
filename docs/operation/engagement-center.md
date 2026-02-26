@@ -324,7 +324,42 @@ Replies are generated using a per-user tone library stored in `juice_user_tones`
 
 **Default tones:** On first access of `/api/dashboard/engagement/tones`, 6 default tones are seeded for the user: Humor, Sarcastic, Huge Fan, Cheers, Neutral, Professional. These can be edited or deleted.
 
-**Tone Settings tab:** The Engagement Center has a 4th tab "Tone Settings" where users can view, edit, and create custom tones with full prompt control.
+**Tone Settings tab:** The Engagement Center has a 4th tab "Tone Settings" where users can view, edit, and create custom tones with full prompt control. The tab also hosts the Image Styles section (see below) and the Reply Playground.
+
+---
+
+## Image Style System (UserImageStyle)
+
+When a reply image is generated, the DALL-E 3 prompt is drawn from a per-user **image style** record stored in `juice_user_image_styles`. Each `UserImageStyle` record has:
+
+| Field | Description |
+|---|---|
+| `name` | Display name (e.g. "Editorial Cartoon", "Cyber / Futuristic") |
+| `prompt` | Full DALL-E prompt template; conversation context is appended automatically |
+| `color` | UI color key (slate, blue, yellow, orange, pink, green, purple, teal) |
+
+**Default styles:** On first access of `GET /api/dashboard/engagement/image-styles`, 3 defaults are seeded:
+
+| Name | Color | Style |
+|---|---|---|
+| Cyber / Futuristic | purple | Cinematic metaphor, no text, dramatic mood |
+| Editorial Cartoon | yellow | Bold editorial cartoon, speech bubbles and labels allowed |
+| Close to Reality | blue | Photorealistic/documentary, no text, literal depiction |
+
+Users can edit prompt text, rename, recolor, delete, and add new styles from the **Image Styles** section in the Tone Settings tab.
+
+**Style resolution at generation time:**
+1. Per-reply override: `imageStyleId` from the explicit request (regenerate action, playground)
+2. Per-account default: `MonitoredAccount.imageStyleId` (set via the account card dropdown, shown when `imageFrequency > 0`)
+3. Fallback: first seeded style for the user
+
+The style name is snapshotted into `EngagementReply.imageStyleName` at generation time so historical records always display the correct style even if the user later renames or deletes it. The Reply Detail Panel shows a style name badge next to the image preview.
+
+**APIs:**
+- `GET /api/dashboard/engagement/image-styles` — list user's styles (seeds defaults if none)
+- `POST /api/dashboard/engagement/image-styles` — create style
+- `PATCH /api/dashboard/engagement/image-styles/[id]` — update name/prompt/color
+- `DELETE /api/dashboard/engagement/image-styles/[id]` — delete
 
 ---
 
@@ -373,7 +408,7 @@ In the Reply Monitoring table, clicking any row opens a slide-out panel showing:
 
 - **Source tweet** text and link to X
 - **Reply text** — editable textarea for `SENT_TO_TELEGRAM` and `DISCARDED` statuses; read-only for `POSTED`
-- **Image preview** (if `replyImageUrl` is set)
+- **Image preview** (if `replyImageUrl` is set) — includes a style name badge (e.g. `Editorial Cartoon`) showing which image style was used
 - **Metadata**: tone, cost, generation date
 
 **Available actions (by status):**
@@ -427,7 +462,8 @@ Clicking **Export JSON** downloads `accounts-config.json` — a snapshot of ever
     "pollInterval": 60,
     "temperature": 0.8,
     "imageFrequency": 10,
-    "toneWeights": { "<userToneId>": 100 },
+    "imageStyleName": "Editorial Cartoon",
+    "toneWeights": { "ToneName": 100 },
     "accountContext": "Tech blogger covering AI startups"
   }
 ]
@@ -456,6 +492,7 @@ Response:
 | `pollInterval` | Must be one of: 5, 10, 15, 30, 60, 210, 300, 510, 690, 930, 1200, 1440, 10080 — silently ignored otherwise |
 | `temperature` | Float 0.1–1.0 — silently ignored if out of range |
 | `imageFrequency` | Integer 0–100 — silently ignored if out of range |
+| `imageStyleName` | Style name (e.g. `"Editorial Cartoon"`) — resolved to ID; pass `null` to clear |
 | `toneWeights` | Pass `null` to clear (reverts to legacy tone enum) |
 | `accountContext` | Pass `null` to clear |
 | `enabled`, `autoPost`, `ignorePauseSchedule` | Coerced to boolean |
@@ -471,7 +508,7 @@ Response:
 
 ## Selective Image Generation
 
-When `alwaysGenerateImage` is enabled on an account, images are generated for **approximately 1/3 of replies** (controlled by `Math.random() < 1/3`). This reduces DALL-E 3 costs while keeping visual variety.
+When `imageFrequency > 0` on an account, images are generated for that percentage of replies (controlled by `Math.random() * 100 < imageFrequency`). This reduces DALL-E 3 costs while keeping visual variety. The style used is determined by the account's `imageStyleId` (see Image Style System above).
 
 ---
 

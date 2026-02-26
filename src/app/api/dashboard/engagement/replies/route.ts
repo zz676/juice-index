@@ -51,6 +51,8 @@ export async function GET(request: NextRequest) {
         replyTweetId: true,
         replyTweetUrl: true,
         replyImageUrl: true,
+        imageStyleId: true,
+        imageStyleName: true,
         tone: true,
         status: true,
         lastError: true,

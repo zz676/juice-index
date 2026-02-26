@@ -478,6 +478,7 @@ model User {
   FollowingCache    FollowingCache[]
   EngagementConfig  EngagementConfig?
   UserTone          UserTone[]
+  UserImageStyle    UserImageStyle[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1726,6 +1727,10 @@ model MonitoredAccount {
   customTonePrompt    String?
   /// Percentage (0–100) of replies that should include a generated image. 0 = disabled.
   imageFrequency      Int               @default(0)
+  /// ID of the user's chosen image style for this account. Null = use first seeded style.
+  imageStyleId        String?
+  /// Snapshot of the image style name for display.
+  imageStyleName      String?
   /// Whether auto-reply is enabled for this account.
   enabled             Boolean           @default(true)
   /// Whether replies should be auto-posted to X (true) or sent to Telegram for manual posting (false).
@@ -1777,6 +1782,10 @@ model EngagementReply {
   replyText            String?
   /// URL of the generated reply image.
   replyImageUrl        String?
+  /// Image style ID used when this reply's image was generated.
+  imageStyleId         String?
+  /// Snapshot of the image style name at generation time.
+  imageStyleName       String?
   /// Tone used for this reply (legacy enum, kept for existing records).
   tone                 ReplyTone
   /// UserTone id used for this reply (new system).
@@ -1928,6 +1937,29 @@ model UserTone {
   @@unique([userId, name])
   @@index([userId])
   @@map("juice_user_tones")
+}
+
+/// Per-user editable image style definitions for engagement reply image generation.
+model UserImageStyle {
+  /// Primary identifier for the record.
+  id        String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId    String
+  /// Display name for the image style (e.g. "Editorial Cartoon").
+  name      String
+  /// Full DALL-E prompt text for this style.
+  prompt    String   @db.Text
+  /// UI color key: slate, blue, yellow, orange, pink, green, purple, teal.
+  color     String   @default("slate")
+  /// Timestamp when the record was created.
+  createdAt DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("juice_user_image_styles")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)

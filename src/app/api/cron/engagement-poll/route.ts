@@ -32,6 +32,22 @@ type AccountStat = {
   skipped: number;
 };
 
+type ImageStyleRecord = { id: string; name: string; prompt: string };
+
+function resolveImageStyle(
+  account: { imageStyleId?: string | null },
+  styleMap: Map<string, ImageStyleRecord>,
+  defaultStyle: ImageStyleRecord | null,
+): { id: string | null; name: string | null; prompt: string | undefined } {
+  const style = account.imageStyleId ? styleMap.get(account.imageStyleId) : null;
+  const resolved = style ?? defaultStyle;
+  return {
+    id: resolved?.id ?? null,
+    name: resolved?.name ?? null,
+    prompt: resolved?.prompt,
+  };
+}
+
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
@@ -73,7 +89,7 @@ export async function POST(request: NextRequest) {
 
   for (const [userId, accounts] of byUserId) {
     // Fetch user-level data in parallel
-    const [xAccount, config, subscription, userTones] = await Promise.all([
+    const [xAccount, config, subscription, userTones, userImageStyles] = await Promise.all([
       prisma.xAccount.findUnique({ where: { userId } }),
         prisma.engagementConfig.findUnique({
         where: { userId },
@@ -98,10 +114,15 @@ export async function POST(request: NextRequest) {
       }),
       prisma.apiSubscription.findUnique({ where: { userId }, select: { tier: true } }),
       prisma.userTone.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
+      prisma.userImageStyle.findMany({ where: { userId }, orderBy: { createdAt: "asc" } }),
     ]);
 
     // Build tone map for weighted random selection
     const userToneMap = new Map<string, UserTone>(userTones.map((t) => [t.id, t]));
+
+    // Build image style map (id -> style) and resolve default (first seeded)
+    const userImageStyleMap = new Map(userImageStyles.map((s) => [s.id, s]));
+    const defaultImageStyle = userImageStyles[0] ?? null;
 
     const tier = normalizeTier(subscription?.tier);
     console.log(`[cron] User ${userId} | tier=${tier} | accounts=${accounts.length} | xAccount=${!!xAccount} | globalPaused=${config?.globalPaused ?? false} | schedules=${config?.PauseSchedules?.length ?? 0}`);
@@ -257,6 +278,7 @@ export async function POST(request: NextRequest) {
           }).catch(() => {});
         }
 
+        const retryImageStyle = resolveImageStyle(account, userImageStyleMap, defaultImageStyle);
         let imageGenerated = false;
         let mediaIds: string[] | undefined;
         if (account.imageFrequency > 0 && Math.random() * 100 < account.imageFrequency) {
@@ -264,7 +286,7 @@ export async function POST(request: NextRequest) {
           if (imgQuota.success) {
             try {
               const imgStart = Date.now();
-              const imgResult = await generateImage(reply.sourceTweetText ?? "", replyText);
+              const imgResult = await generateImage(reply.sourceTweetText ?? "", replyText, retryImageStyle.prompt);
               const imgDurationMs = Date.now() - imgStart;
               if (imgResult.generated) {
                 const { mediaId } = await uploadMedia(accessToken, `data:image/png;base64,${imgResult.imageBase64}`);
@@ -315,6 +337,8 @@ export async function POST(request: NextRequest) {
               status: EngagementReplyStatus.POSTED,
               replyTweetId: postedTweet.id,
               replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+              imageStyleId: imageGenerated ? retryImageStyle.id : null,
+              imageStyleName: imageGenerated ? retryImageStyle.name : null,
               textGenerationCost: costs.textCost,
               imageGenerationCost: costs.imageCost,
               apiCallCost: costs.apiCost,
@@ -342,6 +366,8 @@ export async function POST(request: NextRequest) {
             data: {
               status: EngagementReplyStatus.SENT_TO_TELEGRAM,
               replyText,
+              imageStyleId: imageGenerated ? retryImageStyle.id : null,
+              imageStyleName: imageGenerated ? retryImageStyle.name : null,
               textGenerationCost: costs.textCost,
               imageGenerationCost: costs.imageCost,
               apiCallCost: 0,
@@ -528,6 +554,8 @@ export async function POST(request: NextRequest) {
               },
             }).catch(() => {});
 
+            const tweetImageStyle = resolveImageStyle(account, userImageStyleMap, defaultImageStyle);
+
             if (account.autoPost) {
               // ── X posting flow ──────────────────────────────────────
               let imageGenerated = false;
@@ -538,7 +566,7 @@ export async function POST(request: NextRequest) {
                 if (imgQuota.success) {
                   try {
                     const imgStart = Date.now();
-                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
+                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text, tweetImageStyle.prompt);
                     const imgDurationMs = Date.now() - imgStart;
                     if (imgResult.generated) {
                       const { mediaId } = await uploadMedia(
@@ -597,6 +625,8 @@ export async function POST(request: NextRequest) {
                   status: EngagementReplyStatus.POSTED,
                   replyTweetId: postedTweet.id,
                   replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+                  imageStyleId: imageGenerated ? tweetImageStyle.id : null,
+                  imageStyleName: imageGenerated ? tweetImageStyle.name : null,
                   textGenerationCost: costs.textCost,
                   imageGenerationCost: costs.imageCost,
                   apiCallCost: costs.apiCost,
@@ -618,7 +648,7 @@ export async function POST(request: NextRequest) {
                 if (imgQuota.success) {
                   try {
                     const imgStart = Date.now();
-                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text);
+                    const imgResult = await generateImage(formatTweetWithQuote(tweet.text, tweet.quotedTweetText), generated.text, tweetImageStyle.prompt);
                     const imgDurationMs = Date.now() - imgStart;
                     if (imgResult.generated) {
                       imageUrl = await uploadEngagementImage(replyRecord.id, imgResult.imageBase64);
@@ -675,6 +705,8 @@ export async function POST(request: NextRequest) {
                   status: EngagementReplyStatus.SENT_TO_TELEGRAM,
                   replyText: generated.text,
                   replyImageUrl: imageUrl ?? null,
+                  imageStyleId: imageGenerated ? tweetImageStyle.id : null,
+                  imageStyleName: imageGenerated ? tweetImageStyle.name : null,
                   textGenerationCost: costs.textCost,
                   imageGenerationCost: costs.imageCost,
                   apiCallCost: 0,

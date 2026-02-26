@@ -9,6 +9,9 @@ vi.mock("@/lib/prisma", () => ({
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    userImageStyle: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -28,6 +31,9 @@ const mockPrisma = prisma as unknown as {
   monitoredAccount: {
     findMany: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+  };
+  userImageStyle: {
+    findMany: ReturnType<typeof vi.fn>;
   };
 };
 
@@ -58,6 +64,7 @@ describe("POST /api/dashboard/engagement/accounts/bulk", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.monitoredAccount.update.mockResolvedValue({});
+    mockPrisma.userImageStyle.findMany.mockResolvedValue([]);
   });
 
   it("returns 401 when not authenticated", async () => {
