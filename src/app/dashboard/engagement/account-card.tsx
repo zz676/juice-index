@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import type { UserTone } from "@prisma/client";
+import type { UserTone, UserImageStyle } from "@prisma/client";
 import type { ReplyTone } from "@prisma/client";
 
 export interface MonitoredAccountRow {
@@ -12,6 +12,8 @@ export interface MonitoredAccountRow {
   tone: ReplyTone;
   customTonePrompt: string | null;
   imageFrequency: number;
+  imageStyleId: string | null;
+  imageStyleName: string | null;
   enabled: boolean;
   autoPost: boolean;
   ignorePauseSchedule: boolean;
@@ -47,13 +49,14 @@ export const DEFAULT_TONES: Pick<UserTone, "id" | "name" | "color">[] = [
 interface AccountCardProps {
   account: MonitoredAccountRow;
   tones: UserTone[];
+  imageStyles: UserImageStyle[];
   globalPaused: boolean;
   onUpdate: (updated: MonitoredAccountRow) => void;
   onDelete: (id: string) => void;
   onTestPlayground?: (account: MonitoredAccountRow) => void;
 }
 
-export const AccountCard = memo(function AccountCard({ account, tones, globalPaused, onUpdate, onDelete, onTestPlayground }: AccountCardProps) {
+export const AccountCard = memo(function AccountCard({ account, tones, imageStyles, globalPaused, onUpdate, onDelete, onTestPlayground }: AccountCardProps) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saveFlash, setSaveFlash] = useState(false);
@@ -391,6 +394,23 @@ export const AccountCard = memo(function AccountCard({ account, tones, globalPau
           <span>100%</span>
         </div>
       </div>
+
+      {/* Image style selector — shown when image frequency > 0 */}
+      {localImageFrequency > 0 && imageStyles.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-slate-custom-500 mb-1">Image Style</p>
+          <select
+            value={account.imageStyleId ?? imageStyles[0]?.id ?? ""}
+            onChange={(e) => scheduleCommit({ imageStyleId: e.target.value || null })}
+            disabled={loading}
+            className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700 disabled:opacity-50"
+          >
+            {imageStyles.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Test in Playground */}
       {onTestPlayground && (

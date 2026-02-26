@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { UserTone } from "@prisma/client";
+import type { UserTone, UserImageStyle } from "@prisma/client";
 
 const COLOR_OPTIONS = [
   { key: "slate", label: "Slate", dot: "bg-slate-500" },
@@ -39,11 +39,14 @@ export interface PlaygroundPreset {
   temperature: number;
   accountContext: string | null;
   imageFrequency: number;
+  imageStyleId?: string | null;
 }
 
 interface ToneSettingsProps {
   tones: UserTone[];
   onTonesChange: (tones: UserTone[]) => void;
+  imageStyles: UserImageStyle[];
+  onImageStylesChange: (styles: UserImageStyle[]) => void;
   playgroundPreset?: PlaygroundPreset | null;
 }
 
@@ -148,6 +151,109 @@ function ToneCard({ tone, onSave, onDelete }: ToneCardProps) {
   );
 }
 
+// ─── ImageStyleCard ────────────────────────────────────────────────────────────
+
+interface ImageStyleCardProps {
+  style: UserImageStyle;
+  onSave: (id: string, data: { name: string; prompt: string; color: string }) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}
+
+function ImageStyleCard({ style, onSave, onDelete }: ImageStyleCardProps) {
+  const [name, setName] = useState(style.name);
+  const [prompt, setPrompt] = useState(style.prompt);
+  const [color, setColor] = useState(style.color);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(style.id, { name, prompt, color });
+      setDirty(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete image style "${style.name}"?`)) return;
+    setDeleting(true);
+    try {
+      await onDelete(style.id);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+      {/* Name + color dot */}
+      <div className="flex items-center gap-2">
+        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_DOT[color] ?? "bg-slate-500"}`} />
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => { setName(e.target.value); setDirty(true); }}
+          className="flex-1 text-sm font-semibold text-slate-custom-900 border-0 bg-transparent focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 py-0.5"
+          placeholder="Style name"
+        />
+      </div>
+
+      {/* Prompt textarea */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-1">DALL-E Prompt</p>
+        <textarea
+          value={prompt}
+          onChange={(e) => { setPrompt(e.target.value); setDirty(true); }}
+          rows={4}
+          className="w-full text-xs text-slate-custom-700 border border-slate-custom-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+          placeholder="Write the DALL-E prompt for this image style..."
+        />
+      </div>
+
+      {/* Color picker */}
+      <div>
+        <p className="text-xs font-medium text-slate-custom-500 mb-1.5">Color</p>
+        <div className="flex flex-wrap gap-1.5">
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c.key}
+              onClick={() => { setColor(c.key); setDirty(true); }}
+              title={c.label}
+              className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
+                color === c.key ? "ring-2 ring-offset-1 ring-slate-custom-500 scale-110" : "opacity-60 hover:opacity-100"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-1">
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+        >
+          <span className="material-icons-round text-[14px]">delete</span>
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
+        {dirty && (
+          <button
+            onClick={handleSave}
+            disabled={saving || !name.trim() || !prompt.trim()}
+            className="px-3 py-1 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Playground ──────────────────────────────────────────────────────────────
 
 interface PlaygroundResult {
@@ -157,14 +263,16 @@ interface PlaygroundResult {
   outputTokens: number;
   costs: { textCost: number; imageCost: number; apiCost: number; totalCost: number };
   imageBase64?: string;
+  imageStyleName?: string;
 }
 
 interface PlaygroundSectionProps {
   tones: UserTone[];
+  imageStyles: UserImageStyle[];
   preset?: PlaygroundPreset | null;
 }
 
-function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
+function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const effectiveTones = tones.length > 0 ? tones : DEFAULT_TONES;
 
@@ -176,6 +284,14 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
   const [temperature, setTemperature] = useState(0.8);
   const [accountContext, setAccountContext] = useState("");
   const [doImage, setDoImage] = useState(false);
+  const [selectedImageStyleId, setSelectedImageStyleId] = useState<string>("");
+
+  // Sync selected image style when imageStyles loads
+  useEffect(() => {
+    if (imageStyles.length > 0 && !selectedImageStyleId) {
+      setSelectedImageStyleId(imageStyles[0].id);
+    }
+  }, [imageStyles, selectedImageStyleId]);
 
   // Output state
   const [generating, setGenerating] = useState(false);
@@ -196,12 +312,15 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
     setTemperature(Math.min(preset.temperature ?? 0.8, 1.0));
     setAccountContext(preset.accountContext ?? "");
     setDoImage(preset.imageFrequency > 0);
+    if (preset.imageStyleId && imageStyles.some((s) => s.id === preset.imageStyleId)) {
+      setSelectedImageStyleId(preset.imageStyleId);
+    }
 
     // Auto-scroll into view
     setTimeout(() => {
       sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
-  }, [preset]);
+  }, [preset, imageStyles]);
 
   const handleGenerate = useCallback(async () => {
     if (!tweetInput.trim()) return;
@@ -223,6 +342,10 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
         body.toneWeights = toneWeights;
       }
 
+      if (doImage && selectedImageStyleId) {
+        body.imageStyleId = selectedImageStyleId;
+      }
+
       const res = await fetch("/api/dashboard/engagement/playground", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -240,7 +363,7 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
     } finally {
       setGenerating(false);
     }
-  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, accountContext, doImage]);
+  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, accountContext, doImage, selectedImageStyleId]);
 
   return (
     <div ref={sectionRef} className="space-y-4">
@@ -397,6 +520,22 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
           </div>
         </div>
 
+        {/* Image style selector — shown when image is enabled */}
+        {doImage && imageStyles.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-slate-custom-700 mb-1">Image Style</p>
+            <select
+              value={selectedImageStyleId}
+              onChange={(e) => setSelectedImageStyleId(e.target.value)}
+              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700"
+            >
+              {imageStyles.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Generate button */}
         <button
           onClick={handleGenerate}
@@ -434,12 +573,19 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
             </div>
 
             {result.imageBase64 && (
-              <div className="aspect-[2/1] overflow-hidden rounded-xl border border-slate-custom-200">
-                <img
-                  src={`data:image/png;base64,${result.imageBase64}`}
-                  alt="Generated reply image"
-                  className="w-full h-full object-cover"
-                />
+              <div className="space-y-1">
+                <div className="aspect-[2/1] overflow-hidden rounded-xl border border-slate-custom-200">
+                  <img
+                    src={`data:image/png;base64,${result.imageBase64}`}
+                    alt="Generated reply image"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                {result.imageStyleName && (
+                  <p className="text-[11px] text-slate-custom-400 text-right">
+                    Style: {result.imageStyleName}
+                  </p>
+                )}
               </div>
             )}
 
@@ -488,15 +634,25 @@ function PlaygroundSection({ tones, preset }: PlaygroundSectionProps) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-export function ToneSettings({ tones, onTonesChange, playgroundPreset }: ToneSettingsProps) {
-  const [adding, setAdding] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newPrompt, setNewPrompt] = useState("");
-  const [newColor, setNewColor] = useState("slate");
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createLoading, setCreateLoading] = useState(false);
+export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesChange, playgroundPreset }: ToneSettingsProps) {
+  // Tone state
+  const [addingTone, setAddingTone] = useState(false);
+  const [newToneName, setNewToneName] = useState("");
+  const [newTonePrompt, setNewTonePrompt] = useState("");
+  const [newToneColor, setNewToneColor] = useState("slate");
+  const [toneCreateError, setToneCreateError] = useState<string | null>(null);
+  const [toneCreateLoading, setToneCreateLoading] = useState(false);
 
-  const handleSave = async (id: string, data: { name: string; prompt: string; color: string }) => {
+  // Image style state
+  const [addingStyle, setAddingStyle] = useState(false);
+  const [newStyleName, setNewStyleName] = useState("");
+  const [newStylePrompt, setNewStylePrompt] = useState("");
+  const [newStyleColor, setNewStyleColor] = useState("slate");
+  const [styleCreateError, setStyleCreateError] = useState<string | null>(null);
+  const [styleCreateLoading, setStyleCreateLoading] = useState(false);
+
+  // ── Tone handlers ──
+  const handleSaveTone = async (id: string, data: { name: string; prompt: string; color: string }) => {
     const res = await fetch(`/api/dashboard/engagement/tones/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -508,132 +664,270 @@ export function ToneSettings({ tones, onTonesChange, playgroundPreset }: ToneSet
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteTone = async (id: string) => {
     const res = await fetch(`/api/dashboard/engagement/tones/${id}`, { method: "DELETE" });
     if (res.ok || res.status === 204) {
       onTonesChange(tones.filter((t) => t.id !== id));
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreateTone = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim() || !newPrompt.trim()) return;
-    setCreateLoading(true);
-    setCreateError(null);
+    if (!newToneName.trim() || !newTonePrompt.trim()) return;
+    setToneCreateLoading(true);
+    setToneCreateError(null);
     try {
       const res = await fetch("/api/dashboard/engagement/tones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), prompt: newPrompt.trim(), color: newColor }),
+        body: JSON.stringify({ name: newToneName.trim(), prompt: newTonePrompt.trim(), color: newToneColor }),
       });
       const json = await res.json();
       if (!res.ok) {
-        setCreateError(json.message || "Failed to create tone.");
+        setToneCreateError(json.message || "Failed to create tone.");
         return;
       }
       onTonesChange([...tones, json.tone as UserTone]);
-      setNewName("");
-      setNewPrompt("");
-      setNewColor("slate");
-      setAdding(false);
+      setNewToneName("");
+      setNewTonePrompt("");
+      setNewToneColor("slate");
+      setAddingTone(false);
     } finally {
-      setCreateLoading(false);
+      setToneCreateLoading(false);
+    }
+  };
+
+  // ── Image style handlers ──
+  const handleSaveStyle = async (id: string, data: { name: string; prompt: string; color: string }) => {
+    const res = await fetch(`/api/dashboard/engagement/image-styles/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      onImageStylesChange(imageStyles.map((s) => (s.id === id ? (json.imageStyle as UserImageStyle) : s)));
+    }
+  };
+
+  const handleDeleteStyle = async (id: string) => {
+    const res = await fetch(`/api/dashboard/engagement/image-styles/${id}`, { method: "DELETE" });
+    if (res.ok || res.status === 204) {
+      onImageStylesChange(imageStyles.filter((s) => s.id !== id));
+    }
+  };
+
+  const handleCreateStyle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newStyleName.trim() || !newStylePrompt.trim()) return;
+    setStyleCreateLoading(true);
+    setStyleCreateError(null);
+    try {
+      const res = await fetch("/api/dashboard/engagement/image-styles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newStyleName.trim(), prompt: newStylePrompt.trim(), color: newStyleColor }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setStyleCreateError(json.message || "Failed to create image style.");
+        return;
+      }
+      onImageStylesChange([...imageStyles, json.imageStyle as UserImageStyle]);
+      setNewStyleName("");
+      setNewStylePrompt("");
+      setNewStyleColor("slate");
+      setAddingStyle(false);
+    } finally {
+      setStyleCreateLoading(false);
     }
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-      {/* ── Tone Library ── */}
-      <div className="space-y-6">
-        {/* Add tone button */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-custom-900">Tone Library</h2>
-            <p className="text-xs text-slate-custom-500 mt-0.5">
-              Define how replies are written. Assign tone weights per account.
-            </p>
+      {/* ── Left column: Tone Library + Image Styles ── */}
+      <div className="space-y-10">
+
+        {/* ── Tone Library ── */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-custom-900">Tone Library</h2>
+              <p className="text-xs text-slate-custom-500 mt-0.5">
+                Define how replies are written. Assign tone weights per account.
+              </p>
+            </div>
+            <button
+              onClick={() => setAddingTone((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <span className="material-icons-round text-[14px]">{addingTone ? "close" : "add"}</span>
+              {addingTone ? "Cancel" : "Add Custom Tone"}
+            </button>
           </div>
-          <button
-            onClick={() => setAdding((v) => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors"
-          >
-            <span className="material-icons-round text-[14px]">{adding ? "close" : "add"}</span>
-            {adding ? "Cancel" : "Add Custom Tone"}
-          </button>
+
+          {/* New tone form */}
+          {addingTone && (
+            <form
+              onSubmit={handleCreateTone}
+              className="bg-white rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
+            >
+              <p className="text-xs font-semibold text-slate-custom-900">New Tone</p>
+              <input
+                type="text"
+                placeholder="Tone name"
+                value={newToneName}
+                onChange={(e) => setNewToneName(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <textarea
+                placeholder="System prompt text..."
+                value={newTonePrompt}
+                onChange={(e) => setNewTonePrompt(e.target.value)}
+                rows={4}
+                className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+              />
+              <div>
+                <p className="text-xs font-medium text-slate-custom-500 mb-1.5">Color</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => setNewToneColor(c.key)}
+                      title={c.label}
+                      className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
+                        newToneColor === c.key
+                          ? "ring-2 ring-offset-1 ring-slate-custom-500 scale-110"
+                          : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              {toneCreateError && <p className="text-xs text-red-500">{toneCreateError}</p>}
+              <button
+                type="submit"
+                disabled={toneCreateLoading || !newToneName.trim() || !newTonePrompt.trim()}
+                className="self-end px-4 py-2 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {toneCreateLoading ? "Creating..." : "Create Tone"}
+              </button>
+            </form>
+          )}
+
+          {/* Tone cards grid */}
+          {tones.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-custom-200 p-10 text-center">
+              <span className="material-icons-round text-[48px] text-slate-custom-300">tune</span>
+              <p className="mt-3 text-sm text-slate-custom-500">No tones yet. Add a custom tone above.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {tones.map((tone) => (
+                <ToneCard
+                  key={tone.id}
+                  tone={tone}
+                  onSave={handleSaveTone}
+                  onDelete={handleDeleteTone}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* New tone form */}
-        {adding && (
-          <form
-            onSubmit={handleCreate}
-            className="bg-white rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
-          >
-            <p className="text-xs font-semibold text-slate-custom-900">New Tone</p>
-            <input
-              type="text"
-              placeholder="Tone name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <textarea
-              placeholder="System prompt text..."
-              value={newPrompt}
-              onChange={(e) => setNewPrompt(e.target.value)}
-              rows={4}
-              className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
-            />
+        {/* ── Image Styles ── */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
             <div>
-              <p className="text-xs font-medium text-slate-custom-500 mb-1.5">Color</p>
-              <div className="flex flex-wrap gap-1.5">
-                {COLOR_OPTIONS.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => setNewColor(c.key)}
-                    title={c.label}
-                    className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
-                      newColor === c.key
-                        ? "ring-2 ring-offset-1 ring-slate-custom-500 scale-110"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
-                  />
-                ))}
-              </div>
+              <h2 className="text-sm font-semibold text-slate-custom-900">Image Styles</h2>
+              <p className="text-xs text-slate-custom-500 mt-0.5">
+                Define visual styles for generated reply images.
+              </p>
             </div>
-            {createError && <p className="text-xs text-red-500">{createError}</p>}
             <button
-              type="submit"
-              disabled={createLoading || !newName.trim() || !newPrompt.trim()}
-              className="self-end px-4 py-2 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              onClick={() => setAddingStyle((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors"
             >
-              {createLoading ? "Creating..." : "Create Tone"}
+              <span className="material-icons-round text-[14px]">{addingStyle ? "close" : "add"}</span>
+              {addingStyle ? "Cancel" : "Add Image Style"}
             </button>
-          </form>
-        )}
+          </div>
 
-        {/* Tone cards grid */}
-        {tones.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-custom-200 p-10 text-center">
-            <span className="material-icons-round text-[48px] text-slate-custom-300">tune</span>
-            <p className="mt-3 text-sm text-slate-custom-500">No tones yet. Add a custom tone above.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {tones.map((tone) => (
-              <ToneCard
-                key={tone.id}
-                tone={tone}
-                onSave={handleSave}
-                onDelete={handleDelete}
+          {/* New image style form */}
+          {addingStyle && (
+            <form
+              onSubmit={handleCreateStyle}
+              className="bg-white rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
+            >
+              <p className="text-xs font-semibold text-slate-custom-900">New Image Style</p>
+              <input
+                type="text"
+                placeholder="Style name"
+                value={newStyleName}
+                onChange={(e) => setNewStyleName(e.target.value)}
+                className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-            ))}
-          </div>
-        )}
+              <textarea
+                placeholder="DALL-E prompt text..."
+                value={newStylePrompt}
+                onChange={(e) => setNewStylePrompt(e.target.value)}
+                rows={4}
+                className="px-3 py-2 text-sm border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y"
+              />
+              <div>
+                <p className="text-xs font-medium text-slate-custom-500 mb-1.5">Color</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => setNewStyleColor(c.key)}
+                      title={c.label}
+                      className={`w-5 h-5 rounded-full ${c.dot} transition-all ${
+                        newStyleColor === c.key
+                          ? "ring-2 ring-offset-1 ring-slate-custom-500 scale-110"
+                          : "opacity-60 hover:opacity-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              {styleCreateError && <p className="text-xs text-red-500">{styleCreateError}</p>}
+              <button
+                type="submit"
+                disabled={styleCreateLoading || !newStyleName.trim() || !newStylePrompt.trim()}
+                className="self-end px-4 py-2 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {styleCreateLoading ? "Creating..." : "Create Style"}
+              </button>
+            </form>
+          )}
+
+          {/* Image style cards grid */}
+          {imageStyles.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-custom-200 p-10 text-center">
+              <span className="material-icons-round text-[48px] text-slate-custom-300">palette</span>
+              <p className="mt-3 text-sm text-slate-custom-500">No image styles yet. Add one above.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {imageStyles.map((style) => (
+                <ImageStyleCard
+                  key={style.id}
+                  style={style}
+                  onSave={handleSaveStyle}
+                  onDelete={handleDeleteStyle}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* ── Playground ── */}
-      <PlaygroundSection tones={tones} preset={playgroundPreset} />
+      <PlaygroundSection tones={tones} imageStyles={imageStyles} preset={playgroundPreset} />
     </div>
   );
 }

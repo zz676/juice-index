@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import type { EngagementReplyStatus } from "@prisma/client";
+import type { UserImageStyle } from "@prisma/client";
 import type { MonitoredAccountRow } from "./account-card";
 import { ReplyDetailPanel } from "./reply-detail-panel";
 import type { ReplyRow } from "./reply-detail-panel";
@@ -16,6 +17,7 @@ interface Pagination {
 
 interface ReplyMonitoringTableProps {
   accounts: MonitoredAccountRow[];
+  imageStyles?: UserImageStyle[];
 }
 
 type SortField = "createdAt" | "status" | "tone";
@@ -32,7 +34,7 @@ const STATUS_TABS: Array<"All" | EngagementReplyStatus> = [
   "DISCARDED",
 ];
 
-export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
+export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonitoringTableProps) {
   const [replies, setReplies] = useState<ReplyRow[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -490,6 +492,7 @@ export function ReplyMonitoringTable({ accounts }: ReplyMonitoringTableProps) {
           reply={selectedReply}
           onClose={() => setSelectedReply(null)}
           onUpdate={handleReplyUpdate}
+          imageStyles={imageStyles}
         />
       )}
     </div>

@@ -27,6 +27,7 @@ export async function PATCH(
     tone?: string;
     customTonePrompt?: string | null;
     imageFrequency?: number;
+    imageStyleId?: string | null;
     enabled?: boolean;
     autoPost?: boolean;
     ignorePauseSchedule?: boolean;
@@ -84,6 +85,20 @@ export async function PATCH(
     const interval = Number(body.pollInterval);
     if (VALID_POLL_INTERVALS.includes(interval)) {
       data.pollInterval = interval;
+    }
+  }
+  if (body.imageStyleId !== undefined) {
+    if (body.imageStyleId === null) {
+      data.imageStyleId = null;
+      data.imageStyleName = null;
+    } else {
+      const imageStyle = await prisma.userImageStyle.findFirst({
+        where: { id: body.imageStyleId, userId: user.id },
+      });
+      if (imageStyle) {
+        data.imageStyleId = imageStyle.id;
+        data.imageStyleName = imageStyle.name;
+      }
     }
   }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
-import type { EngagementReplyStatus } from "@prisma/client";
+import type { EngagementReplyStatus, UserImageStyle } from "@prisma/client";
 
 export interface ReplyRow {
   id: string;
@@ -11,6 +11,8 @@ export interface ReplyRow {
   sourceTweetUrl: string | null;
   replyText: string | null;
   replyImageUrl: string | null;
+  imageStyleId: string | null;
+  imageStyleName: string | null;
   replyTweetId: string | null;
   replyTweetUrl: string | null;
   tone: string;
@@ -31,13 +33,15 @@ interface ReplyDetailPanelProps {
   reply: ReplyRow | null;
   onClose: () => void;
   onUpdate: (updated: ReplyRow) => void;
+  imageStyles?: UserImageStyle[];
 }
 
-export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelProps) {
+export function ReplyDetailPanel({ reply, onClose, onUpdate, imageStyles = [] }: ReplyDetailPanelProps) {
   const [editedText, setEditedText] = useState<string>("");
   const [prevReplyId, setPrevReplyId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // action name being processed
   const [withImage, setWithImage] = useState(false);
+  const [selectedImageStyleId, setSelectedImageStyleId] = useState<string>("");
 
   // Sync editedText when reply changes
   if (reply && reply.id !== prevReplyId) {
@@ -84,7 +88,14 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
   const handleMarkPosted = () => callAction("mark-posted");
   const handleDiscard = () => callAction("discard");
   const handleRegenerate = () =>
-    callAction("regenerate", { withImage }, (updated) => setEditedText(updated.replyText ?? ""));
+    callAction(
+      "regenerate",
+      {
+        withImage,
+        ...(withImage && selectedImageStyleId ? { imageStyleId: selectedImageStyleId } : {}),
+      },
+      (updated) => setEditedText(updated.replyText ?? ""),
+    );
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -167,9 +178,16 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
           {/* Image preview */}
           {reply.replyImageUrl && (
             <div>
-              <p className="text-xs font-semibold text-slate-custom-500 mb-1.5 uppercase tracking-wide">
-                Image
-              </p>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-semibold text-slate-custom-500 uppercase tracking-wide">
+                  Image
+                </p>
+                {reply.imageStyleName && (
+                  <span className="text-[10px] text-slate-custom-400 bg-slate-custom-100 border border-slate-custom-200 rounded px-1.5 py-0.5">
+                    {reply.imageStyleName}
+                  </span>
+                )}
+              </div>
               <div className="aspect-[2/1] overflow-hidden rounded-lg border border-slate-custom-200">
                 <img
                   src={reply.replyImageUrl}
@@ -261,6 +279,9 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
                 onToggleImage={() => setWithImage((v) => !v)}
                 onRegenerate={handleRegenerate}
                 loading={loading}
+                imageStyles={imageStyles}
+                selectedImageStyleId={selectedImageStyleId}
+                onImageStyleChange={setSelectedImageStyleId}
               />
             </div>
           )}
@@ -295,6 +316,9 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
                 onToggleImage={() => setWithImage((v) => !v)}
                 onRegenerate={handleRegenerate}
                 loading={loading}
+                imageStyles={imageStyles}
+                selectedImageStyleId={selectedImageStyleId}
+                onImageStyleChange={setSelectedImageStyleId}
               />
             </div>
           )}
@@ -313,6 +337,9 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
                 onToggleImage={() => setWithImage((v) => !v)}
                 onRegenerate={handleRegenerate}
                 loading={loading}
+                imageStyles={imageStyles}
+                selectedImageStyleId={selectedImageStyleId}
+                onImageStyleChange={setSelectedImageStyleId}
               />
             </div>
           )}
@@ -333,42 +360,62 @@ function RegenerateRow({
   onToggleImage,
   onRegenerate,
   loading,
+  imageStyles,
+  selectedImageStyleId,
+  onImageStyleChange,
 }: {
   withImage: boolean;
   onToggleImage: () => void;
   onRegenerate: () => void;
   loading: string | null;
+  imageStyles: UserImageStyle[];
+  selectedImageStyleId: string;
+  onImageStyleChange: (id: string) => void;
 }) {
   return (
-    <div className="pt-2 border-t border-slate-custom-100 flex items-center gap-2">
-      <button
-        onClick={onRegenerate}
-        disabled={loading !== null}
-        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-      >
-        <span className="material-icons-round text-[15px]">refresh</span>
-        {loading === "regenerate" ? "Regenerating…" : "Regenerate"}
-      </button>
-      <button
-        type="button"
-        onClick={onToggleImage}
-        disabled={loading !== null}
-        className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        title={withImage ? "Image generation on" : "Image generation off"}
-      >
-        <span className="material-icons-round text-[15px] text-slate-custom-500">image</span>
-        <div
-          className={`relative inline-flex h-4 w-8 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
-            withImage ? "bg-primary" : "bg-slate-custom-200"
-          }`}
+    <div className="pt-2 border-t border-slate-custom-100 space-y-2">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onRegenerate}
+          disabled={loading !== null}
+          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          <span
-            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
-              withImage ? "translate-x-4" : "translate-x-0"
+          <span className="material-icons-round text-[15px]">refresh</span>
+          {loading === "regenerate" ? "Regenerating…" : "Regenerate"}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleImage}
+          disabled={loading !== null}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          title={withImage ? "Image generation on" : "Image generation off"}
+        >
+          <span className="material-icons-round text-[15px] text-slate-custom-500">image</span>
+          <div
+            className={`relative inline-flex h-4 w-8 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
+              withImage ? "bg-primary" : "bg-slate-custom-200"
             }`}
-          />
-        </div>
-      </button>
+          >
+            <span
+              className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+                withImage ? "translate-x-4" : "translate-x-0"
+              }`}
+            />
+          </div>
+        </button>
+      </div>
+      {withImage && imageStyles.length > 0 && (
+        <select
+          value={selectedImageStyleId || imageStyles[0]?.id || ""}
+          onChange={(e) => onImageStyleChange(e.target.value)}
+          disabled={loading !== null}
+          className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700 disabled:opacity-50"
+        >
+          {imageStyles.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }
