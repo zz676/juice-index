@@ -71,11 +71,13 @@ function StudioPageInner() {
   const [panMode, setPanMode] = useState(false);
   const panStart = useRef({ x: 0, y: 0 });
   const panOrigin = useRef({ x: 0, y: 0 });
+  const promptRef = useRef<HTMLTextAreaElement>(null);
   const [prompt, setPrompt] = useState("");
   const [isGeneratingQueryPlan, setIsGeneratingQueryPlan] = useState(false);
   const [isRunningQuery, setIsRunningQuery] = useState(false);
   const [queryJsonText, setQueryJsonText] = useState("");
   const [generatedSql, setGeneratedSql] = useState("");
+  const [sqlUserEdited, setSqlUserEdited] = useState(false);
   const [tableName, setTableName] = useState("");
   const [xField, setXField] = useState("");
   const [yField, setYField] = useState("");
@@ -398,6 +400,7 @@ function StudioPageInner() {
           : "{}";
 
       setGeneratedSql(nextSql);
+      setSqlUserEdited(false);
       setTableName(typeof data.table === "string" ? data.table : "");
       setQueryJsonText(nextQueryJson);
       setAnalysisExplanation(
@@ -448,9 +451,41 @@ function StudioPageInner() {
     }
   };
 
+  const runRawSql = async (sql: string) => {
+    setIsRunningQuery(true);
+    showToast("info", "Running query...");
+    try {
+      const res = await fetch("/api/dashboard/studio/generate-chart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rawSql: sql }),
+      });
+      const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        throw new Error(
+          (typeof data.message === "string" && data.message) ||
+            (typeof data.error === "string" && data.error) ||
+            "Failed to run query"
+        );
+      }
+      applyQueryExecutionResult(data);
+      fetchUsage();
+    } catch (err) {
+      console.error(err);
+      showToast("error", err instanceof Error ? err.message : "Failed to run query");
+    } finally {
+      setIsRunningQuery(false);
+    }
+  };
+
   const runGeneratedQuery = async () => {
-    if (!tableName) {
-      showToast("error", "Generate a query first.");
+    // If SQL was manually edited or no tableName, use raw SQL path
+    if (sqlUserEdited || !tableName) {
+      if (!generatedSql.trim()) {
+        showToast("error", "Enter or generate SQL first.");
+        return;
+      }
+      await runRawSql(generatedSql);
       return;
     }
 
@@ -993,6 +1028,7 @@ function StudioPageInner() {
                 )}
 
                 <textarea
+                  ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   className="w-full min-h-[66px] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
@@ -1145,16 +1181,25 @@ function StudioPageInner() {
                     <span className="font-semibold text-xs text-slate-custom-700">
                       Generated Query
                     </span>
-                    {tableName && (
+                    {tableName && !sqlUserEdited && (
                       <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[10px] font-bold">
                         {tableName}
                       </span>
                     )}
+                    <button
+                      onClick={() => {
+                        promptRef.current?.scrollIntoView({ behavior: "smooth" });
+                        promptRef.current?.focus();
+                      }}
+                      className="text-[10px] text-primary hover:underline"
+                    >
+                      ← Revise question
+                    </button>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <button
                       onClick={runGeneratedQuery}
-                      disabled={isRunningQuery || !tableName || !queryJsonText.trim() || queryQuotaExhausted}
+                      disabled={isRunningQuery || !generatedSql.trim() || queryQuotaExhausted}
                       className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                     >
                       {isRunningQuery ? (
@@ -1194,9 +1239,12 @@ function StudioPageInner() {
                     </div>
                     <textarea
                       value={generatedSql || ""}
-                      readOnly
-                      placeholder="SELECT * FROM ..."
-                      className="w-full h-[64px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none cursor-default"
+                      onChange={(e) => {
+                        setGeneratedSql(e.target.value);
+                        setSqlUserEdited(true);
+                      }}
+                      placeholder="Paste SQL here to run directly, or generate one above..."
+                      className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                     />
                   </div>
                 </div>

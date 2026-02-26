@@ -19,6 +19,7 @@ import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { isStringField, convertBigIntsToNumbers, formatFieldsForPrompt } from "@/lib/studio/field-registry";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
+import { validateRawSql } from "@/lib/studio/sql-validator";
 import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
 import {
   buildChartData,
@@ -881,6 +882,60 @@ export async function POST(req: Request) {
         query,
         queryJson: JSON.stringify(query, null, 2),
         sql: sqlPreview,
+      });
+    }
+
+    // Mode 3: Raw SQL execution via prisma.$queryRawUnsafe
+    if (typeof payload.rawSql === "string" && payload.rawSql.trim().length > 0) {
+      const queryLimitRes = await enforceGlobalStudioQueryLimit(userId, tier);
+      if (queryLimitRes) return queryLimitRes;
+
+      const validation = validateRawSql(payload.rawSql);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: "QUERY_EXECUTION_FAILED", message: validation.error },
+          { status: 400 }
+        );
+      }
+
+      const { sql, prismaTable } = validation;
+
+      let rows: Record<string, unknown>[];
+      let executionTimeMs: number;
+      try {
+        const execStart = Date.now();
+        rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(sql!);
+        executionTimeMs = Date.now() - execStart;
+      } catch (error) {
+        const message =
+          error instanceof Error && !error.message.includes("prisma")
+            ? error.message
+            : "Failed to execute SQL query";
+        return NextResponse.json(
+          { error: "QUERY_EXECUTION_FAILED", message },
+          { status: 400 }
+        );
+      }
+
+      const converted = prismaTable
+        ? convertBigIntsToNumbers(prismaTable, rows)
+        : rows;
+      const preview = buildChartData(converted);
+
+      prisma.apiRequestLog.create({
+        data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
+      }).catch(() => {});
+
+      return NextResponse.json({
+        mode: "raw-sql",
+        table: prismaTable ?? "",
+        data: converted,
+        rowCount: rows.length,
+        executionTimeMs,
+        previewData: preview.points,
+        xField: preview.xField,
+        yField: preview.yField,
+        sql: sql!,
       });
     }
 
