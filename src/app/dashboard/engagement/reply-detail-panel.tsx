@@ -37,6 +37,7 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
   const [editedText, setEditedText] = useState<string>("");
   const [prevReplyId, setPrevReplyId] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null); // action name being processed
+  const [withImage, setWithImage] = useState(false);
 
   // Sync editedText when reply changes
   if (reply && reply.id !== prevReplyId) {
@@ -49,7 +50,11 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
   const isEditable =
     reply.status === "SENT_TO_TELEGRAM" || reply.status === "DISCARDED";
 
-  async function callAction(action: string, extra?: Record<string, unknown>) {
+  async function callAction(
+    action: string,
+    extra?: Record<string, unknown>,
+    onSuccess?: (updated: ReplyRow) => void,
+  ) {
     if (!reply) return;
     setLoading(action);
     try {
@@ -60,7 +65,9 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
       });
       if (res.ok) {
         const json = await res.json();
-        onUpdate(json.reply as ReplyRow);
+        const updated = json.reply as ReplyRow;
+        onUpdate(updated);
+        onSuccess?.(updated);
       } else {
         const json = await res.json().catch(() => ({}));
         alert(json.message ?? "Action failed");
@@ -76,6 +83,8 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
   const handlePostToX = () => callAction("post-to-x");
   const handleMarkPosted = () => callAction("mark-posted");
   const handleDiscard = () => callAction("discard");
+  const handleRegenerate = () =>
+    callAction("regenerate", { withImage }, (updated) => setEditedText(updated.replyText ?? ""));
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -247,6 +256,12 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
                   {loading === "discard" ? "Discarding…" : "Discard"}
                 </button>
               </div>
+              <RegenerateRow
+                withImage={withImage}
+                onToggleImage={() => setWithImage((v) => !v)}
+                onRegenerate={handleRegenerate}
+                loading={loading}
+              />
             </div>
           )}
 
@@ -275,17 +290,31 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
               >
                 {loading === "mark-posted" ? "Updating…" : "Mark as Posted"}
               </button>
+              <RegenerateRow
+                withImage={withImage}
+                onToggleImage={() => setWithImage((v) => !v)}
+                onRegenerate={handleRegenerate}
+                loading={loading}
+              />
             </div>
           )}
 
           {(reply.status === "PENDING" || reply.status === "FAILED") && (
-            <button
-              onClick={handleDiscard}
-              disabled={loading !== null}
-              className="w-full px-3 py-2 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading === "discard" ? "Discarding…" : "Discard"}
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleDiscard}
+                disabled={loading !== null}
+                className="w-full px-3 py-2 text-sm font-medium border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading === "discard" ? "Discarding…" : "Discard"}
+              </button>
+              <RegenerateRow
+                withImage={withImage}
+                onToggleImage={() => setWithImage((v) => !v)}
+                onRegenerate={handleRegenerate}
+                loading={loading}
+              />
+            </div>
           )}
 
           {reply.status === "POSTED" && !reply.replyTweetUrl && (
@@ -295,6 +324,51 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate }: ReplyDetailPanelP
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function RegenerateRow({
+  withImage,
+  onToggleImage,
+  onRegenerate,
+  loading,
+}: {
+  withImage: boolean;
+  onToggleImage: () => void;
+  onRegenerate: () => void;
+  loading: string | null;
+}) {
+  return (
+    <div className="pt-2 border-t border-slate-custom-100 flex items-center gap-2">
+      <button
+        onClick={onRegenerate}
+        disabled={loading !== null}
+        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        <span className="material-icons-round text-[15px]">refresh</span>
+        {loading === "regenerate" ? "Regenerating…" : "Regenerate"}
+      </button>
+      <button
+        type="button"
+        onClick={onToggleImage}
+        disabled={loading !== null}
+        className="flex items-center gap-1.5 px-3 py-2 text-sm border border-slate-custom-200 rounded-lg hover:bg-slate-custom-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        title={withImage ? "Image generation on" : "Image generation off"}
+      >
+        <span className="material-icons-round text-[15px] text-slate-custom-500">image</span>
+        <div
+          className={`relative inline-flex h-4 w-8 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
+            withImage ? "bg-primary" : "bg-slate-custom-200"
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+              withImage ? "translate-x-4" : "translate-x-0"
+            }`}
+          />
+        </div>
+      </button>
     </div>
   );
 }

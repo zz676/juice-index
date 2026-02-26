@@ -5,6 +5,11 @@ import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
 import { uploadMedia } from "@/lib/x/upload-media";
 import { postTweet } from "@/lib/x/post-tweet";
 import { EngagementReplyStatus } from "@prisma/client";
+import { pickUserTone } from "@/lib/engagement/pick-tone";
+import { generateReply } from "@/lib/engagement/generate-reply";
+import { generateImage } from "@/lib/engagement/generate-image";
+import { uploadEngagementImage } from "@/lib/supabase/storage";
+import { computeTotalReplyCost } from "@/lib/engagement/cost-utils";
 
 export const runtime = "nodejs";
 
@@ -44,7 +49,7 @@ export async function PATCH(
     return NextResponse.json({ error: "NOT_FOUND", message: "Reply not found" }, { status: 404 });
   }
 
-  let body: { action: string; replyText?: string };
+  let body: { action: string; replyText?: string; withImage?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -135,6 +140,84 @@ export async function PATCH(
         status: EngagementReplyStatus.POSTED_T,
         replyTweetId: postedTweet.id,
         replyTweetUrl: `https://x.com/i/web/status/${postedTweet.id}`,
+        lastError: null,
+      },
+      select: REPLY_SELECT,
+    });
+    return NextResponse.json({ reply: updated });
+  }
+
+  if (action === "regenerate") {
+    const withImage = body.withImage === true;
+
+    if (!reply.sourceTweetText) {
+      return NextResponse.json(
+        { error: "BAD_REQUEST", message: "No source tweet text to regenerate from" },
+        { status: 400 },
+      );
+    }
+
+    const account = await prisma.monitoredAccount.findUnique({
+      where: { id: reply.monitoredAccountId },
+      select: { tone: true, toneWeights: true, temperature: true, accountContext: true },
+    });
+
+    if (!account) {
+      return NextResponse.json({ error: "NOT_FOUND", message: "Account not found" }, { status: 404 });
+    }
+
+    const userTones = await prisma.userTone.findMany({ where: { userId: user.id } });
+    const toneMap = new Map(userTones.map((t) => [t.id, t]));
+    const picked = pickUserTone(account, toneMap);
+
+    const recentReplies = await prisma.engagementReply
+      .findMany({
+        where: {
+          monitoredAccountId: reply.monitoredAccountId,
+          status: "POSTED",
+          replyText: { not: null },
+          id: { not: id },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { replyText: true },
+      })
+      .then((rows) => rows.map((r) => r.replyText!));
+
+    const generated = await generateReply(reply.sourceTweetText, picked.prompt, {
+      accountContext: account.accountContext ?? null,
+      recentReplies,
+      temperature: account.temperature ?? 0.8,
+    });
+
+    let newImageUrl: string | null = null;
+    let imageGenerated = false;
+    if (withImage) {
+      try {
+        const imgResult = await generateImage(reply.sourceTweetText, generated.text);
+        if (imgResult.generated) {
+          newImageUrl = await uploadEngagementImage(id, imgResult.imageBase64);
+          imageGenerated = true;
+        }
+      } catch (imgErr) {
+        console.warn(`[regenerate] Image generation failed for reply ${id}:`, imgErr);
+      }
+    }
+
+    const costs = computeTotalReplyCost(generated.inputTokens, generated.outputTokens, imageGenerated);
+
+    const updated = await prisma.engagementReply.update({
+      where: { id },
+      data: {
+        replyText: generated.text,
+        replyImageUrl: withImage ? newImageUrl : null,
+        userToneId: picked.toneId ?? null,
+        userToneName: picked.toneName,
+        status: EngagementReplyStatus.SENT_TO_TELEGRAM,
+        textGenerationCost: costs.textCost,
+        imageGenerationCost: costs.imageCost,
+        apiCallCost: costs.apiCost,
+        totalCost: costs.totalCost,
         lastError: null,
       },
       select: REPLY_SELECT,
