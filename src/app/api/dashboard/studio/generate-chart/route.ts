@@ -55,6 +55,8 @@ type ChartStyleOptions = {
   paddingRight?: number;
   showValues?: boolean;
   showGrid?: boolean;
+  gridLineStyle?: "solid" | "dashed" | "dotted";
+  gridColor?: string;
   xAxisLineColor?: string;
   yAxisLineColor?: string;
   xAxisLineWidth?: number;
@@ -307,6 +309,11 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
     showValues:
       typeof obj.showValues === "boolean" ? obj.showValues : undefined,
     showGrid: typeof obj.showGrid === "boolean" ? obj.showGrid : undefined,
+    gridLineStyle:
+      obj.gridLineStyle === "solid" || obj.gridLineStyle === "dashed" || obj.gridLineStyle === "dotted"
+        ? obj.gridLineStyle
+        : undefined,
+    gridColor: typeof obj.gridColor === "string" ? obj.gridColor : undefined,
     xAxisLineColor:
       typeof obj.xAxisLineColor === "string" ? obj.xAxisLineColor : undefined,
     yAxisLineColor:
@@ -336,6 +343,11 @@ function renderChartConfig(params: {
   const barColor = style.barColor || "#6ada1b";
   const showValues = style.showValues ?? true;
   const showGrid = style.showGrid ?? true;
+  const gridColor = style.gridColor || "#e5e7eb";
+  const gridLineDash =
+    style.gridLineStyle === "dotted" ? [2, 4] :
+    style.gridLineStyle === "solid" ? [] :
+    [4, 4]; // default: dashed
 
   return {
     type: jsType,
@@ -409,7 +421,7 @@ function renderChartConfig(params: {
             color: style.xAxisLineColor || "#e5e7eb",
             width: style.xAxisLineWidth ?? 1,
           },
-          grid: { color: "#e5e7eb", display: showGrid },
+          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
           ticks: {
             color: xTickColor,
             font: {
@@ -430,7 +442,7 @@ function renderChartConfig(params: {
             color: style.yAxisLineColor || "#e5e7eb",
             width: style.yAxisLineWidth ?? 1,
           },
-          grid: { color: "#e5e7eb", display: showGrid },
+          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
           ticks: {
             color: yTickColor,
             font: {
@@ -440,13 +452,13 @@ function renderChartConfig(params: {
                   ? style.yAxisFontSize
                   : 12,
             },
-            callback: (value) => {
+            callback: (value: unknown) => {
               const n = Number(value);
               return Number.isFinite(n) ? n.toLocaleString("en-US") : String(value);
             },
           },
         },
-      },
+      } as unknown as NonNullable<ChartConfiguration["options"]>["scales"],
       layout: {
         padding: {
           top: style.paddingTop ?? 20,

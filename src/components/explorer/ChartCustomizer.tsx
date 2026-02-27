@@ -34,6 +34,8 @@ export interface ChartConfig {
     paddingRight: number;
     showValues: boolean;
     showGrid: boolean;
+    gridLineStyle: "solid" | "dashed" | "dotted";
+    gridColor: string;
 }
 
 export const DEFAULT_CHART_CONFIG: ChartConfig = {
@@ -66,6 +68,8 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     paddingRight: 20,
     showValues: true,
     showGrid: true,
+    gridLineStyle: "dashed",
+    gridColor: "#e5e7eb",
 };
 
 interface ChartCustomizerProps {
@@ -228,6 +232,29 @@ export function ChartCustomizer({
                                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${config.showGrid ? "left-[18px]" : "left-0.5"}`} />
                             </button>
                         </div>
+                        {config.showGrid && (
+                            <>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Grid Line Style</label>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        {([
+                                            { value: "solid", label: "Solid" },
+                                            { value: "dashed", label: "Dashed" },
+                                            { value: "dotted", label: "Dotted" },
+                                        ] as const).map((opt) => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => update({ gridLineStyle: opt.value })}
+                                                className={`py-1.5 text-[10px] font-bold rounded border transition-all ${config.gridLineStyle === opt.value ? "border-primary bg-primary/10 text-primary" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <ColorInput label="Grid Color" value={config.gridColor} onChange={(v) => update({ gridColor: v })} />
+                            </>
+                        )}
                         <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
                         <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
                         <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />

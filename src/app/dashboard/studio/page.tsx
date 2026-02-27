@@ -580,10 +580,16 @@ function StudioPageInner() {
             barWidth: chartConfig.barWidth,
             showValues: chartConfig.showValues,
             showGrid: chartConfig.showGrid,
+            gridLineStyle: chartConfig.gridLineStyle,
+            gridColor: chartConfig.gridColor,
             xAxisLineColor: chartConfig.xAxisLineColor,
             yAxisLineColor: chartConfig.yAxisLineColor,
             xAxisLineWidth: chartConfig.xAxisLineWidth,
             yAxisLineWidth: chartConfig.yAxisLineWidth,
+            paddingTop: chartConfig.paddingTop,
+            paddingBottom: chartConfig.paddingBottom,
+            paddingLeft: chartConfig.paddingLeft,
+            paddingRight: chartConfig.paddingRight,
           },
         }),
       });
@@ -1493,7 +1499,7 @@ function StudioPageInner() {
                           margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
-                            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
                           )}
                           <XAxis
                             dataKey="label"
@@ -1531,7 +1537,7 @@ function StudioPageInner() {
                           margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
-                            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
                           )}
                           <XAxis
                             type="number"
@@ -1578,7 +1584,7 @@ function StudioPageInner() {
                           margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                         >
                           {chartConfig.showGrid && (
-                            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
                           )}
                           <XAxis
                             dataKey="label"
@@ -1623,7 +1629,7 @@ function StudioPageInner() {
                       <div className="absolute inset-0 opacity-40 pointer-events-none">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={DEMO_CHART_DATA} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
-                            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
                             <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} />
                             <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
                             <Bar dataKey="value" fill="#6ada1b" radius={[6, 6, 0, 0]} barSize={28} />
