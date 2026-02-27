@@ -206,18 +206,18 @@ export function ChartCustomizer({
                 method: "DELETE",
             });
             setSelectedStyleId("");
-            setDeleteConfirm(false);
             await fetchStyles();
         } catch {
-            // ignore
+            setStylesError("Failed to delete style.");
         } finally {
+            setDeleteConfirm(false);
             setIsDeleting(false);
         }
     };
 
     const handleApplyStyle = () => {
         const found = savedStyles.find((s) => s.id === selectedStyleId);
-        if (found) onChange(found.config);
+        if (found) onChange({ ...DEFAULT_CHART_CONFIG, ...(found.config as Partial<ChartConfig>) });
     };
 
     // Reset to "type" if the Axes tab disappears (e.g., user runs a single-column query while on Axes tab)
@@ -468,6 +468,7 @@ export function ChartCustomizer({
                                         <button
                                             onClick={handleApplyStyle}
                                             disabled={!selectedStyleId}
+                                            aria-label="Apply selected style"
                                             className="flex-1 py-1.5 text-xs font-bold rounded border border-primary text-primary hover:bg-primary/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                         >
                                             Apply
@@ -475,6 +476,7 @@ export function ChartCustomizer({
                                         <button
                                             onClick={handleDeleteStyle}
                                             disabled={!selectedStyleId || isDeleting}
+                                            aria-label="Delete selected style"
                                             className={`flex-1 py-1.5 text-xs font-bold rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${deleteConfirm ? "border-red-500 bg-red-50 text-red-600" : "border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-500"}`}
                                         >
                                             {deleteConfirm ? "Confirm Delete" : "Delete"}
