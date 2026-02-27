@@ -138,7 +138,7 @@ export function ChartCustomizer({
     columns = [], numericColumns = [], xField = "", yField = "",
     onAxisChange,
 }: ChartCustomizerProps) {
-    const [activeSection, setActiveSection] = useState<string>("type");
+    const [activeSection, setActiveSection] = useState<string>("chart");
 
     const update = (partial: Partial<ChartConfig>) => onChange({ ...config, ...partial });
 
@@ -149,18 +149,13 @@ export function ChartCustomizer({
     ];
 
     const sections = [
-        { id: "axes", icon: "swap_horiz", label: "Axes" },
-        { id: "type", icon: "dashboard", label: "Type" },
-        { id: "colors", icon: "palette", label: "Colors" },
-        { id: "typography", icon: "text_fields", label: "Text" },
-        { id: "source", icon: "copyright", label: "Source" },
-        { id: "styles", icon: "bookmarks", label: "Styles" },
+        { id: "chart", icon: "dashboard", label: "Chart" },
+        { id: "style", icon: "palette", label: "Style" },
+        { id: "saved", icon: "bookmarks", label: "Saved" },
     ];
 
     const hasMultipleColumns = columns.length > 1;
-    const visibleSections = hasMultipleColumns
-        ? sections
-        : sections.filter((s) => s.id !== "axes");
+    const visibleSections = sections;
 
     const [savedStyles, setSavedStyles] = useState<SavedStyle[]>([]);
     const [selectedStyleId, setSelectedStyleId] = useState<string>("");
@@ -238,12 +233,7 @@ export function ChartCustomizer({
         if (found) onChange({ ...DEFAULT_CHART_CONFIG, ...(found.config as Partial<ChartConfig>) });
     };
 
-    // Reset to "type" if the Axes tab disappears (e.g., user runs a single-column query while on Axes tab)
-    useEffect(() => {
-        if (!hasMultipleColumns && activeSection === "axes") {
-            setActiveSection("type");
-        }
-    }, [hasMultipleColumns, activeSection]);
+    // No per-section reset needed — axes are now embedded inside the Chart tab
 
     if (!isOpen) return null;
 
@@ -276,36 +266,8 @@ export function ChartCustomizer({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {activeSection === "axes" && columns.length > 1 && (
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">X Axis</label>
-                            <select
-                                value={xField}
-                                onChange={(e) => onAxisChange?.(e.target.value, yField)}
-                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                            >
-                                {columns.map((col) => (
-                                    <option key={col} value={col}>{col}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Y Axis</label>
-                            <select
-                                value={yField}
-                                onChange={(e) => onAxisChange?.(xField, e.target.value)}
-                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                            >
-                                {numericColumns.map((col) => (
-                                    <option key={col} value={col}>{col}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                )}
-
-                {activeSection === "type" && (
+                {/* ── CHART tab: type + axes + display + layout ── */}
+                {activeSection === "chart" && (
                     <div className="space-y-4">
                         <div>
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
@@ -316,6 +278,42 @@ export function ChartCustomizer({
                                     </button>
                                 ))}
                             </div>
+                        </div>
+
+                        {hasMultipleColumns && (
+                            <>
+                                <div className="border-t border-slate-100 pt-3">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axes</label>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 mb-1 block">X Axis</label>
+                                    <select
+                                        value={xField}
+                                        onChange={(e) => onAxisChange?.(e.target.value, yField)}
+                                        className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                        {columns.map((col) => (
+                                            <option key={col} value={col}>{col}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 mb-1 block">Y Axis</label>
+                                    <select
+                                        value={yField}
+                                        onChange={(e) => onAxisChange?.(xField, e.target.value)}
+                                        className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                        {numericColumns.map((col) => (
+                                            <option key={col} value={col}>{col}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="border-t border-slate-100 pt-3">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Display</label>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-slate-600">Show Values</span>
@@ -352,6 +350,10 @@ export function ChartCustomizer({
                                 <ColorInput label="Grid Color" value={config.gridColor} onChange={(v) => update({ gridColor: v })} />
                             </>
                         )}
+
+                        <div className="border-t border-slate-100 pt-3">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Layout</label>
+                        </div>
                         <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
                         <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
                         <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
@@ -367,7 +369,8 @@ export function ChartCustomizer({
                     </div>
                 )}
 
-                {activeSection === "colors" && (
+                {/* ── STYLE tab: colors + typography + source ── */}
+                {activeSection === "style" && (
                     <div className="space-y-3">
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Palette</label>
                         <div className="flex gap-2 mb-3">
@@ -389,17 +392,15 @@ export function ChartCustomizer({
                         <ColorInput label="Background" value={config.backgroundColor} onChange={(v) => update({ backgroundColor: v })} />
                         <ColorInput label="Bar / Line Color" value={config.barColor} onChange={(v) => update({ barColor: v })} />
                         <ColorInput label="Font Color" value={config.fontColor} onChange={(v) => update({ fontColor: v })} />
-                        <div className="border-t border-slate-100 pt-3 mt-3">
+                        <div className="border-t border-slate-100 pt-3 mt-1">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Lines</label>
                         </div>
                         <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
                         <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
-                    </div>
-                )}
 
-                {activeSection === "typography" && (
-                    <div className="space-y-3">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Title</label>
+                        <div className="border-t border-slate-100 pt-3 mt-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Title</label>
+                        </div>
                         <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Chart title..." />
                         <label className="flex items-center justify-between gap-2">
                             <span className="text-xs font-medium text-slate-600">Title Font</span>
@@ -415,8 +416,9 @@ export function ChartCustomizer({
                         </label>
                         <ColorInput label="Title Color" value={config.titleColor} onChange={(v) => update({ titleColor: v })} />
                         <NumberInput label="Title Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
-                        <div className="border-t border-slate-100 pt-3 mt-3">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axes</label>
+
+                        <div className="border-t border-slate-100 pt-3 mt-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Text</label>
                         </div>
                         <label className="flex items-center justify-between gap-2">
                             <span className="text-xs font-medium text-slate-600">Axis Font</span>
@@ -431,15 +433,13 @@ export function ChartCustomizer({
                             </select>
                         </label>
                         <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="X-Axis Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
+                        <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
                         <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="Y-Axis Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
-                    </div>
-                )}
+                        <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
 
-                {activeSection === "source" && (
-                    <div className="space-y-3">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Watermark / Source</label>
+                        <div className="border-t border-slate-100 pt-3 mt-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Source / Watermark</label>
+                        </div>
                         <div>
                             <span className="text-xs font-medium text-slate-600 mb-1 block">Source Text</span>
                             <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Powered by juiceindex.io" />
@@ -461,7 +461,7 @@ export function ChartCustomizer({
                     </div>
                 )}
 
-                {activeSection === "styles" && (
+                {activeSection === "saved" && (
                     <div className="space-y-5">
                         {/* Saved styles picker */}
                         <div>
