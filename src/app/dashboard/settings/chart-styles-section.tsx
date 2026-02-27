@@ -107,7 +107,7 @@ export default function ChartStylesSection() {
                                     if (e.key === "Enter") commitRename(style.id);
                                     if (e.key === "Escape") { setRenamingId(null); setRenameError(null); }
                                 }}
-                                className="flex-1 rounded-lg border border-slate-custom-200 px-3 py-2 text-sm text-slate-custom-900 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                className="flex-1 rounded-lg border border-slate-custom-200 bg-white px-3 py-2 text-sm text-slate-custom-900 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                             />
                             <button
                                 onClick={() => commitRename(style.id)}
