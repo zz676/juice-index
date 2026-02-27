@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export type ChartType = "bar" | "line" | "horizontalBar";
 
@@ -72,6 +72,8 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     gridColor: "#e5e7eb",
 };
 
+type SavedStyle = { id: string; name: string; config: ChartConfig };
+
 interface ChartCustomizerProps {
     config: ChartConfig;
     onChange: (config: ChartConfig) => void;
@@ -134,12 +136,89 @@ export function ChartCustomizer({
         { id: "colors", icon: "palette", label: "Colors" },
         { id: "typography", icon: "text_fields", label: "Text" },
         { id: "source", icon: "copyright", label: "Source" },
+        { id: "styles", icon: "bookmarks", label: "Styles" },
     ];
 
     const hasMultipleColumns = columns.length > 1;
     const visibleSections = hasMultipleColumns
         ? sections
         : sections.filter((s) => s.id !== "axes");
+
+    const [savedStyles, setSavedStyles] = useState<SavedStyle[]>([]);
+    const [selectedStyleId, setSelectedStyleId] = useState<string>("");
+    const [newStyleName, setNewStyleName] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [stylesError, setStylesError] = useState<string | null>(null);
+
+    const fetchStyles = useCallback(async () => {
+        try {
+            const res = await fetch("/api/dashboard/studio/chart-styles");
+            if (!res.ok) return;
+            const data = await res.json();
+            setSavedStyles(data.styles ?? []);
+        } catch {
+            // silent — not critical
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) fetchStyles();
+    }, [isOpen, fetchStyles]);
+
+    const handleSaveStyle = async () => {
+        if (!newStyleName.trim()) return;
+        setIsSaving(true);
+        setStylesError(null);
+        try {
+            const res = await fetch("/api/dashboard/studio/chart-styles", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newStyleName.trim(), config }),
+            });
+            if (res.status === 409) {
+                setStylesError("A style with that name already exists.");
+                return;
+            }
+            if (!res.ok) {
+                setStylesError("Failed to save style.");
+                return;
+            }
+            setNewStyleName("");
+            await fetchStyles();
+        } catch {
+            setStylesError("Failed to save style.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteStyle = async () => {
+        if (!selectedStyleId) return;
+        if (!deleteConfirm) {
+            setDeleteConfirm(true);
+            return;
+        }
+        setIsDeleting(true);
+        try {
+            await fetch(`/api/dashboard/studio/chart-styles/${selectedStyleId}`, {
+                method: "DELETE",
+            });
+            setSelectedStyleId("");
+            await fetchStyles();
+        } catch {
+            setStylesError("Failed to delete style.");
+        } finally {
+            setDeleteConfirm(false);
+            setIsDeleting(false);
+        }
+    };
+
+    const handleApplyStyle = () => {
+        const found = savedStyles.find((s) => s.id === selectedStyleId);
+        if (found) onChange({ ...DEFAULT_CHART_CONFIG, ...(found.config as Partial<ChartConfig>) });
+    };
 
     // Reset to "type" if the Axes tab disappears (e.g., user runs a single-column query while on Axes tab)
     useEffect(() => {
@@ -361,6 +440,78 @@ export function ChartCustomizer({
                         </label>
                         <ColorInput label="Source Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
                         <NumberInput label="Source Font Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
+                    </div>
+                )}
+
+                {activeSection === "styles" && (
+                    <div className="space-y-5">
+                        {/* Saved styles picker */}
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                                Saved Styles
+                            </label>
+                            {savedStyles.length === 0 ? (
+                                <p className="text-xs text-slate-400 italic">No saved styles yet. Save your current settings below.</p>
+                            ) : (
+                                <>
+                                    <select
+                                        value={selectedStyleId}
+                                        onChange={(e) => { setSelectedStyleId(e.target.value); setDeleteConfirm(false); }}
+                                        className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary mb-2"
+                                    >
+                                        <option value="">— Select a style —</option>
+                                        {savedStyles.map((s) => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleApplyStyle}
+                                            disabled={!selectedStyleId}
+                                            aria-label="Apply selected style"
+                                            className="flex-1 py-1.5 text-xs font-bold rounded border border-primary text-primary hover:bg-primary/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            Apply
+                                        </button>
+                                        <button
+                                            onClick={handleDeleteStyle}
+                                            disabled={!selectedStyleId || isDeleting}
+                                            aria-label="Delete selected style"
+                                            className={`flex-1 py-1.5 text-xs font-bold rounded border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${deleteConfirm ? "border-red-500 bg-red-50 text-red-600" : "border-slate-200 text-slate-500 hover:border-red-300 hover:text-red-500"}`}
+                                        >
+                                            {deleteConfirm ? "Confirm Delete" : "Delete"}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-slate-100" />
+
+                        {/* Save current as */}
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                                Save Current As
+                            </label>
+                            <input
+                                type="text"
+                                value={newStyleName}
+                                onChange={(e) => { setNewStyleName(e.target.value); setStylesError(null); }}
+                                placeholder="Style name..."
+                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary mb-2"
+                                onKeyDown={(e) => { if (e.key === "Enter") handleSaveStyle(); }}
+                            />
+                            {stylesError && <p className="text-xs text-red-500 mb-2">{stylesError}</p>}
+                            <button
+                                onClick={handleSaveStyle}
+                                disabled={!newStyleName.trim() || isSaving}
+                                className="w-full py-2 text-xs font-bold rounded bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                            >
+                                <span className="material-icons-round text-sm">save</span>
+                                {isSaving ? "Saving…" : "Save Style"}
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
