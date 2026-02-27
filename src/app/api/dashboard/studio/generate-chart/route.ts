@@ -30,17 +30,14 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// Register a bundled font so text renders on Linux/Vercel where no system
-// fonts are available to @napi-rs/canvas.  We register the Noto Sans TTF
-// (already shipped inside next/dist) under the name "Inter" so all existing
-// font references in the chart config resolve without any other changes.
-// On macOS the system Inter takes precedence; on Linux this ensures text shows.
+// Register a font so text renders on Linux/Vercel where @napi-rs/canvas has
+// no system fonts. The TTF lives in public/fonts/ (committed to git) so it
+// is always present in the Vercel deployment bundle. Registered under "Inter"
+// so all chart font references work without change. On macOS dev the system
+// Inter is already present so GlobalFonts.has() skips re-registration.
 try {
   if (!GlobalFonts.has("Inter")) {
-    const notoPath = path.join(
-      process.cwd(),
-      "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf"
-    );
+    const notoPath = path.join(process.cwd(), "public", "fonts", "NotoSans-Regular.ttf");
     GlobalFonts.registerFromPath(notoPath, "Inter");
   }
 } catch {
