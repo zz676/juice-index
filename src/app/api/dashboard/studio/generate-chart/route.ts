@@ -431,7 +431,7 @@ function renderChartConfig(params: {
   const bgIsDark = hexLuminance(bgColor) < 0.5;
   const rawTextColor = style.fontColor || (bgIsDark ? "#e2e8f0" : "#0f172a");
   const textColor = ensureContrast(rawTextColor, bgColor);
-  const titleColor = ensureContrast(style.titleColor || rawTextColor, bgColor, "#f1f5f9");
+  const titleColor = style.titleColor || ensureContrast(rawTextColor, bgColor, "#f1f5f9");
   const xTickColor = ensureContrast(style.xAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const yTickColor = ensureContrast(style.yAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const barColor = style.barColor || "#6ada1b";

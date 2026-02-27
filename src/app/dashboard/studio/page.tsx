@@ -1495,7 +1495,7 @@ function StudioPageInner() {
                   <h4
                     className="text-center font-bold pt-3 pb-1"
                     style={{
-                      color: ensureContrast(chartConfig.titleColor, chartConfig.backgroundColor, "#f1f5f9"),
+                      color: chartConfig.titleColor,
                       fontSize: `${chartConfig.titleSize}px`,
                       fontFamily: chartConfig.titleFont,
                     }}
