@@ -168,11 +168,42 @@ const dashedGridPlugin: Plugin = {
     const dash = opts.dash || [];
     const color = opts.color || "#e5e7eb";
 
+    // Draw a line from (x1,y1) to (x2,y2) using manual segment drawing to
+    // avoid ctx.setLineDash(), which can corrupt canvas state in @napi-rs/canvas.
+    function drawLine(x1: number, y1: number, x2: number, y2: number) {
+      if (dash.length === 0) {
+        // Solid line
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        return;
+      }
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len === 0) return;
+      const nx = dx / len;
+      const ny = dy / len;
+      let pos = 0;
+      let di = 0;
+      ctx.beginPath();
+      while (pos < len) {
+        const segLen = Math.min(dash[di % dash.length], len - pos);
+        if (di % 2 === 0) {
+          // "on" segment — draw it
+          ctx.moveTo(x1 + nx * pos, y1 + ny * pos);
+          ctx.lineTo(x1 + nx * (pos + segLen), y1 + ny * (pos + segLen));
+        }
+        pos += segLen;
+        di++;
+      }
+      ctx.stroke();
+    }
+
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 1;
-    ctx.setLineDash(dash);
-    ctx.lineDashOffset = 0;
 
     // Horizontal grid lines from y-axis ticks
     const yScale = chart.scales.y;
@@ -180,10 +211,7 @@ const dashedGridPlugin: Plugin = {
       for (let i = 0; i < yScale.ticks.length; i++) {
         const y = yScale.getPixelForTick(i);
         if (y < top || y > bottom) continue;
-        ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(right, y);
-        ctx.stroke();
+        drawLine(left, y, right, y);
       }
     }
 
@@ -193,10 +221,7 @@ const dashedGridPlugin: Plugin = {
       for (let i = 0; i < xScale.ticks.length; i++) {
         const x = xScale.getPixelForTick(i);
         if (x < left || x > right) continue;
-        ctx.beginPath();
-        ctx.moveTo(x, top);
-        ctx.lineTo(x, bottom);
-        ctx.stroke();
+        drawLine(x, top, x, bottom);
       }
     }
 
