@@ -479,7 +479,7 @@ model User {
   EngagementConfig  EngagementConfig?
   UserTone          UserTone[]
   UserImageStyle    UserImageStyle[]
-  userChartStyles   UserChartStyle[]
+  UserChartStyle    UserChartStyle[]
 
   @@index([emailVerified])
   @@map("juice_users")
