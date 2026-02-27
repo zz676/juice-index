@@ -74,8 +74,8 @@ describe("canAccessModel", () => {
       expect(canAccessModel("FREE", "gpt-4o-mini")).toBe(true);
     });
 
-    it("cannot access gpt-4o (STARTER model)", () => {
-      expect(canAccessModel("FREE", "gpt-4o")).toBe(false);
+    it("cannot access o3-mini (STARTER model)", () => {
+      expect(canAccessModel("FREE", "o3-mini")).toBe(false);
     });
 
     it("cannot access claude-3-5-sonnet (STARTER model)", () => {
@@ -96,8 +96,8 @@ describe("canAccessModel", () => {
       expect(canAccessModel("STARTER", "gpt-4o-mini")).toBe(true);
     });
 
-    it("can access gpt-4o (STARTER model)", () => {
-      expect(canAccessModel("STARTER", "gpt-4o")).toBe(true);
+    it("can access o3-mini (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "o3-mini")).toBe(true);
     });
 
     it("can access claude-3-5-sonnet (STARTER model)", () => {
@@ -114,8 +114,8 @@ describe("canAccessModel", () => {
       expect(canAccessModel("PRO", "gpt-4o-mini")).toBe(true);
     });
 
-    it("can access gpt-4o (STARTER model)", () => {
-      expect(canAccessModel("PRO", "gpt-4o")).toBe(true);
+    it("can access o3-mini (STARTER model)", () => {
+      expect(canAccessModel("PRO", "o3-mini")).toBe(true);
     });
 
     it("can access claude-3-5-sonnet (STARTER model)", () => {
@@ -193,14 +193,14 @@ describe("per-model quotas", () => {
   });
 
   it("getModelQuota returns 0 for inaccessible models", () => {
-    expect(getModelQuota("FREE", "gpt-4o", "studioQueriesByModel")).toBe(0);
+    expect(getModelQuota("FREE", "o3-mini", "studioQueriesByModel")).toBe(0);
     expect(getModelQuota("FREE", "claude-opus-4", "postDraftsByModel")).toBe(0);
     expect(getModelQuota("STARTER", "claude-opus-4", "studioQueriesByModel")).toBe(0);
   });
 
   it("getModelQuota returns correct values for accessible models", () => {
     expect(getModelQuota("FREE", "gpt-4o-mini", "studioQueriesByModel")).toBe(3);
-    expect(getModelQuota("STARTER", "gpt-4o", "studioQueriesByModel")).toBe(5);
+    expect(getModelQuota("STARTER", "o3-mini", "studioQueriesByModel")).toBe(5);
     expect(getModelQuota("PRO", "claude-opus-4", "studioQueriesByModel")).toBe(10);
     expect(getModelQuota("PRO", "claude-opus-4", "postDraftsByModel")).toBe(5);
     expect(getModelQuota("ENTERPRISE", "claude-opus-4", "studioQueriesByModel")).toBe(Infinity);

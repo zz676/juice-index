@@ -23,10 +23,10 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
     description: "Fast & affordable",
   },
   {
-    id: "gpt-4o",
-    displayName: "GPT-4o",
+    id: "o3-mini",
+    displayName: "o3-mini",
     provider: "openai",
-    providerModelId: "gpt-4o",
+    providerModelId: "o3-mini",
     minTier: "STARTER",
     defaultMaxTokens: 400,
     description: "Best reasoning from OpenAI",
@@ -67,7 +67,7 @@ export function canAccessModel(tier: ApiTier, modelId: string): boolean {
 /** Per-token pricing in USD (input / output per token). */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-4o-mini":       { input: 0.15  / 1_000_000, output: 0.60  / 1_000_000 },
-  "gpt-4o":            { input: 2.50  / 1_000_000, output: 10.00 / 1_000_000 },
+  "o3-mini":           { input: 1.10  / 1_000_000, output: 4.40  / 1_000_000 },
   "claude-3-5-sonnet": { input: 3.00  / 1_000_000, output: 15.00 / 1_000_000 },
   "claude-opus-4":     { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
 };

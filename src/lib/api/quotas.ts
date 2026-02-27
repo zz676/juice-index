@@ -67,12 +67,12 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     xAccounts: 1,
     studioQueriesByModel: {
       "gpt-4o-mini": 15,
-      "gpt-4o": 5,
+      "o3-mini": 5,
       "claude-3-5-sonnet": 5,
     },
     postDraftsByModel: {
       "gpt-4o-mini": 5,
-      "gpt-4o": 3,
+      "o3-mini": 3,
       "claude-3-5-sonnet": 3,
     },
     dailyReplies: 5,
@@ -96,13 +96,13 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     xAccounts: 1,
     studioQueriesByModel: {
       "gpt-4o-mini": 50,
-      "gpt-4o": 25,
+      "o3-mini": 25,
       "claude-3-5-sonnet": 25,
       "claude-opus-4": 10,
     },
     postDraftsByModel: {
       "gpt-4o-mini": 20,
-      "gpt-4o": 10,
+      "o3-mini": 10,
       "claude-3-5-sonnet": 10,
       "claude-opus-4": 5,
     },
@@ -127,13 +127,13 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     xAccounts: 5,
     studioQueriesByModel: {
       "gpt-4o-mini": Infinity,
-      "gpt-4o": Infinity,
+      "o3-mini": Infinity,
       "claude-3-5-sonnet": Infinity,
       "claude-opus-4": Infinity,
     },
     postDraftsByModel: {
       "gpt-4o-mini": Infinity,
-      "gpt-4o": Infinity,
+      "o3-mini": Infinity,
       "claude-3-5-sonnet": Infinity,
       "claude-opus-4": Infinity,
     },
