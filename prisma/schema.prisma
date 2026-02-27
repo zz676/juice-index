@@ -479,6 +479,7 @@ model User {
   EngagementConfig  EngagementConfig?
   UserTone          UserTone[]
   UserImageStyle    UserImageStyle[]
+  userChartStyles   UserChartStyle[]
 
   @@index([emailVerified])
   @@map("juice_users")
@@ -1960,6 +1961,27 @@ model UserImageStyle {
   @@unique([userId, name])
   @@index([userId])
   @@map("juice_user_image_styles")
+}
+
+/// Per-user saved chart style presets for the Studio chart customizer.
+model UserChartStyle {
+  /// Primary identifier for the record.
+  id        String   @id @default(cuid())
+  /// Identifier of the related user.
+  userId    String
+  /// Display name for the style (e.g. "Dark Mode", "Corporate Blue").
+  name      String
+  /// Full ChartConfig JSON for this style.
+  config    Json
+  /// Timestamp when the record was created.
+  createdAt DateTime @default(now())
+  /// Timestamp when the record was last updated.
+  updatedAt DateTime @updatedAt
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("juice_user_chart_styles")
 }
 
 /// LEGACY MODELS (Preserved to prevent dropping tables used by external project)
