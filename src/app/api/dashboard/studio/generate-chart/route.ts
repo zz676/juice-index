@@ -202,7 +202,7 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = pluginOptions?.color || "#65a30d";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText(rawText, chart.width - 24, chart.height - 16);
+    ctx.fillText(rawText, chart.width - 24, chart.height - 8);
     ctx.restore();
   },
 };

@@ -88,13 +88,31 @@ interface ChartCustomizerProps {
 }
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+    const [inputVal, setInputVal] = useState(value || "#000000");
+    useEffect(() => { setInputVal(value || "#000000"); }, [value]);
     return (
-        <label className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-slate-600">{label}</span>
-            <div className="relative">
-                <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+            <div className="flex items-center gap-1.5">
+                <input
+                    type="color"
+                    value={value || "#000000"}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5 shrink-0"
+                />
+                <input
+                    type="text"
+                    value={inputVal}
+                    onChange={(e) => {
+                        setInputVal(e.target.value);
+                        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value);
+                    }}
+                    onBlur={() => setInputVal(value || "#000000")}
+                    className="w-20 text-xs font-mono border border-slate-200 rounded px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                    maxLength={7}
+                />
             </div>
-        </label>
+        </div>
     );
 }
 
