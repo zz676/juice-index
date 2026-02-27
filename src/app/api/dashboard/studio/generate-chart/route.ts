@@ -157,78 +157,6 @@ async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> 
   return out.toBuffer("image/png");
 }
 
-const dashedGridPlugin: Plugin = {
-  id: "dashedGrid",
-  beforeDatasetsDraw: (chart, _args, options) => {
-    const opts = options as { display?: boolean; color?: string; dash?: number[] } | undefined;
-    if (!opts?.display) return;
-
-    const ctx = chart.ctx;
-    const { top, bottom, left, right } = chart.chartArea;
-    const dash = opts.dash || [];
-    const color = opts.color || "#e5e7eb";
-
-    // Draw a line from (x1,y1) to (x2,y2) using manual segment drawing to
-    // avoid ctx.setLineDash(), which can corrupt canvas state in @napi-rs/canvas.
-    function drawLine(x1: number, y1: number, x2: number, y2: number) {
-      if (dash.length === 0) {
-        // Solid line
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-        return;
-      }
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len === 0) return;
-      const nx = dx / len;
-      const ny = dy / len;
-      let pos = 0;
-      let di = 0;
-      ctx.beginPath();
-      while (pos < len) {
-        const segLen = Math.min(dash[di % dash.length], len - pos);
-        if (di % 2 === 0) {
-          // "on" segment — draw it
-          ctx.moveTo(x1 + nx * pos, y1 + ny * pos);
-          ctx.lineTo(x1 + nx * (pos + segLen), y1 + ny * (pos + segLen));
-        }
-        pos += segLen;
-        di++;
-      }
-      ctx.stroke();
-    }
-
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-
-    // Horizontal grid lines from y-axis ticks
-    const yScale = chart.scales.y;
-    if (yScale) {
-      for (let i = 0; i < yScale.ticks.length; i++) {
-        const y = yScale.getPixelForTick(i);
-        if (y < top || y > bottom) continue;
-        drawLine(left, y, right, y);
-      }
-    }
-
-    // Vertical grid lines from x-axis ticks
-    const xScale = chart.scales.x;
-    if (xScale) {
-      for (let i = 0; i < xScale.ticks.length; i++) {
-        const x = xScale.getPixelForTick(i);
-        if (x < left || x > right) continue;
-        drawLine(x, top, x, bottom);
-      }
-    }
-
-    ctx.restore();
-  },
-};
-
 const backgroundColorPlugin: Plugin = {
   id: "backgroundColorFill",
   beforeDraw: (chart, _args, options) => {
@@ -519,11 +447,6 @@ function renderChartConfig(params: {
         watermark: {
           enabled: watermark,
         },
-        dashedGrid: {
-          display: showGrid,
-          color: gridColor,
-          dash: gridLineDash,
-        },
       } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
         x: {
@@ -532,7 +455,7 @@ function renderChartConfig(params: {
             color: style.xAxisLineColor || "#e5e7eb",
             width: style.xAxisLineWidth ?? 1,
           },
-          grid: { drawOnChartArea: false },
+          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
           ticks: {
             color: xTickColor,
             font: {
@@ -554,7 +477,7 @@ function renderChartConfig(params: {
             color: style.yAxisLineColor || "#e5e7eb",
             width: style.yAxisLineWidth ?? 1,
           },
-          grid: { drawOnChartArea: false },
+          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
           ticks: {
             color: yTickColor,
             font: {
@@ -580,7 +503,7 @@ function renderChartConfig(params: {
         },
       },
     },
-    plugins: [dashedGridPlugin, backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
+    plugins: [backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
   };
 }
 
