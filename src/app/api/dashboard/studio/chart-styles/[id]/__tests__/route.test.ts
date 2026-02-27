@@ -15,7 +15,7 @@ vi.mock("@/lib/auth/require-user", () => ({
   requireUser: vi.fn(),
 }));
 
-import { PUT, DELETE } from "../route";
+import { PATCH, DELETE } from "../route";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 
@@ -41,7 +41,7 @@ beforeEach(() => {
 
 const makeParams = (id: string) => ({ params: Promise.resolve({ id }) });
 
-describe("PUT /api/dashboard/studio/chart-styles/[id]", () => {
+describe("PATCH /api/dashboard/studio/chart-styles/[id]", () => {
   it("updates name and config", async () => {
     mockPrisma.userChartStyle.findFirst.mockResolvedValue(MOCK_STYLE);
     mockPrisma.userChartStyle.findUnique.mockResolvedValue(null);
@@ -49,11 +49,11 @@ describe("PUT /api/dashboard/studio/chart-styles/[id]", () => {
     mockPrisma.userChartStyle.update.mockResolvedValue(updated);
 
     const req = new Request("http://localhost", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ name: "New Name", config: MOCK_CONFIG }),
     });
 
-    const res = await PUT(req as any, makeParams("s1"));
+    const res = await PATCH(req as any, makeParams("s1"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -64,11 +64,11 @@ describe("PUT /api/dashboard/studio/chart-styles/[id]", () => {
     mockPrisma.userChartStyle.findFirst.mockResolvedValue(null);
 
     const req = new Request("http://localhost", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ name: "New Name" }),
     });
 
-    const res = await PUT(req as any, makeParams("bad-id"));
+    const res = await PATCH(req as any, makeParams("bad-id"));
     expect(res.status).toBe(404);
   });
 
@@ -77,11 +77,11 @@ describe("PUT /api/dashboard/studio/chart-styles/[id]", () => {
     mockPrisma.userChartStyle.findUnique.mockResolvedValue({ id: "other" });
 
     const req = new Request("http://localhost", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({ name: "Taken Name" }),
     });
 
-    const res = await PUT(req as any, makeParams("s1"));
+    const res = await PATCH(req as any, makeParams("s1"));
     expect(res.status).toBe(409);
   });
 
@@ -89,11 +89,35 @@ describe("PUT /api/dashboard/studio/chart-styles/[id]", () => {
     mockPrisma.userChartStyle.findFirst.mockResolvedValue(MOCK_STYLE);
 
     const req = new Request("http://localhost", {
-      method: "PUT",
+      method: "PATCH",
       body: JSON.stringify({}),
     });
 
-    const res = await PUT(req as any, makeParams("s1"));
+    const res = await PATCH(req as any, makeParams("s1"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when name is whitespace only", async () => {
+    mockPrisma.userChartStyle.findFirst.mockResolvedValue(MOCK_STYLE);
+
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ name: "   " }),
+    });
+
+    const res = await PATCH(req as any, makeParams("s1"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when config is not an object", async () => {
+    mockPrisma.userChartStyle.findFirst.mockResolvedValue(MOCK_STYLE);
+
+    const req = new Request("http://localhost", {
+      method: "PATCH",
+      body: JSON.stringify({ config: "not-an-object" }),
+    });
+
+    const res = await PATCH(req as any, makeParams("s1"));
     expect(res.status).toBe(400);
   });
 });

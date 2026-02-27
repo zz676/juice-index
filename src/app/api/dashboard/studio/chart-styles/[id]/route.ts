@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/require-user";
 
 export const runtime = "nodejs";
 
-export async function PUT(
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -28,8 +28,19 @@ export async function PUT(
   }
 
   const data: Record<string, unknown> = {};
-  if (body.name !== undefined) data.name = (body.name as string).trim();
-  if (body.config !== undefined) data.config = body.config;
+  if (body.name !== undefined) {
+    const trimmedName = (body.name as string).trim();
+    if (!trimmedName) {
+      return NextResponse.json({ error: "BAD_REQUEST", message: "name cannot be empty" }, { status: 400 });
+    }
+    data.name = trimmedName;
+  }
+  if (body.config !== undefined) {
+    if (!body.config || typeof body.config !== "object") {
+      return NextResponse.json({ error: "BAD_REQUEST", message: "config must be an object" }, { status: 400 });
+    }
+    data.config = body.config;
+  }
 
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: "BAD_REQUEST", message: "No fields to update" }, { status: 400 });
