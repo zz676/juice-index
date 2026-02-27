@@ -10,7 +10,7 @@ import { z } from "zod";
 import type { ChartConfiguration, Plugin, ChartType as JsChartType } from "chart.js";
 import { Chart, registerables } from "chart.js";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { createCanvas, loadImage, type Image as NapiImage } from "@napi-rs/canvas";
+import { createCanvas, loadImage, GlobalFonts, type Image as NapiImage } from "@napi-rs/canvas";
 import { Brand, MetricType, PeriodType, Prisma } from "@prisma/client";
 import prisma from "@/lib/prisma";
 import { studioQueryLimit, studioChartLimit, enforceStudioQueryLimits } from "@/lib/ratelimit";
@@ -29,6 +29,23 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// Register a bundled font so text renders on Linux/Vercel where no system
+// fonts are available to @napi-rs/canvas.  We register the Noto Sans TTF
+// (already shipped inside next/dist) under the name "Inter" so all existing
+// font references in the chart config resolve without any other changes.
+// On macOS the system Inter takes precedence; on Linux this ensures text shows.
+try {
+  if (!GlobalFonts.has("Inter")) {
+    const notoPath = path.join(
+      process.cwd(),
+      "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf"
+    );
+    GlobalFonts.registerFromPath(notoPath, "Inter");
+  }
+} catch {
+  // Font registration is best-effort; chart renders without text if it fails.
+}
 
 type ExplorerChartType = "bar" | "line" | "horizontalBar";
 
