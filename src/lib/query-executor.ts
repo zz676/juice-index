@@ -111,10 +111,12 @@ export async function executeQuery(request: QueryRequest): Promise<QueryResult> 
     take: Math.min((query.take as number) || MAX_RESULTS, MAX_RESULTS),
   };
 
+  // Prisma client properties are camelCase; registry keys are PascalCase
+  const prismaClientKey = normalizedTable.charAt(0).toLowerCase() + normalizedTable.slice(1);
   const prismaTable = (prisma as unknown as Record<
     string,
     { findMany: (query: unknown) => Promise<Record<string, unknown>[]> }
-  >)[normalizedTable];
+  >)[prismaClientKey];
 
   if (!prismaTable || typeof prismaTable.findMany !== "function") {
     throw new Error(`Table "${normalizedTable}" not found in Prisma client`);

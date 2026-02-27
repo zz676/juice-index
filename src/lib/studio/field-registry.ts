@@ -21,13 +21,13 @@ const PERIOD_TYPE_VALUES = Object.values(PeriodType) as readonly string[];
 const VEHICLE_TYPE_VALUES = Object.values(VehicleType) as readonly string[];
 
 const REGISTRY: Record<string, TableDef> = {
-  eVMetric: {
-    name: "eVMetric",
+  EVMetric: {
+    name: "EVMetric",
     description:
       "Per-brand EV delivery/sales metrics (deliveries, wholesale, retail) by model, region, and period. " +
       "Sources vary by brand (CPCA, CAAM, company announcements). Monthly or weekly cadence. " +
       "value = number of vehicles for most metrics; unit field clarifies when different. " +
-      "Use this table when you need brand-specific breakdowns; use caamNevSales/cpcaNevRetail for market totals.",
+      "Use this table when you need brand-specific breakdowns; use CaamNevSales/CpcaNevRetail for market totals.",
     fields: {
       brand:        { type: "Enum", enumName: "Brand", enumValues: BRAND_VALUES, description: "EV brand/automaker" },
       metric:       { type: "Enum", enumName: "MetricType", enumValues: METRIC_TYPE_VALUES, description: "Metric type (e.g., DELIVERIES, WHOLESALE, RETAIL)" },
@@ -47,8 +47,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  automakerRankings: {
-    name: "automakerRankings",
+  AutomakerRankings: {
+    name: "AutomakerRankings",
     description:
       "Monthly ranking of top-selling automakers in China by total vehicle sales. " +
       "Sources: CPCA (passenger cars) or CAAM (all vehicles). Monthly cadence. " +
@@ -68,13 +68,13 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  caamNevSales: {
-    name: "caamNevSales",
+  CaamNevSales: {
+    name: "CaamNevSales",
     description:
       "Monthly total NEV sales for all of China from CAAM (China Association of Automobile Manufacturers). " +
       "CAAM is the official government-affiliated industry body; data includes domestic sales + exports. " +
       "Monthly cadence. value = total NEV units sold (vehicles). " +
-      "Use for total market size; compare with cpcaNevRetail (retail-only, passenger-only) to assess channel dynamics.",
+      "Use for total market size; compare with CpcaNevRetail (retail-only, passenger-only) to assess channel dynamics.",
     fields: {
       year:      { type: "Int", description: "Calendar year" },
       month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
@@ -85,13 +85,13 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  cpcaNevRetail: {
-    name: "cpcaNevRetail",
+  CpcaNevRetail: {
+    name: "CpcaNevRetail",
     description:
       "Monthly NEV retail sales to end consumers from CPCA (China Passenger Car Association). " +
       "Retail = units registered by end buyers; passenger vehicles only, excludes commercial vehicles. " +
       "Monthly cadence. value = NEV units sold to consumers (vehicles). " +
-      "Use for consumer demand signals; compare with cpcaNevProduction to assess inventory build/draw.",
+      "Use for consumer demand signals; compare with CpcaNevProduction to assess inventory build/draw.",
     fields: {
       year:      { type: "Int", description: "Calendar year" },
       month:     { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
@@ -102,8 +102,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  cpcaNevProduction: {
-    name: "cpcaNevProduction",
+  CpcaNevProduction: {
+    name: "CpcaNevProduction",
     description:
       "Monthly NEV production (manufacturing output) from CPCA (China Passenger Car Association). " +
       "Production = units manufactured; typically leads sales data by weeks. " +
@@ -119,12 +119,12 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  chinaPassengerInventory: {
-    name: "chinaPassengerInventory",
+  ChinaPassengerInventory: {
+    name: "ChinaPassengerInventory",
     description:
       "Monthly total passenger vehicle inventory across China (dealer + factory stock combined). " +
       "Monthly cadence. value = total inventory in million units. " +
-      "Use alongside chinaDealerInventoryFactor for a full picture of channel inventory pressure.",
+      "Use alongside ChinaDealerInventoryFactor for a full picture of channel inventory pressure.",
     fields: {
       year:  { type: "Int", description: "Calendar year" },
       month: { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
@@ -133,8 +133,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  chinaDealerInventoryFactor: {
-    name: "chinaDealerInventoryFactor",
+  ChinaDealerInventoryFactor: {
+    name: "ChinaDealerInventoryFactor",
     description:
       "Monthly dealer inventory coefficient (库存系数) — months of stock at dealerships. Source: CADA (China Automobile Dealers Association). " +
       "Monthly cadence. value = ratio (months of inventory). " +
@@ -146,8 +146,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  chinaViaIndex: {
-    name: "chinaViaIndex",
+  ChinaViaIndex: {
+    name: "ChinaViaIndex",
     description:
       "Monthly Vehicle Inventory Alert (VIA) Index — dealer sentiment and inventory pressure indicator. Source: CADA. " +
       "Works like inverse PMI: >50% = dealer stress/market contraction; <50% = healthy/optimistic. " +
@@ -161,13 +161,13 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  chinaBatteryInstallation: {
-    name: "chinaBatteryInstallation",
+  ChinaBatteryInstallation: {
+    name: "ChinaBatteryInstallation",
     description:
       "Monthly China power battery installation and production totals for the entire industry. Source: CABIA (China Automotive Battery Innovation Alliance). " +
       "Monthly cadence. installation and production are in GWh. " +
       "Installation = batteries fitted into vehicles; production = total manufactured (may be exported/stockpiled). " +
-      "Use for macro EV battery industry trends; use batteryMakerMonthly for per-company breakdown.",
+      "Use for macro EV battery industry trends; use BatteryMakerMonthly for per-company breakdown.",
     fields: {
       year:         { type: "Int", description: "Calendar year" },
       month:        { type: "Int", description: "Month number 1-12 (1=Jan, 12=Dec)" },
@@ -177,13 +177,13 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  batteryMakerMonthly: {
-    name: "batteryMakerMonthly",
+  BatteryMakerMonthly: {
+    name: "BatteryMakerMonthly",
     description:
       "Monthly battery installation and production by individual battery manufacturer. Sources: CABIA (China), SNE Research (Global). " +
       "Monthly cadence. installation and production are in GWh. " +
       "Major makers: CATL, BYD, LG Energy Solution, SK On, Panasonic, CALB, Gotion, EVE, Sunwoda. " +
-      "Use for per-company performance; use batteryMakerRankings for ranked market share view.",
+      "Use for per-company performance; use BatteryMakerRankings for ranked market share view.",
     fields: {
       maker:        { type: "String", description: "Battery manufacturer name (e.g., CATL, BYD, LG Energy Solution)" },
       year:         { type: "Int", description: "Calendar year" },
@@ -196,8 +196,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  batteryMakerRankings: {
-    name: "batteryMakerRankings",
+  BatteryMakerRankings: {
+    name: "BatteryMakerRankings",
     description:
       "Ranked battery manufacturer market share table — monthly, YTD, or yearly snapshots. " +
       "Sources: CABIA (China domestic market), SNE Research (Global market). " +
@@ -220,8 +220,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  plantExports: {
-    name: "plantExports",
+  PlantExports: {
+    name: "PlantExports",
     description:
       "Monthly vehicle export volumes by individual manufacturing plant. Sources: China Customs, company announcements. " +
       "Monthly cadence. value = vehicles exported from that plant (units). " +
@@ -240,8 +240,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  vehicleSpec: {
-    name: "vehicleSpec",
+  VehicleSpec: {
+    name: "VehicleSpec",
     description:
       "Static vehicle specification sheet per model variant — dimensions, powertrain, battery, range, pricing. " +
       "Not time-series data; one row per brand+model+variant combination. " +
@@ -275,13 +275,13 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  nevSalesSummary: {
-    name: "nevSalesSummary",
+  NevSalesSummary: {
+    name: "NevSalesSummary",
     description:
       "Weekly or bi-weekly NEV sales flash reports from CPCA — early month-to-date estimates before full monthly data. " +
       "Each row covers a date range (startDate to endDate). Contains both retail (to consumers) and wholesale (to dealers) figures. " +
       "retailSales and wholesaleSales in vehicles. Retail-wholesale gap indicates channel inventory change. " +
-      "Use for intra-month trend tracking; use cpcaNevRetail for finalized monthly totals.",
+      "Use for intra-month trend tracking; use CpcaNevRetail for finalized monthly totals.",
     fields: {
       dataSource:     { type: "String", description: "Source organization (default: CPCA)" },
       year:           { type: "Int", description: "Calendar year" },
@@ -297,8 +297,8 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
-  nioPowerSnapshot: {
-    name: "nioPowerSnapshot",
+  NioPowerSnapshot: {
+    name: "NioPowerSnapshot",
     description:
       "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access. " +
       "Each row is a point-in-time snapshot (asOfTime). Cumulative counts grow monotonically. " +
