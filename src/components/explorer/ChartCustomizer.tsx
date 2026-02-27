@@ -275,12 +275,12 @@ export function ChartCustomizer({
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Palette</label>
                         <div className="flex gap-2 mb-3">
                             {[
-                                { bg: "#ffffff", bar: "#6ada1b", label: "Lime" },
-                                { bg: "#0f172a", bar: "#6ada1b", label: "Dark" },
-                                { bg: "#ffffff", bar: "#3b82f6", label: "Blue" },
-                                { bg: "#fefce8", bar: "#eab308", label: "Gold" },
+                                { bg: "#ffffff", bar: "#6ada1b", label: "Lime", fontColor: "#1e293b", titleColor: "#0f172a", axisFont: "#64748b", axisLine: "#e5e7eb", grid: "#e5e7eb" },
+                                { bg: "#0f172a", bar: "#6ada1b", label: "Dark", fontColor: "#e2e8f0", titleColor: "#f1f5f9", axisFont: "#94a3b8", axisLine: "#334155", grid: "#1e293b" },
+                                { bg: "#ffffff", bar: "#3b82f6", label: "Blue", fontColor: "#1e293b", titleColor: "#0f172a", axisFont: "#64748b", axisLine: "#e5e7eb", grid: "#e5e7eb" },
+                                { bg: "#fefce8", bar: "#eab308", label: "Gold", fontColor: "#713f12", titleColor: "#451a03", axisFont: "#92400e", axisLine: "#fde68a", grid: "#fef3c7" },
                             ].map((preset) => (
-                                <button key={preset.label} onClick={() => update({ backgroundColor: preset.bg, barColor: preset.bar })} className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border border-slate-200 hover:border-primary/50 transition-colors group" title={preset.label}>
+                                <button key={preset.label} onClick={() => update({ backgroundColor: preset.bg, barColor: preset.bar, fontColor: preset.fontColor, titleColor: preset.titleColor, xAxisFontColor: preset.axisFont, yAxisFontColor: preset.axisFont, xAxisLineColor: preset.axisLine, yAxisLineColor: preset.axisLine, gridColor: preset.grid })} className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg border border-slate-200 hover:border-primary/50 transition-colors group" title={preset.label}>
                                     <div className="flex gap-0.5 w-full h-4 rounded overflow-hidden">
                                         <div className="flex-1 rounded-l" style={{ backgroundColor: preset.bg }} />
                                         <div className="flex-1 rounded-r" style={{ backgroundColor: preset.bar }} />

@@ -157,6 +157,53 @@ async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> 
   return out.toBuffer("image/png");
 }
 
+const dashedGridPlugin: Plugin = {
+  id: "dashedGrid",
+  beforeDatasetsDraw: (chart, _args, options) => {
+    const opts = options as { display?: boolean; color?: string; dash?: number[] } | undefined;
+    if (!opts?.display) return;
+
+    const ctx = chart.ctx;
+    const { top, bottom, left, right } = chart.chartArea;
+    const dash = opts.dash || [];
+    const color = opts.color || "#e5e7eb";
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash(dash);
+    ctx.lineDashOffset = 0;
+
+    // Horizontal grid lines from y-axis ticks
+    const yScale = chart.scales.y;
+    if (yScale) {
+      for (let i = 0; i < yScale.ticks.length; i++) {
+        const y = yScale.getPixelForTick(i);
+        if (y < top || y > bottom) continue;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+      }
+    }
+
+    // Vertical grid lines from x-axis ticks
+    const xScale = chart.scales.x;
+    if (xScale) {
+      for (let i = 0; i < xScale.ticks.length; i++) {
+        const x = xScale.getPixelForTick(i);
+        if (x < left || x > right) continue;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  },
+};
+
 const backgroundColorPlugin: Plugin = {
   id: "backgroundColorFill",
   beforeDraw: (chart, _args, options) => {
@@ -415,6 +462,11 @@ function renderChartConfig(params: {
         watermark: {
           enabled: watermark,
         },
+        dashedGrid: {
+          display: showGrid,
+          color: gridColor,
+          dash: gridLineDash,
+        },
       } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
         x: {
@@ -423,7 +475,7 @@ function renderChartConfig(params: {
             color: style.xAxisLineColor || "#e5e7eb",
             width: style.xAxisLineWidth ?? 1,
           },
-          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
+          grid: { drawOnChartArea: false },
           ticks: {
             color: xTickColor,
             font: {
@@ -445,7 +497,7 @@ function renderChartConfig(params: {
             color: style.yAxisLineColor || "#e5e7eb",
             width: style.yAxisLineWidth ?? 1,
           },
-          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
+          grid: { drawOnChartArea: false },
           ticks: {
             color: yTickColor,
             font: {
@@ -471,7 +523,7 @@ function renderChartConfig(params: {
         },
       },
     },
-    plugins: [backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
+    plugins: [dashedGridPlugin, backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
   };
 }
 
