@@ -6,6 +6,7 @@ import ConnectedAccounts from "./connected-accounts";
 import PasswordSection from "./password-section";
 import NotificationPrefs from "./notification-prefs";
 import DangerZone from "./danger-zone";
+import ChartStylesSection from "./chart-styles-section";
 import { normalizeTier } from "@/lib/api/tier";
 
 interface SettingsPageProps {
@@ -130,6 +131,17 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     </div>
                     <div className="p-6">
                         <PasswordSection hasPassword={hasPassword} email={user.email} />
+                    </div>
+                </section>
+
+                {/* Chart Styles */}
+                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
+                        <span className="material-icons-round text-slate-custom-400">bookmarks</span>
+                        <h3 className="text-base font-semibold text-slate-custom-900">Chart Styles</h3>
+                    </div>
+                    <div className="p-6">
+                        <ChartStylesSection />
                     </div>
                 </section>
 
