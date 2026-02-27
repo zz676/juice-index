@@ -202,7 +202,7 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = pluginOptions?.color || "#65a30d";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText(rawText, chart.width - 24, chart.height - 16);
+    ctx.fillText(rawText, chart.width - 24, chart.height - 8);
     ctx.restore();
   },
 };
@@ -277,6 +277,54 @@ const watermarkPlugin: Plugin = {
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillText("juiceindex.io", padding + (logo ? logoSize + 6 : 0), logoY);
+    ctx.restore();
+  },
+};
+
+// Draws dashed/dotted/solid grid lines manually because @napi-rs/canvas
+// (Skia) does not honour Chart.js's native borderDash property.
+const dashedGridPlugin: Plugin = {
+  id: "dashedGrid",
+  afterDraw: (chart, _args, options) => {
+    const opts = options as { display?: boolean; color?: string; lineDash?: number[] } | undefined;
+    if (!opts?.display) return;
+
+    const ctx = chart.ctx;
+    const { top, bottom, left, right } = chart.chartArea;
+    const lineDash: number[] = Array.isArray(opts.lineDash) ? opts.lineDash : [];
+    const color = typeof opts.color === "string" ? opts.color : "#e5e7eb";
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash(lineDash);
+
+    // Horizontal lines at each y-axis tick
+    const yScale = chart.scales["y"];
+    if (yScale) {
+      for (let i = 0; i < yScale.ticks.length; i++) {
+        const y = yScale.getPixelForTick(i);
+        if (y < top - 1 || y > bottom + 1) continue;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+      }
+    }
+
+    // Vertical lines at each x-axis tick
+    const xScale = chart.scales["x"];
+    if (xScale) {
+      for (let i = 0; i < xScale.ticks.length; i++) {
+        const x = xScale.getPixelForTick(i);
+        if (x < left - 1 || x > right + 1) continue;
+        ctx.beginPath();
+        ctx.moveTo(x, top);
+        ctx.lineTo(x, bottom);
+        ctx.stroke();
+      }
+    }
+
     ctx.restore();
   },
 };
@@ -383,7 +431,7 @@ function renderChartConfig(params: {
   const bgIsDark = hexLuminance(bgColor) < 0.5;
   const rawTextColor = style.fontColor || (bgIsDark ? "#e2e8f0" : "#0f172a");
   const textColor = ensureContrast(rawTextColor, bgColor);
-  const titleColor = ensureContrast(style.titleColor || rawTextColor, bgColor, "#f1f5f9");
+  const titleColor = style.titleColor || ensureContrast(rawTextColor, bgColor, "#f1f5f9");
   const xTickColor = ensureContrast(style.xAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const yTickColor = ensureContrast(style.yAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const barColor = style.barColor || "#6ada1b";
@@ -461,6 +509,11 @@ function renderChartConfig(params: {
         watermark: {
           enabled: watermark,
         },
+        dashedGrid: {
+          display: showGrid,
+          color: gridColor,
+          lineDash: gridLineDash,
+        },
       } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
         x: {
@@ -469,7 +522,7 @@ function renderChartConfig(params: {
             color: style.xAxisLineColor || "#e5e7eb",
             width: style.xAxisLineWidth ?? 1,
           },
-          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
+          grid: { display: false },
           ticks: {
             color: xTickColor,
             font: {
@@ -491,7 +544,7 @@ function renderChartConfig(params: {
             color: style.yAxisLineColor || "#e5e7eb",
             width: style.yAxisLineWidth ?? 1,
           },
-          grid: { color: gridColor, display: showGrid, borderDash: gridLineDash },
+          grid: { display: false },
           ticks: {
             color: yTickColor,
             font: {
@@ -512,12 +565,12 @@ function renderChartConfig(params: {
         padding: {
           top: style.paddingTop ?? 20,
           right: style.paddingRight ?? 28,
-          bottom: style.paddingBottom ?? 44,
+          bottom: Math.max(style.paddingBottom ?? 20, 44),
           left: style.paddingLeft ?? (isHorizontal ? 36 : 24),
         },
       },
     },
-    plugins: [backgroundColorPlugin, sourceAttributionPlugin, watermarkPlugin],
+    plugins: [backgroundColorPlugin, dashedGridPlugin, sourceAttributionPlugin, watermarkPlugin],
   };
 }
 
