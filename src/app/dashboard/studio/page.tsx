@@ -33,6 +33,20 @@ import PublishModal, { type PublishInfo } from "./publish-modal";
 
 type ChartPoint = { label: string; value: number };
 
+function hexLuminance(hex: string): number {
+  const h = (hex || "#000").replace("#", "");
+  if (h.length < 6) return 1;
+  return (0.299 * parseInt(h.slice(0, 2), 16) + 0.587 * parseInt(h.slice(2, 4), 16) + 0.114 * parseInt(h.slice(4, 6), 16)) / 255;
+}
+function ensureContrast(color: string, bg: string, light = "#e2e8f0", dark = "#1e293b"): string {
+  try {
+    if (Math.abs(hexLuminance(color) - hexLuminance(bg)) < 0.25) {
+      return hexLuminance(bg) < 0.5 ? light : dark;
+    }
+  } catch { /* ignore */ }
+  return color;
+}
+
 const DEMO_CHART_DATA: ChartPoint[] = [
   { label: "Tesla", value: 1808 },
   { label: "BYD", value: 1572 },
@@ -1481,7 +1495,7 @@ function StudioPageInner() {
                   <h4
                     className="text-center font-bold pt-3 pb-1"
                     style={{
-                      color: chartConfig.titleColor,
+                      color: ensureContrast(chartConfig.titleColor, chartConfig.backgroundColor, "#f1f5f9"),
                       fontSize: `${chartConfig.titleSize}px`,
                       fontFamily: chartConfig.titleFont,
                     }}
@@ -1505,7 +1519,7 @@ function StudioPageInner() {
                             dataKey="label"
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
-                              fill: chartConfig.xAxisFontColor,
+                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
@@ -1514,7 +1528,7 @@ function StudioPageInner() {
                           <YAxis
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
-                              fill: chartConfig.yAxisFontColor,
+                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
@@ -1543,7 +1557,7 @@ function StudioPageInner() {
                             type="number"
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
-                              fill: chartConfig.xAxisFontColor,
+                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
@@ -1555,7 +1569,7 @@ function StudioPageInner() {
                             width={40}
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
-                              fill: chartConfig.yAxisFontColor,
+                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
@@ -1590,7 +1604,7 @@ function StudioPageInner() {
                             dataKey="label"
                             tick={{
                               fontSize: chartConfig.xAxisFontSize,
-                              fill: chartConfig.xAxisFontColor,
+                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
@@ -1599,7 +1613,7 @@ function StudioPageInner() {
                           <YAxis
                             tick={{
                               fontSize: chartConfig.yAxisFontSize,
-                              fill: chartConfig.yAxisFontColor,
+                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
                               fontFamily: chartConfig.axisFont,
                             }}
                             axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}

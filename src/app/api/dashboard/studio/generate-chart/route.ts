@@ -370,6 +370,35 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
   };
 }
 
+/** Returns the relative luminance (0–1) of a hex color. */
+function hexLuminance(hex: string): number {
+  const h = (hex || "#000").replace("#", "");
+  if (h.length < 6) return 1;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+/**
+ * If `color` has low contrast against `bg`, return `lightFallback` (for dark
+ * backgrounds) or `darkFallback` (for light backgrounds) instead.
+ */
+function ensureContrast(
+  color: string,
+  bg: string,
+  lightFallback = "#e2e8f0",
+  darkFallback = "#1e293b"
+): string {
+  try {
+    const diff = Math.abs(hexLuminance(color) - hexLuminance(bg));
+    if (diff < 0.25) {
+      return hexLuminance(bg) < 0.5 ? lightFallback : darkFallback;
+    }
+  } catch { /* ignore */ }
+  return color;
+}
+
 function renderChartConfig(params: {
   chartType: ExplorerChartType;
   title: string;
@@ -383,10 +412,13 @@ function renderChartConfig(params: {
   const isHorizontal = chartType === "horizontalBar";
   const jsType: JsChartType = chartType === "line" ? "line" : "bar";
 
-  const textColor = style.fontColor || "#0f172a";
-  const titleColor = style.titleColor || textColor;
-  const xTickColor = style.xAxisFontColor || textColor;
-  const yTickColor = style.yAxisFontColor || textColor;
+  const bgColor = style.backgroundColor || "#ffffff";
+  const bgIsDark = hexLuminance(bgColor) < 0.5;
+  const rawTextColor = style.fontColor || (bgIsDark ? "#e2e8f0" : "#0f172a");
+  const textColor = ensureContrast(rawTextColor, bgColor);
+  const titleColor = ensureContrast(style.titleColor || rawTextColor, bgColor, "#f1f5f9");
+  const xTickColor = ensureContrast(style.xAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
+  const yTickColor = ensureContrast(style.yAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const barColor = style.barColor || "#6ada1b";
   const showValues = style.showValues ?? true;
   const showGrid = style.showGrid ?? true;
@@ -452,7 +484,7 @@ function renderChartConfig(params: {
         },
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
-          color: style.sourceColor || "#65a30d",
+          color: ensureContrast(style.sourceColor || "#65a30d", bgColor),
           fontSize:
             style.sourceFontSize && style.sourceFontSize > 0
               ? style.sourceFontSize
