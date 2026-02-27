@@ -2,25 +2,25 @@ import { ALLOWED_TABLE_NAMES } from "@/lib/studio/field-registry";
 
 // Maps lowercased SQL table names (as they appear in FROM clauses) to Prisma model keys
 const SQL_TABLE_TO_PRISMA: Record<string, string> = {
-  evmetric: "eVMetric",
-  automakerankings: "automakerRankings",
-  caamnevsales: "caamNevSales",
-  cpcanevretail: "cpcaNevRetail",
-  cpcanevproduction: "cpcaNevProduction",
-  nevSalessummary: "nevSalesSummary",
-  nevsalessummary: "nevSalesSummary",
-  chinapassengerinventory: "chinaPassengerInventory",
-  chinadealerInventoryfactor: "chinaDealerInventoryFactor",
-  chinaDealerInventoryfactor: "chinaDealerInventoryFactor",
-  chinadealerInventory: "chinaDealerInventoryFactor",
-  chinaviaindex: "chinaViaIndex",
-  chinabatteryinstallation: "chinaBatteryInstallation",
-  batterymakermonthly: "batteryMakerMonthly",
-  batterymakerankings: "batteryMakerRankings",
-  batterymakerankings2: "batteryMakerRankings",
-  plantexports: "plantExports",
-  vehiclespec: "vehicleSpec",
-  niopowersnapshot: "nioPowerSnapshot",
+  evmetric: "EVMetric",
+  automakerankings: "AutomakerRankings",
+  caamnevsales: "CaamNevSales",
+  cpcanevretail: "CpcaNevRetail",
+  cpcanevproduction: "CpcaNevProduction",
+  nevSalessummary: "NevSalesSummary",
+  nevsalessummary: "NevSalesSummary",
+  chinapassengerinventory: "ChinaPassengerInventory",
+  chinadealerInventoryfactor: "ChinaDealerInventoryFactor",
+  chinaDealerInventoryfactor: "ChinaDealerInventoryFactor",
+  chinadealerInventory: "ChinaDealerInventoryFactor",
+  chinaviaindex: "ChinaViaIndex",
+  chinabatteryinstallation: "ChinaBatteryInstallation",
+  batterymakermonthly: "BatteryMakerMonthly",
+  batterymakerankings: "BatteryMakerRankings",
+  batterymakerankings2: "BatteryMakerRankings",
+  plantexports: "PlantExports",
+  vehiclespec: "VehicleSpec",
+  niopowersnapshot: "NioPowerSnapshot",
 };
 
 const FORBIDDEN_PATTERNS: RegExp[] = [
@@ -58,8 +58,8 @@ export function validateRawSql(input: string): SqlValidationResult {
     return { valid: false, error: "SQL is empty." };
   }
 
-  // Must start with SELECT (case-insensitive)
-  if (!/^select\b/i.test(trimmed)) {
+  // Must start with SELECT or WITH (CTEs), and must not contain DML
+  if (!/^(select|with)\b/i.test(trimmed)) {
     return { valid: false, error: "Only SELECT queries are allowed." };
   }
 

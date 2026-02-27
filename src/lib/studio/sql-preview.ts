@@ -1,20 +1,21 @@
 type PrismaOrder = "asc" | "desc";
 
 const PRISMA_TO_SQL_TABLE: Record<string, string> = {
-  eVMetric: "EVMetric",
-  automakerRankings: "AutomakerRankings",
-  caamNevSales: "CaamNevSales",
-  cpcaNevRetail: "CpcaNevRetail",
-  cpcaNevProduction: "CpcaNevProduction",
-  nevSalesSummary: "NevSalesSummary",
-  chinaPassengerInventory: "ChinaPassengerInventory",
-  chinaDealerInventoryFactor: "ChinaDealerInventoryFactor",
-  chinaViaIndex: "ChinaViaIndex",
-  chinaBatteryInstallation: "ChinaBatteryInstallation",
-  batteryMakerMonthly: "BatteryMakerMonthly",
-  batteryMakerRankings: "BatteryMakerRankings",
-  plantExports: "PlantExports",
-  vehicleSpec: "VehicleSpec",
+  EVMetric: "EVMetric",
+  AutomakerRankings: "AutomakerRankings",
+  CaamNevSales: "CaamNevSales",
+  CpcaNevRetail: "CpcaNevRetail",
+  CpcaNevProduction: "CpcaNevProduction",
+  NevSalesSummary: "NevSalesSummary",
+  ChinaPassengerInventory: "ChinaPassengerInventory",
+  ChinaDealerInventoryFactor: "ChinaDealerInventoryFactor",
+  ChinaViaIndex: "ChinaViaIndex",
+  ChinaBatteryInstallation: "ChinaBatteryInstallation",
+  BatteryMakerMonthly: "BatteryMakerMonthly",
+  BatteryMakerRankings: "BatteryMakerRankings",
+  PlantExports: "PlantExports",
+  VehicleSpec: "VehicleSpec",
+  NioPowerSnapshot: "NioPowerSnapshot",
 };
 
 function qIdent(ident: string): string {

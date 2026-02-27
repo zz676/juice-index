@@ -625,17 +625,17 @@ async function getLiveHints() {
       years,
       brands: brandsRows.map((row) => row.brand),
       tableValues: {
-        plantExports: {
+        PlantExports: {
           plants: plantExportPlants.map((r) => r.plant),
           brands: plantExportBrands.map((r) => r.brand),
         },
-        batteryMakerMonthly: {
+        BatteryMakerMonthly: {
           makers: batteryMakers.map((r) => r.maker),
         },
-        automakerRankings: {
+        AutomakerRankings: {
           automakers: automakers.map((r) => r.automaker),
         },
-        batteryMakerRankings: {
+        BatteryMakerRankings: {
           scopes: batteryScopes.map((r) => r.scope),
         },
       },
@@ -684,15 +684,15 @@ Allowed tables (Prisma client keys):
 ${tableDoc}
 
 Live DB hints:
-- latest eVMetric year: ${hints.latestYear}
-- recent eVMetric years: ${hints.years.join(", ") || "unknown"}
+- latest EVMetric year: ${hints.latestYear}
+- recent EVMetric years: ${hints.years.join(", ") || "unknown"}
 - delivery brands in latest year: ${hints.brands.join(", ") || "unknown"}
-${hints.tableValues?.plantExports?.plants?.length ? `- plantExports plants: ${hints.tableValues.plantExports.plants.join(", ")}` : ""}
-${hints.tableValues?.plantExports?.brands?.length ? `- plantExports brands: ${hints.tableValues.plantExports.brands.join(", ")}` : ""}
-${hints.tableValues?.batteryMakerMonthly?.makers?.length ? `- batteryMakerMonthly makers: ${hints.tableValues.batteryMakerMonthly.makers.join(", ")}` : ""}
-${hints.tableValues?.automakerRankings?.automakers?.length ? `- automakerRankings automakers: ${hints.tableValues.automakerRankings.automakers.join(", ")}` : ""}
-${hints.tableValues?.batteryMakerRankings?.scopes?.length ? `- batteryMakerRankings scopes: ${hints.tableValues.batteryMakerRankings.scopes.join(", ")}` : ""}
-${hints.nioPowerDateRange ? `- nioPowerSnapshot date range: ${hints.nioPowerDateRange.min} to ${hints.nioPowerDateRange.max}` : ""}
+${hints.tableValues?.PlantExports?.plants?.length ? `- PlantExports plants: ${hints.tableValues.PlantExports.plants.join(", ")}` : ""}
+${hints.tableValues?.PlantExports?.brands?.length ? `- PlantExports brands: ${hints.tableValues.PlantExports.brands.join(", ")}` : ""}
+${hints.tableValues?.BatteryMakerMonthly?.makers?.length ? `- BatteryMakerMonthly makers: ${hints.tableValues.BatteryMakerMonthly.makers.join(", ")}` : ""}
+${hints.tableValues?.AutomakerRankings?.automakers?.length ? `- AutomakerRankings automakers: ${hints.tableValues.AutomakerRankings.automakers.join(", ")}` : ""}
+${hints.tableValues?.BatteryMakerRankings?.scopes?.length ? `- BatteryMakerRankings scopes: ${hints.tableValues.BatteryMakerRankings.scopes.join(", ")}` : ""}
+${hints.nioPowerDateRange ? `- NioPowerSnapshot date range: ${hints.nioPowerDateRange.min} to ${hints.nioPowerDateRange.max}` : ""}
 
 Rules:
 1. If question is not about EV/NEV market data, set unsupported=true and include reason.
