@@ -570,6 +570,10 @@ function renderChartConfig(params: {
         },
         y: {
           beginAtZero: !isHorizontal,
+          ...(niceYTicks && !isHorizontal ? {
+            min: 0,
+            max: niceYTicks[niceYTicks.length - 1],
+          } : {}),
           border: {
             color: style.yAxisLineColor || "#e5e7eb",
             width: style.yAxisLineWidth ?? 1,
@@ -584,13 +588,12 @@ function renderChartConfig(params: {
                   ? style.yAxisFontSize
                   : 12,
             },
-            ...(niceYTicks && !isHorizontal ? { min: 0, max: niceYTicks[niceYTicks.length - 1] } : {}),
+            ...(niceYTicks && !isHorizontal && niceYTicks.length > 1 ? {
+              stepSize: niceYTicks[1] - niceYTicks[0],
+            } : {}),
             callback: (value: unknown) => {
               const n = Number(value);
-              if (!Number.isFinite(n)) return String(value);
-              // Only show values that land exactly on a nice tick
-              if (niceYTicks && !isHorizontal && !niceYTicks.includes(n)) return "";
-              return n.toLocaleString("en-US");
+              return Number.isFinite(n) ? n.toLocaleString("en-US") : String(value);
             },
           },
         },
@@ -601,7 +604,7 @@ function renderChartConfig(params: {
           right: style.paddingRight ?? 28,
           bottom: Math.max(
             style.paddingBottom ?? 20,
-            (style.sourceFontSize ?? 12) + (style.xAxisFontSize ?? 12) * 2.5 + 20
+            Math.round(((style.sourceFontSize ?? 12) + (style.xAxisFontSize ?? 12) * 2.5 + 20) * 0.7)
           ),
           left: style.paddingLeft ?? (isHorizontal ? 36 : 24),
         },
