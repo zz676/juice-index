@@ -570,9 +570,14 @@ function renderChartConfig(params: {
         },
         y: {
           beginAtZero: !isHorizontal,
+          // afterBuildTicks replaces Chart.js's auto-generated ticks with
+          // exactly our Recharts-compatible nice ticks — the only reliable
+          // way to override Chart.js's own tick algorithm.
           ...(niceYTicks && !isHorizontal ? {
-            min: 0,
-            max: niceYTicks[niceYTicks.length - 1],
+            afterBuildTicks: (axis: unknown) => {
+              (axis as { ticks: Array<{ value: number }> }).ticks =
+                niceYTicks.map((v: number) => ({ value: v }));
+            },
           } : {}),
           border: {
             color: style.yAxisLineColor || "#e5e7eb",
@@ -588,9 +593,6 @@ function renderChartConfig(params: {
                   ? style.yAxisFontSize
                   : 12,
             },
-            ...(niceYTicks && !isHorizontal && niceYTicks.length > 1 ? {
-              stepSize: niceYTicks[1] - niceYTicks[0],
-            } : {}),
             callback: (value: unknown) => {
               const n = Number(value);
               return Number.isFinite(n) ? n.toLocaleString("en-US") : String(value);
