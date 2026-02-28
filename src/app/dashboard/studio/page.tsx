@@ -74,7 +74,7 @@ function WorkflowStepper({
   return (
     <div className="space-y-3">
       <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
-        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-custom-500 mb-3">Workflow</div>
+        <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-500 mb-3">Workflow</div>
         <div className="relative">
           <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-custom-200" />
           <div className="space-y-1">
@@ -96,7 +96,7 @@ function WorkflowStepper({
                   }`}
                 >
                   <span
-                    className={`relative z-10 flex-shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-bold ring-2 transition-all ${
+                    className={`relative z-10 flex-shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] font-bold ring-2 transition-all ${
                       isComplete
                         ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_6px_rgba(106,218,27,0.3)]"
                         : isCurrent
@@ -105,16 +105,16 @@ function WorkflowStepper({
                     }`}
                   >
                     {isComplete ? (
-                      <span className="material-icons-round text-[12px]">check</span>
+                      <span className="material-icons-round text-[13px]">check</span>
                     ) : (
                       step.stepNum
                     )}
                   </span>
                   <div className="min-w-0 flex-1 py-0.5">
-                    <div className={`text-[11px] font-bold leading-tight ${isCurrent ? "text-slate-custom-900" : "text-slate-custom-600"}`}>
+                    <div className={`text-[12px] font-bold leading-tight ${isCurrent ? "text-slate-custom-900" : "text-slate-custom-600"}`}>
                       {step.title}
                     </div>
-                    <div className="text-[10px] text-slate-custom-400 mt-0.5">{step.detail}</div>
+                    <div className="text-[11px] text-slate-custom-400 mt-0.5">{step.detail}</div>
                   </div>
                 </button>
               );
@@ -124,9 +124,9 @@ function WorkflowStepper({
       </div>
       {currentStepInfo && (
         <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
-          <div className="text-sm font-bold text-slate-custom-800">{currentStepInfo.title}</div>
-          <div className="text-[11px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
+          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
+          <div className="text-[15px] font-bold text-slate-custom-800">{currentStepInfo.title}</div>
+          <div className="text-[12px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
         </div>
       )}
     </div>
@@ -993,21 +993,21 @@ function StudioPageInner() {
 
       <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
         <div className="flex items-center gap-4">
-          <h1 className="font-extrabold text-lg flex items-center gap-1.5">
+          <h1 className="font-extrabold text-[20px] flex items-center gap-1.5">
             <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
               Juice AI
             </span>
-            <span className="material-icons-round text-primary text-base animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
+            <span className="material-icons-round text-primary text-[18px] animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
               auto_awesome
             </span>
           </h1>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
             Draft
           </span>
         </div>
         {toast && (
           <div
-            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm transition-all whitespace-nowrap ${
               toast.type === "success"
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
@@ -1019,8 +1019,8 @@ function StudioPageInner() {
           </div>
         )}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-custom-400 flex items-center gap-1">
-            <span className="material-icons-round text-sm">cloud_done</span> Saved
+          <span className="text-[13px] text-slate-custom-400 flex items-center gap-1">
+            <span className="material-icons-round text-[15px]">cloud_done</span> Saved
           </span>
         </div>
       </header>
@@ -1036,25 +1036,24 @@ function StudioPageInner() {
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
-              className="bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 relative group overflow-hidden pt-6 px-6 pb-3"
+              className={`bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-all duration-200 relative group pt-6 px-6 pb-3 ${activeSection === 1 ? "border-l-4 border-l-primary" : ""}`}
             >
-              <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 1 ? "bg-primary" : "bg-transparent"}`} />
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 1 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[13px] font-bold ring-2 transition-colors duration-300 ${activeSection === 1 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                     1
                   </span>
-                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 1 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                  <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 1 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                     Ask Intelligence
                   </h3>
                 </div>
                 <button
                   onClick={() => setExamplesOpen((v) => !v)}
-                  className="flex items-center gap-1 text-[11px] font-medium text-slate-custom-500 hover:text-primary transition-colors"
+                  className="flex items-center gap-1 text-[12px] font-medium text-slate-custom-500 hover:text-primary transition-colors"
                 >
-                  <span className="material-icons-round text-[14px]">lightbulb</span>
+                  <span className="material-icons-round text-[15px]">lightbulb</span>
                   Examples
-                  <span className="material-icons-round text-[14px] transition-transform duration-200" style={{ transform: examplesOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                  <span className="material-icons-round text-[15px] transition-transform duration-200" style={{ transform: examplesOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
                     expand_more
                   </span>
                 </button>
@@ -1069,13 +1068,13 @@ function StudioPageInner() {
                             key={category}
                             title={category}
                             onClick={() => setActiveCategory(activeCategory === category ? null : category)}
-                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-semibold transition-all select-none ${
+                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[12px] font-semibold transition-all select-none ${
                               activeCategory === category
                                 ? "border-primary/40 bg-primary/10 text-slate-custom-900"
                                 : "border-slate-custom-100 text-slate-custom-700 hover:bg-slate-custom-50"
                             }`}
                           >
-                            <span className={`material-icons-round text-[14px] ${activeCategory === category ? "text-primary" : "text-slate-custom-400"}`}>{categoryIcons[category]}</span>
+                            <span className={`material-icons-round text-[15px] ${activeCategory === category ? "text-primary" : "text-slate-custom-400"}`}>{categoryIcons[category]}</span>
                             <span className="truncate">{category}</span>
                           </button>
                         ))}
@@ -1090,9 +1089,9 @@ function StudioPageInner() {
                                 setExamplesOpen(false);
                                 setActiveCategory(null);
                               }}
-                              className="w-full text-left px-3 py-0 text-[11px] text-slate-custom-600 hover:bg-primary/5 hover:text-slate-custom-900 transition-all border-b border-slate-custom-50 last:border-b-0 flex items-start gap-2"
+                              className="w-full text-left px-3 py-0 text-[12px] text-slate-custom-600 hover:bg-primary/5 hover:text-slate-custom-900 transition-all border-b border-slate-custom-50 last:border-b-0 flex items-start gap-2"
                             >
-                              <span className="material-icons-round text-[12px] text-slate-custom-300 mt-px">arrow_right</span>
+                              <span className="material-icons-round text-[13px] text-slate-custom-300 mt-px">arrow_right</span>
                               {q}
                             </button>
                           ))}
@@ -1105,7 +1104,7 @@ function StudioPageInner() {
                   ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full min-h-[66px] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="w-full min-h-[66px] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -1113,13 +1112,13 @@ function StudioPageInner() {
                     <div className="relative">
                       <button
                         onClick={() => setIsQueryModelDropdownOpen((v) => !v)}
-                        className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                        className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
                       >
-                        <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                        <span className="material-icons-round text-[15px] text-primary">smart_toy</span>
                         <span className="max-w-[100px] truncate">
                           {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName ?? "GPT-4o Mini"}
                         </span>
-                      <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                      <span className="material-icons-round text-[15px] text-slate-custom-400">expand_more</span>
                     </button>
                     {isQueryModelDropdownOpen && (
                       <>
@@ -1154,11 +1153,11 @@ function StudioPageInner() {
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">
-                                    <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                    <span className={`text-[13px] font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
                                       {model.displayName}
                                     </span>
                                     {accessible && mu && (
-                                      <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                      <span className={`text-[10px] font-mono px-1 py-0.5 rounded ${
                                         modelExhausted
                                           ? "bg-red-100 text-red-600"
                                           : "bg-slate-custom-100 text-slate-custom-500"
@@ -1167,15 +1166,15 @@ function StudioPageInner() {
                                       </span>
                                     )}
                                   </div>
-                                  <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
+                                  <div className={`text-[11px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
                                     {model.description}
                                   </div>
                                 </div>
                                 {isSelected && accessible && (
-                                  <span className="material-icons-round text-sm text-primary">check</span>
+                                  <span className="material-icons-round text-[15px] text-primary">check</span>
                                 )}
                                 {!accessible && (
-                                  <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
+                                  <span className="material-icons-round text-[15px] text-slate-custom-300">lock</span>
                                 )}
                               </button>
                             );
@@ -1184,7 +1183,7 @@ function StudioPageInner() {
                       </>
                     )}
                     </div>
-                    <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
+                    <span className="text-[11px] font-mono text-slate-custom-400 pl-2.5">
                       {queryUsageCount}/{Number.isFinite(queryLimitCount) ? queryLimitCount : "\u221E"} queries
                       {(() => {
                         const mu = modelUsage.find((u) => u.modelId === queryModelId);
@@ -1197,25 +1196,25 @@ function StudioPageInner() {
                     <button
                       onClick={generateRunnableQuery}
                       disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted || selectedQueryModelExhausted}
-                      className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                     >
                       {isGeneratingQueryPlan && (
-                        <span className="material-icons-round text-xs animate-spin">refresh</span>
+                        <span className="material-icons-round text-[13px] animate-spin">refresh</span>
                       )}
                       {!isGeneratingQueryPlan && (
-                        <span className="material-icons-round text-xs">auto_awesome</span>
+                        <span className="material-icons-round text-[13px]">auto_awesome</span>
                       )}
                       {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
                     </button>
                     {queryQuotaExhausted && (
-                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                        <span className="material-icons-round text-xs">info</span>
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-[13px]">info</span>
                         Daily query limit reached ({queryLimitCount}/{queryLimitCount})
                       </span>
                     )}
                     {selectedQueryModelExhausted && !queryQuotaExhausted && (
-                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                        <span className="material-icons-round text-xs">info</span>
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-[13px]">info</span>
                         {MODEL_REGISTRY.find((m) => m.id === queryModelId)?.displayName} limit reached. Try another model.
                       </span>
                     )}
@@ -1230,12 +1229,11 @@ function StudioPageInner() {
                 id="step-2"
                 onFocusCapture={() => setActiveSection(2)}
                 onClickCapture={() => setActiveSection(2)}
-                className="bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden p-6"
+                className={`bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-all duration-200 relative p-6 ${activeSection === 2 ? "border-l-4 border-l-primary" : ""}`}
               >
-                <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 2 ? "bg-primary" : "bg-transparent"}`} />
                 <div className="flex items-center gap-2 mb-4">
                   <span
-                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${
+                    className={`flex items-center justify-center w-6 h-6 rounded-full text-[13px] font-bold ring-2 transition-colors duration-300 ${
                       activeSection === 2
                         ? "bg-primary text-slate-custom-900 ring-primary/20"
                         : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"
@@ -1244,7 +1242,7 @@ function StudioPageInner() {
                     2
                   </span>
                   <h3
-                    className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${
+                    className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${
                       activeSection === 2 ? "text-slate-custom-900" : "text-slate-custom-500"
                     }`}
                   >
@@ -1255,11 +1253,11 @@ function StudioPageInner() {
                 <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-5 overflow-hidden">
                   <div className="px-3 py-2 border-b border-slate-custom-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs text-slate-custom-700">
+                      <span className="font-semibold text-[13px] text-slate-custom-700">
                         Generated Query
                       </span>
                       {tableName && !sqlUserEdited && (
-                        <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[11px] font-bold">
                           {tableName}
                         </span>
                       )}
@@ -1268,7 +1266,7 @@ function StudioPageInner() {
                           promptRef.current?.scrollIntoView({ behavior: "smooth" });
                           promptRef.current?.focus();
                         }}
-                        className="text-[10px] text-primary hover:underline"
+                        className="text-[11px] text-primary hover:underline"
                       >
                         ← Revise question
                       </button>
@@ -1277,30 +1275,30 @@ function StudioPageInner() {
                       <button
                         onClick={runGeneratedQuery}
                         disabled={isRunningQuery || !generatedSql.trim() || queryQuotaExhausted}
-                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                         {isRunningQuery ? (
-                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                          <span className="material-icons-round text-[11px] animate-spin">refresh</span>
                         ) : (
                           <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z" /></svg>
                         )}
                         {isRunningQuery ? "Running..." : "Run Query"}
                       </button>
                       {queryQuotaExhausted && (
-                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                          <span className="material-icons-round text-xs">info</span>
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-[13px]">info</span>
                           Daily query limit reached ({queryLimitCount}/{queryLimitCount})
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
+                  <div className="px-3 py-2 border-b border-slate-custom-100 text-[13px] text-slate-custom-600">
                     {analysisExplanation || "Generate a query, review it, then run it."}
                   </div>
                   <div className="px-3 pb-3">
                     <div>
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-custom-400">
                           SQL Preview
                         </span>
                         <div className="relative group">
@@ -1309,9 +1307,9 @@ function StudioPageInner() {
                             disabled={!generatedSql}
                             className="p-0.5 rounded text-primary hover:text-green-400 disabled:opacity-40 transition-colors flex items-center"
                           >
-                            <span className="material-icons-round text-[14px]">content_copy</span>
+                            <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
                         </div>
                       </div>
                       <textarea
@@ -1321,7 +1319,7 @@ function StudioPageInner() {
                           setSqlUserEdited(true);
                         }}
                         placeholder="Paste SQL here to run directly, or generate one above..."
-                        className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                        className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                       />
                     </div>
                   </div>
@@ -1329,22 +1327,22 @@ function StudioPageInner() {
 
                 <div className="flex items-center justify-between mb-4 opacity-70">
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-[13px] font-bold border border-slate-custom-300">
                       2.5
                     </span>
-                    <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
+                    <h3 className="font-bold text-[15px] text-slate-custom-500 uppercase tracking-wide">
                       Logic Process
                     </h3>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
+                  <div className="flex items-center gap-3 text-[13px] text-slate-custom-500 font-medium">
                     <span className="flex items-center gap-1 px-2 py-1">
-                      <span className="material-icons-round text-sm text-primary">
+                      <span className="material-icons-round text-[15px] text-primary">
                         table_rows
                       </span>
                       {rowCount || chartData.length} rows
                     </span>
                     <span className="flex items-center gap-1 px-2 py-1">
-                      <span className="material-icons-round text-sm text-primary">
+                      <span className="material-icons-round text-[15px] text-primary">
                         timer
                       </span>
                       {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
@@ -1360,24 +1358,24 @@ function StudioPageInner() {
                       }`}
                     />
                     <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
-                      <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center justify-between text-[13px] mb-1">
                         <span className="font-mono text-slate-custom-500">
                           {tableName ? `TABLE ${tableName}` : "SQL GENERATION"}
                         </span>
                         {isGeneratingQueryPlan && (
                           <span className="text-yellow-500 font-bold flex items-center gap-1">
-                            <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                            <span className="material-icons-round text-[11px] animate-spin">refresh</span>
                             In Progress
                           </span>
                         )}
                         {!isGeneratingQueryPlan && generatedSql && (
                           <span className="text-green-500 font-bold flex items-center gap-1">
-                            <span className="material-icons-round text-[10px]">check</span>
+                            <span className="material-icons-round text-[11px]">check</span>
                             Success
                           </span>
                         )}
                       </div>
-                      <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
+                      <code className="text-[11px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
                         {isGeneratingQueryPlan ? "Generating SQL..." : generatedSql || "Waiting for query..."}
                       </code>
                     </div>
@@ -1390,24 +1388,24 @@ function StudioPageInner() {
                       }`}
                     />
                     <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
-                      <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center justify-between text-[13px] mb-1">
                         <span className="font-mono text-slate-custom-500">
                           TRANSFORM
                         </span>
                         {isRunningQuery && (
                           <span className="text-yellow-500 font-bold flex items-center gap-1">
-                            <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                            <span className="material-icons-round text-[11px] animate-spin">refresh</span>
                             Running
                           </span>
                         )}
                         {!isRunningQuery && hasChartData && (
                           <span className="text-green-500 font-bold flex items-center gap-1">
-                            <span className="material-icons-round text-[10px]">check</span>
+                            <span className="material-icons-round text-[11px]">check</span>
                             Done
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-custom-700">
+                      <div className="text-[13px] text-slate-custom-700">
                         {isRunningQuery
                           ? "Executing query and transforming data..."
                           : hasChartData
@@ -1434,7 +1432,7 @@ function StudioPageInner() {
                           : "border-slate-custom-200"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs mb-1">
+                      <div className="flex items-center justify-between text-[13px] mb-1">
                         <span
                           className={`font-mono font-bold ${
                             hasChartData ? "text-primary" : "text-slate-custom-500"
@@ -1444,20 +1442,20 @@ function StudioPageInner() {
                         </span>
                         {hasChartData && (
                           <span className="text-primary font-bold flex items-center gap-1">
-                            <span className="material-icons-round text-[10px]">
+                            <span className="material-icons-round text-[11px]">
                               check_circle
                             </span>
                             Complete
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-custom-600">
+                      <div className="text-[13px] text-slate-custom-600">
                         {hasChartData
                           ? `${chartData.length} points rendered • ${chartConfig.chartType} chart`
                           : "Run a query to enable chart rendering."}
                       </div>
                       {analysisExplanation && (
-                        <div className="text-[11px] text-slate-custom-500 mt-2">
+                        <div className="text-[12px] text-slate-custom-500 mt-2">
                           {analysisExplanation}
                         </div>
                       )}
@@ -1478,10 +1476,10 @@ function StudioPageInner() {
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
-                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[13px] font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                       3
                     </span>
-                    <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                    <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                       Visualization &amp; Data
                     </h3>
                   </div>
@@ -1501,13 +1499,13 @@ function StudioPageInner() {
                           onClick={() =>
                             setChartConfig((c) => ({ ...c, chartType: ct.value }))
                           }
-                          className={`px-1.5 py-0 rounded text-[7px] font-medium flex items-center gap-px transition-colors leading-tight ${
+                          className={`px-1.5 py-0 rounded text-[8px] font-medium flex items-center gap-px transition-colors leading-tight ${
                             chartConfig.chartType === ct.value
                               ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
                               : "text-slate-custom-500 hover:text-slate-custom-900"
                           }`}
                         >
-                          <span className="material-icons-round text-[9px]">
+                          <span className="material-icons-round text-[10px]">
                             {ct.icon}
                           </span>
                           {ct.label}
@@ -1516,13 +1514,13 @@ function StudioPageInner() {
                     </div>
                     <button
                       onClick={() => setShowCustomizer((v) => !v)}
-                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold transition-all duration-200 ${
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all duration-200 ${
                         showCustomizer
                           ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
                           : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
                       }`}
                     >
-                      <span className="material-icons-round text-xs">tune</span>
+                      <span className="material-icons-round text-[13px]">tune</span>
                       Customize
                     </button>
                   </div>
@@ -1692,7 +1690,7 @@ function StudioPageInner() {
                           </ResponsiveContainer>
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="px-4 py-2 rounded-full bg-white/90 border border-slate-custom-200 text-xs font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
+                          <span className="px-4 py-2 rounded-full bg-white/90 border border-slate-custom-200 text-[13px] font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
                             Run a query to visualize real data
                           </span>
                         </div>
@@ -1715,22 +1713,22 @@ function StudioPageInner() {
                 </div>
 
                 <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-slate-custom-500">
-                    <span className="material-icons-round text-sm">info</span>
+                  <div className="flex items-center gap-2 text-[13px] text-slate-custom-500">
+                    <span className="material-icons-round text-[15px]">info</span>
                     Generate a high-res image for export
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-slate-custom-400">
+                      <span className="text-[11px] font-mono text-slate-custom-400">
                         {chartUsageCount}/{chartLimitCount}
                       </span>
                       <button
                         onClick={generateChartImage}
                         disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
-                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
+                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                     >
                       {isGeneratingImage ? (
-                        <span className="material-icons-round text-sm animate-spin">refresh</span>
+                        <span className="material-icons-round text-[15px] animate-spin">refresh</span>
                       ) : (
                         <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="5" width="14" height="11" rx="2" />
@@ -1744,8 +1742,8 @@ function StudioPageInner() {
                       </button>
                     </div>
                     {chartQuotaExhausted && (
-                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                        <span className="material-icons-round text-xs">info</span>
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="material-icons-round text-[13px]">info</span>
                         Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
                       </span>
                     )}
@@ -1756,8 +1754,8 @@ function StudioPageInner() {
                   <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
                     <div className="flex items-center">
                       {/* Left: label */}
-                      <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
-                        <span className="material-icons-round text-sm text-primary">
+                      <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
+                        <span className="material-icons-round text-[15px] text-primary">
                           check_circle
                         </span>
                         Generated Image
@@ -1769,9 +1767,9 @@ function StudioPageInner() {
                           className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
                           title="Zoom out"
                         >
-                          <span className="material-icons-round text-xs">remove</span>
+                          <span className="material-icons-round text-[13px]">remove</span>
                         </button>
-                        <span className="text-[9px] font-mono text-slate-custom-500 w-8 text-center">
+                        <span className="text-[10px] font-mono text-slate-custom-500 w-8 text-center">
                           {Math.round(imgZoom * 100)}%
                         </span>
                         <button
@@ -1779,7 +1777,7 @@ function StudioPageInner() {
                           className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
                           title="Zoom in"
                         >
-                          <span className="material-icons-round text-xs">add</span>
+                          <span className="material-icons-round text-[13px]">add</span>
                         </button>
                         <button
                           onClick={() => setPanMode((v) => !v)}
@@ -1790,14 +1788,14 @@ function StudioPageInner() {
                           }`}
                           title="Pan / drag"
                         >
-                          <span className="material-icons-round text-xs">pan_tool</span>
+                          <span className="material-icons-round text-[13px]">pan_tool</span>
                         </button>
                         <button
                           onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
                           className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
                           title="Reset view"
                         >
-                          <span className="material-icons-round text-xs">fit_screen</span>
+                          <span className="material-icons-round text-[13px]">fit_screen</span>
                         </button>
                       </div>
                       {/* Right: export actions */}
@@ -1807,27 +1805,27 @@ function StudioPageInner() {
                             onClick={copyChartToClipboard}
                             className="text-slate-custom-400 hover:text-primary transition-all"
                           >
-                            <span className="material-icons-round text-sm">content_copy</span>
+                            <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
                         </div>
                         <div className="relative group">
                           <button
                             onClick={downloadImage}
                             className="text-slate-custom-400 hover:text-primary transition-all"
                           >
-                            <span className="material-icons-round text-sm">download</span>
+                            <span className="material-icons-round text-[15px]">download</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
                         </div>
                         <div className="relative group">
                           <button
                             onClick={() => setChartImage(null)}
                             className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
                           >
-                            <span className="material-icons-round text-sm">close</span>
+                            <span className="material-icons-round text-[15px]">close</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
                         </div>
                       </div>
                     </div>
@@ -1881,10 +1879,10 @@ function StudioPageInner() {
               >
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
-                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[13px] font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
                       4
                     </span>
-                    <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                    <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                       Analyst Composer
                     </h3>
                   </div>
@@ -1894,13 +1892,13 @@ function StudioPageInner() {
                       <div className="relative">
                         <button
                           onClick={() => setIsModelDropdownOpen((v) => !v)}
-                          className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                          className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
                         >
-                          <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                          <span className="material-icons-round text-[15px] text-primary">smart_toy</span>
                           <span className="max-w-[100px] truncate">
                             {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
                           </span>
-                          <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                          <span className="material-icons-round text-[15px] text-slate-custom-400">expand_more</span>
                         </button>
                       {isModelDropdownOpen && (
                         <>
@@ -1935,11 +1933,11 @@ function StudioPageInner() {
                                 >
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                      <span className={`text-[13px] font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
                                         {model.displayName}
                                       </span>
                                       {accessible && mu && (
-                                        <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                        <span className={`text-[10px] font-mono px-1 py-0.5 rounded ${
                                           modelExhausted
                                             ? "bg-red-100 text-red-600"
                                             : "bg-slate-custom-100 text-slate-custom-500"
@@ -1948,15 +1946,15 @@ function StudioPageInner() {
                                         </span>
                                       )}
                                     </div>
-                                    <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
+                                    <div className={`text-[11px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
                                       {model.description}
                                     </div>
                                   </div>
                                   {isSelected && accessible && (
-                                    <span className="material-icons-round text-sm text-primary">check</span>
+                                    <span className="material-icons-round text-[15px] text-primary">check</span>
                                   )}
                                   {!accessible && (
-                                    <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
+                                    <span className="material-icons-round text-[15px] text-slate-custom-300">lock</span>
                                   )}
                                 </button>
                               );
@@ -1965,7 +1963,7 @@ function StudioPageInner() {
                         </>
                       )}
                       </div>
-                      <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
+                      <span className="text-[11px] font-mono text-slate-custom-400 pl-2.5">
                         {composerUsageCount}/{Number.isFinite(draftLimitCount) ? draftLimitCount : "\u221E"} drafts
                         {(() => {
                           const mu = modelUsage.find((u) => u.modelId === selectedModelId);
@@ -1976,8 +1974,8 @@ function StudioPageInner() {
                     </div>
 
                     {/* Temperature Slider */}
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
-                      <span className="material-icons-round text-sm text-orange-400">thermostat</span>
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
+                      <span className="material-icons-round text-[15px] text-orange-400">thermostat</span>
                       <input
                         type="range"
                         min={0}
@@ -1987,7 +1985,7 @@ function StudioPageInner() {
                         onChange={(e) => setTemperature(parseFloat(e.target.value))}
                         className="w-16 h-1 accent-primary cursor-pointer"
                       />
-                      <span className="text-[10px] font-mono font-bold text-slate-custom-500 w-5 text-right">
+                      <span className="text-[11px] font-mono font-bold text-slate-custom-500 w-5 text-right">
                         {temperature.toFixed(1)}
                       </span>
                     </div>
@@ -1996,10 +1994,10 @@ function StudioPageInner() {
                       <button
                         onClick={generateDraft}
                         disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
-                        className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
+                        className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                       >
                         <span
-                          className={`material-icons-round text-sm ${
+                          className={`material-icons-round text-[15px] ${
                             isGeneratingPost ? "animate-spin" : ""
                           }`}
                         >
@@ -2008,14 +2006,14 @@ function StudioPageInner() {
                         {isGeneratingPost ? "Generating..." : "Generate Draft"}
                       </button>
                       {draftQuotaExhausted && (
-                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                          <span className="material-icons-round text-xs">info</span>
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-[13px]">info</span>
                           Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
                         </span>
                       )}
                       {selectedComposerModelExhausted && !draftQuotaExhausted && (
-                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                          <span className="material-icons-round text-xs">info</span>
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-[13px]">info</span>
                           {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName} limit reached. Try another model.
                         </span>
                       )}
@@ -2027,14 +2025,14 @@ function StudioPageInner() {
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                    className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-[15px] text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;
                     const len = postDraft.length;
                     const color = len > limit ? "text-red-600" : len > limit * 0.9 ? "text-yellow-600" : "text-slate-custom-400";
                     return (
-                      <p className={`text-[10px] font-medium mt-1 text-right ${color}`}>
+                      <p className={`text-[11px] font-medium mt-1 text-right ${color}`}>
                         {len.toLocaleString()}/{limit.toLocaleString()}
                       </p>
                     );
@@ -2047,9 +2045,9 @@ function StudioPageInner() {
                           disabled={!hasChartData}
                           className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
                         >
-                          <span className="material-icons-round text-sm">share</span>
+                          <span className="material-icons-round text-[15px]">share</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
                       </div>
                       <div className="relative group">
                         <button
@@ -2057,9 +2055,9 @@ function StudioPageInner() {
                           disabled={!postDraft}
                           className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
                         >
-                          <span className="material-icons-round text-sm">content_copy</span>
+                          <span className="material-icons-round text-[15px]">content_copy</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -2070,33 +2068,33 @@ function StudioPageInner() {
                           onChange={(e) => setAttachImage(e.target.checked)}
                           className="w-3.5 h-3.5 accent-primary cursor-pointer"
                         />
-                        <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
+                        <span className="text-[11px] font-medium text-slate-custom-500">Attach image</span>
                       </label>
                       {userTier !== "FREE" && (
-                        <span className="text-[10px] font-medium text-slate-custom-400">
+                        <span className="text-[11px] font-medium text-slate-custom-400">
                           {publishUsageCount}/{Number.isFinite(publishLimitCount) ? publishLimitCount : "\u221E"} this week
                         </span>
                       )}
                       <div className="relative group">
                         {userTier === "FREE" ? (
                           <button
-                            className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-xs font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
+                            className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-[13px] font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
                             onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
                           >
-                            <span className="material-icons-round text-sm">lock</span>
+                            <span className="material-icons-round text-[15px]">lock</span>
                             Publish
                           </button>
                         ) : (
                           <button
-                            className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                            className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[13px] font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
                             disabled={!postDraft}
                             onClick={handlePublishClick}
                           >
-                            <span className="material-icons-round text-sm">rocket_launch</span>
+                            <span className="material-icons-round text-[15px]">rocket_launch</span>
                             Publish
                           </button>
                         )}
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
                       </div>
                     </div>
                   </div>
