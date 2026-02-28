@@ -1040,10 +1040,10 @@ function StudioPageInner() {
       </header>
 
       <main className="px-6 pt-24 pb-5 max-w-[1120px] mx-auto">
-        <div className={`xl:grid gap-5 ${showCustomizer ? "xl:grid-cols-[1fr_18rem]" : "xl:grid-cols-[1fr_16rem]"}`}>
+        <div className="xl:grid gap-5 xl:grid-cols-[1fr_16rem]">
 
           {/* Main content column - all steps stacked */}
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0">
 
             {/* Step 1 - Always visible */}
             <section
