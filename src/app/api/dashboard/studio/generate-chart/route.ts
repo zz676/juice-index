@@ -46,6 +46,15 @@ try {
 
 type ExplorerChartType = "bar" | "line" | "horizontalBar";
 
+type ChartResolution = "hd" | "fhd" | "2k" | "4k";
+
+const RESOLUTION_MAP: Record<ChartResolution, { width: number; height: number }> = {
+  hd:  { width: 1200, height: 675  },
+  fhd: { width: 1920, height: 1080 },
+  "2k": { width: 2560, height: 1440 },
+  "4k": { width: 3840, height: 2160 },
+};
+
 type ChartStyleOptions = {
   backgroundColor?: string;
   barColor?: string;
@@ -132,10 +141,8 @@ const EV_KEYWORDS = [
 // Register Chart.js components once at module level
 Chart.register(...registerables, ChartDataLabels);
 
-async function renderChartToBuffer(config: ChartConfiguration): Promise<Buffer> {
-  const width = 1200;
-  const height = 675;
-  const radius = 24;
+async function renderChartToBuffer(config: ChartConfiguration, width = 1200, height = 675): Promise<Buffer> {
+  const radius = Math.round(24 * (width / 1200));
 
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
@@ -202,7 +209,7 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = pluginOptions?.color || "#65a30d";
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    ctx.fillText(rawText, chart.width - 24, chart.height - 8);
+    ctx.fillText(rawText, chart.width - 24, chart.height - fontSize * 0.4 - 4);
     ctx.restore();
   },
 };
@@ -414,6 +421,28 @@ function ensureContrast(
   return color;
 }
 
+/**
+ * Replicates Recharts' default nice-tick algorithm (tickCount=5).
+ * Recharts rounds rawStep up using [1,2,4,5,8,10]×10ⁿ candidates,
+ * which for data max ~30 746 gives step=8 000 (not 10 000 like Chart.js).
+ */
+function getNiceYTicks(dataMax: number, tickCount = 5): number[] {
+  if (dataMax <= 0) return Array.from({ length: tickCount }, (_, i) => i);
+  const intervals = tickCount - 1;
+  const rawStep = dataMax / intervals;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const normalized = rawStep / magnitude;
+  const candidates = [1, 2, 4, 5, 8, 10];
+  const niceNormalized = candidates.find((c) => c >= normalized) ?? 10;
+  const niceStep = niceNormalized * magnitude;
+  const niceMax = Math.ceil(dataMax / niceStep) * niceStep;
+  const ticks: number[] = [];
+  for (let v = 0; v <= niceMax + niceStep * 0.01; v += niceStep) {
+    ticks.push(Math.round(v));
+  }
+  return ticks;
+}
+
 function renderChartConfig(params: {
   chartType: ExplorerChartType;
   title: string;
@@ -424,6 +453,8 @@ function renderChartConfig(params: {
   const { chartType, title, points, style, watermark = false } = params;
   const labels = points.map((point) => point.label);
   const values = points.map((point) => point.value);
+  const dataMax = Math.max(0, ...values);
+  const niceYTicks = !isNaN(dataMax) ? getNiceYTicks(dataMax) : undefined;
   const isHorizontal = chartType === "horizontalBar";
   const jsType: JsChartType = chartType === "line" ? "line" : "bar";
 
@@ -431,7 +462,7 @@ function renderChartConfig(params: {
   const bgIsDark = hexLuminance(bgColor) < 0.5;
   const rawTextColor = style.fontColor || (bgIsDark ? "#e2e8f0" : "#0f172a");
   const textColor = ensureContrast(rawTextColor, bgColor);
-  const titleColor = style.titleColor || ensureContrast(rawTextColor, bgColor, "#f1f5f9");
+  const titleColor = ensureContrast(style.titleColor || rawTextColor, bgColor, "#f1f5f9");
   const xTickColor = ensureContrast(style.xAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const yTickColor = ensureContrast(style.yAxisFontColor || (bgIsDark ? "#94a3b8" : "#64748b"), bgColor);
   const barColor = style.barColor || "#6ada1b";
@@ -532,10 +563,9 @@ function renderChartConfig(params: {
                   ? style.xAxisFontSize
                   : 12,
             },
-            maxRotation: isHorizontal ? undefined : 0,
+            maxRotation: isHorizontal ? undefined : 45,
             minRotation: isHorizontal ? undefined : 0,
-            autoSkip: chartType === "line" ? true : (isHorizontal ? undefined : false),
-            maxTicksLimit: chartType === "line" ? 10 : undefined,
+            autoSkip: true,
           },
         },
         y: {
@@ -554,9 +584,13 @@ function renderChartConfig(params: {
                   ? style.yAxisFontSize
                   : 12,
             },
+            ...(niceYTicks && !isHorizontal ? { min: 0, max: niceYTicks[niceYTicks.length - 1] } : {}),
             callback: (value: unknown) => {
               const n = Number(value);
-              return Number.isFinite(n) ? n.toLocaleString("en-US") : String(value);
+              if (!Number.isFinite(n)) return String(value);
+              // Only show values that land exactly on a nice tick
+              if (niceYTicks && !isHorizontal && !niceYTicks.includes(n)) return "";
+              return n.toLocaleString("en-US");
             },
           },
         },
@@ -565,7 +599,10 @@ function renderChartConfig(params: {
         padding: {
           top: style.paddingTop ?? 20,
           right: style.paddingRight ?? 28,
-          bottom: Math.max(style.paddingBottom ?? 20, 44),
+          bottom: Math.max(
+            style.paddingBottom ?? 20,
+            (style.sourceFontSize ?? 12) + (style.xAxisFontSize ?? 12) * 2.5 + 20
+          ),
           left: style.paddingLeft ?? (isHorizontal ? 36 : 24),
         },
       },
@@ -1268,7 +1305,28 @@ export async function POST(req: Request) {
         ? payload.title.trim()
         : "Data Results";
 
-    const style = normalizeStyleOptions(payload.chartOptions);
+    const rawResolution = typeof payload.resolution === "string" ? payload.resolution : "hd";
+    const resolution: ChartResolution = rawResolution in RESOLUTION_MAP ? (rawResolution as ChartResolution) : "hd";
+    const { width: imgWidth, height: imgHeight } = RESOLUTION_MAP[resolution];
+    const scale = imgWidth / 1200;
+
+    const rawStyle = normalizeStyleOptions(payload.chartOptions);
+    // Scale all size/padding values proportionally so the image looks the same at any resolution
+    const style: ChartStyleOptions = {
+      ...rawStyle,
+      titleSize:      Math.round((rawStyle.titleSize      ?? 24) * scale),
+      xAxisFontSize:  Math.round((rawStyle.xAxisFontSize  ?? 12) * scale),
+      yAxisFontSize:  Math.round((rawStyle.yAxisFontSize  ?? 12) * scale),
+      sourceFontSize: Math.round((rawStyle.sourceFontSize ?? 12) * scale),
+      paddingTop:    Math.round((rawStyle.paddingTop    ?? 20) * scale),
+      paddingBottom: Math.round((rawStyle.paddingBottom ?? 20) * scale),
+      paddingLeft:   Math.round((rawStyle.paddingLeft   ?? 24) * scale),
+      paddingRight:  Math.round((rawStyle.paddingRight  ?? 28) * scale),
+      barWidth:      rawStyle.barWidth && rawStyle.barWidth > 0 ? Math.round(rawStyle.barWidth * scale) : undefined,
+      xAxisLineWidth: Math.round((rawStyle.xAxisLineWidth ?? 1) * scale),
+      yAxisLineWidth: Math.round((rawStyle.yAxisLineWidth ?? 1) * scale),
+    };
+
     const applyWatermark = tier === "FREE";
     const config = renderChartConfig({
       chartType,
@@ -1280,7 +1338,7 @@ export async function POST(req: Request) {
 
     // Pre-load logo for the watermark plugin (sync hook needs it ready)
     preloadedLogo = await getLogoImage();
-    const imageBuffer = await renderChartToBuffer(config);
+    const imageBuffer = await renderChartToBuffer(config, imgWidth, imgHeight);
 
     prisma.apiRequestLog.create({
       data: { userId, endpoint: "/api/dashboard/studio/generate-chart", method: "POST", statusCode: 200, durationMs: Date.now() - reqStart, tierAtRequest: tier },
@@ -1293,6 +1351,9 @@ export async function POST(req: Request) {
       title,
       dataPoints: points.length,
       watermarked: applyWatermark,
+      resolution,
+      width: imgWidth,
+      height: imgHeight,
     });
   } catch (error) {
     console.error("Explorer generate-chart route error:", error);

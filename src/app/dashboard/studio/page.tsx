@@ -73,7 +73,7 @@ function WorkflowStepper({
   const currentStepInfo = steps.find((s) => s.stepNum === currentStep);
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
+      <div className="bg-white rounded-xl border border-primary/15 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] p-4">
         <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-500 mb-3">Workflow</div>
         <div className="relative">
           <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-custom-200" />
@@ -123,7 +123,7 @@ function WorkflowStepper({
         </div>
       </div>
       {currentStepInfo && (
-        <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
+        <div className="bg-white rounded-xl border border-primary/25 shadow-[0_0_28px_rgba(106,218,27,0.22),_0_2px_8px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.3),_inset_0_-1px_0_rgba(106,218,27,0.06)] p-4">
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
           <div className="text-[15px] font-bold text-slate-custom-800">{currentStepInfo.title}</div>
           <div className="text-[12px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
@@ -151,6 +151,7 @@ function StudioPageInner() {
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [chartImage, setChartImage] = useState<string | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [chartResolution, setChartResolution] = useState<"hd" | "fhd" | "2k" | "4k">("hd");
   const [imgZoom, setImgZoom] = useState(1);
   const [imgPan, setImgPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -623,6 +624,7 @@ function StudioPageInner() {
           data: chartData,
           chartType: chartConfig.chartType,
           title: chartConfig.title,
+          resolution: chartResolution,
           chartOptions: {
             backgroundColor: chartConfig.backgroundColor,
             barColor: chartConfig.barColor,
@@ -692,7 +694,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingImage(false);
     }
-  }, [chartConfig, chartData, showToast, fetchUsage]);
+  }, [chartConfig, chartData, chartResolution, showToast, fetchUsage]);
 
   const generateDraft = useCallback(async () => {
     if (!prompt.trim()) {
@@ -1719,6 +1721,17 @@ function StudioPageInner() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <div className="flex items-center gap-2">
+                      <select
+                        value={chartResolution}
+                        onChange={(e) => setChartResolution(e.target.value as "hd" | "fhd" | "2k" | "4k")}
+                        disabled={isGeneratingImage}
+                        className="text-[11px] font-mono bg-white border border-slate-custom-200 rounded-md px-1.5 py-1 text-slate-custom-600 focus:outline-none focus:border-primary/50 disabled:opacity-50"
+                      >
+                        <option value="hd">HD  1200×675</option>
+                        <option value="fhd">FHD 1920×1080</option>
+                        <option value="2k">2K  2560×1440</option>
+                        <option value="4k">4K  3840×2160</option>
+                      </select>
                       <span className="text-[11px] font-mono text-slate-custom-400">
                         {chartUsageCount}/{chartLimitCount}
                       </span>
