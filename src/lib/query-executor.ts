@@ -7,6 +7,11 @@ import {
   getFieldNames,
   getAllowedTablesList,
 } from "@/lib/studio/field-registry";
+import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
+
+// Prisma 7's new client architecture (default.js) does not expose view accessors
+// via the model delegate API. These tables must be queried via $queryRawUnsafe.
+const VIEW_TABLES = new Set(["NioPowerDailyDelta", "NioPowerMonthlyDelta"]);
 
 const MAX_RESULTS = 1000;
 const QUERY_TIMEOUT = 5000;
@@ -110,6 +115,29 @@ export async function executeQuery(request: QueryRequest): Promise<QueryResult> 
     ...(normalizedOrderBy !== undefined ? { orderBy: normalizedOrderBy } : {}),
     take: Math.min((query.take as number) || MAX_RESULTS, MAX_RESULTS),
   };
+
+  // Views are not accessible via Prisma's model delegate API in Prisma 7.
+  // Fall back to $queryRawUnsafe with SQL generated from the findMany args.
+  if (VIEW_TABLES.has(normalizedTable)) {
+    const sql = prismaFindManyToSql({ table: normalizedTable, query: safeQuery });
+    try {
+      const result = await Promise.race([
+        prisma.$queryRawUnsafe<Record<string, unknown>[]>(sql),
+        timeout(QUERY_TIMEOUT),
+      ]);
+      return {
+        table: normalizedTable,
+        data: result as Record<string, unknown>[],
+        rowCount: (result as Record<string, unknown>[]).length,
+        executionTimeMs: Date.now() - startTime,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+      throw error;
+    }
+  }
 
   // Prisma client properties are camelCase; registry keys are PascalCase
   const prismaClientKey = normalizedTable.charAt(0).toLowerCase() + normalizedTable.slice(1);
