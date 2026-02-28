@@ -395,11 +395,13 @@ function StudioPageInner() {
       >;
 
       if (!res.ok) {
-        throw new Error(
+        const msg =
           (typeof data.message === "string" && data.message) ||
-            (typeof data.error === "string" && data.error) ||
-            "Failed to process query"
-        );
+          (typeof data.error === "string" && data.error) ||
+          "Failed to process query";
+        console.log("[studio] generate-query error:", msg, data);
+        showToast("error", msg);
+        return;
       }
 
       const nextSql =
@@ -455,7 +457,7 @@ function StudioPageInner() {
       // On mobile, collapse sidebar to show results
       if (window.innerWidth < 1024) setShowSidebar(false);
     } catch (err) {
-      console.error(err);
+      console.log("[studio] generate-query unexpected error:", err);
       showToast(
         "error",
         err instanceof Error ? err.message : "Failed to generate query"

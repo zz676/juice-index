@@ -301,8 +301,9 @@ const REGISTRY: Record<string, TableDef> = {
     name: "NioPowerSnapshot",
     description:
       "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access. " +
-      "Each row is a point-in-time snapshot (asOfTime). Cumulative counts grow monotonically. " +
-      "Use for tracking NIO's charging/swap network expansion over time.",
+      "Each row is a point-in-time snapshot (asOfTime). Cumulative counts (cumulativeSwaps, cumulativeCharges) grow monotonically — they represent all-time running totals, NOT per-day or per-period session counts. " +
+      "For 'daily swap sessions' or 'monthly swap sessions' queries: query the snapshot rows for the time period (filter by asOfTime), show them as a line chart of the cumulative total, and explain the limitation. " +
+      "Use for tracking NIO's charging/swap network expansion and cumulative service milestones over time.",
     fields: {
       asOfTime:               { type: "DateTime", description: "Timestamp when this snapshot was recorded" },
       totalStations:          { type: "Int", description: "Total NIO power stations (swap + charging combined)" },
