@@ -107,11 +107,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log(`[Accounts] Looking up @${username} on X for user ${user.id}`);
     let found;
     try {
       found = await lookupUserByUsername(accessToken, username);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      console.error(`[Accounts] X lookup failed for @${username} — user ${user.id}: ${message}`);
       if (message.includes("(401)")) {
         await prisma.xAccount.update({
           where: { id: xAccount.id },
@@ -119,6 +121,12 @@ export async function POST(request: NextRequest) {
         });
         return NextResponse.json(
           { error: "X_TOKEN_ERROR", message: "Your X connection is no longer valid. Please reconnect your X account in Settings." },
+          { status: 502 }
+        );
+      }
+      if (message.includes("(403)")) {
+        return NextResponse.json(
+          { error: "X_API_ERROR", message: "X API access is temporarily unavailable (spend cap or permissions). Please try again later." },
           { status: 502 }
         );
       }
