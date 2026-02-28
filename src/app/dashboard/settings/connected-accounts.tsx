@@ -61,8 +61,10 @@ const xErrorMessages: Record<string, string> = {
     invalid_state: "OAuth state validation failed. Please try again.",
     state_mismatch: "OAuth state mismatch. Please try again.",
     token_exchange_failed: "Failed to connect your X account. Please try again.",
-    empty_tokens: "X returned empty credentials. Please disconnect and reconnect your account.",
+    empty_tokens: "X returned empty credentials. Please try reconnecting.",
     access_denied: "You denied access to your X account.",
+    upgrade_required: "X posting requires a Starter plan or higher.",
+    server_config: "Server configuration error. Please contact support.",
 };
 
 export default function ConnectedAccounts({
@@ -241,13 +243,21 @@ export default function ConnectedAccounts({
                                                 </p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={handleXDisconnect}
-                                            disabled={xDisconnecting}
-                                            className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                                        >
-                                            {xDisconnecting ? "..." : "Disconnect"}
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <a
+                                                href="/api/x/authorize"
+                                                className="px-2.5 py-1 text-xs font-medium text-slate-custom-600 border border-slate-custom-200 rounded-lg hover:bg-slate-custom-100 transition-colors"
+                                            >
+                                                Reconnect
+                                            </a>
+                                            <button
+                                                onClick={handleXDisconnect}
+                                                disabled={xDisconnecting}
+                                                className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                            >
+                                                {xDisconnecting ? "..." : "Disconnect"}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-between py-2 border-t border-slate-custom-100 mt-1 pt-2">
                                         <div>
