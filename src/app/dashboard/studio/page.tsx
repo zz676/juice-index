@@ -61,6 +61,78 @@ type QueryRow = Record<string, unknown>;
 
 type ToastType = "success" | "error" | "info";
 
+function WorkflowStepper({
+  currentStep,
+  steps,
+  onStepClick,
+}: {
+  currentStep: number;
+  steps: { id: string; stepNum: number; title: string; detail: string }[];
+  onStepClick: (id: string) => void;
+}) {
+  const currentStepInfo = steps.find((s) => s.stepNum === currentStep);
+  return (
+    <div className="space-y-3">
+      <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-slate-custom-500 mb-3">Workflow</div>
+        <div className="relative">
+          <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-custom-200" />
+          <div className="space-y-1">
+            {steps.map((step) => {
+              const isComplete = currentStep > step.stepNum;
+              const isCurrent = currentStep === step.stepNum;
+              const isAccessible = currentStep >= step.stepNum;
+              return (
+                <button
+                  key={step.id}
+                  onClick={() => onStepClick(step.id)}
+                  disabled={!isAccessible}
+                  className={`w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-all ${
+                    isCurrent
+                      ? "bg-primary/10"
+                      : isAccessible
+                      ? "hover:bg-slate-custom-50"
+                      : "opacity-40 cursor-not-allowed"
+                  }`}
+                >
+                  <span
+                    className={`relative z-10 flex-shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-bold ring-2 transition-all ${
+                      isComplete
+                        ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_6px_rgba(106,218,27,0.3)]"
+                        : isCurrent
+                        ? "bg-white text-primary border-2 border-primary ring-primary/20"
+                        : "bg-slate-custom-100 text-slate-custom-400 ring-slate-custom-200"
+                    }`}
+                  >
+                    {isComplete ? (
+                      <span className="material-icons-round text-[12px]">check</span>
+                    ) : (
+                      step.stepNum
+                    )}
+                  </span>
+                  <div className="min-w-0 flex-1 py-0.5">
+                    <div className={`text-[11px] font-bold leading-tight ${isCurrent ? "text-slate-custom-900" : "text-slate-custom-600"}`}>
+                      {step.title}
+                    </div>
+                    <div className="text-[10px] text-slate-custom-400 mt-0.5">{step.detail}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      {currentStepInfo && (
+        <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm p-4">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
+          <div className="text-sm font-bold text-slate-custom-800">{currentStepInfo.title}</div>
+          <div className="text-[11px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StudioPage() {
   return (
     <Suspense>
@@ -112,7 +184,6 @@ function StudioPageInner() {
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [queryModelId, setQueryModelId] = useState(DEFAULT_MODEL_ID);
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
   const [activeSection, setActiveSection] = useState<number>(1);
   const [queryUsageCount, setQueryUsageCount] = useState(0);
   const [queryLimitCount, setQueryLimitCount] = useState(Infinity);
@@ -129,11 +200,6 @@ function StudioPageInner() {
     draftUsed: number;
     draftLimit: number;
   }>>([]);
-  const defaultPanelWidth = 450;
-  const minPanelWidth = 260;
-  const [panelWidth, setPanelWidth] = useState(defaultPanelWidth);
-  const isResizing = useRef(false);
-  const panelLeftOffset = useRef(0);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isScheduling, setIsScheduling] = useState(false);
@@ -141,26 +207,6 @@ function StudioPageInner() {
   const [isLoadingPublishInfo, setIsLoadingPublishInfo] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      const newWidth = Math.min(Math.max(e.clientX - panelLeftOffset.current, minPanelWidth), 700);
-      setPanelWidth(newWidth);
-    };
-    const handleMouseUp = () => {
-      if (isResizing.current) {
-        isResizing.current = false;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      }
-    };
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -206,7 +252,6 @@ function StudioPageInner() {
     "Vehicle Specs": "directions_car",
   };
 
-  const chartRef = useRef<HTMLDivElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -357,7 +402,7 @@ function StudioPageInner() {
       );
 
       setTimeout(() => {
-        chartRef.current?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById("step-3")?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 350);
     },
     [showToast]
@@ -454,8 +499,9 @@ function StudioPageInner() {
       showToast("success", "Runnable query generated. Review and click Run Query.");
       fetchUsage();
 
-      // On mobile, collapse sidebar to show results
-      if (window.innerWidth < 1024) setShowSidebar(false);
+      setTimeout(() => {
+        document.getElementById("step-2")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } catch (err) {
       console.log("[studio] generate-query unexpected error:", err);
       showToast(
@@ -930,61 +976,67 @@ function StudioPageInner() {
     return mu.draftUsed >= mu.draftLimit;
   })();
 
+  const currentStep = chartImage ? 4 : chartData.length > 0 ? 3 : (generatedSql || tableName) ? 2 : 1;
+  const workflowSteps = [
+    { id: "step-1", stepNum: 1, title: "Ask Intelligence", detail: "Enter your data question" },
+    { id: "step-2", stepNum: 2, title: "Review Query", detail: "Review and run SQL" },
+    { id: "step-3", stepNum: 3, title: "Visualization & Data", detail: "Explore your chart" },
+    { id: "step-4", stepNum: 4, title: "Analyst Composer", detail: "Draft and publish" },
+  ];
+  const scrollToStep = (stepId: string) => {
+    const el = document.getElementById(stepId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="font-display text-slate-custom-800 h-full flex overflow-hidden -m-8 -mt-2">
-      <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+    <div className="font-display text-slate-custom-800 min-h-full -m-8 -mt-2 bg-slate-custom-50">
 
-        <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 relative">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowSidebar((v) => !v)}
-              className="lg:hidden p-1.5 rounded-md border border-slate-200 text-slate-500 hover:text-primary hover:border-primary/50 transition-all"
-            >
-              <span className="material-icons-round text-sm">
-                {showSidebar ? "chevron_left" : "menu"}
-              </span>
-            </button>
-            <h1 className="font-extrabold text-lg flex items-center gap-1.5">
-              <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
-                Juice AI
-              </span>
-              <span className="material-icons-round text-primary text-base animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
-                auto_awesome
-              </span>
-            </h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
-              Draft
+      <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
+        <div className="flex items-center gap-4">
+          <h1 className="font-extrabold text-lg flex items-center gap-1.5">
+            <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
+              Juice AI
             </span>
-          </div>
-          {toast && (
-            <div
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
-                toast.type === "success"
-                  ? "border-primary bg-primary text-green-900"
-                  : toast.type === "error"
-                  ? "border-red-300 bg-red-200 text-red-700"
-                  : "border-slate-200 bg-white text-slate-700"
-              }`}
-            >
-              {toast.message}
-            </div>
-          )}
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-custom-400 flex items-center gap-1">
-              <span className="material-icons-round text-sm">cloud_done</span> Saved
+            <span className="material-icons-round text-primary text-base animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
+              auto_awesome
             </span>
-          </div>
-        </header>
-
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col lg:flex-row">
+          </h1>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
+            Draft
+          </span>
+        </div>
+        {toast && (
           <div
-            className={`${showSidebar ? "w-full" : "hidden lg:flex"} bg-slate-custom-50 flex flex-col overflow-y-auto relative flex-shrink-0`}
-            style={{ width: showSidebar ? `${panelWidth}px` : undefined }}
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-xs font-medium shadow-sm transition-all whitespace-nowrap ${
+              toast.type === "success"
+                ? "border-primary bg-primary text-green-900"
+                : toast.type === "error"
+                ? "border-red-300 bg-red-200 text-red-700"
+                : "border-slate-200 bg-white text-slate-700"
+            }`}
           >
+            {toast.message}
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-custom-400 flex items-center gap-1">
+            <span className="material-icons-round text-sm">cloud_done</span> Saved
+          </span>
+        </div>
+      </header>
+
+      <main className="px-6 py-5 max-w-[1400px] mx-auto">
+        <div className={`xl:grid gap-5 ${showCustomizer ? "xl:grid-cols-[1fr_18rem]" : currentStep >= 2 ? "xl:grid-cols-[1fr_16rem]" : ""}`}>
+
+          {/* Main content column - all steps stacked */}
+          <div className="space-y-5">
+
+            {/* Step 1 - Always visible */}
             <section
+              id="step-1"
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
-              className="pt-6 px-6 pb-3 border-b border-slate-custom-200 relative group transition-all hover:bg-white"
+              className="bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 relative group overflow-hidden pt-6 px-6 pb-3"
             >
               <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 1 ? "bg-primary" : "bg-transparent"}`} />
               <div className="flex items-center justify-between mb-4">
@@ -1172,908 +1224,915 @@ function StudioPageInner() {
               </div>
             </section>
 
-            <section
-              onFocusCapture={() => setActiveSection(2)}
-              onClickCapture={() => setActiveSection(2)}
-              className="p-6 flex-1 bg-slate-custom-100/50 relative"
-            >
-              <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 2 ? "bg-primary" : "bg-transparent"}`} />
-              <div className="flex items-center gap-2 mb-4">
-                <span
-                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${
-                    activeSection === 2
-                      ? "bg-primary text-slate-custom-900 ring-primary/20"
-                      : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"
-                  }`}
-                >
-                  2
-                </span>
-                <h3
-                  className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${
-                    activeSection === 2 ? "text-slate-custom-900" : "text-slate-custom-500"
-                  }`}
-                >
-                  Review Query
-                </h3>
-              </div>
+            {/* Step 2 - Visible when generatedSql || tableName */}
+            {(generatedSql || tableName) && (
+              <section
+                id="step-2"
+                onFocusCapture={() => setActiveSection(2)}
+                onClickCapture={() => setActiveSection(2)}
+                className="bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 relative overflow-hidden p-6"
+              >
+                <div className={`absolute left-0 top-0 bottom-0 w-1 transition-colors duration-300 ${activeSection === 2 ? "bg-primary" : "bg-transparent"}`} />
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${
+                      activeSection === 2
+                        ? "bg-primary text-slate-custom-900 ring-primary/20"
+                        : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"
+                    }`}
+                  >
+                    2
+                  </span>
+                  <h3
+                    className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${
+                      activeSection === 2 ? "text-slate-custom-900" : "text-slate-custom-500"
+                    }`}
+                  >
+                    Review Query
+                  </h3>
+                </div>
 
-              <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-5 overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-custom-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-xs text-slate-custom-700">
-                      Generated Query
-                    </span>
-                    {tableName && !sqlUserEdited && (
-                      <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[10px] font-bold">
-                        {tableName}
+                <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-5 overflow-hidden">
+                  <div className="px-3 py-2 border-b border-slate-custom-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-xs text-slate-custom-700">
+                        Generated Query
                       </span>
-                    )}
-                    <button
-                      onClick={() => {
-                        promptRef.current?.scrollIntoView({ behavior: "smooth" });
-                        promptRef.current?.focus();
-                      }}
-                      className="text-[10px] text-primary hover:underline"
+                      {tableName && !sqlUserEdited && (
+                        <span className="px-2 py-0.5 rounded bg-primary/15 text-primary text-[10px] font-bold">
+                          {tableName}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => {
+                          promptRef.current?.scrollIntoView({ behavior: "smooth" });
+                          promptRef.current?.focus();
+                        }}
+                        className="text-[10px] text-primary hover:underline"
+                      >
+                        ← Revise question
+                      </button>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        onClick={runGeneratedQuery}
+                        disabled={isRunningQuery || !generatedSql.trim() || queryQuotaExhausted}
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                      >
+                        {isRunningQuery ? (
+                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                        ) : (
+                          <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z" /></svg>
+                        )}
+                        {isRunningQuery ? "Running..." : "Run Query"}
+                      </button>
+                      {queryQuotaExhausted && (
+                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-xs">info</span>
+                          Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
+                    {analysisExplanation || "Generate a query, review it, then run it."}
+                  </div>
+                  <div className="px-3 pb-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400">
+                          SQL Preview
+                        </span>
+                        <div className="relative group">
+                          <button
+                            onClick={copySql}
+                            disabled={!generatedSql}
+                            className="p-0.5 rounded text-primary hover:text-green-400 disabled:opacity-40 transition-colors flex items-center"
+                          >
+                            <span className="material-icons-round text-[14px]">content_copy</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
+                        </div>
+                      </div>
+                      <textarea
+                        value={generatedSql || ""}
+                        onChange={(e) => {
+                          setGeneratedSql(e.target.value);
+                          setSqlUserEdited(true);
+                        }}
+                        placeholder="Paste SQL here to run directly, or generate one above..."
+                        className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-4 opacity-70">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
+                      2.5
+                    </span>
+                    <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
+                      Logic Process
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
+                    <span className="flex items-center gap-1 px-2 py-1">
+                      <span className="material-icons-round text-sm text-primary">
+                        table_rows
+                      </span>
+                      {rowCount || chartData.length} rows
+                    </span>
+                    <span className="flex items-center gap-1 px-2 py-1">
+                      <span className="material-icons-round text-sm text-primary">
+                        timer
+                      </span>
+                      {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-3 ml-3">
+                  <div className="relative">
+                    <span
+                      className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
+                        generatedSql ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isGeneratingQueryPlan ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
+                      }`}
+                    />
+                    <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-mono text-slate-custom-500">
+                          {tableName ? `TABLE ${tableName}` : "SQL GENERATION"}
+                        </span>
+                        {isGeneratingQueryPlan && (
+                          <span className="text-yellow-500 font-bold flex items-center gap-1">
+                            <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                            In Progress
+                          </span>
+                        )}
+                        {!isGeneratingQueryPlan && generatedSql && (
+                          <span className="text-green-500 font-bold flex items-center gap-1">
+                            <span className="material-icons-round text-[10px]">check</span>
+                            Success
+                          </span>
+                        )}
+                      </div>
+                      <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
+                        {isGeneratingQueryPlan ? "Generating SQL..." : generatedSql || "Waiting for query..."}
+                      </code>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <span
+                      className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
+                        hasChartData ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isRunningQuery ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
+                      }`}
+                    />
+                    <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-mono text-slate-custom-500">
+                          TRANSFORM
+                        </span>
+                        {isRunningQuery && (
+                          <span className="text-yellow-500 font-bold flex items-center gap-1">
+                            <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                            Running
+                          </span>
+                        )}
+                        {!isRunningQuery && hasChartData && (
+                          <span className="text-green-500 font-bold flex items-center gap-1">
+                            <span className="material-icons-round text-[10px]">check</span>
+                            Done
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-custom-700">
+                        {isRunningQuery
+                          ? "Executing query and transforming data..."
+                          : hasChartData
+                          ? `Mapped ${chartData.length} points (${xField || "x"} → ${yField || "y"})`
+                          : "Waiting for result rows..."}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <span
+                      className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ${
+                        hasChartData
+                          ? "bg-primary ring-primary/20"
+                          : isRunningQuery
+                          ? "bg-yellow-400 ring-slate-custom-50 animate-pulse"
+                          : "bg-slate-300 ring-slate-custom-50"
+                      }`}
+                    />
+                    <div
+                      className={`bg-white p-3 rounded shadow-sm border ${
+                        hasChartData
+                          ? "border-primary/50"
+                          : "border-slate-custom-200"
+                      }`}
                     >
-                      ← Revise question
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span
+                          className={`font-mono font-bold ${
+                            hasChartData ? "text-primary" : "text-slate-custom-500"
+                          }`}
+                        >
+                          CHART READY
+                        </span>
+                        {hasChartData && (
+                          <span className="text-primary font-bold flex items-center gap-1">
+                            <span className="material-icons-round text-[10px]">
+                              check_circle
+                            </span>
+                            Complete
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-custom-600">
+                        {hasChartData
+                          ? `${chartData.length} points rendered • ${chartConfig.chartType} chart`
+                          : "Run a query to enable chart rendering."}
+                      </div>
+                      {analysisExplanation && (
+                        <div className="text-[11px] text-slate-custom-500 mt-2">
+                          {analysisExplanation}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Step 3 - Visible when chartData or rawData exists */}
+            {(chartData.length > 0 || rawData.length > 0) && (
+              <section
+                id="step-3"
+                onFocusCapture={() => setActiveSection(3)}
+                onClickCapture={() => setActiveSection(3)}
+                className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
+                <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
+                  <div className="flex items-center gap-2">
+                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                      3
+                    </span>
+                    <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                      Visualization &amp; Data
+                    </h3>
+                  </div>
+                  <div className="flex items-start gap-1.5 pb-1">
+                    <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
+                      {([
+                        { value: "bar" as const, label: "Bar", icon: "bar_chart" },
+                        { value: "line" as const, label: "Line", icon: "show_chart" },
+                        {
+                          value: "horizontalBar" as const,
+                          label: "H-Bar",
+                          icon: "align_horizontal_left",
+                        },
+                      ] as const).map((ct) => (
+                        <button
+                          key={ct.value}
+                          onClick={() =>
+                            setChartConfig((c) => ({ ...c, chartType: ct.value }))
+                          }
+                          className={`px-1.5 py-0 rounded text-[7px] font-medium flex items-center gap-px transition-colors leading-tight ${
+                            chartConfig.chartType === ct.value
+                              ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
+                              : "text-slate-custom-500 hover:text-slate-custom-900"
+                          }`}
+                        >
+                          <span className="material-icons-round text-[9px]">
+                            {ct.icon}
+                          </span>
+                          {ct.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setShowCustomizer((v) => !v)}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold transition-all duration-200 ${
+                        showCustomizer
+                          ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
+                          : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
+                      }`}
+                    >
+                      <span className="material-icons-round text-xs">tune</span>
+                      Customize
                     </button>
+                  </div>
+                </div>
+
+                <div
+                  className="px-4 min-h-[370px]"
+                  style={{ backgroundColor: chartConfig.backgroundColor }}
+                >
+                  {chartConfig.title && (
+                    <h4
+                      className="text-center font-bold pt-3 pb-1"
+                      style={{
+                        color: ensureContrast(chartConfig.titleColor, chartConfig.backgroundColor, "#f1f5f9"),
+                        fontSize: `${chartConfig.titleSize}px`,
+                        fontFamily: chartConfig.titleFont,
+                      }}
+                    >
+                      {chartConfig.title}
+                    </h4>
+                  )}
+
+                  <div className="h-[320px]">
+                    {hasChartData ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        {chartConfig.chartType === "line" ? (
+                          <LineChart
+                            data={chartData}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
+                          >
+                            {chartConfig.showGrid && (
+                              <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
+                            )}
+                            <XAxis
+                              dataKey="label"
+                              tick={{
+                                fontSize: chartConfig.xAxisFontSize,
+                                fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                            />
+                            <YAxis
+                              tick={{
+                                fontSize: chartConfig.yAxisFontSize,
+                                fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.yAxisLineColor }}
+                            />
+                            <Tooltip />
+                            <Line
+                              type="monotone"
+                              dataKey="value"
+                              stroke={chartConfig.barColor}
+                              strokeWidth={2.5}
+                              dot={{ r: 4, fill: chartConfig.barColor }}
+                              activeDot={{ r: 6 }}
+                            />
+                          </LineChart>
+                        ) : chartConfig.chartType === "horizontalBar" ? (
+                          <BarChart
+                            data={chartData}
+                            layout="vertical"
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
+                          >
+                            {chartConfig.showGrid && (
+                              <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
+                            )}
+                            <XAxis
+                              type="number"
+                              tick={{
+                                fontSize: chartConfig.xAxisFontSize,
+                                fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="label"
+                              width={40}
+                              tick={{
+                                fontSize: chartConfig.yAxisFontSize,
+                                fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.yAxisLineColor }}
+                            />
+                            <Tooltip />
+                            <Bar
+                              dataKey="value"
+                              fill={chartConfig.barColor}
+                              radius={[0, 6, 6, 0]}
+                              barSize={chartConfig.barWidth ?? 28}
+                            >
+                              {chartConfig.showValues && (
+                                <LabelList
+                                  dataKey="value"
+                                  position="right"
+                                  fill={chartConfig.fontColor}
+                                  fontSize={11}
+                                />
+                              )}
+                            </Bar>
+                          </BarChart>
+                        ) : (
+                          <BarChart
+                            data={chartData}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
+                          >
+                            {chartConfig.showGrid && (
+                              <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
+                            )}
+                            <XAxis
+                              dataKey="label"
+                              tick={{
+                                fontSize: chartConfig.xAxisFontSize,
+                                fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                            />
+                            <YAxis
+                              tick={{
+                                fontSize: chartConfig.yAxisFontSize,
+                                fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.yAxisLineColor }}
+                            />
+                            <Tooltip />
+                            <Bar
+                              dataKey="value"
+                              fill={chartConfig.barColor}
+                              radius={[6, 6, 0, 0]}
+                              barSize={chartConfig.barWidth ?? 28}
+                            >
+                              {chartConfig.showValues && (
+                                <LabelList
+                                  dataKey="value"
+                                  position="top"
+                                  fill={chartConfig.fontColor}
+                                  fontSize={11}
+                                />
+                              )}
+                            </Bar>
+                          </BarChart>
+                        )}
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full w-full relative">
+                        <div className="absolute inset-0 opacity-40 pointer-events-none">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={DEMO_CHART_DATA} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
+                              <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
+                              <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                              <Bar dataKey="value" fill="#6ada1b" radius={[6, 6, 0, 0]} barSize={28} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="px-4 py-2 rounded-full bg-white/90 border border-slate-custom-200 text-xs font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
+                            Run a query to visualize real data
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {chartConfig.sourceText && (
+                    <div
+                      className="text-right italic -mt-3 pb-[2px]"
+                      style={{
+                        color: chartConfig.sourceColor,
+                        fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
+                        fontFamily: chartConfig.sourceFont,
+                      }}
+                    >
+                      {chartConfig.sourceText}
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-slate-custom-500">
+                    <span className="material-icons-round text-sm">info</span>
+                    Generate a high-res image for export
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <button
-                      onClick={runGeneratedQuery}
-                      disabled={isRunningQuery || !generatedSql.trim() || queryQuotaExhausted}
-                      className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[10px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-slate-custom-400">
+                        {chartUsageCount}/{chartLimitCount}
+                      </span>
+                      <button
+                        onClick={generateChartImage}
+                        disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
+                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
                     >
-                      {isRunningQuery ? (
-                        <span className="material-icons-round text-[10px] animate-spin">refresh</span>
+                      {isGeneratingImage ? (
+                        <span className="material-icons-round text-sm animate-spin">refresh</span>
                       ) : (
-                        <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M4 2l10 6-10 6V2z" /></svg>
+                        <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="5" width="14" height="11" rx="2" />
+                          <path d="M3 13l4-4 3 3 2.5-2.5L17 13" />
+                          <circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
+                          <path d="M15 2l0.6 1.4L17 4l-1.4 0.6L15 6l-0.6-1.4L13 4l1.4-0.6Z" fill="currentColor" stroke="none" />
+                          <path d="M1.5 3l0.4 0.9L3 4.3l-1.1 0.4L1.5 5.6l-0.4-0.9L0 4.3l1.1-0.4Z" fill="currentColor" stroke="none" />
+                        </svg>
                       )}
-                      {isRunningQuery ? "Running..." : "Run Query"}
-                    </button>
-                    {queryQuotaExhausted && (
+                        {isGeneratingImage ? "Generating..." : "Generate Image"}
+                      </button>
+                    </div>
+                    {chartQuotaExhausted && (
                       <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-xs">info</span>
-                        Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                        Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="px-3 py-2 border-b border-slate-custom-100 text-xs text-slate-custom-600">
-                  {analysisExplanation || "Generate a query, review it, then run it."}
-                </div>
-                <div className="px-3 pb-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-custom-400">
-                        SQL Preview
+
+                {chartImage && (
+                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
+                    <div className="flex items-center">
+                      {/* Left: label */}
+                      <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
+                        <span className="material-icons-round text-sm text-primary">
+                          check_circle
+                        </span>
+                        Generated Image
                       </span>
-                      <div className="relative group">
+                      {/* Center: zoom/pan controls */}
+                      <div className="flex-1 flex items-center justify-center gap-1.5">
                         <button
-                          onClick={copySql}
-                          disabled={!generatedSql}
-                          className="p-0.5 rounded text-primary hover:text-green-400 disabled:opacity-40 transition-colors flex items-center"
+                          onClick={() => { setImgZoom((z) => Math.max(0.5, z - 0.25)); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          title="Zoom out"
                         >
-                          <span className="material-icons-round text-[14px]">content_copy</span>
+                          <span className="material-icons-round text-xs">remove</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
+                        <span className="text-[9px] font-mono text-slate-custom-500 w-8 text-center">
+                          {Math.round(imgZoom * 100)}%
+                        </span>
+                        <button
+                          onClick={() => { setImgZoom((z) => Math.min(5, z + 0.25)); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          title="Zoom in"
+                        >
+                          <span className="material-icons-round text-xs">add</span>
+                        </button>
+                        <button
+                          onClick={() => setPanMode((v) => !v)}
+                          className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${
+                            panMode
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-slate-custom-200 text-slate-custom-500 hover:text-primary hover:border-primary/50"
+                          }`}
+                          title="Pan / drag"
+                        >
+                          <span className="material-icons-round text-xs">pan_tool</span>
+                        </button>
+                        <button
+                          onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          title="Reset view"
+                        >
+                          <span className="material-icons-round text-xs">fit_screen</span>
+                        </button>
+                      </div>
+                      {/* Right: export actions */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="relative group">
+                          <button
+                            onClick={copyChartToClipboard}
+                            className="text-slate-custom-400 hover:text-primary transition-all"
+                          >
+                            <span className="material-icons-round text-sm">content_copy</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
+                        </div>
+                        <div className="relative group">
+                          <button
+                            onClick={downloadImage}
+                            className="text-slate-custom-400 hover:text-primary transition-all"
+                          >
+                            <span className="material-icons-round text-sm">download</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
+                        </div>
+                        <div className="relative group">
+                          <button
+                            onClick={() => setChartImage(null)}
+                            className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
+                          >
+                            <span className="material-icons-round text-sm">close</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                        </div>
                       </div>
                     </div>
-                    <textarea
-                      value={generatedSql || ""}
-                      onChange={(e) => {
-                        setGeneratedSql(e.target.value);
-                        setSqlUserEdited(true);
+                    <div className="relative max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                      onWheel={(e) => {
+                        e.preventDefault();
+                        setImgZoom((z) => Math.min(5, Math.max(0.5, z + (e.deltaY < 0 ? 0.15 : -0.15))));
                       }}
-                      placeholder="Paste SQL here to run directly, or generate one above..."
-                      className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[11px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4 opacity-70">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-slate-custom-200 text-slate-custom-500 text-xs font-bold border border-slate-custom-300">
-                    2.5
-                  </span>
-                  <h3 className="font-bold text-sm text-slate-custom-500 uppercase tracking-wide">
-                    Logic Process
-                  </h3>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-custom-500 font-medium">
-                  <span className="flex items-center gap-1 px-2 py-1">
-                    <span className="material-icons-round text-sm text-primary">
-                      table_rows
-                    </span>
-                    {rowCount || chartData.length} rows
-                  </span>
-                  <span className="flex items-center gap-1 px-2 py-1">
-                    <span className="material-icons-round text-sm text-primary">
-                      timer
-                    </span>
-                    {executionTimeMs !== null ? `${executionTimeMs}ms` : "—"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="relative pl-3 border-l-2 border-slate-custom-200 space-y-3 ml-3">
-                <div className="relative">
-                  <span
-                    className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
-                      generatedSql ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isGeneratingQueryPlan ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
-                    }`}
-                  />
-                  <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-mono text-slate-custom-500">
-                        {tableName ? `TABLE ${tableName}` : "SQL GENERATION"}
-                      </span>
-                      {isGeneratingQueryPlan && (
-                        <span className="text-yellow-500 font-bold flex items-center gap-1">
-                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
-                          In Progress
-                        </span>
-                      )}
-                      {!isGeneratingQueryPlan && generatedSql && (
-                        <span className="text-green-500 font-bold flex items-center gap-1">
-                          <span className="material-icons-round text-[10px]">check</span>
-                          Success
-                        </span>
-                      )}
-                    </div>
-                    <code className="text-[10px] text-slate-custom-600 font-mono block overflow-hidden whitespace-nowrap text-ellipsis">
-                      {isGeneratingQueryPlan ? "Generating SQL..." : generatedSql || "Waiting for query..."}
-                    </code>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <span
-                    className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ring-slate-custom-50 ${
-                      hasChartData ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isRunningQuery ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
-                    }`}
-                  />
-                  <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-mono text-slate-custom-500">
-                        TRANSFORM
-                      </span>
-                      {isRunningQuery && (
-                        <span className="text-yellow-500 font-bold flex items-center gap-1">
-                          <span className="material-icons-round text-[10px] animate-spin">refresh</span>
-                          Running
-                        </span>
-                      )}
-                      {!isRunningQuery && hasChartData && (
-                        <span className="text-green-500 font-bold flex items-center gap-1">
-                          <span className="material-icons-round text-[10px]">check</span>
-                          Done
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-custom-700">
-                      {isRunningQuery
-                        ? "Executing query and transforming data..."
-                        : hasChartData
-                        ? `Mapped ${chartData.length} points (${xField || "x"} → ${yField || "y"})`
-                        : "Waiting for result rows..."}
+                      onMouseDown={(e) => {
+                        if (!panMode) return;
+                        e.preventDefault();
+                        setIsPanning(true);
+                        panStart.current = { x: e.clientX, y: e.clientY };
+                        panOrigin.current = { ...imgPan };
+                      }}
+                      onMouseMove={(e) => {
+                        if (!isPanning) return;
+                        setImgPan({
+                          x: panOrigin.current.x + (e.clientX - panStart.current.x),
+                          y: panOrigin.current.y + (e.clientY - panStart.current.y),
+                        });
+                      }}
+                      onMouseUp={() => setIsPanning(false)}
+                      onMouseLeave={() => setIsPanning(false)}
+                      style={{ cursor: panMode ? (isPanning ? "grabbing" : "grab") : "default" }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={chartImage}
+                        alt="Generated chart"
+                        draggable={false}
+                        className="w-full transition-transform duration-100"
+                        style={{
+                          transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
+                          transformOrigin: "center center",
+                        }}
+                      />
                     </div>
                   </div>
-                </div>
+                )}
+              </section>
+            )}
 
-                <div className="relative">
-                  <span
-                    className={`absolute -left-[19px] top-1 w-3 h-3 rounded-full ring-4 ${
-                      hasChartData
-                        ? "bg-primary ring-primary/20"
-                        : isRunningQuery
-                        ? "bg-yellow-400 ring-slate-custom-50 animate-pulse"
-                        : "bg-slate-300 ring-slate-custom-50"
-                    }`}
-                  />
-                  <div
-                    className={`bg-white p-3 rounded shadow-sm border ${
-                      hasChartData
-                        ? "border-primary/50"
-                        : "border-slate-custom-200"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span
-                        className={`font-mono font-bold ${
-                          hasChartData ? "text-primary" : "text-slate-custom-500"
-                        }`}
-                      >
-                        CHART READY
-                      </span>
-                      {hasChartData && (
-                        <span className="text-primary font-bold flex items-center gap-1">
-                          <span className="material-icons-round text-[10px]">
-                            check_circle
-                          </span>
-                          Complete
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-custom-600">
-                      {hasChartData
-                        ? `${chartData.length} points rendered • ${chartConfig.chartType} chart`
-                        : "Run a query to enable chart rendering."}
-                    </div>
-                    {analysisExplanation && (
-                      <div className="text-[11px] text-slate-custom-500 mt-2">
-                        {analysisExplanation}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          {/* Resize Handle */}
-          {showSidebar && (
-            <div
-              onMouseDown={(e) => {
-                e.preventDefault();
-                const sidebarEl = e.currentTarget.previousElementSibling as HTMLElement | null;
-                panelLeftOffset.current = sidebarEl ? sidebarEl.getBoundingClientRect().left : 0;
-                isResizing.current = true;
-                document.body.style.cursor = "col-resize";
-                document.body.style.userSelect = "none";
-              }}
-              className="hidden lg:flex items-center justify-center w-2 flex-shrink-0 cursor-col-resize group hover:bg-primary/10 active:bg-primary/20 transition-colors"
-            >
-              <div className="w-0.5 h-8 rounded-full bg-slate-custom-300 group-hover:bg-primary group-active:bg-primary transition-colors" />
-            </div>
-          )}
-
-          <div className="flex-1 h-full min-h-0 bg-slate-custom-100 p-3 pr-6 overflow-y-auto flex flex-col gap-3">
-            <section
-              ref={chartRef}
-              onFocusCapture={() => setActiveSection(3)}
-              onClickCapture={() => setActiveSection(3)}
-              className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
-            >
-              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
-              <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
-                <div className="flex items-center gap-2">
-                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 3 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
-                    3
-                  </span>
-                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
-                    Visualization &amp; Data
-                  </h3>
-                </div>
-                <div className="flex items-start gap-1.5 pb-1">
-                  <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
-                    {([
-                      { value: "bar" as const, label: "Bar", icon: "bar_chart" },
-                      { value: "line" as const, label: "Line", icon: "show_chart" },
-                      {
-                        value: "horizontalBar" as const,
-                        label: "H-Bar",
-                        icon: "align_horizontal_left",
-                      },
-                    ] as const).map((ct) => (
-                      <button
-                        key={ct.value}
-                        onClick={() =>
-                          setChartConfig((c) => ({ ...c, chartType: ct.value }))
-                        }
-                        className={`px-1.5 py-0 rounded text-[7px] font-medium flex items-center gap-px transition-colors leading-tight ${
-                          chartConfig.chartType === ct.value
-                            ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
-                            : "text-slate-custom-500 hover:text-slate-custom-900"
-                        }`}
-                      >
-                        <span className="material-icons-round text-[9px]">
-                          {ct.icon}
-                        </span>
-                        {ct.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setShowCustomizer((v) => !v)}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold transition-all duration-200 ${
-                      showCustomizer
-                        ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
-                        : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
-                    }`}
-                  >
-                    <span className="material-icons-round text-xs">tune</span>
-                    Customize
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className="px-4 min-h-[370px]"
-                style={{ backgroundColor: chartConfig.backgroundColor }}
+            {/* Step 4 - Visible when chartData exists */}
+            {chartData.length > 0 && (
+              <section
+                id="step-4"
+                onFocusCapture={() => setActiveSection(4)}
+                onClickCapture={() => setActiveSection(4)}
+                className="bg-white rounded-2xl overflow-auto border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
               >
-                {chartConfig.title && (
-                  <h4
-                    className="text-center font-bold pt-3 pb-1"
-                    style={{
-                      color: chartConfig.titleColor,
-                      fontSize: `${chartConfig.titleSize}px`,
-                      fontFamily: chartConfig.titleFont,
-                    }}
-                  >
-                    {chartConfig.title}
-                  </h4>
-                )}
-
-                <div className="h-[320px]">
-                  {hasChartData ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      {chartConfig.chartType === "line" ? (
-                        <LineChart
-                          data={chartData}
-                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
-                        >
-                          {chartConfig.showGrid && (
-                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
-                          )}
-                          <XAxis
-                            dataKey="label"
-                            tick={{
-                              fontSize: chartConfig.xAxisFontSize,
-                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
-                          />
-                          <YAxis
-                            tick={{
-                              fontSize: chartConfig.yAxisFontSize,
-                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
-                          />
-                          <Tooltip />
-                          <Line
-                            type="monotone"
-                            dataKey="value"
-                            stroke={chartConfig.barColor}
-                            strokeWidth={2.5}
-                            dot={{ r: 4, fill: chartConfig.barColor }}
-                            activeDot={{ r: 6 }}
-                          />
-                        </LineChart>
-                      ) : chartConfig.chartType === "horizontalBar" ? (
-                        <BarChart
-                          data={chartData}
-                          layout="vertical"
-                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
-                        >
-                          {chartConfig.showGrid && (
-                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
-                          )}
-                          <XAxis
-                            type="number"
-                            tick={{
-                              fontSize: chartConfig.xAxisFontSize,
-                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
-                          />
-                          <YAxis
-                            type="category"
-                            dataKey="label"
-                            width={40}
-                            tick={{
-                              fontSize: chartConfig.yAxisFontSize,
-                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
-                          />
-                          <Tooltip />
-                          <Bar
-                            dataKey="value"
-                            fill={chartConfig.barColor}
-                            radius={[0, 6, 6, 0]}
-                            barSize={chartConfig.barWidth ?? 28}
-                          >
-                            {chartConfig.showValues && (
-                              <LabelList
-                                dataKey="value"
-                                position="right"
-                                fill={chartConfig.fontColor}
-                                fontSize={11}
-                              />
-                            )}
-                          </Bar>
-                        </BarChart>
-                      ) : (
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
-                        >
-                          {chartConfig.showGrid && (
-                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
-                          )}
-                          <XAxis
-                            dataKey="label"
-                            tick={{
-                              fontSize: chartConfig.xAxisFontSize,
-                              fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.xAxisLineColor }}
-                          />
-                          <YAxis
-                            tick={{
-                              fontSize: chartConfig.yAxisFontSize,
-                              fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
-                              fontFamily: chartConfig.axisFont,
-                            }}
-                            axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
-                            tickLine={{ stroke: chartConfig.yAxisLineColor }}
-                          />
-                          <Tooltip />
-                          <Bar
-                            dataKey="value"
-                            fill={chartConfig.barColor}
-                            radius={[6, 6, 0, 0]}
-                            barSize={chartConfig.barWidth ?? 28}
-                          >
-                            {chartConfig.showValues && (
-                              <LabelList
-                                dataKey="value"
-                                position="top"
-                                fill={chartConfig.fontColor}
-                                fontSize={11}
-                              />
-                            )}
-                          </Bar>
-                        </BarChart>
-                      )}
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full w-full relative">
-                      <div className="absolute inset-0 opacity-40 pointer-events-none">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={DEMO_CHART_DATA} margin={{ top: 10, right: 20, bottom: 20, left: 20 }}>
-                            <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
-                            <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                            <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                            <Bar dataKey="value" fill="#6ada1b" radius={[6, 6, 0, 0]} barSize={28} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="px-4 py-2 rounded-full bg-white/90 border border-slate-custom-200 text-xs font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
-                          Run a query to visualize real data
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {chartConfig.sourceText && (
-                  <div
-                    className="text-right italic -mt-3 pb-[2px]"
-                    style={{
-                      color: chartConfig.sourceColor,
-                      fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
-                      fontFamily: chartConfig.sourceFont,
-                    }}
-                  >
-                    {chartConfig.sourceText}
-                  </div>
-                )}
-              </div>
-
-              <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs text-slate-custom-500">
-                  <span className="material-icons-round text-sm">info</span>
-                  Generate a high-res image for export
-                </div>
-                <div className="flex flex-col items-end gap-1">
+                <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-slate-custom-400">
-                      {chartUsageCount}/{chartLimitCount}
+                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
+                      4
                     </span>
-                    <button
-                      onClick={generateChartImage}
-                      disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
-                    className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
-                >
-                  {isGeneratingImage ? (
-                    <span className="material-icons-round text-sm animate-spin">refresh</span>
-                  ) : (
-                    <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="5" width="14" height="11" rx="2" />
-                      <path d="M3 13l4-4 3 3 2.5-2.5L17 13" />
-                      <circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
-                      <path d="M15 2l0.6 1.4L17 4l-1.4 0.6L15 6l-0.6-1.4L13 4l1.4-0.6Z" fill="currentColor" stroke="none" />
-                      <path d="M1.5 3l0.4 0.9L3 4.3l-1.1 0.4L1.5 5.6l-0.4-0.9L0 4.3l1.1-0.4Z" fill="currentColor" stroke="none" />
-                    </svg>
-                  )}
-                      {isGeneratingImage ? "Generating..." : "Generate Image"}
-                    </button>
+                    <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
+                      Analyst Composer
+                    </h3>
                   </div>
-                  {chartQuotaExhausted && (
-                    <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                      <span className="material-icons-round text-xs">info</span>
-                      Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {chartImage && (
-                <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
-                  <div className="flex items-center">
-                    {/* Left: label */}
-                    <span className="text-xs font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
-                      <span className="material-icons-round text-sm text-primary">
-                        check_circle
+                  <div className="flex items-center gap-2">
+                    {/* Model Dropdown */}
+                    <div className="flex flex-col">
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsModelDropdownOpen((v) => !v)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                        >
+                          <span className="material-icons-round text-sm text-primary">smart_toy</span>
+                          <span className="max-w-[100px] truncate">
+                            {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
+                          </span>
+                          <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
+                        </button>
+                      {isModelDropdownOpen && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsModelDropdownOpen(false)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
+                            {MODEL_REGISTRY.map((model: ModelDefinition) => {
+                              const accessible = canAccessModel(userTier, model.id);
+                              const isSelected = model.id === selectedModelId;
+                              const mu = modelUsage.find((u) => u.modelId === model.id);
+                              const modelExhausted = accessible && mu && Number.isFinite(mu.draftLimit) && mu.draftUsed >= mu.draftLimit;
+                              return (
+                                <button
+                                  key={model.id}
+                                  onClick={() => {
+                                    if (accessible && !modelExhausted) {
+                                      setSelectedModelId(model.id);
+                                      setIsModelDropdownOpen(false);
+                                    } else if (modelExhausted) {
+                                      showToast("info", `${model.displayName} daily draft limit reached. Try another model.`);
+                                    } else {
+                                      showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
+                                    }
+                                  }}
+                                  className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
+                                    accessible && !modelExhausted
+                                      ? "hover:bg-primary/5 cursor-pointer"
+                                      : "opacity-50 cursor-not-allowed"
+                                  } ${isSelected ? "bg-primary/10" : ""}`}
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
+                                        {model.displayName}
+                                      </span>
+                                      {accessible && mu && (
+                                        <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+                                          modelExhausted
+                                            ? "bg-red-100 text-red-600"
+                                            : "bg-slate-custom-100 text-slate-custom-500"
+                                        }`}>
+                                          {Number.isFinite(mu.draftLimit) ? `${mu.draftUsed}/${mu.draftLimit}` : "Unlimited"}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
+                                      {model.description}
+                                    </div>
+                                  </div>
+                                  {isSelected && accessible && (
+                                    <span className="material-icons-round text-sm text-primary">check</span>
+                                  )}
+                                  {!accessible && (
+                                    <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
+                        {composerUsageCount}/{Number.isFinite(draftLimitCount) ? draftLimitCount : "\u221E"} drafts
+                        {(() => {
+                          const mu = modelUsage.find((u) => u.modelId === selectedModelId);
+                          if (!mu || !Number.isFinite(mu.draftLimit)) return null;
+                          return ` \u00B7 ${mu.draftUsed}/${mu.draftLimit} ${MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? selectedModelId}`;
+                        })()}
                       </span>
-                      Generated Image
-                    </span>
-                    {/* Center: zoom/pan controls */}
-                    <div className="flex-1 flex items-center justify-center gap-1.5">
-                      <button
-                        onClick={() => { setImgZoom((z) => Math.max(0.5, z - 0.25)); }}
-                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
-                        title="Zoom out"
-                      >
-                        <span className="material-icons-round text-xs">remove</span>
-                      </button>
-                      <span className="text-[9px] font-mono text-slate-custom-500 w-8 text-center">
-                        {Math.round(imgZoom * 100)}%
-                      </span>
-                      <button
-                        onClick={() => { setImgZoom((z) => Math.min(5, z + 0.25)); }}
-                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
-                        title="Zoom in"
-                      >
-                        <span className="material-icons-round text-xs">add</span>
-                      </button>
-                      <button
-                        onClick={() => setPanMode((v) => !v)}
-                        className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${
-                          panMode
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-slate-custom-200 text-slate-custom-500 hover:text-primary hover:border-primary/50"
-                        }`}
-                        title="Pan / drag"
-                      >
-                        <span className="material-icons-round text-xs">pan_tool</span>
-                      </button>
-                      <button
-                        onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
-                        className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
-                        title="Reset view"
-                      >
-                        <span className="material-icons-round text-xs">fit_screen</span>
-                      </button>
                     </div>
-                    {/* Right: export actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+
+                    {/* Temperature Slider */}
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
+                      <span className="material-icons-round text-sm text-orange-400">thermostat</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.1}
+                        value={temperature}
+                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                        className="w-16 h-1 accent-primary cursor-pointer"
+                      />
+                      <span className="text-[10px] font-mono font-bold text-slate-custom-500 w-5 text-right">
+                        {temperature.toFixed(1)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        onClick={generateDraft}
+                        disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
+                        className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
+                      >
+                        <span
+                          className={`material-icons-round text-sm ${
+                            isGeneratingPost ? "animate-spin" : ""
+                          }`}
+                        >
+                          {isGeneratingPost ? "refresh" : "auto_awesome"}
+                        </span>
+                        {isGeneratingPost ? "Generating..." : "Generate Draft"}
+                      </button>
+                      {draftQuotaExhausted && (
+                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-xs">info</span>
+                          Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
+                        </span>
+                      )}
+                      {selectedComposerModelExhausted && !draftQuotaExhausted && (
+                        <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
+                          <span className="material-icons-round text-xs">info</span>
+                          {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName} limit reached. Try another model.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <textarea
+                    value={postDraft}
+                    onChange={(e) => setPostDraft(e.target.value)}
+                    placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
+                    className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                  {postDraft && (() => {
+                    const limit = publishInfo?.charLimit ?? 280;
+                    const len = postDraft.length;
+                    const color = len > limit ? "text-red-600" : len > limit * 0.9 ? "text-yellow-600" : "text-slate-custom-400";
+                    return (
+                      <p className={`text-[10px] font-medium mt-1 text-right ${color}`}>
+                        {len.toLocaleString()}/{limit.toLocaleString()}
+                      </p>
+                    );
+                  })()}
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-3">
                       <div className="relative group">
                         <button
-                          onClick={copyChartToClipboard}
-                          className="text-slate-custom-400 hover:text-primary transition-all"
+                          onClick={copyShareLink}
+                          disabled={!hasChartData}
+                          className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
+                        >
+                          <span className="material-icons-round text-sm">share</span>
+                        </button>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
+                      </div>
+                      <div className="relative group">
+                        <button
+                          onClick={copyDraft}
+                          disabled={!postDraft}
+                          className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
                         >
                           <span className="material-icons-round text-sm">content_copy</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
-                      </div>
-                      <div className="relative group">
-                        <button
-                          onClick={downloadImage}
-                          className="text-slate-custom-400 hover:text-primary transition-all"
-                        >
-                          <span className="material-icons-round text-sm">download</span>
-                        </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
-                      </div>
-                      <div className="relative group">
-                        <button
-                          onClick={() => setChartImage(null)}
-                          className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
-                        >
-                          <span className="material-icons-round text-sm">close</span>
-                        </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
                       </div>
                     </div>
-                  </div>
-                  <div className="relative max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
-                    onWheel={(e) => {
-                      e.preventDefault();
-                      setImgZoom((z) => Math.min(5, Math.max(0.5, z + (e.deltaY < 0 ? 0.15 : -0.15))));
-                    }}
-                    onMouseDown={(e) => {
-                      if (!panMode) return;
-                      e.preventDefault();
-                      setIsPanning(true);
-                      panStart.current = { x: e.clientX, y: e.clientY };
-                      panOrigin.current = { ...imgPan };
-                    }}
-                    onMouseMove={(e) => {
-                      if (!isPanning) return;
-                      setImgPan({
-                        x: panOrigin.current.x + (e.clientX - panStart.current.x),
-                        y: panOrigin.current.y + (e.clientY - panStart.current.y),
-                      });
-                    }}
-                    onMouseUp={() => setIsPanning(false)}
-                    onMouseLeave={() => setIsPanning(false)}
-                    style={{ cursor: panMode ? (isPanning ? "grabbing" : "grab") : "default" }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={chartImage}
-                      alt="Generated chart"
-                      draggable={false}
-                      className="w-full transition-transform duration-100"
-                      style={{
-                        transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
-                        transformOrigin: "center center",
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <section
-              onFocusCapture={() => setActiveSection(4)}
-              onClickCapture={() => setActiveSection(4)}
-              className="bg-white rounded-2xl overflow-auto border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
-                <div className="flex items-center gap-2">
-                  <span className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ring-2 transition-colors duration-300 ${activeSection === 4 ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_8px_rgba(106,218,27,0.4)]" : "bg-slate-custom-200 text-slate-custom-500 ring-slate-custom-200"}`}>
-                    4
-                  </span>
-                  <h3 className={`font-bold text-sm uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
-                    Analyst Composer
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Model Dropdown */}
-                  <div className="flex flex-col">
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsModelDropdownOpen((v) => !v)}
-                        className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
-                      >
-                        <span className="material-icons-round text-sm text-primary">smart_toy</span>
-                        <span className="max-w-[100px] truncate">
-                          {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? "GPT-4o Mini"}
-                        </span>
-                        <span className="material-icons-round text-sm text-slate-custom-400">expand_more</span>
-                      </button>
-                    {isModelDropdownOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40"
-                          onClick={() => setIsModelDropdownOpen(false)}
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={attachImage}
+                          onChange={(e) => setAttachImage(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-primary cursor-pointer"
                         />
-                        <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
-                          {MODEL_REGISTRY.map((model: ModelDefinition) => {
-                            const accessible = canAccessModel(userTier, model.id);
-                            const isSelected = model.id === selectedModelId;
-                            const mu = modelUsage.find((u) => u.modelId === model.id);
-                            const modelExhausted = accessible && mu && Number.isFinite(mu.draftLimit) && mu.draftUsed >= mu.draftLimit;
-                            return (
-                              <button
-                                key={model.id}
-                                onClick={() => {
-                                  if (accessible && !modelExhausted) {
-                                    setSelectedModelId(model.id);
-                                    setIsModelDropdownOpen(false);
-                                  } else if (modelExhausted) {
-                                    showToast("info", `${model.displayName} daily draft limit reached. Try another model.`);
-                                  } else {
-                                    showToast("info", `Upgrade to ${model.minTier} to unlock ${model.displayName}`);
-                                  }
-                                }}
-                                className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 transition-colors border-b border-slate-custom-50 last:border-b-0 ${
-                                  accessible && !modelExhausted
-                                    ? "hover:bg-primary/5 cursor-pointer"
-                                    : "opacity-50 cursor-not-allowed"
-                                } ${isSelected ? "bg-primary/10" : ""}`}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`text-xs font-bold ${accessible ? "text-slate-custom-800" : "text-slate-custom-400"}`}>
-                                      {model.displayName}
-                                    </span>
-                                    {accessible && mu && (
-                                      <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
-                                        modelExhausted
-                                          ? "bg-red-100 text-red-600"
-                                          : "bg-slate-custom-100 text-slate-custom-500"
-                                      }`}>
-                                        {Number.isFinite(mu.draftLimit) ? `${mu.draftUsed}/${mu.draftLimit}` : "Unlimited"}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className={`text-[10px] ${accessible ? "text-slate-custom-500" : "text-slate-custom-300"}`}>
-                                    {model.description}
-                                  </div>
-                                </div>
-                                {isSelected && accessible && (
-                                  <span className="material-icons-round text-sm text-primary">check</span>
-                                )}
-                                {!accessible && (
-                                  <span className="material-icons-round text-sm text-slate-custom-300">lock</span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-custom-400 pl-2.5">
-                      {composerUsageCount}/{Number.isFinite(draftLimitCount) ? draftLimitCount : "\u221E"} drafts
-                      {(() => {
-                        const mu = modelUsage.find((u) => u.modelId === selectedModelId);
-                        if (!mu || !Number.isFinite(mu.draftLimit)) return null;
-                        return ` \u00B7 ${mu.draftUsed}/${mu.draftLimit} ${MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName ?? selectedModelId}`;
-                      })()}
-                    </span>
-                  </div>
-
-                  {/* Temperature Slider */}
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
-                    <span className="material-icons-round text-sm text-orange-400">thermostat</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      value={temperature}
-                      onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                      className="w-16 h-1 accent-primary cursor-pointer"
-                    />
-                    <span className="text-[10px] font-mono font-bold text-slate-custom-500 w-5 text-right">
-                      {temperature.toFixed(1)}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1">
-                    <button
-                      onClick={generateDraft}
-                      disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
-                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-xs font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
-                    >
-                      <span
-                        className={`material-icons-round text-sm ${
-                          isGeneratingPost ? "animate-spin" : ""
-                        }`}
-                      >
-                        {isGeneratingPost ? "refresh" : "auto_awesome"}
-                      </span>
-                      {isGeneratingPost ? "Generating..." : "Generate Draft"}
-                    </button>
-                    {draftQuotaExhausted && (
-                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                        <span className="material-icons-round text-xs">info</span>
-                        Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
-                      </span>
-                    )}
-                    {selectedComposerModelExhausted && !draftQuotaExhausted && (
-                      <span className="text-[10px] text-amber-600 font-medium flex items-center gap-0.5">
-                        <span className="material-icons-round text-xs">info</span>
-                        {MODEL_REGISTRY.find((m) => m.id === selectedModelId)?.displayName} limit reached. Try another model.
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="p-3">
-                <textarea
-                  value={postDraft}
-                  onChange={(e) => setPostDraft(e.target.value)}
-                  placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                  className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-sm text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                />
-                {postDraft && (() => {
-                  const limit = publishInfo?.charLimit ?? 280;
-                  const len = postDraft.length;
-                  const color = len > limit ? "text-red-600" : len > limit * 0.9 ? "text-yellow-600" : "text-slate-custom-400";
-                  return (
-                    <p className={`text-[10px] font-medium mt-1 text-right ${color}`}>
-                      {len.toLocaleString()}/{limit.toLocaleString()}
-                    </p>
-                  );
-                })()}
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-3">
-                    <div className="relative group">
-                      <button
-                        onClick={copyShareLink}
-                        disabled={!hasChartData}
-                        className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
-                      >
-                        <span className="material-icons-round text-sm">share</span>
-                      </button>
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
-                    </div>
-                    <div className="relative group">
-                      <button
-                        onClick={copyDraft}
-                        disabled={!postDraft}
-                        className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
-                      >
-                        <span className="material-icons-round text-sm">content_copy</span>
-                      </button>
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={attachImage}
-                        onChange={(e) => setAttachImage(e.target.checked)}
-                        className="w-3.5 h-3.5 accent-primary cursor-pointer"
-                      />
-                      <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
-                    </label>
-                    {userTier !== "FREE" && (
-                      <span className="text-[10px] font-medium text-slate-custom-400">
-                        {publishUsageCount}/{Number.isFinite(publishLimitCount) ? publishLimitCount : "\u221E"} this week
-                      </span>
-                    )}
-                    <div className="relative group">
-                      {userTier === "FREE" ? (
-                        <button
-                          className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-xs font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
-                          onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
-                        >
-                          <span className="material-icons-round text-sm">lock</span>
-                          Publish
-                        </button>
-                      ) : (
-                        <button
-                          className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
-                          disabled={!postDraft}
-                          onClick={handlePublishClick}
-                        >
-                          <span className="material-icons-round text-sm">rocket_launch</span>
-                          Publish
-                        </button>
+                        <span className="text-[10px] font-medium text-slate-custom-500">Attach image</span>
+                      </label>
+                      {userTier !== "FREE" && (
+                        <span className="text-[10px] font-medium text-slate-custom-400">
+                          {publishUsageCount}/{Number.isFinite(publishLimitCount) ? publishLimitCount : "\u221E"} this week
+                        </span>
                       )}
-                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
+                      <div className="relative group">
+                        {userTier === "FREE" ? (
+                          <button
+                            className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-xs font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
+                            onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
+                          >
+                            <span className="material-icons-round text-sm">lock</span>
+                            Publish
+                          </button>
+                        ) : (
+                          <button
+                            className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-xs font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
+                            disabled={!postDraft}
+                            onClick={handlePublishClick}
+                          >
+                            <span className="material-icons-round text-sm">rocket_launch</span>
+                            Publish
+                          </button>
+                        )}
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
+
           </div>
 
-          <ChartCustomizer
-            config={chartConfig}
-            onChange={setChartConfig}
-            isOpen={showCustomizer}
-            onToggle={() => setShowCustomizer(false)}
-            columns={columns}
-            numericColumns={numericColumns}
-            xField={xField}
-            yField={yField}
-            onAxisChange={handleAxisChange}
-          />
+          {/* Right sidebar - WorkflowStepper or ChartCustomizer */}
+          {(showCustomizer || currentStep >= 2) && (
+            <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+              {showCustomizer ? (
+                <ChartCustomizer
+                  config={chartConfig}
+                  onChange={setChartConfig}
+                  isOpen={true}
+                  onToggle={() => setShowCustomizer(false)}
+                  columns={columns}
+                  numericColumns={numericColumns}
+                  xField={xField}
+                  yField={yField}
+                  onAxisChange={handleAxisChange}
+                />
+              ) : (
+                <WorkflowStepper
+                  currentStep={currentStep}
+                  steps={workflowSteps}
+                  onStepClick={scrollToStep}
+                />
+              )}
+            </aside>
+          )}
+
         </div>
-      </div>
+      </main>
 
       <PublishModal
         open={showPublishModal}
