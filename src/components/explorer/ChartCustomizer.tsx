@@ -238,9 +238,9 @@ export function ChartCustomizer({
     if (!isOpen) return null;
 
     return (
-        <div className="w-72 bg-white border-l border-primary/20 flex flex-col h-full overflow-hidden shadow-[-6px_0_32px_rgba(106,218,27,0.18),_0_0_20px_rgba(106,218,27,0.07),_inset_0_1px_0_rgba(106,218,27,0.25),_inset_1px_0_0_rgba(106,218,27,0.08)]">
+        <div className="w-72 bg-white border-[1.3px] border-lime-300 rounded-2xl flex flex-col h-full overflow-hidden shadow-[-6px_0_32px_rgba(106,218,27,0.18),_0_0_20px_rgba(106,218,27,0.07),_inset_0_1px_0_rgba(106,218,27,0.25),_inset_1px_0_0_rgba(106,218,27,0.08)]">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-b from-primary/[0.05] to-slate-50/50">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-b from-primary/[0.075] to-primary/[0.03]">
                 <div className="flex items-center gap-2">
                     <span className="material-icons-round text-primary text-lg">tune</span>
                     <h3 className="text-sm font-bold text-slate-800">Customize</h3>

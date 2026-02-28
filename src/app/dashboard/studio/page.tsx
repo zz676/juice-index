@@ -73,10 +73,14 @@ function WorkflowStepper({
   const currentStepInfo = steps.find((s) => s.stepNum === currentStep);
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-xl border border-primary/15 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] p-4">
-        <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-500 mb-3">Workflow</div>
+      <div className="bg-white rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] overflow-hidden">
+        <div className="bg-lime-50 px-4 py-2.5 border-b border-lime-200">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-lime-800 text-center">Workflow</div>
+        </div>
+        <div className="p-4">
         <div className="relative">
-          <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-custom-200" />
+          {/* Vertical connector line through circle centres */}
+          <div className="absolute left-[17px] top-5 bottom-5 w-0.5 bg-primary/25" />
           <div className="space-y-1">
             {steps.map((step) => {
               const isComplete = currentStep > step.stepNum;
@@ -87,30 +91,32 @@ function WorkflowStepper({
                   key={step.id}
                   onClick={() => onStepClick(step.id)}
                   disabled={!isAccessible}
-                  className={`w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-all ${
+                  className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left transition-all ${
                     isCurrent
-                      ? "bg-primary/10"
+                      ? "bg-primary/5"
                       : isAccessible
                       ? "hover:bg-slate-custom-50"
                       : "opacity-40 cursor-not-allowed"
                   }`}
                 >
                   <span
-                    className={`relative z-10 flex-shrink-0 w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] font-bold ring-2 transition-all ${
+                    className={`relative z-10 flex-shrink-0 w-[18px] h-[18px] rounded-full flex items-center justify-center transition-all ${
                       isComplete
-                        ? "bg-primary text-slate-custom-900 ring-primary/20 shadow-[0_0_6px_rgba(106,218,27,0.3)]"
+                        ? "bg-primary shadow-[0_0_8px_rgba(106,218,27,0.45)]"
                         : isCurrent
-                        ? "bg-white text-primary border-2 border-primary ring-primary/20"
-                        : "bg-slate-custom-100 text-slate-custom-400 ring-slate-custom-200"
+                        ? "bg-white border-2 border-primary shadow-[0_0_8px_rgba(106,218,27,0.35)]"
+                        : "bg-white border-2 border-slate-custom-200"
                     }`}
                   >
                     {isComplete ? (
-                      <span className="material-icons-round text-[13px]">check</span>
+                      <span className="material-icons-round text-white text-[9px]">check</span>
+                    ) : isCurrent ? (
+                      <span className="w-[6px] h-[6px] rounded-full bg-primary" />
                     ) : (
-                      step.stepNum
+                      <span className="w-[5px] h-[5px] rounded-full bg-slate-custom-300" />
                     )}
                   </span>
-                  <div className="min-w-0 flex-1 py-0.5">
+                  <div className="min-w-0 flex-1">
                     <div className={`text-[12px] font-bold leading-tight ${isCurrent ? "text-slate-custom-900" : "text-slate-custom-600"}`}>
                       {step.title}
                     </div>
@@ -121,9 +127,10 @@ function WorkflowStepper({
             })}
           </div>
         </div>
+        </div>
       </div>
       {currentStepInfo && (
-        <div className="bg-white rounded-xl border border-primary/25 shadow-[0_0_28px_rgba(106,218,27,0.22),_0_2px_8px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.3),_inset_0_-1px_0_rgba(106,218,27,0.06)] p-4">
+        <div className="bg-white rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_28px_rgba(106,218,27,0.22),_0_2px_8px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.3),_inset_0_-1px_0_rgba(106,218,27,0.06)] p-4">
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
           <div className="text-[15px] font-bold text-slate-custom-800">{currentStepInfo.title}</div>
           <div className="text-[12px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
@@ -685,6 +692,11 @@ function StudioPageInner() {
       setImgPan({ x: 0, y: 0 });
       fetchUsage();
       showToast("success", "Chart image ready!");
+      setActiveSection(4);
+      setTimeout(() => {
+        const el = document.getElementById("step-4");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } catch (err) {
       console.error(err);
       showToast(
@@ -991,7 +1003,7 @@ function StudioPageInner() {
   };
 
   return (
-    <div className="font-display text-slate-custom-800 min-h-full -m-8 -mt-2 bg-slate-custom-50">
+    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "radial-gradient(ellipse at top left, rgba(163,230,53,0.28) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.20) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.45) 0%, rgba(255,255,255,1) 45%, rgba(217,249,157,0.35) 100%)" }}>
 
       <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
         <div className="flex items-center gap-4">
@@ -1027,8 +1039,8 @@ function StudioPageInner() {
         </div>
       </header>
 
-      <main className="px-6 py-5 max-w-[1400px] mx-auto">
-        <div className={`xl:grid gap-5 ${showCustomizer ? "xl:grid-cols-[1fr_18rem]" : currentStep >= 2 ? "xl:grid-cols-[1fr_16rem]" : ""}`}>
+      <main className="px-6 pt-24 pb-5 max-w-[1120px] mx-auto">
+        <div className={`xl:grid gap-5 ${showCustomizer ? "xl:grid-cols-[1fr_18rem]" : "xl:grid-cols-[1fr_16rem]"}`}>
 
           {/* Main content column - all steps stacked */}
           <div className="space-y-5">
@@ -1038,7 +1050,7 @@ function StudioPageInner() {
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
-              className={`bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-all duration-200 relative group pt-6 px-6 pb-3 ${activeSection === 1 ? "border-l-4 border-l-primary" : ""}`}
+              className={`bg-white rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative group pt-10 px-6 pb-3 ${activeSection === 1 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1231,7 +1243,7 @@ function StudioPageInner() {
                 id="step-2"
                 onFocusCapture={() => setActiveSection(2)}
                 onClickCapture={() => setActiveSection(2)}
-                className={`bg-white rounded-2xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-all duration-200 relative p-6 ${activeSection === 2 ? "border-l-4 border-l-primary" : ""}`}
+                className={`bg-white rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative p-6 ${activeSection === 2 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span
@@ -1473,7 +1485,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className="bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-l-4 border-l-primary shadow-sm border border-slate-custom-200 hover:shadow-md transition-shadow duration-200"
+                className={`bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1888,7 +1900,7 @@ function StudioPageInner() {
                 id="step-4"
                 onFocusCapture={() => setActiveSection(4)}
                 onClickCapture={() => setActiveSection(4)}
-                className="bg-white rounded-2xl overflow-auto border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                className={`bg-white rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
@@ -2118,29 +2130,27 @@ function StudioPageInner() {
           </div>
 
           {/* Right sidebar - WorkflowStepper or ChartCustomizer */}
-          {(showCustomizer || currentStep >= 2) && (
-            <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
-              {showCustomizer ? (
-                <ChartCustomizer
-                  config={chartConfig}
-                  onChange={setChartConfig}
-                  isOpen={true}
-                  onToggle={() => setShowCustomizer(false)}
-                  columns={columns}
-                  numericColumns={numericColumns}
-                  xField={xField}
-                  yField={yField}
-                  onAxisChange={handleAxisChange}
-                />
-              ) : (
-                <WorkflowStepper
-                  currentStep={currentStep}
-                  steps={workflowSteps}
-                  onStepClick={scrollToStep}
-                />
-              )}
-            </aside>
-          )}
+          <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+            {showCustomizer ? (
+              <ChartCustomizer
+                config={chartConfig}
+                onChange={setChartConfig}
+                isOpen={true}
+                onToggle={() => setShowCustomizer(false)}
+                columns={columns}
+                numericColumns={numericColumns}
+                xField={xField}
+                yField={yField}
+                onAxisChange={handleAxisChange}
+              />
+            ) : (
+              <WorkflowStepper
+                currentStep={currentStep}
+                steps={workflowSteps}
+                onStepClick={scrollToStep}
+              />
+            )}
+          </aside>
 
         </div>
       </main>
