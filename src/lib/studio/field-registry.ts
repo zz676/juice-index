@@ -302,8 +302,8 @@ const REGISTRY: Record<string, TableDef> = {
     description:
       "NIO power infrastructure snapshots over time — swap stations, charging stations/piles, cumulative swaps & charges, third-party pile access. " +
       "Each row is a point-in-time snapshot (asOfTime). Cumulative counts (cumulativeSwaps, cumulativeCharges) grow monotonically — they represent all-time running totals, NOT per-day or per-period session counts. " +
-      "For 'daily swap sessions' or 'monthly swap sessions' queries: query the snapshot rows for the time period (filter by asOfTime), show them as a line chart of the cumulative total, and explain the limitation. " +
-      "Use for tracking NIO's charging/swap network expansion and cumulative service milestones over time.",
+      "DO NOT use this table for daily/monthly/per-period session queries — use NioPowerDailyDelta instead. " +
+      "Use NioPowerSnapshot only when the user explicitly wants to track cumulative milestones or network expansion over time.",
     fields: {
       asOfTime:               { type: "DateTime", description: "Timestamp when this snapshot was recorded" },
       totalStations:          { type: "Int", description: "Total NIO power stations (swap + charging combined)" },
@@ -315,6 +315,32 @@ const REGISTRY: Record<string, TableDef> = {
       cumulativeCharges:      { type: "BigInt", description: "All-time cumulative charging sessions since NIO launched" },
       thirdPartyPiles:        { type: "Int", description: "Third-party charging piles accessible via NIO app" },
       thirdPartyUsagePercent: { type: "Float", description: "Share of NIO users using third-party charging as decimal (0.25 = 25%)" },
+    },
+  },
+
+  NioPowerDailyDelta: {
+    name: "NioPowerDailyDelta",
+    description:
+      "Pre-computed daily delta view of NIO power data — one row per calendar day. " +
+      "dailySwaps and dailyCharges are the actual sessions performed on that day (NOT cumulative). " +
+      "Use this table for all queries about daily or monthly swap/charge session counts (e.g. 'daily swap sessions in Feb 2026', 'monthly charges in 2025'). " +
+      "Filter by year and month (integers) for period queries. The 'date' field is a MM-DD label (e.g. '02-25') for chart x-axis display. " +
+      "dailySwaps/dailyCharges are null for the very first row in the dataset.",
+    fields: {
+      fullDate:           { type: "DateTime", description: "Calendar date for this row (YYYY-MM-DD), use for range filters" },
+      year:               { type: "Int",      description: "Calendar year (e.g. 2026)" },
+      month:              { type: "Int",      description: "Calendar month number (1=Jan … 12=Dec)" },
+      date:               { type: "String",   description: "Month-day label formatted as MM-DD (e.g. '02-25'), for chart x-axis" },
+      swapStations:       { type: "Int",      description: "Battery swap stations count on this day" },
+      chargingStations:   { type: "Int",      description: "Charging stations count on this day" },
+      chargingPiles:      { type: "Int",      description: "Charging pile units count on this day" },
+      totalStations:      { type: "Int",      description: "Total NIO power stations on this day" },
+      highwaySwapStations:{ type: "Int",      description: "Highway swap stations count on this day" },
+      thirdPartyPiles:    { type: "Int",      description: "Third-party piles accessible via NIO app on this day" },
+      cumulativeSwaps:    { type: "BigInt",   description: "All-time cumulative swap sessions at end of this day" },
+      cumulativeCharges:  { type: "BigInt",   description: "All-time cumulative charge sessions at end of this day" },
+      dailySwaps:         { type: "BigInt",   description: "Battery swap sessions performed on this specific day (null for first data row)" },
+      dailyCharges:       { type: "BigInt",   description: "Charging sessions performed on this specific day (null for first data row)" },
     },
   },
 };

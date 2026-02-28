@@ -14,6 +14,7 @@ const CANONICAL_TABLES = new Set([
   "PlantExports",
   "VehicleSpec",
   "NioPowerSnapshot",
+  "NioPowerDailyDelta",
 ]);
 
 const ALIASES: Record<string, string> = {
@@ -49,6 +50,12 @@ const ALIASES: Record<string, string> = {
   nio_power_snapshot: "NioPowerSnapshot",
   nio_power: "NioPowerSnapshot",
   power_snapshot: "NioPowerSnapshot",
+
+  niopowerdailydelta: "NioPowerDailyDelta",
+  nio_power_daily_delta: "NioPowerDailyDelta",
+  nio_daily_delta: "NioPowerDailyDelta",
+  nio_daily: "NioPowerDailyDelta",
+  power_daily_delta: "NioPowerDailyDelta",
 };
 
 export function normalizeTableName(raw: string): string {

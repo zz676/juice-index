@@ -16,6 +16,7 @@ const PRISMA_TO_SQL_TABLE: Record<string, string> = {
   PlantExports: "PlantExports",
   VehicleSpec: "VehicleSpec",
   NioPowerSnapshot: "NioPowerSnapshot",
+  NioPowerDailyDelta: "NioPowerDailyDelta",
 };
 
 function qIdent(ident: string): string {

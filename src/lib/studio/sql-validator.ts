@@ -21,6 +21,7 @@ const SQL_TABLE_TO_PRISMA: Record<string, string> = {
   plantexports: "PlantExports",
   vehiclespec: "VehicleSpec",
   niopowersnapshot: "NioPowerSnapshot",
+  niopowerdailydelta: "NioPowerDailyDelta",
 };
 
 const FORBIDDEN_PATTERNS: RegExp[] = [
