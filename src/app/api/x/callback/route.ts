@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
   const errorParam = searchParams.get("error");
 
   if (errorParam) {
+    console.error("[X OAuth] Callback — X returned error:", errorParam, "description:", searchParams.get("error_description"));
     settingsUrl.searchParams.set("x_error", errorParam);
     const response = NextResponse.redirect(settingsUrl);
     response.cookies.delete("x_oauth_state");

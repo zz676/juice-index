@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
     codeChallenge,
   });
 
+  console.log("[X OAuth] Authorize — clientId:", clientId, "redirectUri:", redirectUri);
+
   const response = NextResponse.redirect(authorizeUrl);
 
   // Store state + code_verifier in an HttpOnly cookie (10 min TTL)
