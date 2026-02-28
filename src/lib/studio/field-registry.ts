@@ -318,29 +318,67 @@ const REGISTRY: Record<string, TableDef> = {
     },
   },
 
+  NioPowerMonthlyDelta: {
+    name: "NioPowerMonthlyDelta",
+    description:
+      "Monthly aggregated NIO power data — one row per calendar month. " +
+      "'monthly*' fields are sums of daily deltas (what was added/done that month, NOT cumulative). " +
+      "Absolute snapshot fields (swapStations, cumulativeSwaps, etc.) are end-of-month readings. " +
+      "Use this table for monthly or yearly swap/charge session queries (e.g. 'monthly swaps in 2025', 'yearly swap trend'). " +
+      "Filter by year (integer) for a full-year view. Use yearMonth (YYYY-MM) as the chart x-axis.",
+    fields: {
+      year:                      { type: "Int",    description: "Calendar year (e.g. 2025)" },
+      month:                     { type: "Int",    description: "Calendar month number (1=Jan … 12=Dec)" },
+      yearMonth:                 { type: "String", description: "Year-month label formatted as YYYY-MM (e.g. '2025-02'), for chart x-axis" },
+      monthlySwaps:              { type: "BigInt", description: "Battery swap sessions performed this month (delta)" },
+      monthlyCharges:            { type: "BigInt", description: "Charging sessions performed this month (delta)" },
+      monthlySwapStations:       { type: "BigInt", description: "New battery swap stations opened this month (delta)" },
+      monthlyChargingStations:   { type: "BigInt", description: "New charging stations opened this month (delta)" },
+      monthlyChargingPiles:      { type: "BigInt", description: "New charging pile units added this month (delta)" },
+      monthlyTotalStations:      { type: "BigInt", description: "Total new NIO power stations opened this month (delta)" },
+      monthlyHighwaySwapStations:{ type: "BigInt", description: "New highway swap stations opened this month (delta)" },
+      monthlyThirdPartyPiles:    { type: "BigInt", description: "New third-party piles added to NIO network this month (delta)" },
+      swapStations:              { type: "Int",    description: "Battery swap stations count at end of month (snapshot)" },
+      chargingStations:          { type: "Int",    description: "Charging stations count at end of month (snapshot)" },
+      chargingPiles:             { type: "Int",    description: "Charging pile units count at end of month (snapshot)" },
+      totalStations:             { type: "Int",    description: "Total NIO power stations at end of month (snapshot)" },
+      highwaySwapStations:       { type: "Int",    description: "Highway swap stations count at end of month (snapshot)" },
+      thirdPartyPiles:           { type: "Int",    description: "Third-party piles accessible via NIO app at end of month (snapshot)" },
+      cumulativeSwaps:           { type: "BigInt", description: "All-time cumulative swap sessions at end of month (snapshot)" },
+      cumulativeCharges:         { type: "BigInt", description: "All-time cumulative charge sessions at end of month (snapshot)" },
+    },
+  },
+
   NioPowerDailyDelta: {
     name: "NioPowerDailyDelta",
     description:
-      "Pre-computed daily delta view of NIO power data — one row per calendar day. " +
-      "dailySwaps and dailyCharges are the actual sessions performed on that day (NOT cumulative). " +
-      "Use this table for all queries about daily or monthly swap/charge session counts (e.g. 'daily swap sessions in Feb 2026', 'monthly charges in 2025'). " +
-      "Filter by year and month (integers) for period queries. The 'date' field is a MM-DD label (e.g. '02-25') for chart x-axis display. " +
-      "dailySwaps/dailyCharges are null for the very first row in the dataset.",
+      "Daily delta view of NIO power data — one row per calendar day. " +
+      "'daily*' fields are deltas (what was added/done that day, NOT cumulative). " +
+      "Absolute snapshot fields (swapStations, cumulativeSwaps, etc.) are end-of-day readings. " +
+      "Use this table for daily swap/charge session queries (e.g. 'daily swap sessions in Feb 2026'). " +
+      "Filter by year and month (integers). Use 'date' (MM-DD) as the chart x-axis. " +
+      "The first day of the dataset is excluded since there is no prior day to diff against.",
     fields: {
-      fullDate:           { type: "DateTime", description: "Calendar date for this row (YYYY-MM-DD), use for range filters" },
-      year:               { type: "Int",      description: "Calendar year (e.g. 2026)" },
-      month:              { type: "Int",      description: "Calendar month number (1=Jan … 12=Dec)" },
-      date:               { type: "String",   description: "Month-day label formatted as MM-DD (e.g. '02-25'), for chart x-axis" },
-      swapStations:       { type: "Int",      description: "Battery swap stations count on this day" },
-      chargingStations:   { type: "Int",      description: "Charging stations count on this day" },
-      chargingPiles:      { type: "Int",      description: "Charging pile units count on this day" },
-      totalStations:      { type: "Int",      description: "Total NIO power stations on this day" },
-      highwaySwapStations:{ type: "Int",      description: "Highway swap stations count on this day" },
-      thirdPartyPiles:    { type: "Int",      description: "Third-party piles accessible via NIO app on this day" },
-      cumulativeSwaps:    { type: "BigInt",   description: "All-time cumulative swap sessions at end of this day" },
-      cumulativeCharges:  { type: "BigInt",   description: "All-time cumulative charge sessions at end of this day" },
-      dailySwaps:         { type: "BigInt",   description: "Battery swap sessions performed on this specific day (null for first data row)" },
-      dailyCharges:       { type: "BigInt",   description: "Charging sessions performed on this specific day (null for first data row)" },
+      fullDate:                  { type: "DateTime", description: "Calendar date for this row (YYYY-MM-DD), use for range filters" },
+      year:                      { type: "Int",      description: "Calendar year (e.g. 2026)" },
+      month:                     { type: "Int",      description: "Calendar month number (1=Jan … 12=Dec)" },
+      date:                      { type: "String",   description: "Month-day label formatted as MM-DD (e.g. '02-25'), for chart x-axis" },
+      swapStations:              { type: "Int",      description: "Battery swap stations count at end of this day (snapshot)" },
+      chargingStations:          { type: "Int",      description: "Charging stations count at end of this day (snapshot)" },
+      chargingPiles:             { type: "Int",      description: "Charging pile units count at end of this day (snapshot)" },
+      totalStations:             { type: "Int",      description: "Total NIO power stations at end of this day (snapshot)" },
+      highwaySwapStations:       { type: "Int",      description: "Highway swap stations count at end of this day (snapshot)" },
+      thirdPartyPiles:           { type: "Int",      description: "Third-party piles accessible via NIO app at end of this day (snapshot)" },
+      cumulativeSwaps:           { type: "BigInt",   description: "All-time cumulative swap sessions at end of this day (snapshot)" },
+      cumulativeCharges:         { type: "BigInt",   description: "All-time cumulative charge sessions at end of this day (snapshot)" },
+      dailySwaps:                { type: "BigInt",   description: "Battery swap sessions performed on this day (delta)" },
+      dailyCharges:              { type: "BigInt",   description: "Charging sessions performed on this day (delta)" },
+      dailySwapStations:         { type: "BigInt",   description: "New battery swap stations opened on this day (delta)" },
+      dailyChargingStations:     { type: "BigInt",   description: "New charging stations opened on this day (delta)" },
+      dailyChargingPiles:        { type: "BigInt",   description: "New charging pile units added on this day (delta)" },
+      dailyTotalStations:        { type: "BigInt",   description: "Total new NIO power stations opened on this day (delta)" },
+      dailyHighwaySwapStations:  { type: "BigInt",   description: "New highway swap stations opened on this day (delta)" },
+      dailyThirdPartyPiles:      { type: "BigInt",   description: "New third-party piles added to NIO network on this day (delta)" },
     },
   },
 };

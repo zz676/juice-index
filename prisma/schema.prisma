@@ -1422,37 +1422,96 @@ model NioPowerSnapshot {
   @@map("NioPowerSnapshot")
 }
 
+/// Monthly aggregated view of NIO power data, derived from NioPowerDailyDelta.
+/// Each row is one calendar month. "monthly*" fields are sums of daily deltas.
+/// Absolute snapshot fields (swapStations, cumulativeSwaps, etc.) are end-of-month readings.
+view NioPowerMonthlyDelta {
+  /// Calendar year (e.g. 2025).
+  year                       Int
+  /// Calendar month number (1=Jan … 12=Dec).
+  month                      Int
+  /// Year-month label formatted as YYYY-MM (e.g. "2025-02"), unique per row.
+  yearMonth                  String  @unique
+  /// Total battery swap sessions for this month.
+  monthlySwaps               BigInt
+  /// Total charging sessions for this month.
+  monthlyCharges             BigInt
+  /// New battery swap stations opened this month.
+  monthlySwapStations        BigInt
+  /// New charging stations opened this month.
+  monthlyChargingStations    BigInt
+  /// New charging pile units added this month.
+  monthlyChargingPiles       BigInt
+  /// Total new NIO power stations opened this month.
+  monthlyTotalStations       BigInt
+  /// New highway swap stations opened this month.
+  monthlyHighwaySwapStations BigInt
+  /// New third-party piles added to NIO network this month.
+  monthlyThirdPartyPiles     BigInt
+  /// Battery swap stations count at end of month.
+  swapStations               Int
+  /// Charging stations count at end of month.
+  chargingStations           Int
+  /// Charging pile units count at end of month.
+  chargingPiles              Int
+  /// Total NIO power stations at end of month.
+  totalStations              Int
+  /// Highway swap stations count at end of month.
+  highwaySwapStations        Int
+  /// Third-party piles accessible via NIO app at end of month.
+  thirdPartyPiles            Int
+  /// All-time cumulative swap sessions at end of month.
+  cumulativeSwaps            BigInt
+  /// All-time cumulative charge sessions at end of month.
+  cumulativeCharges          BigInt
+
+  @@map("NioPowerMonthlyDelta")
+}
+
 /// Daily delta view derived from NioPowerSnapshot cumulative totals.
-/// Each row represents one calendar day with per-day swap/charge counts.
+/// Each row represents one calendar day. "daily*" fields are deltas (what was added/done that day).
+/// Absolute snapshot fields (swapStations, cumulativeSwaps, etc.) are end-of-day readings.
 view NioPowerDailyDelta {
   /// Calendar date for this row (used as unique row identifier).
-  fullDate            DateTime  @unique @map("fullDate") @db.Date
+  fullDate                   DateTime  @unique @map("fullDate") @db.Date
   /// Calendar year (e.g. 2026).
-  year                Int
+  year                       Int
   /// Calendar month number (1=Jan … 12=Dec).
-  month               Int
+  month                      Int
   /// Month-day label formatted as MM-DD (e.g. "02-25").
-  date                String
-  /// Battery swap stations count on this day.
-  swapStations        Int
-  /// Charging stations count on this day.
-  chargingStations    Int
-  /// Charging pile units count on this day.
-  chargingPiles       Int
-  /// Total NIO power stations on this day.
-  totalStations       Int
-  /// Highway swap stations count on this day.
-  highwaySwapStations Int
-  /// Third-party piles accessible via NIO app on this day.
-  thirdPartyPiles     Int
-  /// All-time cumulative swap sessions at end of this day.
-  cumulativeSwaps     BigInt
-  /// All-time cumulative charge sessions at end of this day.
-  cumulativeCharges   BigInt
-  /// Battery swap sessions performed on this day (null for first row).
-  dailySwaps          BigInt?
-  /// Charging sessions performed on this day (null for first row).
-  dailyCharges        BigInt?
+  date                       String
+  /// Battery swap stations count at end of this day (snapshot).
+  swapStations               Int
+  /// Charging stations count at end of this day (snapshot).
+  chargingStations           Int
+  /// Charging pile units count at end of this day (snapshot).
+  chargingPiles              Int
+  /// Total NIO power stations at end of this day (snapshot).
+  totalStations              Int
+  /// Highway swap stations count at end of this day (snapshot).
+  highwaySwapStations        Int
+  /// Third-party piles accessible via NIO app at end of this day (snapshot).
+  thirdPartyPiles            Int
+  /// All-time cumulative swap sessions at end of this day (snapshot).
+  cumulativeSwaps            BigInt
+  /// All-time cumulative charge sessions at end of this day (snapshot).
+  cumulativeCharges          BigInt
+  /// Battery swap sessions performed on this day (delta).
+  dailySwaps                 BigInt
+  /// Charging sessions performed on this day (delta).
+  dailyCharges               BigInt
+  /// New battery swap stations opened on this day (delta).
+  dailySwapStations          BigInt
+  /// New charging stations opened on this day (delta).
+  dailyChargingStations      BigInt
+  /// New charging pile units added on this day (delta).
+  dailyChargingPiles         BigInt
+  /// Total new NIO power stations opened on this day (delta).
+  dailyTotalStations         BigInt
+  /// New highway swap stations opened on this day (delta).
+  dailyHighwaySwapStations   BigInt
+  /// New third-party piles added to NIO network on this day (delta).
+  dailyThirdPartyPiles       BigInt
 
   @@map("NioPowerDailyDelta")
 }
