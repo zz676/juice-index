@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/require-user";
 import { normalizeTier } from "@/lib/api/tier";
 import { TIER_QUOTAS } from "@/lib/api/quotas";
@@ -13,7 +13,9 @@ import { getRedirectBase } from "@/lib/auth/redirect-base";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const settingsUrl = new URL("/dashboard/settings", request.url);
+
   const { user, error } = await requireUser();
   if (error) return error;
 
@@ -26,23 +28,12 @@ export async function GET() {
   const quota = TIER_QUOTAS[tier];
 
   if (quota.xAccounts <= 0) {
-    return NextResponse.json(
-      { error: "FORBIDDEN", message: "Your plan does not include X posting. Upgrade to Starter or higher." },
-      { status: 403 }
-    );
+    settingsUrl.searchParams.set("x_error", "upgrade_required");
+    return NextResponse.redirect(settingsUrl);
   }
 
-  // Check if already connected
-  const existing = await prisma.xAccount.findUnique({
-    where: { userId: user.id },
-    select: { tokenError: true },
-  });
-  if (existing && !existing.tokenError) {
-    return NextResponse.json(
-      { error: "CONFLICT", message: "An X account is already connected. Disconnect it first." },
-      { status: 409 }
-    );
-  }
+  // Allow reconnection at any time — the callback upsert handles overwriting existing tokens.
+  // No conflict check needed; OAuth requires user consent on X's side anyway.
 
   const { clientId } = getXOAuthClientCredentials();
   const { codeVerifier, codeChallenge } = generatePKCE();
@@ -50,10 +41,8 @@ export async function GET() {
 
   const siteUrl = getRedirectBase();
   if (!siteUrl) {
-    return NextResponse.json(
-      { error: "SERVER_CONFIG", message: "Application URL is not configured" },
-      { status: 500 }
-    );
+    settingsUrl.searchParams.set("x_error", "server_config");
+    return NextResponse.redirect(settingsUrl);
   }
   const redirectUri = `${siteUrl}/api/x/callback`;
 
