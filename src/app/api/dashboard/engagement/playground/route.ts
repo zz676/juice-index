@@ -64,10 +64,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "X account token expired. Please reconnect in Settings." }, { status: 400 });
     }
 
+    console.log(`[Playground] Fetching tweet ${tweetId} for user ${userId}`);
     const fetched = await fetchTweetById(accessToken, tweetId);
     if (!fetched) {
+      console.warn(`[Playground] Tweet ${tweetId} not found or inaccessible for user ${userId}`);
       return NextResponse.json({ message: "Could not fetch tweet. It may be private or deleted." }, { status: 400 });
     }
+    console.log(`[Playground] Tweet ${tweetId} fetched — length: ${fetched.text.length} chars`);
 
     tweetText = fetched.text;
     quotedTweetText = fetched.quotedTweetText;

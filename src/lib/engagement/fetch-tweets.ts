@@ -8,7 +8,16 @@ async function xGet<T>(accessToken: string, path: string): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`X API error (${res.status}) ${path}: ${body}`);
+    const errMsg = `X API error (${res.status}) ${path}: ${body}`;
+    // Surface spend cap and auth errors prominently for faster ops triage
+    if (res.status === 403) {
+      console.error(`[X API] 403 Forbidden — ${path} — body: ${body} (check spend cap in X developer console)`);
+    } else if (res.status === 401) {
+      console.error(`[X API] 401 Unauthorized — ${path} — token likely expired or revoked`);
+    } else {
+      console.error(`[X API] ${res.status} error — ${path} — body: ${body}`);
+    }
+    throw new Error(errMsg);
   }
   return res.json() as Promise<T>;
 }
@@ -158,7 +167,8 @@ export async function fetchTweetById(
       accessToken,
       `/tweets/${tweetId}?${params}`,
     );
-  } catch {
+  } catch (err) {
+    console.error(`[X API] fetchTweetById failed for tweet ${tweetId}:`, err instanceof Error ? err.message : err);
     return null;
   }
 
