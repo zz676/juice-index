@@ -77,7 +77,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="bg-background-light font-display text-slate-custom-800 antialiased overflow-hidden h-screen flex">
             {/* Sidebar */}
             <aside
-                className={`${collapsed ? "w-16" : "w-64"} bg-white border-r border-slate-custom-200 flex flex-col h-full flex-shrink-0 z-20 transition-all duration-300`}
+                className={`${collapsed ? "w-16" : "w-64"} border-r border-green-100 flex flex-col h-full flex-shrink-0 z-20 transition-all duration-300`}
+                style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.025) 0px, rgba(112,185,60,0.025) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.22) 0%, transparent 65%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.10) 0%, transparent 55%), linear-gradient(180deg, rgba(212,233,173,0.20) 0%, rgba(255,255,255,0.98) 40%)" }}
             >
                 {/* Top: Logo + Toggle */}
                 <div className={`flex items-center ${collapsed ? "justify-center px-0" : "justify-between px-6"} h-20 flex-shrink-0`}>
@@ -124,10 +125,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                 key={item.href}
                                 href={item.href}
                                 title={collapsed ? item.label : undefined}
-                                className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-4 py-2.5 rounded-xl"} font-medium transition-all group
+                                className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-4 py-2.5 rounded-xl"} font-medium transition-all group relative
                                     ${isActive
-                                        ? "bg-primary/10 text-slate-custom-900"
-                                        : "text-slate-custom-500 hover:bg-slate-custom-50 hover:text-slate-custom-700"
+                                        ? "bg-primary/15 text-slate-custom-900 shadow-[inset_3px_0_0_rgba(106,218,27,0.7)]"
+                                        : "text-slate-custom-500 hover:bg-white/60 hover:text-slate-custom-700"
                                     }`}
                             >
                                 <span
@@ -233,7 +234,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-                {/* Top Header */}
+                {/* Top Header — hidden on studio (which has its own combined header) */}
+                {pathname !== "/dashboard/studio" && (
                 <header className="h-[51px] flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
@@ -244,6 +246,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <NotificationBell />
                     </div>
                 </header>
+                )}
 
                 {/* X Token Error Banner */}
                 {xTokenError && (

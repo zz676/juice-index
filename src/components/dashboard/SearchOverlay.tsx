@@ -169,7 +169,7 @@ export default function SearchOverlay() {
           if (query.length >= 2) setIsOpen(true);
         }}
         onKeyDown={handleKeyDown}
-        className="w-full pl-11 pr-20 py-2 bg-slate-custom-50 border border-slate-custom-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all duration-200 placeholder-slate-custom-400 text-slate-custom-700"
+        className="w-full pl-11 pr-20 py-2 bg-slate-custom-50 rounded-xl text-sm focus:outline-none focus:bg-white transition-all duration-200 placeholder-slate-custom-400 text-slate-custom-700"
         placeholder="Search tickers, reports, or news..."
         type="text"
       />
