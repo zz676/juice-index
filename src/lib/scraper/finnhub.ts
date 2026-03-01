@@ -32,10 +32,13 @@ export function parseFinnhubQuote(
 
     const peRatio: number | null = m?.peBasicExclExtraTTM ?? m?.peTTM ?? null;
 
-    // Earnings calendar: pick the first upcoming entry
+    // Earnings calendar: sort ascending and pick the nearest upcoming date
     const earningsArr: Array<{ date: string }> =
       (earningsJson as any)?.earningsCalendar ?? [];
-    const next = earningsArr[0] ?? null;
+    const today = new Date().toISOString().slice(0, 10);
+    const next = earningsArr
+      .filter((e) => e.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))[0] ?? null;
     const earningsDate = next?.date ? new Date(next.date) : null;
     const earningsDateRaw = next?.date ?? null;
 
@@ -78,17 +81,17 @@ export async function fetchStockQuote(ticker: string): Promise<StockQuoteData | 
       fetch(`${FINNHUB_API}/calendar/earnings?symbol=${encodeURIComponent(ticker)}&from=${from}&to=${to}`, { headers, signal: ac.signal, next: { revalidate: 0 } }),
     ]);
 
-    if (!quoteRes.ok) {
-      console.warn(`[finnhub] ${ticker}: quote HTTP ${quoteRes.status}`);
-      return null;
-    }
-    if (!metricRes.ok) {
-      console.warn(`[finnhub] ${ticker}: metric HTTP ${metricRes.status}`);
-      return null;
-    }
-    if (!earningsRes.ok) {
-      console.warn(`[finnhub] ${ticker}: earnings HTTP ${earningsRes.status}`);
-      return null;
+    for (const [label, res] of [["quote", quoteRes], ["metric", metricRes], ["earnings", earningsRes]] as const) {
+      if (!res.ok) {
+        if (res.status === 403) {
+          console.warn(`[finnhub] ${ticker}: ${label} HTTP 403 FORBIDDEN — exchange not supported on free tier`);
+        } else if (res.status === 429) {
+          console.warn(`[finnhub] ${ticker}: ${label} HTTP 429 RATE_LIMITED — reduce batch size or increase delay`);
+        } else {
+          console.warn(`[finnhub] ${ticker}: ${label} HTTP ${res.status}`);
+        }
+        return null;
+      }
     }
 
     const [quoteJson, metricJson, earningsJson] = await Promise.all([

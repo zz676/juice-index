@@ -31,8 +31,8 @@ async function processTicker(ticker: string, companyName: string, country: strin
   return { ticker, status };
 }
 
-const BATCH_SIZE = 3;          // 3 tickers × 3 Finnhub calls = 9 req per batch
-const BATCH_DELAY_MS = 10_000; // 10 seconds between batches → ~54 req/min (free tier limit: 60)
+const BATCH_SIZE = 2;          // 2 tickers × 3 Finnhub calls = 6 req per batch
+const BATCH_DELAY_MS = 15_000; // 15 seconds between batches → ~24 req/min (well under free tier limit: 60)
 
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
