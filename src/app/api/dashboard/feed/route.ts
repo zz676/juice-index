@@ -30,25 +30,33 @@ export async function GET() {
             url: post.sourceUrl,
         }));
 
-        // Fetch upcoming earnings from the latest StockDailySnapshot per ticker
-        const upcomingSnapshots = await prisma.stockDailySnapshot.findMany({
+        // Fetch upcoming earnings, deduplicate by ticker in JS to get soonest per company
+        const rawSnapshots = await prisma.stockDailySnapshot.findMany({
             where: { earningsDate: { gte: new Date() } },
             orderBy: { earningsDate: "asc" },
-            distinct: ["ticker"],
-            take: 5,
+            take: 200,
         });
 
-        const catalysts = upcomingSnapshots.map((s) => {
-            const date = s.earningsDate!;
+        // Keep only the earliest upcoming earningsDate per ticker
+        const seen = new Set<string>();
+        const upcomingSnapshots = rawSnapshots.filter((s) => {
+            if (seen.has(s.ticker)) return false;
+            seen.add(s.ticker);
+            return true;
+        }).slice(0, 5);
+
+        const catalysts = upcomingSnapshots.flatMap((s) => {
+            if (!s.earningsDate) return [];
+            const date = s.earningsDate;
             const month = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
             const day = String(date.getUTCDate()).padStart(2, "0");
-            return {
+            return [{
                 month,
                 day,
                 title: `${s.companyName} Earnings`,
                 desc: s.earningsDateRaw ? `Est. ${s.earningsDateRaw}` : "Earnings date from Yahoo Finance.",
                 tags: ["Earnings", s.ticker],
-            };
+            }];
         });
 
         // If no posts found (db empty), mock some news
