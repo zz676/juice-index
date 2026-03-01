@@ -52,6 +52,12 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
   const [loading, setLoading] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState<"date" | "postDate" | null>(null);
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [postDateFrom, setPostDateFrom] = useState<string>("");
+  const [postDateTo, setPostDateTo] = useState<string>("");
+  const datePickerRef = useRef<HTMLDivElement>(null);
   const [selectedReply, setSelectedReply] = useState<ReplyRow | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -66,12 +72,26 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setDatePickerOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const fetchReplies = async (
     page = 1,
     tab: "All" | EngagementReplyStatus = activeTab,
     sort = sortBy,
     order = sortOrder,
     accountId: string | null = selectedAccountId,
+    df = dateFrom,
+    dt = dateTo,
+    pdf = postDateFrom,
+    pdt = postDateTo,
   ) => {
     setLoading(true);
     try {
@@ -83,6 +103,10 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
       });
       if (tab !== "All") params.set("status", tab);
       if (accountId) params.set("accountId", accountId);
+      if (df) params.set("dateFrom", df);
+      if (dt) params.set("dateTo", dt);
+      if (pdf) params.set("postDateFrom", pdf);
+      if (pdt) params.set("postDateTo", pdt);
       const res = await fetch(`/api/dashboard/engagement/replies?${params}`);
       const data = await res.json();
       setReplies(data.replies ?? []);
