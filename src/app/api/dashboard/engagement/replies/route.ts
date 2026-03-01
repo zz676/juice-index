@@ -31,6 +31,24 @@ export async function GET(request: NextRequest) {
     where.monitoredAccountId = accountId;
   }
 
+  const dateFrom = url.searchParams.get("dateFrom");
+  const dateTo = url.searchParams.get("dateTo");
+  const postDateFrom = url.searchParams.get("postDateFrom");
+  const postDateTo = url.searchParams.get("postDateTo");
+
+  if (dateFrom || dateTo) {
+    where.createdAt = {
+      ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
+      ...(dateTo ? { lte: new Date(dateTo + "T23:59:59.999Z") } : {}),
+    };
+  }
+  if (postDateFrom || postDateTo) {
+    where.sourceTweetCreatedAt = {
+      ...(postDateFrom ? { gte: new Date(postDateFrom) } : {}),
+      ...(postDateTo ? { lte: new Date(postDateTo + "T23:59:59.999Z") } : {}),
+    };
+  }
+
   const accountFilterWhere: Record<string, unknown> = { userId: user.id };
   if (accountId) {
     accountFilterWhere.monitoredAccountId = accountId;
