@@ -790,8 +790,11 @@ function StudioPageInner() {
   const copyChartToClipboard = useCallback(async () => {
     if (!chartImage) return;
     try {
-      const res = await fetch(chartImage);
-      const blob = await res.blob();
+      const base64 = chartImage.split(",")[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "image/png" });
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       showToast("success", "Chart copied to clipboard!");
     } catch {
