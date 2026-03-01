@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import yahooFinance from "yahoo-finance2";
-import type { Quote } from "yahoo-finance2/modules/quote";
+
+const YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v7/finance/quote";
 
 const STOCKS: { symbol: string; brand: string }[] = [
   { symbol: "TSLA",       brand: "Tesla"     },
@@ -45,10 +45,24 @@ export async function GET() {
       });
     }
 
-    const symbols = STOCKS.map((s) => s.symbol);
-    const results = (await yahooFinance.quote(symbols, {
-      fields: ["regularMarketPrice", "regularMarketChangePercent", "currency"],
-    })) as Quote[];
+    const symbols = STOCKS.map((s) => s.symbol).join(",");
+    const url = `${YAHOO_QUOTE_URL}?symbols=${encodeURIComponent(symbols)}&fields=regularMarketPrice,regularMarketChangePercent,currency`;
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "application/json",
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!res.ok) throw new Error(`Yahoo Finance returned ${res.status}`);
+
+    const json = await res.json();
+    const results: Array<{ symbol: string; regularMarketPrice?: number; regularMarketChangePercent?: number; currency?: string }> =
+      json?.quoteResponse?.result ?? [];
 
     const quotes: StockQuote[] = STOCKS.map((stock) => {
       const r = results.find((q) => q.symbol === stock.symbol);
