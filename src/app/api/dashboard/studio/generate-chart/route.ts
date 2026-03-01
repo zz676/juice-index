@@ -317,11 +317,15 @@ const dashedGridPlugin: Plugin = {
         ctx.lineTo(right, y);
         ctx.stroke();
       }
-      // Closing line at the top of the chart area (Recharts-style border)
+      // Closing lines at the top and right of the chart area (Recharts-style border)
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.moveTo(left, top);
       ctx.lineTo(right, top);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(right, top);
+      ctx.lineTo(right, bottom);
       ctx.stroke();
       ctx.setLineDash(lineDash);
     }
