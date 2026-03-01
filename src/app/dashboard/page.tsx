@@ -170,14 +170,6 @@ export default function DashboardPage() {
                 <div>
                   <h5 className="text-sm font-semibold text-slate-custom-900">{item.title}</h5>
                   <p className="text-xs text-slate-custom-500 mt-0.5">{item.desc}</p>
-                  <div className="mt-1.5 flex gap-2">
-                    {item.tags.map(t => (
-                      <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-custom-100 text-slate-custom-600 rounded-full font-medium">{t}</span>
-                    ))}
-                    {item.highlight && (
-                      <span className="text-[10px] px-2 py-0.5 bg-primary/20 text-green-700 rounded-full font-medium">{item.highlight}</span>
-                    )}
-                  </div>
                 </div>
               </div>
             ))}
