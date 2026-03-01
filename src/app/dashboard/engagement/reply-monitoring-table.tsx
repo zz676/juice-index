@@ -88,10 +88,10 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
     sort = sortBy,
     order = sortOrder,
     accountId: string | null = selectedAccountId,
-    df = dateFrom,
-    dt = dateTo,
-    pdf = postDateFrom,
-    pdt = postDateTo,
+    dateFromFilter = dateFrom,
+    dateToFilter = dateTo,
+    postDateFromFilter = postDateFrom,
+    postDateToFilter = postDateTo,
   ) => {
     setLoading(true);
     try {
@@ -103,10 +103,10 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
       });
       if (tab !== "All") params.set("status", tab);
       if (accountId) params.set("accountId", accountId);
-      if (df) params.set("dateFrom", df);
-      if (dt) params.set("dateTo", dt);
-      if (pdf) params.set("postDateFrom", pdf);
-      if (pdt) params.set("postDateTo", pdt);
+      if (dateFromFilter) params.set("dateFrom", dateFromFilter);
+      if (dateToFilter) params.set("dateTo", dateToFilter);
+      if (postDateFromFilter) params.set("postDateFrom", postDateFromFilter);
+      if (postDateToFilter) params.set("postDateTo", postDateToFilter);
       const res = await fetch(`/api/dashboard/engagement/replies?${params}`);
       const data = await res.json();
       setReplies(data.replies ?? []);
