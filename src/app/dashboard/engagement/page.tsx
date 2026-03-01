@@ -196,7 +196,7 @@ export default function EngagementPage() {
   };
 
   return (
-    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Global pause banner */}
       <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
@@ -247,7 +247,7 @@ export default function EngagementPage() {
       {activeTab === "accounts" && (
         <div className="space-y-6">
           {/* Add account form */}
-          <div className="bg-card rounded-xl border border-slate-custom-200 p-5">
+          <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5">
             <h2 className="text-sm font-semibold text-slate-custom-900 mb-3">Add Account</h2>
             <form onSubmit={handleAddAccount} className="flex gap-2">
               <input
@@ -303,7 +303,7 @@ export default function EngagementPage() {
               ))}
             </div>
           ) : accounts.length === 0 ? (
-            <div className="bg-card rounded-xl border border-slate-custom-200 p-10 text-center">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-10 text-center">
               <span className="material-icons-round text-[48px] text-slate-custom-300">
                 manage_accounts
               </span>

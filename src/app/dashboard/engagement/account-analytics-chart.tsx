@@ -250,7 +250,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-wrap items-center gap-4">
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4 flex flex-wrap items-center gap-4">
         {/* Multi-account selector */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-custom-600 whitespace-nowrap">
@@ -404,7 +404,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
       </div>
 
       {/* Chart card */}
-      <div className="bg-card rounded-xl border border-slate-custom-200 p-5">
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5">
         {selectedIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-icons-round text-[48px] text-slate-custom-300">insights</span>
@@ -476,12 +476,12 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
         <div className="space-y-3">
           {/* Aggregate totals */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card rounded-xl border border-slate-custom-200 p-4">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4">
               <p className="text-xs font-medium text-slate-custom-500 mb-1">Total Replies</p>
               <p className="text-2xl font-bold text-slate-custom-900">{totalReplies}</p>
               <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
             </div>
-            <div className="bg-card rounded-xl border border-slate-custom-200 p-4">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4">
               <p className="text-xs font-medium text-slate-custom-500 mb-1">Total API Cost</p>
               <p className="text-2xl font-bold text-slate-custom-900">${totalCost.toFixed(4)}</p>
               <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
@@ -490,7 +490,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
 
           {/* Per-account breakdown (only meaningful when > 1 selected) */}
           {activeAccountIds.length > 1 && (
-            <div className="bg-card rounded-xl border border-slate-custom-200 overflow-hidden">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-custom-100 flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-custom-600">Per Account</p>
                 <div className="flex items-center gap-6 flex-shrink-0">

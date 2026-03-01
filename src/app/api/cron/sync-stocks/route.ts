@@ -6,6 +6,34 @@ import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
+// Process one ticker: fetch quote and write snapshot to DB.
+async function processTicker(ticker: string, companyName: string, country: string, isEV: boolean, market: string) {
+  const data = await fetchYahooQuote(ticker);
+
+  await prisma.stockDailySnapshot.create({
+    data: {
+      ticker,
+      companyName,
+      country,
+      isEV,
+      market,
+      price:           data?.price           ?? null,
+      marketCap:       data?.marketCap        ?? null,
+      volume:          data?.volume           ?? null,
+      peRatio:         data?.peRatio          ?? null,
+      earningsDate:    data?.earningsDate     ?? null,
+      earningsDateRaw: data?.earningsDateRaw  ?? null,
+    },
+  });
+
+  const status = data ? "ok" : "no_data";
+  console.log(`[cron] sync-stocks: ${ticker} → ${status}`);
+  return { ticker, status };
+}
+
+const BATCH_SIZE = 5;
+const BATCH_DELAY_MS = 10_000; // 10 seconds between batches
+
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
@@ -13,42 +41,39 @@ export async function POST(request: NextRequest) {
   const startedAt = new Date();
   console.log(`[cron] sync-stocks started at ${startedAt.toISOString()} — ${ALL_COMPANIES.length} companies`);
 
-  const results = await Promise.allSettled(
-    ALL_COMPANIES.map(async ({ ticker, companyName, country, isEV, market }) => {
-      const data = await fetchYahooQuote(ticker);
+  const allResults: Array<{ ticker: string; status: string; reason?: string }> = [];
 
-      await prisma.stockDailySnapshot.create({
-        data: {
-          ticker,
-          companyName,
-          country,
-          isEV,
-          market,
-          price:           data?.price           ?? null,
-          marketCap:       data?.marketCap        ?? null,
-          volume:          data?.volume           ?? null,
-          peRatio:         data?.peRatio          ?? null,
-          earningsDate:    data?.earningsDate     ?? null,
-          earningsDateRaw: data?.earningsDateRaw  ?? null,
-        },
-      });
+  for (let i = 0; i < ALL_COMPANIES.length; i += BATCH_SIZE) {
+    const batch = ALL_COMPANIES.slice(i, i + BATCH_SIZE);
+    console.log(`[cron] sync-stocks batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.map((c) => c.ticker).join(", ")}`);
 
-      const status = data ? "ok" : "no_data";
-      console.log(`[cron] sync-stocks: ${ticker} → ${status}`);
-      return { ticker, status };
-    }),
-  );
+    const batchResults = await Promise.allSettled(
+      batch.map(({ ticker, companyName, country, isEV, market }) =>
+        processTicker(ticker, companyName, country, isEV, market)
+      ),
+    );
 
-  const summary = results.map((r, i) =>
-    r.status === "fulfilled"
-      ? r.value
-      : { ticker: ALL_COMPANIES[i].ticker, status: "error", reason: String((r as PromiseRejectedResult).reason) }
-  );
+    for (let j = 0; j < batchResults.length; j++) {
+      const r = batchResults[j];
+      allResults.push(
+        r.status === "fulfilled"
+          ? r.value
+          : { ticker: batch[j].ticker, status: "error", reason: String((r as PromiseRejectedResult).reason) }
+      );
+    }
 
-  const ok      = summary.filter((r) => r.status === "ok").length;
-  const no_data = summary.filter((r) => r.status === "no_data").length;
-  const errors  = summary.filter((r) => r.status === "error").length;
+    // Delay before next batch (skip after the last batch)
+    if (i + BATCH_SIZE < ALL_COMPANIES.length) {
+      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+    }
+  }
+
+  const results = allResults;
+
+  const ok      = results.filter((r) => r.status === "ok").length;
+  const no_data = results.filter((r) => r.status === "no_data").length;
+  const errors  = results.filter((r) => r.status === "error").length;
 
   console.log(`[cron] sync-stocks done — ok=${ok}, no_data=${no_data}, errors=${errors}`);
-  return NextResponse.json({ ok, no_data, errors, results: summary });
+  return NextResponse.json({ ok, no_data, errors, results });
 }

@@ -68,7 +68,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
         <div className="w-full max-w-7xl mx-auto animate-pulse space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -86,7 +86,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto">
       {/* Data delay banner for Free tier */}
       {tier === "FREE" && (
@@ -121,7 +121,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {feed?.news.map((item, i) => (
               <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="block">
-                <div className="bg-card p-3 rounded-lg border border-slate-custom-100 hover:border-primary/40 transition-all group flex gap-3 items-start">
+                <div className="bg-card p-3 rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] hover:border-lime-300 hover:shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_36px_rgba(155,199,84,0.5)] transition-all group flex gap-3 items-start">
                   <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-custom-100 overflow-hidden flex items-center justify-center">
                     <span className="material-icons-round text-slate-custom-400">image</span>
                   </div>

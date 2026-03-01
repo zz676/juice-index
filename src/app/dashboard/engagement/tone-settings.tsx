@@ -85,7 +85,7 @@ function ToneCard({ tone, onSave, onDelete }: ToneCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+    <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4 flex flex-col gap-3">
       {/* Name + color dot */}
       <div className="flex items-center gap-2">
         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_DOT[color] ?? "bg-slate-500"}`} />
@@ -188,7 +188,7 @@ function ImageStyleCard({ style, onSave, onDelete }: ImageStyleCardProps) {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+    <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4 flex flex-col gap-3">
       {/* Name + color dot */}
       <div className="flex items-center gap-2">
         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_DOT[color] ?? "bg-slate-500"}`} />
@@ -381,7 +381,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-slate-custom-200 p-5 space-y-4">
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5 space-y-4">
         {/* Tweet input */}
         <div>
           <p className="text-xs font-medium text-slate-custom-700 mb-1">Tweet</p>
@@ -630,7 +630,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             )}
 
             {/* Cost breakdown */}
-            <div className="p-3 bg-card rounded-xl border border-slate-custom-200 text-[11px] text-slate-custom-500 space-y-1">
+            <div className="p-3 bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] text-[11px] text-slate-custom-500 space-y-1">
               <p className="font-medium text-slate-custom-700 mb-1.5">Cost Estimate</p>
               <div className="flex justify-between">
                 <span>Input tokens</span>
@@ -858,7 +858,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
 
           {/* Tone cards grid */}
           {tones.length === 0 ? (
-            <div className="bg-card rounded-xl border border-slate-custom-200 p-10 text-center">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-10 text-center">
               <span className="material-icons-round text-[48px] text-slate-custom-300">tune</span>
               <p className="mt-3 text-sm text-slate-custom-500">No tones yet. Add a custom tone above.</p>
             </div>
@@ -946,7 +946,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
 
           {/* Image style cards grid */}
           {imageStyles.length === 0 ? (
-            <div className="bg-card rounded-xl border border-slate-custom-200 p-10 text-center">
+            <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-10 text-center">
               <span className="material-icons-round text-[48px] text-slate-custom-300">palette</span>
               <p className="mt-3 text-sm text-slate-custom-500">No image styles yet. Add one above.</p>
             </div>

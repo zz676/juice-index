@@ -236,7 +236,7 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
       )}
 
       {/* Table */}
-      <div className="bg-card rounded-lg border border-slate-custom-100 overflow-hidden min-h-[400px]">
+      <div className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="p-6 space-y-4">
             {[...Array(5)].map((_, i) => (
