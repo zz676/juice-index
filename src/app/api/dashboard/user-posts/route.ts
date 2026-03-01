@@ -30,7 +30,17 @@ export async function GET(request: NextRequest) {
     where.content = { contains: search, mode: "insensitive" };
   }
 
-  const [posts, total, subscription, xAccount, xLoginAccount] = await Promise.all([
+  // Fetch subscription first (fast PK lookup) so userTier is known for parallel batch
+  const subscription = await prisma.apiSubscription.findUnique({
+    where: { userId: user.id },
+    select: { tier: true },
+  });
+  const userTier = normalizeTier(subscription?.tier);
+  const canPublish = hasTier(userTier, "STARTER");
+  const canSchedule = hasTier(userTier, "STARTER");
+
+  // Run remaining queries + Redis usage check in parallel
+  const [posts, total, xAccount, xLoginAccount, publishUsage] = await Promise.all([
     prisma.userPost.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -39,10 +49,6 @@ export async function GET(request: NextRequest) {
       omit: { imageBase64: true },
     }),
     prisma.userPost.count({ where }),
-    prisma.apiSubscription.findUnique({
-      where: { userId: user.id },
-      select: { tier: true },
-    }),
     prisma.xAccount.findUnique({
       where: { userId: user.id },
       select: { id: true, isXPremium: true },
@@ -51,13 +57,8 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id, provider: AuthProvider.X },
       select: { id: true },
     }),
+    getWeeklyPublishUsage(user.id, userTier),
   ]);
-
-  const userTier = normalizeTier(subscription?.tier);
-  const canPublish = hasTier(userTier, "STARTER");
-  const canSchedule = hasTier(userTier, "STARTER");
-
-  const publishUsage = await getWeeklyPublishUsage(user.id, userTier);
   const charLimit = getXCharLimit(xAccount?.isXPremium ?? false);
 
   return NextResponse.json({

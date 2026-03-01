@@ -103,7 +103,7 @@ export function ReplyDetailPanel({ reply, onClose, onUpdate, imageStyles = [] }:
       <div className="flex-1 bg-black/30" onClick={onClose} />
 
       {/* Panel */}
-      <div className="w-[480px] max-w-full bg-white h-full overflow-y-auto flex flex-col shadow-xl">
+      <div className="w-[480px] max-w-full bg-card h-full overflow-y-auto flex flex-col shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-custom-200 flex-shrink-0">
           <div className="flex items-center gap-2">
@@ -397,7 +397,7 @@ function RegenerateRow({
             }`}
           >
             <span
-              className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${
+              className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-card shadow transition duration-200 ease-in-out ${
                 withImage ? "translate-x-4" : "translate-x-0"
               }`}
             />
@@ -409,7 +409,7 @@ function RegenerateRow({
           value={selectedImageStyleId || imageStyles[0]?.id || ""}
           onChange={(e) => onImageStyleChange(e.target.value)}
           disabled={loading !== null}
-          className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700 disabled:opacity-50"
+          className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700 disabled:opacity-50"
         >
           {imageStyles.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>

@@ -69,27 +69,30 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-[120px] bg-slate-custom-100 rounded-lg" />
-          ))}
-        </div>
-        <div className="h-[420px] bg-slate-custom-100 rounded-lg" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-64 bg-slate-custom-100 rounded-lg" />
-          <div className="h-64 bg-slate-custom-100 rounded-lg" />
+      <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+        <div className="w-full max-w-7xl mx-auto animate-pulse space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-[120px] bg-slate-custom-100 rounded-lg" />
+            ))}
+          </div>
+          <div className="h-[420px] bg-slate-custom-100 rounded-lg" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="h-64 bg-slate-custom-100 rounded-lg" />
+            <div className="h-64 bg-slate-custom-100 rounded-lg" />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <>
+    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="w-full max-w-7xl mx-auto">
       <StockTicker />
       {/* Data delay banner for Free tier */}
       {tier === "FREE" && (
-        <div className="mb-6">
+        <div className="mb-3">
           <UpgradeBanner
             icon="schedule"
             message="Data shown is delayed by 30 days and limited to 1 year of history. Upgrade to Pro for real-time data and 5 years of history."
@@ -98,38 +101,38 @@ export default function DashboardPage() {
       )}
 
       {/* 4 Stat Cards in equal-width row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 pt-2">
         {filteredCards.map((card, i) => (
           <StatCard key={i} {...card} />
         ))}
       </div>
 
       {/* Delivery Chart: full width */}
-      <div className="mb-8">
+      <div className="mb-4">
         <DeliveryChart />
       </div>
 
       {/* News & Catalysts (full width, side by side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
         {/* News */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-custom-900 text-lg">Latest News</h3>
             <Link href="/dashboard/posts" className="text-xs font-semibold text-primary hover:text-primary/80 uppercase tracking-wide">View All</Link>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {feed?.news.map((item, i) => (
               <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="block">
-                <div className="bg-white p-4 rounded-lg border border-slate-custom-100 hover:border-primary/40 transition-all group flex gap-4 items-start">
-                  <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-slate-custom-100 overflow-hidden flex items-center justify-center">
+                <div className="bg-card p-3 rounded-lg border border-slate-custom-100 hover:border-primary/40 transition-all group flex gap-3 items-start">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-custom-100 overflow-hidden flex items-center justify-center">
                     <span className="material-icons-round text-slate-custom-400">image</span>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-0.5">
                       <span className={`${item.tagColor} text-[10px] font-bold px-2 py-0.5 rounded-full uppercase`}>{item.tag}</span>
                       <span className="text-slate-custom-400 text-xs">{item.time}</span>
                     </div>
-                    <h4 className="font-semibold text-slate-custom-900 leading-tight mb-1 group-hover:text-primary transition-colors">{item.title}</h4>
+                    <h4 className="font-semibold text-slate-custom-900 leading-tight mb-0.5 group-hover:text-primary transition-colors">{item.title}</h4>
                     <p className="text-sm text-slate-custom-500 line-clamp-1">{item.desc}</p>
                   </div>
                 </div>
@@ -140,20 +143,20 @@ export default function DashboardPage() {
 
         {/* Catalysts */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-custom-900 text-lg">Upcoming Catalysts</h3>
           </div>
-          <div className="bg-white rounded-lg border border-slate-custom-100 p-1">
+          <div className="flex flex-col gap-1.5">
             {feed?.catalysts.map((item, i) => (
-              <div key={i} className="flex gap-4 p-3 border-b border-slate-custom-50 last:border-0 hover:bg-slate-custom-50 rounded-lg transition-colors">
-                <div className="flex flex-col items-center justify-center bg-slate-custom-100 w-14 h-14 rounded-2xl text-center flex-shrink-0">
+              <div key={i} className="flex gap-3 p-2.5 bg-white/50 hover:bg-white/75 rounded-xl transition-colors">
+                <div className="flex flex-col items-center justify-center bg-slate-custom-100 w-12 h-12 rounded-xl text-center flex-shrink-0">
                   <span className="text-[10px] text-slate-custom-500 uppercase font-bold">{item.month}</span>
-                  <span className="text-xl font-bold text-slate-custom-900 leading-none">{item.day}</span>
+                  <span className="text-lg font-bold text-slate-custom-900 leading-none">{item.day}</span>
                 </div>
                 <div>
                   <h5 className="text-sm font-semibold text-slate-custom-900">{item.title}</h5>
-                  <p className="text-xs text-slate-custom-500 mt-1">{item.desc}</p>
-                  <div className="mt-2 flex gap-2">
+                  <p className="text-xs text-slate-custom-500 mt-0.5">{item.desc}</p>
+                  <div className="mt-1.5 flex gap-2">
                     {item.tags.map(t => (
                       <span key={t} className="text-[10px] px-2 py-0.5 bg-slate-custom-100 text-slate-custom-600 rounded-full font-medium">{t}</span>
                     ))}
@@ -167,6 +170,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </>
+      </div>
+    </div>
   );
 }

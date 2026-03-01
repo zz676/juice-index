@@ -216,7 +216,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   }) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="bg-white border border-slate-custom-200 rounded-xl shadow-lg px-4 py-3 text-xs min-w-[160px]">
+      <div className="bg-card border border-slate-custom-200 rounded-xl shadow-lg px-4 py-3 text-xs min-w-[160px]">
         <p className="font-semibold text-slate-custom-700 mb-2">
           {label ? formatTooltipLabel(label) : ""}
         </p>
@@ -250,7 +250,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-wrap items-center gap-4">
+      <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-wrap items-center gap-4">
         {/* Multi-account selector */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-custom-600 whitespace-nowrap">
@@ -259,7 +259,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border border-slate-custom-200 bg-white text-slate-custom-700 hover:bg-slate-custom-50 transition-colors min-w-[180px]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-lg border border-slate-custom-200 bg-card text-slate-custom-700 hover:bg-slate-custom-50 transition-colors min-w-[180px]"
             >
               <span className="material-icons-round text-[16px] text-slate-custom-400">group</span>
               <span className="flex-1 text-left truncate">{buttonLabel}</span>
@@ -269,7 +269,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
             </button>
 
             {dropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg z-50 w-64">
+              <div className="absolute left-0 top-full mt-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg z-50 w-64">
                 {/* Search */}
                 <div className="p-2 border-b border-slate-custom-100">
                   <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-custom-50 rounded-lg">
@@ -376,7 +376,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
               onClick={() => handleGranularityChange(g)}
               className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
                 granularity === g
-                  ? "bg-white text-slate-custom-900 shadow-sm"
+                  ? "bg-card text-slate-custom-900 shadow-sm"
                   : "text-slate-custom-500 hover:text-slate-custom-700"
               }`}
             >
@@ -404,7 +404,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
       </div>
 
       {/* Chart card */}
-      <div className="bg-white rounded-xl border border-slate-custom-200 p-5">
+      <div className="bg-card rounded-xl border border-slate-custom-200 p-5">
         {selectedIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <span className="material-icons-round text-[48px] text-slate-custom-300">insights</span>
@@ -476,12 +476,12 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
         <div className="space-y-3">
           {/* Aggregate totals */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
+            <div className="bg-card rounded-xl border border-slate-custom-200 p-4">
               <p className="text-xs font-medium text-slate-custom-500 mb-1">Total Replies</p>
               <p className="text-2xl font-bold text-slate-custom-900">{totalReplies}</p>
               <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
             </div>
-            <div className="bg-white rounded-xl border border-slate-custom-200 p-4">
+            <div className="bg-card rounded-xl border border-slate-custom-200 p-4">
               <p className="text-xs font-medium text-slate-custom-500 mb-1">Total API Cost</p>
               <p className="text-2xl font-bold text-slate-custom-900">${totalCost.toFixed(4)}</p>
               <p className="text-xs text-slate-custom-400 mt-0.5 capitalize">{rangeLabel}</p>
@@ -490,7 +490,7 @@ export function AccountAnalyticsChart({ accounts }: AccountAnalyticsChartProps) 
 
           {/* Per-account breakdown (only meaningful when > 1 selected) */}
           {activeAccountIds.length > 1 && (
-            <div className="bg-white rounded-xl border border-slate-custom-200 overflow-hidden">
+            <div className="bg-card rounded-xl border border-slate-custom-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-custom-100 flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-custom-600">Per Account</p>
                 <div className="flex items-center gap-6 flex-shrink-0">

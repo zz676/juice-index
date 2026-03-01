@@ -317,18 +317,32 @@ const dashedGridPlugin: Plugin = {
         ctx.lineTo(right, y);
         ctx.stroke();
       }
+      // Closing lines at the top and right of the chart area (Recharts-style border)
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(right, top);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(right, top);
+      ctx.lineTo(right, bottom);
+      ctx.stroke();
+      ctx.setLineDash(lineDash);
     }
 
-    // Vertical lines at each x-axis tick
-    const xScale = chart.scales["x"];
-    if (xScale) {
-      for (let i = 0; i < xScale.ticks.length; i++) {
-        const x = xScale.getPixelForTick(i);
-        if (x < left - 1 || x > right + 1) continue;
-        ctx.beginPath();
-        ctx.moveTo(x, top);
-        ctx.lineTo(x, bottom);
-        ctx.stroke();
+    // Vertical lines at each x-axis tick (line charts only)
+    const showVertical = (opts as Record<string, unknown>).showVertical === true;
+    if (showVertical) {
+      const xScale = chart.scales["x"];
+      if (xScale) {
+        for (let i = 0; i < xScale.ticks.length; i++) {
+          const x = xScale.getPixelForTick(i);
+          if (x < left - 1 || x > right + 1) continue;
+          ctx.beginPath();
+          ctx.moveTo(x, top);
+          ctx.lineTo(x, bottom);
+          ctx.stroke();
+        }
       }
     }
 
@@ -454,7 +468,7 @@ function renderChartConfig(params: {
   const labels = points.map((point) => point.label);
   const values = points.map((point) => point.value);
   const dataMax = Math.max(0, ...values);
-  const niceYTicks = !isNaN(dataMax) ? getNiceYTicks(dataMax) : undefined;
+  const niceYTicks = !isNaN(dataMax) ? getNiceYTicks(dataMax, 6) : undefined;
   const isHorizontal = chartType === "horizontalBar";
   const jsType: JsChartType = chartType === "line" ? "line" : "bar";
 
@@ -544,6 +558,7 @@ function renderChartConfig(params: {
           display: showGrid,
           color: gridColor,
           lineDash: gridLineDash,
+          showVertical: chartType === "line",
         },
       } as unknown as NonNullable<ChartConfiguration["options"]>["plugins"],
       scales: {
@@ -565,7 +580,8 @@ function renderChartConfig(params: {
             },
             maxRotation: isHorizontal ? undefined : 45,
             minRotation: isHorizontal ? undefined : 0,
-            autoSkip: true,
+            autoSkip: isHorizontal ? undefined : true,
+            maxTicksLimit: isHorizontal ? undefined : (chartType === "line" ? 10 : 12),
           },
         },
         y: {

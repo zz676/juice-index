@@ -117,7 +117,7 @@ export default function NotificationBell() {
       {/* Bell Button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-10 h-10 rounded-full bg-white border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all shadow-sm relative"
+        className="w-10 h-10 rounded-full bg-card border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all shadow-sm relative"
       >
         <span className="material-icons-round">notifications_none</span>
         {unreadCount > 0 && (
@@ -127,7 +127,7 @@ export default function NotificationBell() {
 
       {/* Dropdown Panel */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl border border-slate-custom-200 shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-96 bg-card rounded-xl border border-slate-custom-200 shadow-lg z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-custom-100">
             <h3 className="text-sm font-semibold text-slate-custom-900">Notifications</h3>

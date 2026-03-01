@@ -176,7 +176,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, imageStyl
   };
 
   return (
-    <div className={`bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${saveFlash ? " card-save-flash" : ""}`}>
+    <div className={`bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${saveFlash ? " card-save-flash" : ""}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {account.avatarUrl ? (
@@ -403,7 +403,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, imageStyl
             value={account.imageStyleId ?? imageStyles[0]?.id ?? ""}
             onChange={(e) => scheduleCommit({ imageStyleId: e.target.value || null })}
             disabled={loading}
-            className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700 disabled:opacity-50"
+            className="w-full text-xs border border-slate-custom-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700 disabled:opacity-50"
           >
             {imageStyles.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>

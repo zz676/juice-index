@@ -30,12 +30,34 @@ export async function GET() {
             url: post.sourceUrl,
         }));
 
-        // Mock catalysts for now (no Catalyst model yet)
-        const catalysts = [
-            { month: "Oct", day: "24", title: "Xiaomi Earnings Call", desc: "Expected to reveal EV margin data.", tags: ["Earnings", "1810.HK"] },
-            { month: "Nov", day: "01", title: "Monthly Deliveries", desc: "Major OEMs release Oct figures.", tags: ["Macro"], highlight: "High Impact" },
-            { month: "Nov", day: "17", title: "Guangzhou Auto Show", desc: "Li Auto MPV launch event.", tags: ["Event"] },
-        ];
+        // Fetch upcoming earnings, deduplicate by ticker in JS to get soonest per company
+        const rawSnapshots = await prisma.stockDailySnapshot.findMany({
+            where: { earningsDate: { gte: new Date() } },
+            orderBy: { earningsDate: "asc" },
+            take: 200,
+        });
+
+        // Keep only the earliest upcoming earningsDate per ticker
+        const seen = new Set<string>();
+        const upcomingSnapshots = rawSnapshots.filter((s) => {
+            if (seen.has(s.ticker)) return false;
+            seen.add(s.ticker);
+            return true;
+        }).slice(0, 5);
+
+        const catalysts = upcomingSnapshots.flatMap((s) => {
+            if (!s.earningsDate) return [];
+            const date = s.earningsDate;
+            const month = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+            const day = String(date.getUTCDate()).padStart(2, "0");
+            return [{
+                month,
+                day,
+                title: `${s.companyName} Earnings`,
+                desc: s.earningsDateRaw ? `Est. ${s.earningsDateRaw}` : "Earnings date from Yahoo Finance.",
+                tags: ["Earnings", s.ticker],
+            }];
+        });
 
         // If no posts found (db empty), mock some news
         if (news.length === 0) {

@@ -128,7 +128,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                 className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-4 py-2.5 rounded-xl"} font-medium transition-all group relative
                                     ${isActive
                                         ? "bg-primary/15 text-slate-custom-900 shadow-[inset_3px_0_0_rgba(106,218,27,0.7)]"
-                                        : "text-slate-custom-500 hover:bg-white/60 hover:text-slate-custom-700"
+                                        : "text-slate-custom-500 hover:bg-card/60 hover:text-slate-custom-700"
                                     }`}
                             >
                                 <span
@@ -206,7 +206,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                         {/* Popover Menu */}
                         {profileOpen && (
-                            <div className={`absolute ${collapsed ? "left-full ml-2" : "left-0 right-0 mx-1"} bottom-full mb-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-1 z-50`}>
+                            <div className={`absolute ${collapsed ? "left-full ml-2" : "left-0 right-0 mx-1"} bottom-full mb-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg py-1 z-50`}>
                                 <div className="px-4 py-3 border-b border-slate-custom-100">
                                     <p className="text-sm font-semibold text-slate-custom-900">{displayName}</p>
                                     <p className="text-xs text-slate-custom-500">{user?.email || ""}</p>
@@ -233,10 +233,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+            <main className="flex-1 flex flex-col h-full overflow-hidden relative" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
                 {/* Top Header — hidden on studio (which has its own combined header) */}
                 {pathname !== "/dashboard/studio" && (
-                <header className="h-[51px] flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
+                <header className="h-[51px] flex items-center px-8 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />

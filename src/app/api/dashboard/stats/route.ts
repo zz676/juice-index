@@ -15,48 +15,46 @@ export async function GET() {
       });
     }
 
-    // Fetch latest weekly sales summaries (most recent 9 weeks)
-    const recentSummaries = await prisma.nevSalesSummary.findMany({
-      orderBy: [{ year: "desc" }, { endDate: "desc" }],
-      take: 9,
-    });
+    // Fetch all data in parallel
+    const [recentSummaries, latestRetail, topAutomaker, latestProduction, latestBattery, recentExports] = await Promise.all([
+      // Most recent 9 weeks of weekly sales summaries
+      prisma.nevSalesSummary.findMany({
+        orderBy: [{ year: "desc" }, { endDate: "desc" }],
+        take: 9,
+      }),
+      // Latest CPCA retail data for YoY comparison
+      prisma.cpcaNevRetail.findFirst({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      }),
+      // #1 ranked automaker from most recent month
+      prisma.automakerRankings.findFirst({
+        where: { ranking: 1 },
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      }),
+      // Latest NEV production data
+      prisma.cpcaNevProduction.findFirst({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      }),
+      // Latest battery installation data
+      prisma.chinaBatteryInstallation.findFirst({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      }),
+      // Recent plant exports — enough to cover all plants in the latest month
+      prisma.plantExports.findMany({
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        take: 50,
+      }),
+    ]);
 
-    // Fetch latest CPCA retail data for YoY comparison
-    const latestRetail = await prisma.cpcaNevRetail.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-
-    // Fetch #1 ranked automaker from most recent month
-    const topAutomaker = await prisma.automakerRankings.findFirst({
-      where: { ranking: 1 },
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-
-    // Fetch latest NEV production data
-    const latestProduction = await prisma.cpcaNevProduction.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-
-    // Fetch latest battery installation data
-    const latestBattery = await prisma.chinaBatteryInstallation.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-
-    // Fetch latest NEV exports (aggregate all plants for most recent month)
-    const latestExportRecord = await prisma.plantExports.findFirst({
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-    let exportTotal = 0;
-    let exportYear = 0;
-    let exportMonth = 0;
-    if (latestExportRecord) {
-      exportYear = latestExportRecord.year;
-      exportMonth = latestExportRecord.month;
-      const allExports = await prisma.plantExports.findMany({
-        where: { year: exportYear, month: exportMonth },
-      });
-      exportTotal = allExports.reduce((sum, e) => sum + e.value, 0);
-    }
+    // Aggregate exports for the most recent month (avoids a second round-trip)
+    const latestExportRecord = recentExports[0] ?? null;
+    const exportYear = latestExportRecord?.year ?? 0;
+    const exportMonth = latestExportRecord?.month ?? 0;
+    const exportTotal = latestExportRecord
+      ? recentExports
+          .filter((e) => e.year === exportYear && e.month === exportMonth)
+          .reduce((sum, e) => sum + e.value, 0)
+      : 0;
 
     // If no data exists, return an empty-but-structured response
     if (!recentSummaries.length && !latestRetail && !topAutomaker && !latestProduction && !latestBattery && !latestExportRecord) {

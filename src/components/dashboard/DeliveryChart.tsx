@@ -108,7 +108,7 @@ export function DeliveryChart() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-slate-custom-100">
+    <div className="bg-card p-6 rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-slate-custom-100">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
@@ -135,7 +135,7 @@ export function DeliveryChart() {
                 onClick={() => setMonths(opt.value)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
                   months === opt.value
-                    ? "bg-white text-slate-custom-900 shadow-sm ring-1 ring-slate-custom-200"
+                    ? "bg-card text-slate-custom-900 shadow-sm ring-1 ring-slate-custom-200"
                     : "text-slate-custom-500 hover:text-slate-custom-900"
                 }`}
               >
@@ -150,7 +150,7 @@ export function DeliveryChart() {
               onClick={() => setChartType("bar")}
               className={`p-1.5 rounded-full transition-colors ${
                 chartType === "bar"
-                  ? "bg-white shadow-sm ring-1 ring-slate-custom-200 text-slate-custom-900"
+                  ? "bg-card shadow-sm ring-1 ring-slate-custom-200 text-slate-custom-900"
                   : "text-slate-custom-500 hover:text-slate-custom-900"
               }`}
               title="Bar chart"
@@ -161,7 +161,7 @@ export function DeliveryChart() {
               onClick={() => setChartType("line")}
               className={`p-1.5 rounded-full transition-colors ${
                 chartType === "line"
-                  ? "bg-white shadow-sm ring-1 ring-slate-custom-200 text-slate-custom-900"
+                  ? "bg-card shadow-sm ring-1 ring-slate-custom-200 text-slate-custom-900"
                   : "text-slate-custom-500 hover:text-slate-custom-900"
               }`}
               title="Line chart"
@@ -181,7 +181,7 @@ export function DeliveryChart() {
             </button>
 
             {filterOpen && chartData && (
-              <div className="absolute right-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-56">
+              <div className="absolute right-0 top-full mt-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-56">
                 <div className="flex items-center justify-between px-3 pb-2 border-b border-slate-custom-100">
                   <button
                     onClick={() => setSelectedBrands(new Set(chartData.brands))}
