@@ -78,7 +78,7 @@ export default function StockTicker() {
   const items = [...quotes, ...quotes];
 
   return (
-    <div className="w-full bg-primary/15 border-b border-primary/25 overflow-hidden flex items-center h-9">
+    <div className="w-full bg-primary/35 border-b border-primary/45 overflow-hidden flex items-center h-9">
       {/* LIVE label */}
       <div className="flex items-center gap-1.5 px-3 border-r border-primary/40 h-full shrink-0">
         <span className="relative flex h-1.5 w-1.5">
