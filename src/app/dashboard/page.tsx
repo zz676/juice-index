@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DeliveryChart } from "@/components/dashboard/DeliveryChart";
 import UpgradeBanner from "@/components/dashboard/UpgradeBanner";
+import StockTicker from "@/components/dashboard/StockTicker";
 
 interface CardData {
   icon: string;
@@ -85,6 +86,7 @@ export default function DashboardPage() {
 
   return (
     <>
+      <StockTicker />
       {/* Data delay banner for Free tier */}
       {tier === "FREE" && (
         <div className="mb-6">
