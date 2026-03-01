@@ -714,7 +714,7 @@ function renderMultiLineChartConfig(params: {
         },
         legend: {
           display: true,
-          position: "top" as const,
+          position: "bottom" as const,
           labels: {
             color: ensureContrast(rawTextColor, bgColor),
             font: { family: style.axisFont || "Inter", size: style.xAxisFontSize ?? 12 },
