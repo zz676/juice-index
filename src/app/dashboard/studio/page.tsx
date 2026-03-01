@@ -1838,7 +1838,7 @@ function StudioPageInner() {
                   {hasMultiSeriesChartData && (
                     <div className="flex flex-wrap items-center justify-center gap-3 px-4 py-1.5">
                       {seriesKeys.map((key, i) => (
-                        <div key={key} className="flex items-center gap-1.5">
+                        <div key={key} className="flex items-center gap-2.5">
                           <span
                             className="inline-block w-3 h-3 rounded-full flex-shrink-0"
                             style={{ backgroundColor: SERIES_COLORS[i % SERIES_COLORS.length] }}
