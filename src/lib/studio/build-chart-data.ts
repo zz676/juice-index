@@ -23,6 +23,10 @@ export function toLabel(row: DataRow, xField: string): string {
     const monthIndex = Number(row.month) - 1;
     return `${MONTH_NAMES[monthIndex] || row.month} ${row.year}`;
   }
+  if (xField === "period" && row.period !== undefined && row.year !== undefined) {
+    const monthIndex = Number(row.period) - 1;
+    return `${MONTH_NAMES[monthIndex] || row.period} ${row.year}`;
+  }
   return String(row[xField]);
 }
 
@@ -32,6 +36,7 @@ function isNumericValue(v: unknown): boolean {
 
 export function detectXField(sample: DataRow): string | null {
   if (sample.month !== undefined && sample.year !== undefined) return "month";
+  if (sample.period !== undefined && sample.year !== undefined) return "period";
   if (sample.brand !== undefined) return "brand";
   if (sample.maker !== undefined) return "maker";
   if (sample.automaker !== undefined) return "automaker";
