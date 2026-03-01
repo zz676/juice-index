@@ -34,15 +34,15 @@ function TickerItem({ quote }: { quote: StockQuote }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={ariaLabel}
-      className="inline-flex items-center gap-1.5 px-4 hover:bg-white/10 transition-colors rounded cursor-pointer shrink-0 h-full"
+      className="inline-flex items-center gap-1.5 px-4 hover:bg-primary/15 transition-colors rounded cursor-pointer shrink-0 h-full"
     >
-      <span className="font-semibold text-white text-[11px] tracking-wide">{quote.brand}</span>
-      <span className="text-slate-custom-400 text-[10px]">{quote.symbol}</span>
-      <span className="text-white text-[11px] tabular-nums">{formatPrice(quote.price, quote.currency)}</span>
+      <span className="font-semibold text-slate-custom-800 text-[11px] tracking-wide">{quote.brand}</span>
+      <span className="text-slate-custom-500 text-[10px]">{quote.symbol}</span>
+      <span className="text-slate-custom-700 text-[11px] tabular-nums">{formatPrice(quote.price, quote.currency)}</span>
       <span className={`${changeColor} text-[11px] tabular-nums font-medium`}>
         <span aria-hidden="true">{arrow}</span> {Math.abs(quote.change).toFixed(2)}%
       </span>
-      <span aria-hidden="true" className="text-slate-custom-600 text-[11px] ml-2 select-none">|</span>
+      <span aria-hidden="true" className="text-slate-custom-400 text-[11px] ml-2 select-none">|</span>
     </a>
   );
 }
@@ -78,14 +78,14 @@ export default function StockTicker() {
   const items = [...quotes, ...quotes];
 
   return (
-    <div className="w-full bg-slate-custom-900 border-b border-slate-custom-800 overflow-hidden flex items-center h-9 mb-4 rounded-lg">
+    <div className="w-full bg-primary/10 border-b border-primary/20 overflow-hidden flex items-center h-9">
       {/* LIVE label */}
-      <div className="flex items-center gap-1.5 px-3 border-r border-slate-custom-700 h-full shrink-0">
+      <div className="flex items-center gap-1.5 px-3 border-r border-primary/30 h-full shrink-0">
         <span className="relative flex h-1.5 w-1.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
         </span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-custom-400">Live</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-custom-500">Live</span>
       </div>
 
       {/* Scrolling track */}
