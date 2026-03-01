@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UserTone, UserImageStyle } from "@prisma/client";
+import { REPLY_MODELS, DEFAULT_REPLY_MODEL } from "@/lib/engagement/models";
 
 const COLOR_OPTIONS = [
   { key: "slate", label: "Slate", dot: "bg-slate-500" },
@@ -259,6 +260,7 @@ function ImageStyleCard({ style, onSave, onDelete }: ImageStyleCardProps) {
 interface PlaygroundResult {
   replyText: string;
   toneUsed: string;
+  modelUsed: string;
   inputTokens: number;
   outputTokens: number;
   costs: { textCost: number; imageCost: number; apiCost: number; totalCost: number };
@@ -282,6 +284,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
   const [selectedToneId, setSelectedToneId] = useState<string>(effectiveTones[0]?.id ?? "");
   const [toneWeights, setToneWeights] = useState<Record<string, number>>({});
   const [temperature, setTemperature] = useState(0.8);
+  const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_REPLY_MODEL);
   const [accountContext, setAccountContext] = useState("");
   const [useAccountContext, setUseAccountContext] = useState(true);
   const [adHocPrompt, setAdHocPrompt] = useState("");
@@ -335,6 +338,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
       const body: Record<string, unknown> = {
         tweetInput: tweetInput.trim(),
         temperature,
+        model: selectedModel,
         accountContext: useAccountContext ? accountContext.trim() || undefined : undefined,
         generateImage: doImage,
       };
@@ -368,7 +372,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
     } finally {
       setGenerating(false);
     }
-  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, accountContext, useAccountContext, adHocPrompt, doImage, selectedImageStyleId]);
+  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, selectedModel, accountContext, useAccountContext, adHocPrompt, doImage, selectedImageStyleId]);
 
   return (
     <div ref={sectionRef} className="space-y-4">
@@ -517,6 +521,27 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
           </div>
         </div>
 
+        {/* Model selector */}
+        <div>
+          <p className="text-xs font-medium text-slate-custom-700 mb-1.5">Model</p>
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+            className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
+          >
+            <optgroup label="Standard">
+              {REPLY_MODELS.filter((m) => m.tier === "standard").map((m) => (
+                <option key={m.id} value={m.id}>{m.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Enterprise">
+              {REPLY_MODELS.filter((m) => m.tier === "enterprise").map((m) => (
+                <option key={m.id} value={m.id}>{m.label}</option>
+              ))}
+            </optgroup>
+          </select>
+        </div>
+
         {/* Account context */}
         <div>
           <label className="flex items-center gap-2 mb-1 cursor-pointer w-fit">
@@ -605,9 +630,16 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             <div className="p-4 bg-slate-custom-50 rounded-xl border border-slate-custom-200">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <p className="text-xs font-semibold text-slate-custom-700">Generated Reply</p>
-                <span className="text-[10px] text-slate-custom-400 bg-card border border-slate-custom-200 rounded px-1.5 py-0.5">
-                  {result.toneUsed}
-                </span>
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  <span className="text-[10px] text-slate-custom-400 bg-card border border-slate-custom-200 rounded px-1.5 py-0.5">
+                    {result.toneUsed}
+                  </span>
+                  {result.modelUsed && (
+                    <span className="text-[10px] text-slate-custom-400 bg-card border border-slate-custom-200 rounded px-1.5 py-0.5">
+                      {REPLY_MODELS.find((m) => m.id === result.modelUsed)?.label ?? result.modelUsed}
+                    </span>
+                  )}
+                </div>
               </div>
               <p className="text-sm text-slate-custom-900 leading-relaxed">{result.replyText}</p>
             </div>

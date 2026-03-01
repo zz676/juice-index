@@ -1,8 +1,7 @@
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { getModelInstance, DEFAULT_REPLY_MODEL } from "./models";
 import type { GenerateReplyResult } from "./types";
 
-const REPLY_MODEL = "gpt-4.1-mini";
 const REPLY_MAX_TOKENS = 80;
 
 export async function generateReply(
@@ -13,6 +12,7 @@ export async function generateReply(
     accountContext?: string | null;
     recentReplies?: string[];
     temperature?: number;
+    model?: string;
   },
 ): Promise<GenerateReplyResult> {
   const systemParts: string[] = [tonePrompt];
@@ -62,7 +62,7 @@ Write only the reply text, nothing else.`);
     : sourceTweetText;
 
   const result = await generateText({
-    model: openai(REPLY_MODEL),
+    model: getModelInstance(options?.model ?? DEFAULT_REPLY_MODEL),
     system: systemMessage,
     messages: [{ role: "user", content: tweetSection }],
     temperature: options?.temperature ?? 0.8,
