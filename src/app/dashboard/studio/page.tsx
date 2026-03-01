@@ -30,6 +30,8 @@ import type { ApiTier } from "@/lib/api/tier";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
 import { buildChartData, deriveColumns } from "@/lib/studio/build-chart-data";
 import PublishModal, { type PublishInfo } from "./publish-modal";
+import SearchOverlay from "@/components/dashboard/SearchOverlay";
+import NotificationBell from "@/components/dashboard/NotificationBell";
 
 type ChartPoint = { label: string; value: number };
 
@@ -1005,7 +1007,7 @@ function StudioPageInner() {
   return (
     <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(106,218,27,0.07) 0px, rgba(106,218,27,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(163,230,53,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(190,240,60,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(134,224,40,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(217,249,157,0.50) 100%)" }}>
 
-      <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
+      <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
         <div className="flex items-center gap-4">
           <h1 className="font-extrabold text-[20px] flex items-center gap-1.5">
             <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
@@ -1019,7 +1021,7 @@ function StudioPageInner() {
             Draft
           </span>
         </div>
-        {toast && (
+        {toast ? (
           <div
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm transition-all whitespace-nowrap ${
               toast.type === "success"
@@ -1031,8 +1033,15 @@ function StudioPageInner() {
           >
             {toast.message}
           </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <SearchOverlay />
+            </div>
+          </div>
         )}
         <div className="flex items-center gap-3">
+          <NotificationBell />
           <span className="text-[13px] text-slate-custom-400 flex items-center gap-1">
             <span className="material-icons-round text-[15px]">cloud_done</span> Saved
           </span>

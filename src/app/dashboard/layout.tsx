@@ -233,7 +233,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-                {/* Top Header */}
+                {/* Top Header — hidden on studio (which has its own combined header) */}
+                {pathname !== "/dashboard/studio" && (
                 <header className="h-[51px] flex items-center px-8 bg-background-light z-10 sticky top-0 relative">
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
@@ -244,6 +245,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <NotificationBell />
                     </div>
                 </header>
+                )}
 
                 {/* X Token Error Banner */}
                 {xTokenError && (
