@@ -197,14 +197,6 @@ export default function EngagementPage() {
 
   return (
     <div className="py-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-custom-900">Engagement Center</h1>
-        <p className="mt-1 text-sm text-slate-custom-500">
-          Auto-reply to tweets from monitored X accounts.
-        </p>
-      </div>
-
       {/* Global pause banner */}
       <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
 

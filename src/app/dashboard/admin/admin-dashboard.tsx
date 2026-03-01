@@ -123,13 +123,7 @@ export default function AdminDashboard({ metrics }: { metrics: AdminMetrics }) {
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-custom-900">Admin Console</h1>
-          <p className="mt-1 text-sm text-slate-custom-500">
-            Platform-level metrics and analytics.
-          </p>
-        </div>
+      <div className="flex items-center justify-end mb-8">
         <button
           onClick={handleRefresh}
           disabled={refreshing}
