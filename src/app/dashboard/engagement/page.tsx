@@ -196,7 +196,8 @@ export default function EngagementPage() {
   };
 
   return (
-    <div className="py-8 space-y-6">
+    <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Global pause banner */}
       <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
 
@@ -345,6 +346,7 @@ export default function EngagementPage() {
           playgroundPreset={playgroundPreset}
         />
       )}
+      </div>
     </div>
   );
 }
