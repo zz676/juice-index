@@ -7,6 +7,7 @@ vi.mock("@/lib/prisma", () => ({
   default: {
     apiSubscription: { findUnique: vi.fn() },
     userPost: { count: vi.fn(), create: vi.fn(), findMany: vi.fn() },
+    xAccount: { findUnique: vi.fn() },
   },
 }));
 
@@ -14,11 +15,33 @@ vi.mock("@/lib/auth/require-user", () => ({
   requireUser: vi.fn(),
 }));
 
+vi.mock("@/lib/ratelimit", () => ({
+  weeklyPublishLimit: vi.fn(),
+  getWeeklyPublishUsage: vi.fn(),
+}));
+
+vi.mock("@/lib/x/refresh-token", () => ({
+  refreshTokenIfNeeded: vi.fn(),
+  XTokenExpiredError: class XTokenExpiredError extends Error {},
+}));
+
+vi.mock("@/lib/x/post-tweet", () => ({
+  postTweet: vi.fn(),
+}));
+
+vi.mock("@/lib/x/upload-media", () => ({
+  uploadMedia: vi.fn(),
+  stripBase64Prefix: vi.fn((s: string) => s),
+}));
+
 // ── Imports (after mocks) ───────────────────────────────────────────────────
 
 import { POST } from "../route";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
+import { weeklyPublishLimit } from "@/lib/ratelimit";
+import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
+import { postTweet } from "@/lib/x/post-tweet";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -29,6 +52,7 @@ const mockPrisma = prisma as unknown as {
     create: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
   };
+  xAccount: { findUnique: ReturnType<typeof vi.fn> };
 };
 
 function makeRequest(body: Record<string, unknown>): NextRequest {
@@ -60,6 +84,20 @@ describe("POST /api/dashboard/user-posts", () => {
       content: "test",
       status: "DRAFT",
     });
+    mockPrisma.xAccount.findUnique.mockResolvedValue(null);
+    (weeklyPublishLimit as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: 9999999999,
+    });
+    (refreshTokenIfNeeded as ReturnType<typeof vi.fn>).mockResolvedValue(
+      "mock-access-token"
+    );
+    (postTweet as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "tweet-123",
+      text: "hello",
+    });
   });
 
   // ── FREE tier ───────────────────────────────────────────────────────────
@@ -71,7 +109,7 @@ describe("POST /api/dashboard/user-posts", () => {
       const res = await POST(makeRequest({ content: "hello", action: "publish" }));
       expect(res.status).toBe(403);
       const json = await res.json();
-      expect(json.message).toMatch(/requires.*Pro/i);
+      expect(json.message).toMatch(/requires.*Starter/i);
     });
 
     it("rejects schedule with 403", async () => {
@@ -84,7 +122,7 @@ describe("POST /api/dashboard/user-posts", () => {
       );
       expect(res.status).toBe(403);
       const json = await res.json();
-      expect(json.message).toMatch(/requires.*Pro/i);
+      expect(json.message).toMatch(/requires.*Starter/i);
     });
 
     it("rejects draft when at max drafts (5)", async () => {
@@ -106,7 +144,17 @@ describe("POST /api/dashboard/user-posts", () => {
   // ── PRO tier ──────────────────────────────────────────────────────────
 
   describe("PRO tier", () => {
-    beforeEach(() => setTier("PRO"));
+    beforeEach(() => {
+      setTier("PRO");
+      mockPrisma.xAccount.findUnique.mockResolvedValue({
+        id: "xacct-1",
+        userId: "test-user-id",
+        isXPremium: false,
+        accessToken: "tok",
+        refreshToken: "ref",
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+    });
 
     it("allows publish", async () => {
       const res = await POST(makeRequest({ content: "hello", action: "publish" }));
@@ -151,7 +199,17 @@ describe("POST /api/dashboard/user-posts", () => {
   // ── ENTERPRISE tier ───────────────────────────────────────────────────
 
   describe("ENTERPRISE tier", () => {
-    beforeEach(() => setTier("ENTERPRISE"));
+    beforeEach(() => {
+      setTier("ENTERPRISE");
+      mockPrisma.xAccount.findUnique.mockResolvedValue({
+        id: "xacct-2",
+        userId: "test-user-id",
+        isXPremium: true,
+        accessToken: "tok",
+        refreshToken: "ref",
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+    });
 
     it("allows schedule (Infinity max)", async () => {
       mockPrisma.userPost.count.mockResolvedValue(100);
