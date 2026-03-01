@@ -1045,7 +1045,7 @@ function StudioPageInner() {
         </div>
       </header>
 
-      <main className="px-6 pt-24 pb-5 max-w-[1120px] mx-auto">
+      <main className="px-6 pt-24 pb-5 w-full max-w-7xl mx-auto">
         <div className="xl:grid gap-5 xl:grid-cols-[1fr_16rem]">
 
           {/* Main content column - all steps stacked */}
@@ -1756,12 +1756,12 @@ function StudioPageInner() {
                       <button
                         onClick={generateChartImage}
                         disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
-                      className="flex items-center gap-1.5 bg-card border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
-                    >
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                      >
                       {isGeneratingImage ? (
                         <span className="material-icons-round text-[15px] animate-spin">refresh</span>
                       ) : (
-                        <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="5" width="14" height="11" rx="2" />
                           <path d="M3 13l4-4 3 3 2.5-2.5L17 13" />
                           <circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
@@ -2025,10 +2025,10 @@ function StudioPageInner() {
                       <button
                         onClick={generateDraft}
                         disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
-                        className="flex items-center gap-1.5 bg-card border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                         <span
-                          className={`material-icons-round text-[15px] ${
+                          className={`material-icons-round text-[11px] ${
                             isGeneratingPost ? "animate-spin" : ""
                           }`}
                         >

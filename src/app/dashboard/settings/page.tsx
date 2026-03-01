@@ -59,102 +59,103 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     const hasPassword = !!user.passwordHash;
 
     return (
-        <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-slate-custom-900">Account Settings</h1>
-                <p className="mt-1 text-sm text-slate-custom-500">
-                    Manage your profile, security, and preferences.
-                </p>
+        <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+            <div className="w-full max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 items-start">
+                {/* Left column */}
+                <div className="flex flex-col gap-2">
+                    {/* Profile */}
+                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
+                            <span className="material-icons-round text-slate-custom-400">person</span>
+                            <h3 className="text-base font-semibold text-slate-custom-900">Profile</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <ProfileForm
+                                name={user.name ?? ""}
+                                email={user.email}
+                                avatarUrl={user.avatarUrl ?? null}
+                            />
+                        </div>
+                    </section>
+
+                    {/* Connected Accounts */}
+                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
+                            <span className="material-icons-round text-slate-custom-400">link</span>
+                            <h3 className="text-base font-semibold text-slate-custom-900">Connected Accounts</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <ConnectedAccounts
+                                identities={identities}
+                                hasPassword={hasPassword}
+                                xAccount={xAccount}
+                                tier={tier}
+                                hasXLoginIdentity={hasXLoginIdentity}
+                                xConnected={params.x_connected === "true"}
+                                xError={params.x_error}
+                                xTokenError={xAccount?.tokenError ?? false}
+                            />
+                        </div>
+                    </section>
+
+                    {/* Password & Security */}
+                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
+                            <span className="material-icons-round text-slate-custom-400">lock</span>
+                            <h3 className="text-base font-semibold text-slate-custom-900">Password & Security</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <PasswordSection hasPassword={hasPassword} email={user.email} />
+                        </div>
+                    </section>
+
+                    {/* Danger Zone */}
+                    <section className="bg-card rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-red-200 flex items-center gap-3">
+                            <span className="material-icons-round text-red-400">warning</span>
+                            <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <DangerZone userEmail={user.email} />
+                        </div>
+                    </section>
+                </div>
+
+                {/* Right column */}
+                <div className="flex flex-col gap-4">
+                    {/* Notification Preferences */}
+                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
+                            <span className="material-icons-round text-slate-custom-400">notifications</span>
+                            <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <NotificationPrefs
+                                preferences={preferences ? {
+                                    language: preferences.language,
+                                    digestFrequency: preferences.digestFrequency,
+                                    alertsEnabled: preferences.alertsEnabled,
+                                    alertThreshold: preferences.alertThreshold,
+                                    brands: preferences.brands,
+                                    topics: preferences.topics,
+                                } : null}
+                            />
+                        </div>
+                    </section>
+
+                    {/* Chart Styles */}
+                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                        <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
+                            <span className="material-icons-round text-slate-custom-400">bookmarks</span>
+                            <h3 className="text-base font-semibold text-slate-custom-900">Chart Styles</h3>
+                        </div>
+                        <div className="px-6 py-4">
+                            <ChartStylesSection />
+                        </div>
+                    </section>
+                </div>
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Profile */}
-                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">person</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Profile</h3>
-                    </div>
-                    <div className="p-6">
-                        <ProfileForm
-                            name={user.name ?? ""}
-                            email={user.email}
-                            avatarUrl={user.avatarUrl ?? null}
-                        />
-                    </div>
-                </section>
-
-                {/* Notification Preferences */}
-                <section className="lg:row-span-2 bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">notifications</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
-                    </div>
-                    <div className="p-6">
-                        <NotificationPrefs
-                            preferences={preferences ? {
-                                language: preferences.language,
-                                digestFrequency: preferences.digestFrequency,
-                                alertsEnabled: preferences.alertsEnabled,
-                                alertThreshold: preferences.alertThreshold,
-                                brands: preferences.brands,
-                                topics: preferences.topics,
-                            } : null}
-                        />
-                    </div>
-                </section>
-
-                {/* Connected Accounts */}
-                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">link</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Connected Accounts</h3>
-                    </div>
-                    <div className="p-6">
-                        <ConnectedAccounts
-                            identities={identities}
-                            hasPassword={hasPassword}
-                            xAccount={xAccount}
-                            tier={tier}
-                            hasXLoginIdentity={hasXLoginIdentity}
-                            xConnected={params.x_connected === "true"}
-                            xError={params.x_error}
-                            xTokenError={xAccount?.tokenError ?? false}
-                        />
-                    </div>
-                </section>
-
-                {/* Password & Security */}
-                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">lock</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Password & Security</h3>
-                    </div>
-                    <div className="p-6">
-                        <PasswordSection hasPassword={hasPassword} email={user.email} />
-                    </div>
-                </section>
-
-                {/* Chart Styles */}
-                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
-                        <span className="material-icons-round text-slate-custom-400">bookmarks</span>
-                        <h3 className="text-base font-semibold text-slate-custom-900">Chart Styles</h3>
-                    </div>
-                    <div className="p-6">
-                        <ChartStylesSection />
-                    </div>
-                </section>
-
-                {/* Danger Zone */}
-                <section className="bg-card rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                    <div className="px-6 py-4 border-b border-red-200 flex items-center gap-3">
-                        <span className="material-icons-round text-red-400">warning</span>
-                        <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>
-                    </div>
-                    <div className="p-6">
-                        <DangerZone userEmail={user.email} />
-                    </div>
-                </section>
             </div>
         </div>
     );

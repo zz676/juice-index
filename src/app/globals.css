@@ -17,7 +17,7 @@
   --color-slate-custom-900: #0f172a;
   --color-background-light: #f8fafc;
   --color-background-dark: #0b1120;
-  --color-card: #f2fde8;
+  --color-card: rgba(255, 255, 255, 0.9);
   --font-family-display: 'Inter', system-ui, -apple-system, sans-serif;
   --spacing: 0.25rem;
 }
