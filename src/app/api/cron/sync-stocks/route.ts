@@ -7,8 +7,10 @@ import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const BATCH_SIZE = 3;          // per batch: up to 3 tickers × 2 Finnhub calls = 6 req max
-const BATCH_DELAY_MS = 15_000; // 15 seconds between batches → ~24 req/min (free tier limit: 60)
+const BATCH_SIZE = 3;
+// Only delay batches that contain US-listed stocks (those make Finnhub calls).
+// 6s delay × max 6 Finnhub calls per batch = 60 req/min — exactly at free tier limit.
+const FINNHUB_BATCH_DELAY_MS = 6_000;
 
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
@@ -64,9 +66,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Delay before next batch (skip after the last batch)
-    if (i + BATCH_SIZE < ALL_COMPANIES.length) {
-      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
+    // Only delay if this batch had US-listed stocks (those make Finnhub calls).
+    // Non-US batches need no delay since they don't touch Finnhub.
+    const hadUsTickers = batch.some((c) => c.market === "US");
+    if (hadUsTickers && i + BATCH_SIZE < ALL_COMPANIES.length) {
+      await new Promise((resolve) => setTimeout(resolve, FINNHUB_BATCH_DELAY_MS));
     }
   }
 
