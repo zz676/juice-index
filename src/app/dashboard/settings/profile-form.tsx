@@ -114,8 +114,8 @@ export default function ProfileForm({ name, email, avatarUrl }: ProfileFormProps
                     <div
                         className={`rounded-lg p-4 shadow-lg border flex items-center gap-3 ${
                             state.type === "success"
-                                ? "bg-white border-green-200 text-green-800"
-                                : "bg-white border-red-200 text-red-800"
+                                ? "bg-card border-green-200 text-green-800"
+                                : "bg-card border-red-200 text-red-800"
                         }`}
                     >
                         <span className={`material-icons-round text-[20px] ${

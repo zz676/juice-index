@@ -85,7 +85,7 @@ function ToneCard({ tone, onSave, onDelete }: ToneCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+    <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
       {/* Name + color dot */}
       <div className="flex items-center gap-2">
         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_DOT[color] ?? "bg-slate-500"}`} />
@@ -188,7 +188,7 @@ function ImageStyleCard({ style, onSave, onDelete }: ImageStyleCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
+    <div className="bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3">
       {/* Name + color dot */}
       <div className="flex items-center gap-2">
         <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_DOT[color] ?? "bg-slate-500"}`} />
@@ -381,7 +381,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-custom-200 p-5 space-y-4">
+      <div className="bg-card rounded-xl border border-slate-custom-200 p-5 space-y-4">
         {/* Tweet input */}
         <div>
           <p className="text-xs font-medium text-slate-custom-700 mb-1">Tweet</p>
@@ -441,7 +441,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             <select
               value={selectedToneId}
               onChange={(e) => setSelectedToneId(e.target.value)}
-              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700"
+              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
             >
               {effectiveTones.map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
@@ -567,7 +567,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             <select
               value={selectedImageStyleId}
               onChange={(e) => setSelectedImageStyleId(e.target.value)}
-              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700"
+              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
             >
               {imageStyles.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -605,7 +605,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             <div className="p-4 bg-slate-custom-50 rounded-xl border border-slate-custom-200">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <p className="text-xs font-semibold text-slate-custom-700">Generated Reply</p>
-                <span className="text-[10px] text-slate-custom-400 bg-white border border-slate-custom-200 rounded px-1.5 py-0.5">
+                <span className="text-[10px] text-slate-custom-400 bg-card border border-slate-custom-200 rounded px-1.5 py-0.5">
                   {result.toneUsed}
                 </span>
               </div>
@@ -630,7 +630,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             )}
 
             {/* Cost breakdown */}
-            <div className="p-3 bg-white rounded-xl border border-slate-custom-200 text-[11px] text-slate-custom-500 space-y-1">
+            <div className="p-3 bg-card rounded-xl border border-slate-custom-200 text-[11px] text-slate-custom-500 space-y-1">
               <p className="font-medium text-slate-custom-700 mb-1.5">Cost Estimate</p>
               <div className="flex justify-between">
                 <span>Input tokens</span>
@@ -810,7 +810,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
           {addingTone && (
             <form
               onSubmit={handleCreateTone}
-              className="bg-white rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
+              className="bg-card rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
             >
               <p className="text-xs font-semibold text-slate-custom-900">New Tone</p>
               <input
@@ -858,7 +858,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
 
           {/* Tone cards grid */}
           {tones.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-custom-200 p-10 text-center">
+            <div className="bg-card rounded-xl border border-slate-custom-200 p-10 text-center">
               <span className="material-icons-round text-[48px] text-slate-custom-300">tune</span>
               <p className="mt-3 text-sm text-slate-custom-500">No tones yet. Add a custom tone above.</p>
             </div>
@@ -898,7 +898,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
           {addingStyle && (
             <form
               onSubmit={handleCreateStyle}
-              className="bg-white rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
+              className="bg-card rounded-xl border border-primary/40 p-4 flex flex-col gap-3"
             >
               <p className="text-xs font-semibold text-slate-custom-900">New Image Style</p>
               <input
@@ -946,7 +946,7 @@ export function ToneSettings({ tones, onTonesChange, imageStyles, onImageStylesC
 
           {/* Image style cards grid */}
           {imageStyles.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-custom-200 p-10 text-center">
+            <div className="bg-card rounded-xl border border-slate-custom-200 p-10 text-center">
               <span className="material-icons-round text-[48px] text-slate-custom-300">palette</span>
               <p className="mt-3 text-sm text-slate-custom-500">No image styles yet. Add one above.</p>
             </div>

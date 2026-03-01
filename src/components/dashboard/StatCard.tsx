@@ -10,9 +10,9 @@ interface StatCardProps {
 
 export function StatCard({ icon, label, value, change, up, badge, suffix }: StatCardProps) {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100 group hover:border-primary/30 transition-all relative overflow-hidden">
-      <div className="flex justify-between items-start mb-4">
-        <div className="p-2 bg-slate-custom-50 rounded-full text-slate-custom-500">
+    <div className="bg-card p-4 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100 group hover:border-primary/30 transition-all relative overflow-hidden">
+      <div className="flex justify-between items-start mb-3">
+        <div className="p-1.5 bg-slate-custom-50 rounded-full text-slate-custom-500">
           <span className="material-icons-round text-xl">{icon}</span>
         </div>
         {change && (
@@ -31,8 +31,8 @@ export function StatCard({ icon, label, value, change, up, badge, suffix }: Stat
           </span>
         )}
       </div>
-      <p className="text-slate-custom-500 text-sm font-medium mb-1">{label}</p>
-      <h2 className="text-3xl font-bold text-slate-custom-900">
+      <p className="text-slate-custom-500 text-sm font-medium mb-0.5">{label}</p>
+      <h2 className="text-2xl font-bold text-slate-custom-900">
         {value}
         {suffix && (
           <span className="text-lg text-slate-custom-400 font-medium ml-1">{suffix}</span>

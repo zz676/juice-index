@@ -133,7 +133,7 @@ export default function PublishModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="bg-white rounded-2xl shadow-xl border border-slate-custom-200 w-full max-w-md mx-4 overflow-hidden"
+            className="bg-card rounded-2xl shadow-xl border border-slate-custom-200 w-full max-w-md mx-4 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -313,7 +313,7 @@ export default function PublishModal({
                               setScheduleDate(e.target.value);
                               setScheduleError("");
                             }}
-                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-white"
+                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-card"
                           />
                           <input
                             type="time"
@@ -322,7 +322,7 @@ export default function PublishModal({
                               setScheduleTime(e.target.value);
                               setScheduleError("");
                             }}
-                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-white"
+                            className="flex-1 px-3 py-1.5 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400 bg-card"
                           />
                         </div>
                         {scheduleError && (

@@ -69,7 +69,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Profile */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">person</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Profile</h3>
@@ -84,7 +84,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </section>
 
                 {/* Notification Preferences */}
-                <section className="lg:row-span-2 bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="lg:row-span-2 bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">notifications</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
@@ -104,7 +104,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </section>
 
                 {/* Connected Accounts */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">link</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Connected Accounts</h3>
@@ -124,7 +124,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </section>
 
                 {/* Password & Security */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">lock</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Password & Security</h3>
@@ -135,7 +135,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </section>
 
                 {/* Chart Styles */}
-                <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
                         <span className="material-icons-round text-slate-custom-400">bookmarks</span>
                         <h3 className="text-base font-semibold text-slate-custom-900">Chart Styles</h3>
@@ -146,7 +146,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 </section>
 
                 {/* Danger Zone */}
-                <section className="bg-white rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                <section className="bg-card rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                     <div className="px-6 py-4 border-b border-red-200 flex items-center gap-3">
                         <span className="material-icons-round text-red-400">warning</span>
                         <h3 className="text-base font-semibold text-red-600">Danger Zone</h3>

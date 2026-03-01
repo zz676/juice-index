@@ -341,7 +341,7 @@ export default function PostsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts..."
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </form>
           <button
@@ -356,21 +356,21 @@ export default function PostsPage() {
 
       {/* Summary Stats Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-custom-200 px-4 py-3">
+        <div className="flex items-center gap-3 bg-card rounded-lg border border-slate-custom-200 px-4 py-3">
           <span className="material-icons-round text-xl text-slate-custom-400">description</span>
           <div>
             <p className="text-lg font-bold text-slate-custom-900">{totalCount}</p>
             <p className="text-[11px] text-slate-custom-500 font-medium">Total</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-purple-200 px-4 py-3">
+        <div className="flex items-center gap-3 bg-card rounded-lg border border-purple-200 px-4 py-3">
           <span className="material-icons-round text-xl text-purple-500">schedule</span>
           <div>
             <p className="text-lg font-bold text-purple-700">{statusCounts["SCHEDULED"] || 0}</p>
             <p className="text-[11px] text-purple-500 font-medium">Scheduled</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-green-200 px-4 py-3">
+        <div className="flex items-center gap-3 bg-card rounded-lg border border-green-200 px-4 py-3">
           <span className="material-icons-round text-xl text-green-500">check_circle</span>
           <div>
             <p className="text-lg font-bold text-green-700">{statusCounts["PUBLISHED"] || 0}</p>
@@ -378,7 +378,7 @@ export default function PostsPage() {
           </div>
         </div>
         {failedCount > 0 && (
-          <div className="flex items-center gap-3 bg-white rounded-lg border border-red-200 px-4 py-3">
+          <div className="flex items-center gap-3 bg-card rounded-lg border border-red-200 px-4 py-3">
             <span className="material-icons-round text-xl text-red-500">error</span>
             <div>
               <p className="text-lg font-bold text-red-700">{failedCount}</p>
@@ -421,7 +421,7 @@ export default function PostsPage() {
 
       {/* Compose Panel */}
       {composeOpen && (
-        <div className="bg-white rounded-lg border border-slate-custom-200 p-5 space-y-4">
+        <div className="bg-card rounded-lg border border-slate-custom-200 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-custom-900">
               {editingId ? "Edit Post" : "Compose New Post"}
@@ -566,7 +566,7 @@ export default function PostsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden">
+      <div className="bg-card rounded-lg border border-slate-custom-100 overflow-hidden">
         {loading ? (
           <div className="p-6 space-y-4">
             {[...Array(8)].map((_, i) => (
@@ -865,13 +865,13 @@ export default function PostsPage() {
                                 type="date"
                                 value={rescheduleDate}
                                 onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleError(""); }}
-                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-card"
                               />
                               <input
                                 type="time"
                                 value={rescheduleTime}
                                 onChange={(e) => { setRescheduleTime(e.target.value); setRescheduleError(""); }}
-                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-card"
                               />
                               <button
                                 onClick={() => handleReschedule(post.id)}
