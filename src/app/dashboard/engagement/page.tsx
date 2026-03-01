@@ -196,15 +196,8 @@ export default function EngagementPage() {
   };
 
   return (
-    <div className="py-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-custom-900">Engagement Center</h1>
-        <p className="mt-1 text-sm text-slate-custom-500">
-          Auto-reply to tweets from monitored X accounts.
-        </p>
-      </div>
-
+    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Global pause banner */}
       <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
 
@@ -353,6 +346,7 @@ export default function EngagementPage() {
           playgroundPreset={playgroundPreset}
         />
       )}
+      </div>
     </div>
   );
 }
