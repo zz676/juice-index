@@ -1860,7 +1860,7 @@ function StudioPageInner() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative max-w-xl mx-auto rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                    <div className="relative w-full rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
                       onWheel={(e) => {
                         e.preventDefault();
                         setImgZoom((z) => Math.min(5, Math.max(0.5, z + (e.deltaY < 0 ? 0.15 : -0.15))));
