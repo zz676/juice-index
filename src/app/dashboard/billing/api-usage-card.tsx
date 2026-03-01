@@ -33,7 +33,7 @@ export default function ApiUsageCard({
   const modelQuotaEntries = Object.entries(quotas.studioQueriesByModel);
 
   return (
-    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
       <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
         <span className="material-icons-round text-slate-custom-400">data_usage</span>
         <h3 className="text-base font-semibold text-slate-custom-900">Usage &amp; Quotas</h3>

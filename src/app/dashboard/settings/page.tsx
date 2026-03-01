@@ -59,13 +59,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     const hasPassword = !!user.passwordHash;
 
     return (
-        <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+        <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
             <div className="w-full max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 items-start">
                 {/* Left column */}
                 <div className="flex flex-col gap-2">
                     {/* Profile */}
-                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
                         <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
                             <span className="material-icons-round text-slate-custom-400">person</span>
                             <h3 className="text-base font-semibold text-slate-custom-900">Profile</h3>
@@ -80,7 +80,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     </section>
 
                     {/* Connected Accounts */}
-                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
                         <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
                             <span className="material-icons-round text-slate-custom-400">link</span>
                             <h3 className="text-base font-semibold text-slate-custom-900">Connected Accounts</h3>
@@ -100,7 +100,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     </section>
 
                     {/* Password & Security */}
-                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
                         <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
                             <span className="material-icons-round text-slate-custom-400">lock</span>
                             <h3 className="text-base font-semibold text-slate-custom-900">Password & Security</h3>
@@ -125,7 +125,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 {/* Right column */}
                 <div className="flex flex-col gap-4">
                     {/* Notification Preferences */}
-                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
                         <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
                             <span className="material-icons-round text-slate-custom-400">notifications</span>
                             <h3 className="text-base font-semibold text-slate-custom-900">Notification Preferences</h3>
@@ -145,7 +145,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                     </section>
 
                     {/* Chart Styles */}
-                    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <section className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)]">
                         <div className="px-6 py-3 border-b border-slate-custom-100 flex items-center gap-3">
                             <span className="material-icons-round text-slate-custom-400">bookmarks</span>
                             <h3 className="text-base font-semibold text-slate-custom-900">Chart Styles</h3>

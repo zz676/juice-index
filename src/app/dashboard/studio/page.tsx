@@ -1132,7 +1132,7 @@ function StudioPageInner() {
                     <div className="relative">
                       <button
                         onClick={() => setIsQueryModelDropdownOpen((v) => !v)}
-                        className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                        className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary hover:shadow-[0_0_8px_rgba(106,218,27,0.35)] transition-all duration-200"
                       >
                         <span className="material-icons-round text-[15px] text-primary">smart_toy</span>
                         <span className="max-w-[100px] truncate">
@@ -1216,7 +1216,7 @@ function StudioPageInner() {
                     <button
                       onClick={generateRunnableQuery}
                       disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted || selectedQueryModelExhausted}
-                      className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.5)] hover:shadow-[0_0_22px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                     >
                       {isGeneratingQueryPlan && (
                         <span className="material-icons-round text-[13px] animate-spin">refresh</span>
@@ -1295,7 +1295,7 @@ function StudioPageInner() {
                       <button
                         onClick={runGeneratedQuery}
                         disabled={isRunningQuery || !generatedSql.trim() || queryQuotaExhausted}
-                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.5)] hover:shadow-[0_0_22px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.3)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                         {isRunningQuery ? (
                           <span className="material-icons-round text-[11px] animate-spin">refresh</span>
@@ -1325,7 +1325,7 @@ function StudioPageInner() {
                           <button
                             onClick={copySql}
                             disabled={!generatedSql}
-                            className="p-0.5 rounded text-primary hover:text-green-400 disabled:opacity-40 transition-colors flex items-center"
+                            className="p-0.5 rounded text-primary hover:text-green-400 hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] disabled:opacity-40 transition-all flex items-center"
                           >
                             <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
@@ -1756,7 +1756,7 @@ function StudioPageInner() {
                       <button
                         onClick={generateChartImage}
                         disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
-                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.5)] hover:shadow-[0_0_22px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.3)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                       {isGeneratingImage ? (
                         <span className="material-icons-round text-[15px] animate-spin">refresh</span>
@@ -1795,7 +1795,7 @@ function StudioPageInner() {
                       <div className="flex-1 flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => { setImgZoom((z) => Math.max(0.5, z - 0.25)); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
                           title="Zoom out"
                         >
                           <span className="material-icons-round text-[13px]">remove</span>
@@ -1805,7 +1805,7 @@ function StudioPageInner() {
                         </span>
                         <button
                           onClick={() => { setImgZoom((z) => Math.min(5, z + 0.25)); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
                           title="Zoom in"
                         >
                           <span className="material-icons-round text-[13px]">add</span>
@@ -1823,7 +1823,7 @@ function StudioPageInner() {
                         </button>
                         <button
                           onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 transition-all"
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
                           title="Reset view"
                         >
                           <span className="material-icons-round text-[13px]">fit_screen</span>
@@ -1834,7 +1834,7 @@ function StudioPageInner() {
                         <div className="relative group">
                           <button
                             onClick={copyChartToClipboard}
-                            className="text-slate-custom-400 hover:text-primary transition-all"
+                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
                           >
                             <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
@@ -1843,7 +1843,7 @@ function StudioPageInner() {
                         <div className="relative group">
                           <button
                             onClick={downloadImage}
-                            className="text-slate-custom-400 hover:text-primary transition-all"
+                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
                           >
                             <span className="material-icons-round text-[15px]">download</span>
                           </button>
@@ -1923,7 +1923,7 @@ function StudioPageInner() {
                       <div className="relative">
                         <button
                           onClick={() => setIsModelDropdownOpen((v) => !v)}
-                          className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200"
+                          className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary hover:shadow-[0_0_8px_rgba(106,218,27,0.35)] transition-all duration-200"
                         >
                           <span className="material-icons-round text-[15px] text-primary">smart_toy</span>
                           <span className="max-w-[100px] truncate">
@@ -2005,7 +2005,7 @@ function StudioPageInner() {
                     </div>
 
                     {/* Temperature Slider */}
-                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary transition-all duration-200">
+                    <div className="flex items-center gap-1.5 text-[13px] font-medium text-slate-custom-600 px-2.5 py-1.5 rounded-lg hover:text-primary hover:shadow-[0_0_8px_rgba(106,218,27,0.35)] transition-all duration-200">
                       <span className="material-icons-round text-[15px] text-orange-400">thermostat</span>
                       <input
                         type="range"
@@ -2025,7 +2025,7 @@ function StudioPageInner() {
                       <button
                         onClick={generateDraft}
                         disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
-                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.5)] hover:shadow-[0_0_22px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.3)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                         <span
                           className={`material-icons-round text-[11px] ${
@@ -2074,7 +2074,7 @@ function StudioPageInner() {
                         <button
                           onClick={copyShareLink}
                           disabled={!hasChartData}
-                          className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
+                          className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all disabled:opacity-50"
                         >
                           <span className="material-icons-round text-[15px]">share</span>
                         </button>
@@ -2084,7 +2084,7 @@ function StudioPageInner() {
                         <button
                           onClick={copyDraft}
                           disabled={!postDraft}
-                          className="text-slate-custom-400 hover:text-primary transition-all disabled:opacity-50"
+                          className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all disabled:opacity-50"
                         >
                           <span className="material-icons-round text-[15px]">content_copy</span>
                         </button>

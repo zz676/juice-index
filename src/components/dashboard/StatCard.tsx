@@ -10,7 +10,7 @@ interface StatCardProps {
 
 export function StatCard({ icon, label, value, change, up, badge, suffix }: StatCardProps) {
   return (
-    <div className="bg-card p-4 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100 group hover:border-primary/30 transition-all relative overflow-hidden">
+    <div className="bg-card p-4 rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] border border-lime-200 group hover:border-lime-300 hover:shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_36px_rgba(155,199,84,0.5)] transition-all relative overflow-hidden">
       <div className="flex justify-between items-start mb-3">
         <div className="p-1.5 bg-slate-custom-50 rounded-full text-slate-custom-500">
           <span className="material-icons-round text-xl">{icon}</span>

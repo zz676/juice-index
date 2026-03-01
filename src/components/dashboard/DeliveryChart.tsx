@@ -108,7 +108,7 @@ export function DeliveryChart() {
   };
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-slate-custom-100">
+    <div className="bg-card p-6 rounded-lg shadow-[0_2px_15px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] border border-lime-200">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>

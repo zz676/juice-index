@@ -176,7 +176,7 @@ export const AccountCard = memo(function AccountCard({ account, tones, imageStyl
   };
 
   return (
-    <div className={`bg-card rounded-xl border border-slate-custom-200 p-4 flex flex-col gap-3 overflow-hidden${saveFlash ? " card-save-flash" : ""}`}>
+    <div className={`bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-4 flex flex-col gap-3 overflow-hidden${saveFlash ? " card-save-flash" : ""}`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         {account.avatarUrl ? (

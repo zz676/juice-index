@@ -322,27 +322,27 @@ export default function PostsPage() {
   const failedCount = statusCounts["FAILED"] || 0;
 
   return (
-    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header + Stats Row */}
       <div className="flex items-center justify-between gap-3">
         {/* Stat boxes */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-card rounded-lg border border-slate-custom-200 px-3 py-2">
+        <div className="flex items-end gap-2">
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] px-3 py-2">
             <span className="material-icons-round text-base text-slate-custom-400">description</span>
             <div>
               <p className="text-sm font-bold text-slate-custom-900 leading-none">{totalCount}</p>
               <p className="text-[10px] text-slate-custom-500 font-medium mt-0.5">Total</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-card rounded-lg border border-purple-200 px-3 py-2">
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-purple-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] px-3 py-2">
             <span className="material-icons-round text-base text-purple-500">schedule</span>
             <div>
               <p className="text-sm font-bold text-purple-700 leading-none">{statusCounts["SCHEDULED"] || 0}</p>
               <p className="text-[10px] text-purple-500 font-medium mt-0.5">Scheduled</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-card rounded-lg border border-green-200 px-3 py-2">
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-green-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] px-3 py-2">
             <span className="material-icons-round text-base text-green-500">check_circle</span>
             <div>
               <p className="text-sm font-bold text-green-700 leading-none">{statusCounts["PUBLISHED"] || 0}</p>
@@ -350,7 +350,7 @@ export default function PostsPage() {
             </div>
           </div>
           {failedCount > 0 && (
-            <div className="flex items-center gap-2 bg-card rounded-lg border border-red-200 px-3 py-2">
+            <div className="flex items-center gap-2 bg-card rounded-lg border border-red-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] px-3 py-2">
               <span className="material-icons-round text-base text-red-500">error</span>
               <div>
                 <p className="text-sm font-bold text-red-700 leading-none">{failedCount}</p>
@@ -358,9 +358,6 @@ export default function PostsPage() {
               </div>
             </div>
           )}
-        </div>
-        {/* Search + Compose */}
-        <div className="flex items-center gap-3">
           <form onSubmit={handleSearchSubmit} className="relative w-48">
             <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-custom-400 text-base">
               search
@@ -373,14 +370,15 @@ export default function PostsPage() {
               className="w-full pl-10 pr-4 py-2 bg-card border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </form>
-          <button
-            onClick={() => { resetCompose(); setComposeOpen(!composeOpen); }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-custom-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-custom-800 transition-colors whitespace-nowrap"
-          >
-            <span className="material-icons-round text-base">add</span>
-            Compose
-          </button>
         </div>
+        {/* Compose */}
+        <button
+          onClick={() => { resetCompose(); setComposeOpen(!composeOpen); }}
+          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[13px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.6),0_0_24px_rgba(106,218,27,0.3)] hover:shadow-[0_0_20px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.4)] transition-all duration-200 flex items-center gap-1 whitespace-nowrap"
+        >
+          <span className="material-icons-round text-[15px]">add</span>
+          Compose
+        </button>
       </div>
 
       {/* X Account Warning */}
@@ -416,7 +414,7 @@ export default function PostsPage() {
 
       {/* Compose Panel */}
       {composeOpen && (
-        <div className="bg-card rounded-lg border border-slate-custom-200 p-5 space-y-4">
+        <div className="bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-custom-900">
               {editingId ? "Edit Post" : "Compose New Post"}
