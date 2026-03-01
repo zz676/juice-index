@@ -128,18 +128,32 @@ export function buildMultiSeriesChartData(
   const resolvedX = xField || (sample.period !== undefined ? "period" : sample.month !== undefined ? "month" : detectXField(sample)) || "label";
   const resolvedY = yField || detectYField(sample) || "value";
 
-  // Collect ordered x-axis values and series keys
-  const xValuesOrdered: string[] = [];
-  const xValuesSeen = new Set<string>();
+  // Collect series keys and x-axis values
   const seriesSet = new Set<string>();
+  const isMonthField = resolvedX === "period" || resolvedX === "month";
+  const numericPeriods = new Set<number>(); // used when xField is period/month
 
   for (const row of rows) {
-    const xRaw = toMonthLabel(row, resolvedX);
-    if (!xValuesSeen.has(xRaw)) {
-      xValuesOrdered.push(xRaw);
-      xValuesSeen.add(xRaw);
-    }
     seriesSet.add(String(row[groupField] ?? ""));
+    if (isMonthField) {
+      const n = Number(row[resolvedX]);
+      if (!isNaN(n)) numericPeriods.add(n);
+    }
+  }
+
+  // For period/month fields sort numerically 1→12 so x-axis always starts at Jan
+  let xValuesOrdered: string[];
+  if (isMonthField) {
+    xValuesOrdered = Array.from(numericPeriods)
+      .sort((a, b) => a - b)
+      .map((n) => MONTH_SHORT[n] ?? String(n));
+  } else {
+    const seen = new Set<string>();
+    xValuesOrdered = [];
+    for (const row of rows) {
+      const label = String(row[resolvedX] ?? "");
+      if (!seen.has(label)) { seen.add(label); xValuesOrdered.push(label); }
+    }
   }
 
   const series = Array.from(seriesSet).sort();

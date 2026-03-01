@@ -718,8 +718,10 @@ function renderMultiLineChartConfig(params: {
           labels: {
             color: ensureContrast(rawTextColor, bgColor),
             font: { family: style.axisFont || "Inter", size: style.xAxisFontSize ?? 12 },
-            boxWidth: 16,
-            padding: 12,
+            usePointStyle: true,
+            pointStyle: "circle",
+            boxWidth: 8,
+            padding: 14,
           },
         },
         datalabels: { display: false },
