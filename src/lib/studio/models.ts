@@ -1,6 +1,11 @@
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
+import { xai } from "@ai-sdk/xai";
+import type { LanguageModel } from "ai";
 import { type ApiTier, hasTier } from "@/lib/api/tier";
 
-export type ModelProvider = "openai" | "anthropic";
+export type ModelProvider = "openai" | "anthropic" | "google" | "xai";
 
 export interface ModelDefinition {
   id: string;
@@ -14,25 +19,34 @@ export interface ModelDefinition {
 
 export const MODEL_REGISTRY: ModelDefinition[] = [
   {
-    id: "gpt-4o-mini",
-    displayName: "GPT-4o Mini",
-    provider: "openai",
-    providerModelId: "gpt-4o-mini",
+    id: "grok-4-1-fast-reasoning",
+    displayName: "Grok 4.1 Fast",
+    provider: "xai",
+    providerModelId: "grok-4-1-fast-reasoning",
     minTier: "FREE",
     defaultMaxTokens: 280,
     description: "Fast & affordable",
   },
   {
-    id: "o3-mini",
-    displayName: "o3-mini",
+    id: "gpt-5-mini",
+    displayName: "GPT-5 Mini",
     provider: "openai",
-    providerModelId: "o3-mini",
+    providerModelId: "gpt-5-mini",
     minTier: "STARTER",
     defaultMaxTokens: 400,
-    description: "Best reasoning from OpenAI",
+    description: "Versatile from OpenAI",
   },
   {
-    id: "claude-3-5-sonnet",
+    id: "gemini-3.1-pro-preview",
+    displayName: "Gemini 3.1 Pro",
+    provider: "google",
+    providerModelId: "gemini-3.1-pro-preview",
+    minTier: "STARTER",
+    defaultMaxTokens: 400,
+    description: "Latest from Google",
+  },
+  {
+    id: "claude-sonnet-4-6",
     displayName: "Claude Sonnet 4.6",
     provider: "anthropic",
     providerModelId: "claude-sonnet-4-6",
@@ -41,7 +55,16 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
     description: "Balanced speed & quality",
   },
   {
-    id: "claude-opus-4",
+    id: "gpt-5.2",
+    displayName: "GPT-5.2",
+    provider: "openai",
+    providerModelId: "gpt-5.2",
+    minTier: "PRO",
+    defaultMaxTokens: 500,
+    description: "Advanced reasoning from OpenAI",
+  },
+  {
+    id: "claude-opus-4-6",
     displayName: "Claude Opus 4.6",
     provider: "anthropic",
     providerModelId: "claude-opus-4-6",
@@ -51,7 +74,7 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
   },
 ];
 
-export const DEFAULT_MODEL_ID = "gpt-4o-mini";
+export const DEFAULT_MODEL_ID = "grok-4-1-fast-reasoning";
 export const DEFAULT_TEMPERATURE = 0.4;
 
 export function getModelById(id: string): ModelDefinition | undefined {
@@ -64,12 +87,27 @@ export function canAccessModel(tier: ApiTier, modelId: string): boolean {
   return hasTier(tier, model.minTier);
 }
 
+export function getStudioModelInstance(modelDef: ModelDefinition): LanguageModel {
+  switch (modelDef.provider) {
+    case "openai":
+      return openai(modelDef.providerModelId);
+    case "anthropic":
+      return anthropic(modelDef.providerModelId);
+    case "google":
+      return google(modelDef.providerModelId);
+    case "xai":
+      return xai(modelDef.providerModelId);
+  }
+}
+
 /** Per-token pricing in USD (input / output per token). */
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  "gpt-4o-mini":       { input: 0.15  / 1_000_000, output: 0.60  / 1_000_000 },
-  "o3-mini":           { input: 1.10  / 1_000_000, output: 4.40  / 1_000_000 },
-  "claude-3-5-sonnet": { input: 3.00  / 1_000_000, output: 15.00 / 1_000_000 },
-  "claude-opus-4":     { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
+  "grok-4-1-fast-reasoning": { input: 0.20  / 1_000_000, output: 0.50  / 1_000_000 },
+  "gpt-5-mini":              { input: 0.25  / 1_000_000, output: 2.00  / 1_000_000 },
+  "gemini-3.1-pro-preview":  { input: 2.00  / 1_000_000, output: 12.00 / 1_000_000 },
+  "claude-sonnet-4-6":       { input: 3.00  / 1_000_000, output: 15.00 / 1_000_000 },
+  "gpt-5.2":                 { input: 1.75  / 1_000_000, output: 14.00 / 1_000_000 },
+  "claude-opus-4-6":         { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
 };
 
 const DEFAULT_PRICING = { input: 1.00 / 1_000_000, output: 3.00 / 1_000_000 };

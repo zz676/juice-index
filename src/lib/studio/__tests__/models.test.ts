@@ -20,8 +20,8 @@ const REQUIRED_MODEL_FIELDS = [
 ] as const;
 
 describe("MODEL_REGISTRY", () => {
-  it("has exactly 4 models", () => {
-    expect(MODEL_REGISTRY).toHaveLength(4);
+  it("has exactly 6 models", () => {
+    expect(MODEL_REGISTRY).toHaveLength(6);
   });
 
   it.each(MODEL_REGISTRY.map((m) => [m.id, m]))(
@@ -35,8 +35,8 @@ describe("MODEL_REGISTRY", () => {
 });
 
 describe("defaults", () => {
-  it("DEFAULT_MODEL_ID is gpt-4o-mini", () => {
-    expect(DEFAULT_MODEL_ID).toBe("gpt-4o-mini");
+  it("DEFAULT_MODEL_ID is grok-4-1-fast-reasoning", () => {
+    expect(DEFAULT_MODEL_ID).toBe("grok-4-1-fast-reasoning");
   });
 
   it("DEFAULT_MODEL_ID exists in the registry", () => {
@@ -49,10 +49,10 @@ describe("defaults", () => {
 });
 
 describe("getModelById", () => {
-  it("returns GPT-4o Mini for gpt-4o-mini", () => {
-    const model = getModelById("gpt-4o-mini");
+  it("returns Grok 4.1 Fast for grok-4-1-fast-reasoning", () => {
+    const model = getModelById("grok-4-1-fast-reasoning");
     expect(model).toBeDefined();
-    expect(model!.displayName).toBe("GPT-4o Mini");
+    expect(model!.displayName).toBe("Grok 4.1 Fast");
   });
 
   it("returns undefined for nonexistent model", () => {
@@ -70,20 +70,28 @@ describe("getModelById", () => {
 
 describe("canAccessModel", () => {
   describe("FREE tier", () => {
-    it("can access gpt-4o-mini (FREE model)", () => {
-      expect(canAccessModel("FREE", "gpt-4o-mini")).toBe(true);
+    it("can access grok-4-1-fast-reasoning (FREE model)", () => {
+      expect(canAccessModel("FREE", "grok-4-1-fast-reasoning")).toBe(true);
     });
 
-    it("cannot access o3-mini (STARTER model)", () => {
-      expect(canAccessModel("FREE", "o3-mini")).toBe(false);
+    it("cannot access gpt-5-mini (STARTER model)", () => {
+      expect(canAccessModel("FREE", "gpt-5-mini")).toBe(false);
     });
 
-    it("cannot access claude-3-5-sonnet (STARTER model)", () => {
-      expect(canAccessModel("FREE", "claude-3-5-sonnet")).toBe(false);
+    it("cannot access gemini-3.1-pro-preview (STARTER model)", () => {
+      expect(canAccessModel("FREE", "gemini-3.1-pro-preview")).toBe(false);
     });
 
-    it("cannot access claude-opus-4 (PRO model)", () => {
-      expect(canAccessModel("FREE", "claude-opus-4")).toBe(false);
+    it("cannot access claude-sonnet-4-6 (STARTER model)", () => {
+      expect(canAccessModel("FREE", "claude-sonnet-4-6")).toBe(false);
+    });
+
+    it("cannot access gpt-5.2 (PRO model)", () => {
+      expect(canAccessModel("FREE", "gpt-5.2")).toBe(false);
+    });
+
+    it("cannot access claude-opus-4-6 (PRO model)", () => {
+      expect(canAccessModel("FREE", "claude-opus-4-6")).toBe(false);
     });
 
     it("returns false for nonexistent model", () => {
@@ -92,38 +100,46 @@ describe("canAccessModel", () => {
   });
 
   describe("STARTER tier", () => {
-    it("can access gpt-4o-mini (FREE model)", () => {
-      expect(canAccessModel("STARTER", "gpt-4o-mini")).toBe(true);
+    it("can access grok-4-1-fast-reasoning (FREE model)", () => {
+      expect(canAccessModel("STARTER", "grok-4-1-fast-reasoning")).toBe(true);
     });
 
-    it("can access o3-mini (STARTER model)", () => {
-      expect(canAccessModel("STARTER", "o3-mini")).toBe(true);
+    it("can access gpt-5-mini (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "gpt-5-mini")).toBe(true);
     });
 
-    it("can access claude-3-5-sonnet (STARTER model)", () => {
-      expect(canAccessModel("STARTER", "claude-3-5-sonnet")).toBe(true);
+    it("can access gemini-3.1-pro-preview (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "gemini-3.1-pro-preview")).toBe(true);
     });
 
-    it("cannot access claude-opus-4 (PRO model)", () => {
-      expect(canAccessModel("STARTER", "claude-opus-4")).toBe(false);
+    it("can access claude-sonnet-4-6 (STARTER model)", () => {
+      expect(canAccessModel("STARTER", "claude-sonnet-4-6")).toBe(true);
+    });
+
+    it("cannot access gpt-5.2 (PRO model)", () => {
+      expect(canAccessModel("STARTER", "gpt-5.2")).toBe(false);
+    });
+
+    it("cannot access claude-opus-4-6 (PRO model)", () => {
+      expect(canAccessModel("STARTER", "claude-opus-4-6")).toBe(false);
     });
   });
 
   describe("PRO tier", () => {
-    it("can access gpt-4o-mini (FREE model)", () => {
-      expect(canAccessModel("PRO", "gpt-4o-mini")).toBe(true);
+    it("can access grok-4-1-fast-reasoning (FREE model)", () => {
+      expect(canAccessModel("PRO", "grok-4-1-fast-reasoning")).toBe(true);
     });
 
-    it("can access o3-mini (STARTER model)", () => {
-      expect(canAccessModel("PRO", "o3-mini")).toBe(true);
+    it("can access claude-sonnet-4-6 (STARTER model)", () => {
+      expect(canAccessModel("PRO", "claude-sonnet-4-6")).toBe(true);
     });
 
-    it("can access claude-3-5-sonnet (STARTER model)", () => {
-      expect(canAccessModel("PRO", "claude-3-5-sonnet")).toBe(true);
+    it("can access gpt-5.2 (PRO model)", () => {
+      expect(canAccessModel("PRO", "gpt-5.2")).toBe(true);
     });
 
-    it("can access claude-opus-4 (PRO model)", () => {
-      expect(canAccessModel("PRO", "claude-opus-4")).toBe(true);
+    it("can access claude-opus-4-6 (PRO model)", () => {
+      expect(canAccessModel("PRO", "claude-opus-4-6")).toBe(true);
     });
   });
 
@@ -193,16 +209,16 @@ describe("per-model quotas", () => {
   });
 
   it("getModelQuota returns 0 for inaccessible models", () => {
-    expect(getModelQuota("FREE", "o3-mini", "studioQueriesByModel")).toBe(0);
-    expect(getModelQuota("FREE", "claude-opus-4", "postDraftsByModel")).toBe(0);
-    expect(getModelQuota("STARTER", "claude-opus-4", "studioQueriesByModel")).toBe(0);
+    expect(getModelQuota("FREE", "gpt-5-mini", "studioQueriesByModel")).toBe(0);
+    expect(getModelQuota("FREE", "claude-opus-4-6", "postDraftsByModel")).toBe(0);
+    expect(getModelQuota("STARTER", "claude-opus-4-6", "studioQueriesByModel")).toBe(0);
   });
 
   it("getModelQuota returns correct values for accessible models", () => {
-    expect(getModelQuota("FREE", "gpt-4o-mini", "studioQueriesByModel")).toBe(3);
-    expect(getModelQuota("STARTER", "o3-mini", "studioQueriesByModel")).toBe(5);
-    expect(getModelQuota("PRO", "claude-opus-4", "studioQueriesByModel")).toBe(10);
-    expect(getModelQuota("PRO", "claude-opus-4", "postDraftsByModel")).toBe(5);
-    expect(getModelQuota("ENTERPRISE", "claude-opus-4", "studioQueriesByModel")).toBe(Infinity);
+    expect(getModelQuota("FREE", "grok-4-1-fast-reasoning", "studioQueriesByModel")).toBe(3);
+    expect(getModelQuota("STARTER", "claude-sonnet-4-6", "studioQueriesByModel")).toBe(5);
+    expect(getModelQuota("PRO", "claude-opus-4-6", "studioQueriesByModel")).toBe(10);
+    expect(getModelQuota("PRO", "claude-opus-4-6", "postDraftsByModel")).toBe(5);
+    expect(getModelQuota("ENTERPRISE", "claude-opus-4-6", "studioQueriesByModel")).toBe(Infinity);
   });
 });

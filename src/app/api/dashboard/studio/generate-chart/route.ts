@@ -4,8 +4,6 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import type { ChartConfiguration, Plugin, ChartType as JsChartType } from "chart.js";
 import { Chart, registerables } from "chart.js";
@@ -20,7 +18,7 @@ import { executeQuery, getAllowedTables } from "@/lib/query-executor";
 import { isStringField, convertBigIntsToNumbers, formatFieldsForPrompt } from "@/lib/studio/field-registry";
 import { prismaFindManyToSql } from "@/lib/studio/sql-preview";
 import { validateRawSql } from "@/lib/studio/sql-validator";
-import { getModelById, canAccessModel, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
+import { getModelById, canAccessModel, getStudioModelInstance, DEFAULT_MODEL_ID, estimateCost } from "@/lib/studio/models";
 import {
   buildChartData,
   buildMultiSeriesChartData,
@@ -1003,9 +1001,7 @@ async function generateStructuredQuery(prompt: string, modelId?: string) {
     .join("\n\n");
 
   const modelDef = getModelById(modelId ?? DEFAULT_MODEL_ID) ?? getModelById(DEFAULT_MODEL_ID)!;
-  const aiModel = modelDef.provider === "anthropic"
-    ? anthropic(modelDef.providerModelId)
-    : openai(modelDef.providerModelId);
+  const aiModel = getStudioModelInstance(modelDef);
 
   const aiStart = Date.now();
   const { object, usage } = await generateObject({
