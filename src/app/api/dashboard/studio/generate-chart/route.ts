@@ -721,6 +721,7 @@ function renderMultiLineChartConfig(params: {
             usePointStyle: true,
             pointStyle: "circle",
             boxWidth: 8,
+            boxPadding: 6,
             padding: 14,
           },
         },
