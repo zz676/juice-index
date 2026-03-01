@@ -7,6 +7,7 @@ import { generateReply } from "@/lib/engagement/generate-reply";
 import { generateImage } from "@/lib/engagement/generate-image";
 import { computeTotalReplyCost } from "@/lib/engagement/cost-utils";
 import { pickToneByWeights, FALLBACK_TONE_PROMPTS } from "@/lib/engagement/pick-tone";
+import { REPLY_MODELS, DEFAULT_REPLY_MODEL } from "@/lib/engagement/models";
 import type { UserTone } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     accountContext?: string;
     generateImage?: boolean;
     imageStyleId?: string;
+    model?: string;
   };
 
   try {
@@ -40,7 +42,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { tweetInput, toneId, toneWeights, adHocTone, temperature, accountContext, generateImage: doImage, imageStyleId } = body;
+  const { tweetInput, toneId, toneWeights, adHocTone, temperature, accountContext, generateImage: doImage, imageStyleId, model: requestedModel } = body;
+
+  // Validate model ID
+  const modelId = requestedModel && REPLY_MODELS.some((m) => m.id === requestedModel)
+    ? requestedModel
+    : DEFAULT_REPLY_MODEL;
 
   if (!tweetInput?.trim()) {
     return NextResponse.json({ message: "tweetInput is required" }, { status: 400 });
@@ -120,6 +127,7 @@ export async function POST(request: NextRequest) {
     quotedTweetText,
     accountContext: accountContext ?? null,
     temperature: temperature ?? 0.8,
+    model: modelId,
   });
 
   // --- Optionally generate image ---
@@ -163,11 +171,12 @@ export async function POST(request: NextRequest) {
   }
 
   // --- Compute costs ---
-  const costs = computeTotalReplyCost(generated.inputTokens, generated.outputTokens, imageGenerated);
+  const costs = computeTotalReplyCost(generated.inputTokens, generated.outputTokens, imageGenerated, modelId);
 
   return NextResponse.json({
     replyText: generated.text,
     toneUsed: resolvedToneName,
+    modelUsed: modelId,
     inputTokens: generated.inputTokens,
     outputTokens: generated.outputTokens,
     costs,

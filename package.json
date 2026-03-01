@@ -16,7 +16,9 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.44",
+    "@ai-sdk/google": "^3.0.34",
     "@ai-sdk/openai": "^3.0.26",
+    "@ai-sdk/xai": "^3.0.60",
     "@napi-rs/canvas": "^0.1.92",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
