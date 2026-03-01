@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-const YAHOO_SUMMARY_URL = "https://query1.finance.yahoo.com/v10/finance/quoteSummary";
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
@@ -37,10 +36,12 @@ export interface StockQuote {
   currency: string;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function fetchOne(symbol: string): Promise<{ price: number | null; change: number; currency: string }> {
   const url =
-    `${YAHOO_SUMMARY_URL}/${encodeURIComponent(symbol)}` +
-    `?modules=price&corsDomain=finance.yahoo.com`;
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}` +
+    `?range=1d&interval=1d&includePrePost=false`;
 
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 8_000);
@@ -56,15 +57,19 @@ async function fetchOne(symbol: string): Promise<{ price: number | null; change:
       return { price: null, change: 0, currency: "USD" };
     }
     const json = await res.json();
-    const qs = json?.quoteSummary;
-    if (!qs || qs.error || !Array.isArray(qs.result) || qs.result.length === 0) {
-      return { price: null, change: 0, currency: "USD" };
-    }
-    const p = qs.result[0]?.price;
+    const meta = json?.chart?.result?.[0]?.meta;
+    if (!meta) return { price: null, change: 0, currency: "USD" };
+
+    const price: number | null = meta.regularMarketPrice ?? null;
+    const prev: number | null  = meta.chartPreviousClose ?? meta.previousClose ?? null;
+    const change = (price !== null && prev !== null && prev !== 0)
+      ? ((price - prev) / prev) * 100
+      : 0;
+
     return {
-      price:    p?.regularMarketPrice?.raw          ?? null,
-      change:   p?.regularMarketChangePercent?.raw  ?? 0,
-      currency: p?.currency                         ?? "USD",
+      price,
+      change,
+      currency: meta.currency ?? "USD",
     };
   } catch {
     console.warn(`[stocks] ${symbol}: fetch error`);
@@ -85,13 +90,13 @@ export async function GET() {
       });
     }
 
-    const results = await Promise.allSettled(STOCKS.map((s) => fetchOne(s.symbol)));
-
-    const quotes: StockQuote[] = STOCKS.map((stock, i) => {
-      const r = results[i];
-      const data = r.status === "fulfilled" ? r.value : { price: null, change: 0, currency: "USD" };
-      return { symbol: stock.symbol, brand: stock.brand, ...data };
-    });
+    // Fetch sequentially with 80 ms gaps to stay under Yahoo's rate limit
+    const quotes: StockQuote[] = [];
+    for (let i = 0; i < STOCKS.length; i++) {
+      if (i > 0) await sleep(80);
+      const data = await fetchOne(STOCKS[i].symbol);
+      quotes.push({ symbol: STOCKS[i].symbol, brand: STOCKS[i].brand, ...data });
+    }
 
     cache = { data: quotes, expiry: Date.now() + CACHE_TTL_MS };
 
@@ -100,7 +105,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Stock fetch error:", error);
-    // Serve stale cache rather than a hard 500
     if (cache) {
       return NextResponse.json(cache.data, {
         headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
