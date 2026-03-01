@@ -160,7 +160,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-custom-900 text-lg">Upcoming Catalysts</h3>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {feed?.catalysts.map((item, i) => (
               <div key={i} className="flex gap-3 p-3 bg-card rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] hover:border-lime-300 hover:shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_36px_rgba(155,199,84,0.5)] transition-all">
                 <div className="flex flex-col items-center justify-center bg-lime-50 w-12 h-12 rounded-lg text-center flex-shrink-0">
