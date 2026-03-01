@@ -15,7 +15,7 @@ const makeFixture = (overrides: Record<string, unknown> = {}) => ({
         },
         calendarEvents: {
           earnings: {
-            earningsDate: [{ raw: 1742169600, fmt: "Mar 17, 2026" }],
+            earningsDate: [{ raw: 1773705600, fmt: "Mar 17, 2026" }],
           },
         },
       },
@@ -31,11 +31,13 @@ describe("parseYahooQuote", () => {
     expect(result).not.toBeNull();
     expect(result!.price).toBe(34.9);
     expect(result!.marketCap).toBe(905_000_000_000);
-    expect(result!.volume).toBe(12_000_000);
+    expect(result!.volume).toBe(BigInt(12_000_000));
     expect(result!.peRatio).toBe(28.5);
     expect(result!.earningsDateRaw).toBe("Mar 17, 2026");
     expect(result!.earningsDate).toBeInstanceOf(Date);
-    expect(result!.earningsDate!.getFullYear()).toBe(2026);
+    expect(result!.earningsDate!.getUTCFullYear()).toBe(2026);
+    expect(result!.earningsDate!.getUTCMonth()).toBe(2); // March = 2
+    expect(result!.earningsDate!.getUTCDate()).toBe(17);
   });
 
   it("returns null when result array is empty", () => {
@@ -58,6 +60,18 @@ describe("parseYahooQuote", () => {
     const result = parseYahooQuote(fixture);
     expect(result).not.toBeNull();
     expect(result!.peRatio).toBeNull();
+  });
+
+  it("handles range-format earningsDateRaw — uses raw timestamp, not fmt string", () => {
+    const fixture = makeFixture();
+    (fixture.quoteSummary.result[0] as any).calendarEvents.earnings.earningsDate = [
+      { raw: 1773705600, fmt: "Mar 17, 2026 - Mar 21, 2026" },
+    ];
+    const result = parseYahooQuote(fixture);
+    expect(result).not.toBeNull();
+    expect(result!.earningsDateRaw).toBe("Mar 17, 2026 - Mar 21, 2026");
+    expect(result!.earningsDate).toBeInstanceOf(Date);
+    expect(result!.earningsDate!.getUTCFullYear()).toBe(2026);
   });
 
   it("tolerates missing earningsDate", () => {

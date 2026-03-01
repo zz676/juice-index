@@ -3,7 +3,7 @@ const YAHOO_API = "https://query1.finance.yahoo.com/v10/finance/quoteSummary";
 export interface YahooQuoteData {
   price: number | null;
   marketCap: number | null;
-  volume: number | null;
+  volume: bigint | null;
   peRatio: number | null;
   earningsDate: Date | null;
   earningsDateRaw: string | null;
@@ -22,14 +22,15 @@ export function parseYahooQuote(raw: unknown): YahooQuoteData | null {
     const r = qs.result[0];
     const price: number | null = r?.price?.regularMarketPrice?.raw ?? null;
     const marketCap: number | null = r?.price?.marketCap?.raw ?? null;
-    const volume: number | null = r?.price?.regularMarketVolume?.raw ?? null;
+    const rawVolume: number | null = r?.price?.regularMarketVolume?.raw ?? null;
+    const volume: bigint | null = rawVolume !== null ? BigInt(Math.round(rawVolume)) : null;
     const peRatio: number | null = r?.summaryDetail?.trailingPE?.raw ?? null;
 
     const earningsArr: Array<{ raw: number; fmt: string }> =
       r?.calendarEvents?.earnings?.earningsDate ?? [];
     const firstEarnings = earningsArr[0] ?? null;
+    const earningsDate = firstEarnings?.raw ? new Date(firstEarnings.raw * 1000) : null;
     const earningsDateRaw = firstEarnings?.fmt ?? null;
-    const earningsDate = earningsDateRaw ? new Date(earningsDateRaw) : null;
 
     return { price, marketCap, volume, peRatio, earningsDate, earningsDateRaw };
   } catch {
@@ -47,8 +48,12 @@ export async function fetchYahooQuote(ticker: string): Promise<YahooQuoteData | 
     `${YAHOO_API}/${encodeURIComponent(ticker)}` +
     `?modules=price%2CcalendarEvents%2CsummaryDetail&corsDomain=finance.yahoo.com`;
 
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 8_000);
+
   try {
     const res = await fetch(url, {
+      signal: ac.signal,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
@@ -68,5 +73,7 @@ export async function fetchYahooQuote(ticker: string): Promise<YahooQuoteData | 
   } catch (err) {
     console.warn(`[yahoo] ${ticker}: fetch error`, err);
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
