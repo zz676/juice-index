@@ -408,8 +408,61 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-slate-custom-500">
-                    Post Date
+                  <th className="px-4 py-3 text-left">
+                    <div className="relative" ref={datePickerOpen === "postDate" ? datePickerRef : undefined}>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-slate-custom-500">Post Date</span>
+                        <button
+                          onClick={() => setDatePickerOpen(datePickerOpen === "postDate" ? null : "postDate")}
+                          className={`flex items-center transition-colors ${
+                            postDateFrom || postDateTo ? "text-primary" : "text-slate-custom-300 hover:text-slate-custom-500"
+                          }`}
+                          title="Filter by post date"
+                          aria-label="Filter by post date"
+                        >
+                          <span className="material-icons-round text-[14px]">filter_list</span>
+                          {(postDateFrom || postDateTo) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block ml-0.5" />
+                          )}
+                        </button>
+                      </div>
+
+                      {datePickerOpen === "postDate" && (
+                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
+                          <span className="block text-[11px] font-semibold text-slate-custom-500 uppercase tracking-wide">
+                            Filter by Post Date
+                          </span>
+                          <div className="space-y-1.5">
+                            <label htmlFor="post-date-filter-from" className="text-[11px] text-slate-custom-500">From</label>
+                            <input
+                              id="post-date-filter-from"
+                              type="date"
+                              value={postDateFrom}
+                              onChange={(e) => handleDateChange("postDateFrom", e.target.value)}
+                              className="w-full text-xs border border-slate-custom-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label htmlFor="post-date-filter-to" className="text-[11px] text-slate-custom-500">To</label>
+                            <input
+                              id="post-date-filter-to"
+                              type="date"
+                              value={postDateTo}
+                              onChange={(e) => handleDateChange("postDateTo", e.target.value)}
+                              className="w-full text-xs border border-slate-custom-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                          {(postDateFrom || postDateTo) && (
+                            <button
+                              onClick={() => clearDateFilter("postDate")}
+                              className="text-xs text-slate-custom-500 hover:text-red-500 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </th>
                 </tr>
               </thead>
