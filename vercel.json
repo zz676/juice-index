@@ -1,9 +1,3 @@
 {
-  "regions": ["sfo1"],
-  "crons": [
-    {
-      "path": "/api/cron/sync-stocks",
-      "schedule": "0 22 * * 1-5"
-    }
-  ]
+  "regions": ["sfo1"]
 }

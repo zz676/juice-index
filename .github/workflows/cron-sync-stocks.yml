@@ -1,0 +1,25 @@
+name: Cron – Sync Stocks
+
+on:
+  schedule:
+    # 10 PM UTC, Monday–Friday (matches previous Vercel schedule)
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger sync-stocks endpoint
+        run: |
+          body=$(curl -s -w "\n%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/sync-stocks" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          http_code=$(echo "$body" | tail -1)
+          response_body=$(echo "$body" | sed '$d')
+          echo "HTTP status: $http_code"
+          echo "Response: $response_body"
+          if [ "$http_code" -ne 200 ]; then
+            echo "::error::Cron endpoint returned HTTP $http_code"
+            exit 1
+          fi
