@@ -22,3 +22,9 @@ CREATE INDEX "juice_stock_daily_snapshots_ticker_idx" ON "juice_stock_daily_snap
 
 -- CreateIndex
 CREATE INDEX "juice_stock_daily_snapshots_scrapedAt_idx" ON "juice_stock_daily_snapshots"("scrapedAt");
+
+-- CreateIndex
+CREATE INDEX "idx_stock_snapshot_ticker_scraped" ON "juice_stock_daily_snapshots"("ticker", "scrapedAt" DESC);
+
+-- CreateIndex
+CREATE INDEX "juice_stock_daily_snapshots_earningsDate_idx" ON "juice_stock_daily_snapshots"("earningsDate");

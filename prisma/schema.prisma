@@ -2388,7 +2388,8 @@ model StockDailySnapshot {
   /// UTC timestamp of when this scrape was performed by the cron job.
   scrapedAt       DateTime  @default(now())
 
-  @@index([ticker])
+  @@index([ticker, scrapedAt(sort: Desc)], map: "idx_stock_snapshot_ticker_scraped")
   @@index([scrapedAt])
+  @@index([earningsDate])
   @@map("juice_stock_daily_snapshots")
 }
