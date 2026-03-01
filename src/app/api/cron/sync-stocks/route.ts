@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     }),
   );
 
-  const summary = results.map((r) =>
+  const summary = results.map((r, i) =>
     r.status === "fulfilled"
       ? r.value
-      : { ticker: "unknown", status: "error", reason: String((r as PromiseRejectedResult).reason) }
+      : { ticker: ALL_COMPANIES[i].ticker, status: "error", reason: String((r as PromiseRejectedResult).reason) }
   );
 
   const ok      = summary.filter((r) => r.status === "ok").length;
