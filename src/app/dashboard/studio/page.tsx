@@ -1017,9 +1017,6 @@ function StudioPageInner() {
               auto_awesome
             </span>
           </h1>
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-custom-100 text-slate-custom-500 uppercase tracking-wide border border-slate-custom-200">
-            Draft
-          </span>
         </div>
         {toast ? (
           <div
@@ -1042,9 +1039,6 @@ function StudioPageInner() {
         )}
         <div className="flex items-center gap-3">
           <NotificationBell />
-          <span className="text-[13px] text-slate-custom-400 flex items-center gap-1">
-            <span className="material-icons-round text-[15px]">cloud_done</span> Saved
-          </span>
         </div>
       </header>
 
