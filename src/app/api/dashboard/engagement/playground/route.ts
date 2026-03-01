@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     tweetInput?: string;
     toneId?: string;
     toneWeights?: Record<string, number>;
+    adHocTone?: string;
     temperature?: number;
     accountContext?: string;
     generateImage?: boolean;
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { tweetInput, toneId, toneWeights, temperature, accountContext, generateImage: doImage, imageStyleId } = body;
+  const { tweetInput, toneId, toneWeights, adHocTone, temperature, accountContext, generateImage: doImage, imageStyleId } = body;
 
   if (!tweetInput?.trim()) {
     return NextResponse.json({ message: "tweetInput is required" }, { status: 400 });
@@ -83,7 +84,10 @@ export async function POST(request: NextRequest) {
   let tonePrompt: string;
   let resolvedToneName: string;
 
-  if (toneId) {
+  if (adHocTone?.trim()) {
+    tonePrompt = adHocTone.trim();
+    resolvedToneName = "Ad-hoc";
+  } else if (toneId) {
     // Single tone mode
     const tone = await prisma.userTone.findFirst({
       where: { id: toneId, userId },

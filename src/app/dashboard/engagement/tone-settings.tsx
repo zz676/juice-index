@@ -278,11 +278,13 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
 
   // Form state
   const [tweetInput, setTweetInput] = useState("");
-  const [toneMode, setToneMode] = useState<"single" | "weighted">("weighted");
+  const [toneMode, setToneMode] = useState<"single" | "weighted" | "adhoc">("weighted");
   const [selectedToneId, setSelectedToneId] = useState<string>(effectiveTones[0]?.id ?? "");
   const [toneWeights, setToneWeights] = useState<Record<string, number>>({});
   const [temperature, setTemperature] = useState(0.8);
   const [accountContext, setAccountContext] = useState("");
+  const [useAccountContext, setUseAccountContext] = useState(true);
+  const [adHocPrompt, setAdHocPrompt] = useState("");
   const [doImage, setDoImage] = useState(false);
   const [selectedImageStyleId, setSelectedImageStyleId] = useState<string>("");
 
@@ -311,6 +313,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
     }
     setTemperature(Math.min(preset.temperature ?? 0.8, 1.0));
     setAccountContext(preset.accountContext ?? "");
+    setUseAccountContext(!!preset.accountContext);
     setDoImage(preset.imageFrequency > 0);
     if (preset.imageStyleId && imageStyles.some((s) => s.id === preset.imageStyleId)) {
       setSelectedImageStyleId(preset.imageStyleId);
@@ -332,7 +335,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
       const body: Record<string, unknown> = {
         tweetInput: tweetInput.trim(),
         temperature,
-        accountContext: accountContext.trim() || undefined,
+        accountContext: useAccountContext ? accountContext.trim() || undefined : undefined,
         generateImage: doImage,
       };
 
@@ -340,6 +343,8 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
         body.toneId = selectedToneId;
       } else if (toneMode === "weighted") {
         body.toneWeights = toneWeights;
+      } else if (toneMode === "adhoc") {
+        body.adHocTone = adHocPrompt.trim();
       }
 
       if (doImage && selectedImageStyleId) {
@@ -363,7 +368,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
     } finally {
       setGenerating(false);
     }
-  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, accountContext, doImage, selectedImageStyleId]);
+  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, accountContext, useAccountContext, adHocPrompt, doImage, selectedImageStyleId]);
 
   return (
     <div ref={sectionRef} className="space-y-4">
@@ -416,6 +421,16 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
             >
               Weight-Based
             </button>
+            <button
+              onClick={() => setToneMode("adhoc")}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                toneMode === "adhoc"
+                  ? "bg-primary text-slate-custom-900"
+                  : "bg-slate-custom-100 text-slate-custom-600 hover:bg-slate-custom-200"
+              }`}
+            >
+              Ad-hoc
+            </button>
           </div>
         </div>
 
@@ -432,6 +447,22 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
+          </div>
+        )}
+
+        {/* Ad-hoc tone prompt */}
+        {toneMode === "adhoc" && (
+          <div>
+            <textarea
+              value={adHocPrompt}
+              onChange={(e) => setAdHocPrompt(e.target.value)}
+              rows={4}
+              placeholder={'Write a direct system prompt for the LLM, e.g. "Reply as a skeptical investor. Be blunt, under 15 words."'}
+              className="w-full text-xs text-slate-custom-700 border border-slate-custom-200 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            />
+            <p className="text-[11px] text-slate-custom-400 mt-0.5">
+              This replaces the tone entirely — sent directly to the LLM as its persona instruction.
+            </p>
           </div>
         )}
 
@@ -488,13 +519,22 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
 
         {/* Account context */}
         <div>
-          <p className="text-xs font-medium text-slate-custom-700 mb-1">Account Context</p>
+          <label className="flex items-center gap-2 mb-1 cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={useAccountContext}
+              onChange={(e) => setUseAccountContext(e.target.checked)}
+              className="accent-primary w-3.5 h-3.5"
+            />
+            <span className="text-xs font-medium text-slate-custom-700">Account Context</span>
+          </label>
           <textarea
             value={accountContext}
             onChange={(e) => setAccountContext(e.target.value)}
+            disabled={!useAccountContext}
             rows={2}
             placeholder="e.g., Tech blogger covering AI startups"
-            className="w-full text-xs text-slate-custom-700 border border-slate-custom-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            className="w-full text-xs text-slate-custom-700 border border-slate-custom-200 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none disabled:opacity-40 disabled:bg-slate-custom-50"
           />
         </div>
 
@@ -539,7 +579,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
         {/* Generate button */}
         <button
           onClick={handleGenerate}
-          disabled={generating || !tweetInput.trim()}
+          disabled={generating || !tweetInput.trim() || (toneMode === "adhoc" && !adHocPrompt.trim())}
           className="w-full py-2.5 text-sm font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           {generating ? (
