@@ -1,55 +1,33 @@
 import { describe, it, expect } from "vitest";
-import { parseFinnhubQuote } from "../finnhub";
+import { parseStockExtras } from "../finnhub";
 
-const quoteFixture = { c: 34.9, d: 0.5, dp: 1.45, h: 35.2, l: 34.1, o: 34.3, pc: 34.4, t: 1773705600 };
-const metricFixture = {
-  metric: {
-    marketCapitalization: 905_000, // in millions → 905B
-    peBasicExclExtraTTM: 28.5,
-  },
-};
+const metricFixture = { metric: { peBasicExclExtraTTM: 28.5 } };
 const earningsFixture = {
   earningsCalendar: [{ date: "2026-04-22", symbol: "LI", epsEstimate: 0.62, year: 2026, quarter: 1 }],
 };
 
-describe("parseFinnhubQuote", () => {
-  it("extracts all fields from a complete response", () => {
-    const result = parseFinnhubQuote(quoteFixture, metricFixture, earningsFixture);
-    expect(result).not.toBeNull();
-    expect(result!.price).toBe(34.9);
-    expect(result!.marketCap).toBe(905_000_000_000);
-    expect(result!.peRatio).toBe(28.5);
-    expect(result!.volume).toBeNull();
-    expect(result!.earningsDate).toBeInstanceOf(Date);
-    expect(result!.earningsDateRaw).toBe("2026-04-22");
-  });
-
-  it("returns null when price is 0 and no metric or earnings data", () => {
-    expect(parseFinnhubQuote({ c: 0 }, {}, { earningsCalendar: [] })).toBeNull();
-  });
-
-  it("returns null for completely unexpected shape", () => {
-    expect(parseFinnhubQuote(null, null, null)).toBeNull();
-    expect(parseFinnhubQuote("garbage", "garbage", "garbage")).toBeNull();
+describe("parseStockExtras", () => {
+  it("extracts peRatio and earnings from a complete response", () => {
+    const result = parseStockExtras(metricFixture, earningsFixture);
+    expect(result.peRatio).toBe(28.5);
+    expect(result.earningsDate).toBeInstanceOf(Date);
+    expect(result.earningsDateRaw).toBe("2026-04-22");
   });
 
   it("tolerates missing peRatio (negative-earnings company)", () => {
-    const result = parseFinnhubQuote(quoteFixture, { metric: { marketCapitalization: 1000 } }, earningsFixture);
-    expect(result).not.toBeNull();
-    expect(result!.peRatio).toBeNull();
+    const result = parseStockExtras({ metric: {} }, earningsFixture);
+    expect(result.peRatio).toBeNull();
   });
 
   it("falls back to peTTM when peBasicExclExtraTTM is absent", () => {
-    const result = parseFinnhubQuote(quoteFixture, { metric: { marketCapitalization: 1000, peTTM: 55.0 } }, earningsFixture);
-    expect(result).not.toBeNull();
-    expect(result!.peRatio).toBe(55.0);
+    const result = parseStockExtras({ metric: { peTTM: 55.0 } }, earningsFixture);
+    expect(result.peRatio).toBe(55.0);
   });
 
   it("tolerates missing earnings calendar", () => {
-    const result = parseFinnhubQuote(quoteFixture, metricFixture, { earningsCalendar: [] });
-    expect(result).not.toBeNull();
-    expect(result!.earningsDate).toBeNull();
-    expect(result!.earningsDateRaw).toBeNull();
+    const result = parseStockExtras(metricFixture, { earningsCalendar: [] });
+    expect(result.earningsDate).toBeNull();
+    expect(result.earningsDateRaw).toBeNull();
   });
 
   it("picks the nearest upcoming date when calendar is out of order", () => {
@@ -60,8 +38,7 @@ describe("parseFinnhubQuote", () => {
         { date: "2026-06-01", symbol: "NIO" },
       ],
     };
-    const result = parseFinnhubQuote(quoteFixture, metricFixture, unordered);
-    expect(result).not.toBeNull();
-    expect(result!.earningsDateRaw).toBe("2026-03-10");
+    const result = parseStockExtras(metricFixture, unordered);
+    expect(result.earningsDateRaw).toBe("2026-03-10");
   });
 });

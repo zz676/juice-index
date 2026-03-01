@@ -1,38 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { fetchStockQuote } from "@/lib/scraper/finnhub";
+import { fetchStockExtras } from "@/lib/scraper/finnhub";
+import { fetchMarketCapData } from "@/lib/scraper/companiesmarketcap";
 import { ALL_COMPANIES } from "@/lib/scraper/companies";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-// Process one ticker: fetch quote and write snapshot to DB.
-async function processTicker(ticker: string, companyName: string, country: string, isEV: boolean, market: string) {
-  const data = await fetchStockQuote(ticker);
-
-  await prisma.stockDailySnapshot.create({
-    data: {
-      ticker,
-      companyName,
-      country,
-      isEV,
-      market,
-      price:           data?.price           ?? null,
-      marketCap:       data?.marketCap        ?? null,
-      volume:          data?.volume           ?? null,
-      peRatio:         data?.peRatio          ?? null,
-      earningsDate:    data?.earningsDate     ?? null,
-      earningsDateRaw: data?.earningsDateRaw  ?? null,
-    },
-  });
-
-  const status = data ? "ok" : "no_data";
-  console.log(`[cron] sync-stocks: ${ticker} → ${status}`);
-  return { ticker, status };
-}
-
-const BATCH_SIZE = 2;          // 2 tickers × 3 Finnhub calls = 6 req per batch
-const BATCH_DELAY_MS = 15_000; // 15 seconds between batches → ~24 req/min (well under free tier limit: 60)
+const BATCH_SIZE = 3;          // per batch: up to 3 tickers × 2 Finnhub calls = 6 req max
+const BATCH_DELAY_MS = 15_000; // 15 seconds between batches → ~24 req/min (free tier limit: 60)
 
 export async function POST(request: NextRequest) {
   const authError = verifyCronAuth(request);
@@ -41,6 +17,9 @@ export async function POST(request: NextRequest) {
   const startedAt = new Date();
   console.log(`[cron] sync-stocks started at ${startedAt.toISOString()} — ${ALL_COMPANIES.length} companies`);
 
+  // Step 1: fetch price + market cap for all companies in one request
+  const marketCapData = await fetchMarketCapData();
+
   const allResults: Array<{ ticker: string; status: string; reason?: string }> = [];
 
   for (let i = 0; i < ALL_COMPANIES.length; i += BATCH_SIZE) {
@@ -48,9 +27,32 @@ export async function POST(request: NextRequest) {
     console.log(`[cron] sync-stocks batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.map((c) => c.ticker).join(", ")}`);
 
     const batchResults = await Promise.allSettled(
-      batch.map(({ ticker, companyName, country, isEV, market }) =>
-        processTicker(ticker, companyName, country, isEV, market)
-      ),
+      batch.map(async ({ ticker, companyName, country, isEV, market }) => {
+        const cmc = marketCapData.get(ticker);
+
+        // Only call Finnhub for US-listed stocks — non-US exchanges return 403 on free tier
+        const extras = market === "US" ? await fetchStockExtras(ticker) : null;
+
+        await prisma.stockDailySnapshot.create({
+          data: {
+            ticker,
+            companyName,
+            country,
+            isEV,
+            market,
+            price:           cmc?.price             ?? null,
+            marketCap:       cmc?.marketCap          ?? null,
+            volume:          null,
+            peRatio:         extras?.peRatio         ?? null,
+            earningsDate:    extras?.earningsDate    ?? null,
+            earningsDateRaw: extras?.earningsDateRaw ?? null,
+          },
+        });
+
+        const status = cmc ? "ok" : "no_data";
+        console.log(`[cron] sync-stocks: ${ticker} → ${status}`);
+        return { ticker, status };
+      }),
     );
 
     for (let j = 0; j < batchResults.length; j++) {
@@ -68,12 +70,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const results = allResults;
-
-  const ok      = results.filter((r) => r.status === "ok").length;
-  const no_data = results.filter((r) => r.status === "no_data").length;
-  const errors  = results.filter((r) => r.status === "error").length;
+  const ok      = allResults.filter((r) => r.status === "ok").length;
+  const no_data = allResults.filter((r) => r.status === "no_data").length;
+  const errors  = allResults.filter((r) => r.status === "error").length;
 
   console.log(`[cron] sync-stocks done — ok=${ok}, no_data=${no_data}, errors=${errors}`);
-  return NextResponse.json({ ok, no_data, errors, results });
+  return NextResponse.json({ ok, no_data, errors, results: allResults });
 }
