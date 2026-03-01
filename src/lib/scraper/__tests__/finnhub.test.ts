@@ -51,4 +51,17 @@ describe("parseFinnhubQuote", () => {
     expect(result!.earningsDate).toBeNull();
     expect(result!.earningsDateRaw).toBeNull();
   });
+
+  it("picks the nearest upcoming date when calendar is out of order", () => {
+    const unordered = {
+      earningsCalendar: [
+        { date: "2026-09-01", symbol: "NIO" },
+        { date: "2026-03-10", symbol: "NIO" },
+        { date: "2026-06-01", symbol: "NIO" },
+      ],
+    };
+    const result = parseFinnhubQuote(quoteFixture, metricFixture, unordered);
+    expect(result).not.toBeNull();
+    expect(result!.earningsDateRaw).toBe("2026-03-10");
+  });
 });

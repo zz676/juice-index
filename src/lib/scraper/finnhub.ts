@@ -32,10 +32,13 @@ export function parseFinnhubQuote(
 
     const peRatio: number | null = m?.peBasicExclExtraTTM ?? m?.peTTM ?? null;
 
-    // Earnings calendar: pick the first upcoming entry
+    // Earnings calendar: sort ascending and pick the nearest upcoming date
     const earningsArr: Array<{ date: string }> =
       (earningsJson as any)?.earningsCalendar ?? [];
-    const next = earningsArr[0] ?? null;
+    const today = new Date().toISOString().slice(0, 10);
+    const next = earningsArr
+      .filter((e) => e.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date))[0] ?? null;
     const earningsDate = next?.date ? new Date(next.date) : null;
     const earningsDateRaw = next?.date ?? null;
 
