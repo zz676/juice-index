@@ -101,6 +101,31 @@ The "Latest News" section renders real data from the `Post` model (PUBLISHED pos
 - **Frontend** (`/dashboard` page): News cards are `<a href={url} target="_blank" rel="noopener noreferrer">` elements. The `DashboardFeed` interface includes an optional `url` field.
 - **"View All"** link navigates to `/dashboard/posts` (the post management page).
 
+## Upcoming Catalysts Ordering
+
+The `catalysts` array returned by `GET /api/dashboard/feed` is built from `juice_stock_daily_snapshots` and follows these rules:
+
+1. **Exclude no-date records** — snapshots with a `null` earningsDate are filtered out entirely.
+2. **Deduplicate by ticker** — only the earliest upcoming `earningsDate` per ticker is kept (the DB query orders by `earningsDate asc`, so the first occurrence wins).
+3. **Pinned companies first** — the following companies always appear at the top of the list regardless of how far away their earnings date is:
+
+   | Company | Matched tickers | Name keywords |
+   |---------|----------------|---------------|
+   | Tesla | TSLA | tesla |
+   | NIO | NIO | nio |
+   | Xpeng | XPEV | xpeng |
+   | Li Auto | LI | li auto |
+   | Rivian | RIVN | rivian |
+   | Lucid Motors | LCID | lucid |
+   | BYD | BYD, BYDDF, 002594 | byd |
+   | Xiaomi | 1810, XIACF | xiaomi, xiao |
+
+   Matching uses the ticker prefix (before `.`) case-insensitively, falling back to a company name substring check.
+
+4. **Within each group, sorted by earliest date** — pinned companies among themselves are sorted by date, as are non-pinned companies.
+
+The fetch limit is 500 raw snapshots (up from 200) to ensure full coverage across all tracked companies.
+
 ## Caching
 
 All API routes use 5-minute in-memory caching, consistent with the existing stats route pattern.
