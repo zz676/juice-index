@@ -68,7 +68,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="pt-10 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
         <div className="w-full max-w-7xl mx-auto animate-pulse space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -86,7 +86,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-10 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto">
       {/* Data delay banner for Free tier */}
       {tier === "FREE" && (

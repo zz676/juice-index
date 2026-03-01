@@ -34,7 +34,7 @@ function TickerItem({ quote }: { quote: StockQuote }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={ariaLabel}
-      className="inline-flex items-center gap-1.5 px-4 hover:bg-primary/15 transition-colors rounded cursor-pointer shrink-0 h-full"
+      className="inline-flex items-center gap-1.5 px-4 hover:bg-primary/20 transition-colors rounded cursor-pointer shrink-0 h-full"
     >
       <span className="font-semibold text-slate-custom-800 text-[11px] tracking-wide">{quote.brand}</span>
       <span className="text-slate-custom-500 text-[10px]">{quote.symbol}</span>
@@ -78,9 +78,9 @@ export default function StockTicker() {
   const items = [...quotes, ...quotes];
 
   return (
-    <div className="w-full bg-primary/10 border-b border-primary/20 overflow-hidden flex items-center h-9">
+    <div className="w-full bg-primary/15 border-b border-primary/25 overflow-hidden flex items-center h-9">
       {/* LIVE label */}
-      <div className="flex items-center gap-1.5 px-3 border-r border-primary/30 h-full shrink-0">
+      <div className="flex items-center gap-1.5 px-3 border-r border-primary/40 h-full shrink-0">
         <span className="relative flex h-1.5 w-1.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />

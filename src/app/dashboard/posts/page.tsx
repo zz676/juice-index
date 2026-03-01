@@ -322,7 +322,7 @@ export default function PostsPage() {
   const failedCount = statusCounts["FAILED"] || 0;
 
   return (
-    <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-10 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header + Stats Row */}
       <div className="flex items-center justify-between gap-3">

@@ -59,7 +59,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     const hasPassword = !!user.passwordHash;
 
     return (
-        <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+        <div className="pt-10 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
             <div className="w-full max-w-7xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-4 items-start">
                 {/* Left column */}
