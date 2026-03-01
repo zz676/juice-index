@@ -1003,7 +1003,7 @@ function StudioPageInner() {
   };
 
   return (
-    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(106,218,27,0.04) 0px, rgba(106,218,27,0.04) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(163,230,53,0.22) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.16) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.35) 0%, rgba(255,255,255,1) 45%, rgba(217,249,157,0.28) 100%)" }}>
+    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(106,218,27,0.07) 0px, rgba(106,218,27,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(163,230,53,0.40) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(190,240,60,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(134,224,40,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.38) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(217,249,157,0.50) 100%)" }}>
 
       <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
         <div className="flex items-center gap-4">
