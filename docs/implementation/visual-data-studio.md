@@ -217,6 +217,53 @@ Added an **Axes** section to `ChartCustomizer` so users can change which columns
 ### Design doc
 See [`docs/plans/2026-02-23-axis-column-selection-design.md`](../plans/2026-02-23-axis-column-selection-design.md).
 
+## ✅ Phase 3.10: Multi-Line (Year Comparison) Charts (Complete)
+
+Added **multiLine** chart type to the Studio visualization pipeline, enabling users to compare the same metric across multiple years on a single overlaid chart (e.g., "NIO monthly deliveries 2023 vs 2024 vs 2025").
+
+### Architecture
+
+**New flow:**
+```
+User prompt → AI generates chartType="multiLine" + groupField="year"
+  → executeQuery → buildMultiSeriesChartData → { label, "2023": n, "2024": n, "2025": n }[]
+  → Client: multiple <Line> elements in Recharts
+  → Server PNG: multiple datasets in Chart.js (renderMultiLineChartConfig)
+```
+
+### Changes
+
+**`src/lib/studio/build-chart-data.ts`**:
+- Added `MultiSeriesPoint` type: `{ label: string; [series: string]: string | number }`.
+- Added `detectGroupField(sample)`: returns `"year"` when data has a year + period/month structure.
+- Added `buildMultiSeriesChartData(rows, groupField, xField?, yField?)`: pivots raw rows into multi-series format, returns `{ points, series, xField, yField, groupField }`.
+
+**`src/app/api/dashboard/studio/generate-chart/route.ts`**:
+- Extended `ExplorerChartType` to `"bar" | "line" | "horizontalBar" | "multiLine"`.
+- Updated `QUERY_RESPONSE_SCHEMA` to include `"multiLine"` in `chartType` enum and added `groupField` field.
+- Updated AI system prompt rule 8: prefer `"multiLine"` when user asks to compare the same metric across years; use `"line"` for single continuous timeline.
+- Modes 0, 1, 3: call `buildMultiSeriesChartData` when `groupField` is set or data contains multiple years; return `multiSeriesData`, `series`, `groupField` alongside existing `previewData`.
+- Added `SERIES_COLORS` palette (7 colors: indigo, orange, green, red, sky, purple, yellow).
+- Added `renderMultiLineChartConfig()`: builds a Chart.js config with one dataset per series, legend enabled, color-coded lines.
+- Mode 2 (PNG): detects `multiLine` request with `payload.multiSeriesData`/`payload.series` and routes to `renderMultiLineChartConfig`; falls back to single-series for other chart types.
+
+**`src/components/explorer/ChartCustomizer.tsx`**:
+- Added `"multiLine"` to `ChartType` union.
+- Added "Multi" button (icon: `stacked_line_chart`) to the chart type selector; grid changed from 3 to 4 columns.
+
+**`src/app/dashboard/studio/page.tsx`**:
+- Added `multiSeriesData`, `seriesKeys`, `groupField` state.
+- `applyQueryExecutionResult`: populates multi-series state from API response; clears on empty response.
+- `handleAxisChange`: rebuilds multi-series data via `buildMultiSeriesChartData` when `groupField` is set.
+- `generateChartImage`: sends `multiSeriesData`/`series`/`groupField` to server when chart type is multiLine.
+- `hasMultiSeriesChartData` derived flag for conditional rendering.
+- Chart render section: new `multiLine` branch using Recharts `<LineChart>` with `{seriesKeys.map((key, i) => <Line>)}` and `SERIES_COLORS`.
+- Legend row below chart: colored dots + series labels (e.g., "2023", "2024", "2025") when multiLine.
+
+### Backward Compatibility
+- All existing `"bar"`, `"line"`, `"horizontalBar"` charts are unaffected.
+- `previewData` (single-series) is always returned alongside `multiSeriesData` for compatibility.
+
 ## 🚀 Next Steps (Phase 4)
 
 ### 1. Deployment
