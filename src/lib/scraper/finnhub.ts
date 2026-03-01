@@ -100,6 +100,9 @@ export async function fetchStockQuote(ticker: string): Promise<StockQuoteData | 
       earningsRes.json(),
     ]);
 
+    const earningsArr = (earningsJson as any)?.earningsCalendar ?? [];
+    console.log(`[finnhub] ${ticker}: earnings raw → ${JSON.stringify(earningsArr)}`);
+
     return parseFinnhubQuote(quoteJson, metricJson, earningsJson);
   } catch (err) {
     console.warn(`[finnhub] ${ticker}: fetch error`, err);
