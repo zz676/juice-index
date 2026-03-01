@@ -42,7 +42,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     : { paymentMethod: null, invoices: [], upcomingInvoice: null };
 
   return (
-    <div className="pt-20 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+    <div className="pt-10 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto">
 
       {/* Upgrade prompt from ?plan= (e.g., pricing page → "Get Started with Pro") */}
