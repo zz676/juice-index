@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { fetchYahooQuote } from "@/lib/scraper/yahoo-finance";
+import { fetchStockQuote } from "@/lib/scraper/finnhub";
 import { ALL_COMPANIES } from "@/lib/scraper/companies";
 import prisma from "@/lib/prisma";
 
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 // Process one ticker: fetch quote and write snapshot to DB.
 async function processTicker(ticker: string, companyName: string, country: string, isEV: boolean, market: string) {
-  const data = await fetchYahooQuote(ticker);
+  const data = await fetchStockQuote(ticker);
 
   await prisma.stockDailySnapshot.create({
     data: {
