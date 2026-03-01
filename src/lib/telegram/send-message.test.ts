@@ -32,7 +32,7 @@ describe("buildMessageText", () => {
 
   it("escapes HTML chars in reply text inside pre", () => {
     const result = buildMessageText("alice", "A < B & C > D", "🔗 link");
-    expect(result).toContain("<pre>A &lt; B &amp; C &gt; D</pre>");
+    expect(result).toContain('<pre language="text">A &lt; B &amp; C &gt; D</pre>');
   });
 
   it("includes the author username in header", () => {

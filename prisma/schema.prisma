@@ -2354,3 +2354,42 @@ model LegacyXAccount {
   @@map("XAccount")
   @@ignore
 }
+
+/// Daily snapshot of market data and upcoming earnings for a globally tracked company.
+/// One row is inserted per ticker per cron run. The most recent row per ticker
+/// is treated as the current view. Older rows are retained for historical trend use.
+/// Non-public companies will have null market data fields.
+model StockDailySnapshot {
+  /// Unique identifier for this snapshot row.
+  id              String    @id @default(cuid())
+  /// Yahoo Finance ticker symbol used to fetch this data (e.g. "TSLA", "9863.HK", "002594.SZ").
+  ticker          String
+  /// Human-readable company name displayed in the UI (e.g. "Tesla", "BYD", "Leapmotor").
+  companyName     String
+  /// Country of the company's primary operations or headquarters (e.g. "USA", "China", "India").
+  country         String?
+  /// True if the company is primarily an EV or EV-adjacent business.
+  isEV            Boolean   @default(false)
+  /// Exchange market code. "US" = NYSE/NASDAQ/OTC, "HK" = HKEX, "CN" = Shanghai/Shenzhen,
+  /// "IN" = NSE India, "EU" = European exchanges.
+  market          String
+  /// Latest closing or delayed price in the ticker's local currency. Null for private companies.
+  price           Float?
+  /// Market capitalisation in local currency as a raw numeric value. Null for private companies.
+  marketCap       Float?
+  /// Number of shares traded in the most recent session. Null for private companies.
+  volume          BigInt?
+  /// Trailing twelve-month price-to-earnings ratio. Null if company has negative earnings or is private.
+  peRatio         Float?
+  /// Next estimated earnings announcement date parsed from Yahoo Finance. Null if unavailable.
+  earningsDate    DateTime?
+  /// Raw earnings date label as displayed on Yahoo Finance (e.g. "Mar 17, 2026 - Mar 21, 2026").
+  earningsDateRaw String?
+  /// UTC timestamp of when this scrape was performed by the cron job.
+  scrapedAt       DateTime  @default(now())
+
+  @@index([ticker, scrapedAt(sort: Desc)], map: "idx_stock_snapshot_ticker_scraped")
+  @@index([scrapedAt])
+  @@index([earningsDate])
+  @@map("juice_stock_daily_snapshots")
+}
