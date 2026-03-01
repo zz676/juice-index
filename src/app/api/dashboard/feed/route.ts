@@ -30,24 +30,39 @@ export async function GET() {
             url: post.sourceUrl,
         }));
 
-        // Fetch upcoming earnings, deduplicate by ticker in JS to get soonest per company
+        // Pinned companies always shown first regardless of earnings date
+        const PINNED_TICKERS = new Set(["TSLA", "NIO", "XPEV", "LI", "RIVN", "LCID", "BYD", "BYDDF", "002594", "1810", "XIACF"]);
+        const PINNED_NAME_KEYWORDS = ["tesla", "nio", "xpeng", "li auto", "rivian", "lucid", "byd", "xiaomi", "xiao"];
+        function isPinned(ticker: string, companyName: string): boolean {
+            const tickerUpper = ticker.toUpperCase().split(".")[0];
+            if (PINNED_TICKERS.has(tickerUpper)) return true;
+            const lower = companyName.toLowerCase();
+            return PINNED_NAME_KEYWORDS.some((k) => lower.includes(k));
+        }
+
+        // Fetch upcoming earnings (earningsDate present and in the future), sorted earliest first
         const rawSnapshots = await prisma.stockDailySnapshot.findMany({
             where: { earningsDate: { gte: new Date() } },
             orderBy: { earningsDate: "asc" },
-            take: 200,
+            take: 500,
         });
 
-        // Keep only the earliest upcoming earningsDate per ticker
+        // Keep only the earliest upcoming earningsDate per ticker (DB order is already asc)
         const seen = new Set<string>();
         const upcomingSnapshots = rawSnapshots.filter((s) => {
+            if (!s.earningsDate) return false;
             if (seen.has(s.ticker)) return false;
             seen.add(s.ticker);
             return true;
-        }).slice(0, 5);
+        });
 
-        const catalysts = upcomingSnapshots.flatMap((s) => {
-            if (!s.earningsDate) return [];
-            const date = s.earningsDate;
+        // Split into pinned (fixed companies) and the rest, both already sorted by date
+        const pinned = upcomingSnapshots.filter((s) => isPinned(s.ticker, s.companyName));
+        const rest = upcomingSnapshots.filter((s) => !isPinned(s.ticker, s.companyName));
+        const sorted = [...pinned, ...rest];
+
+        const catalysts = sorted.flatMap((s) => {
+            const date = s.earningsDate!;
             const month = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
             const day = String(date.getUTCDate()).padStart(2, "0");
             return [{
