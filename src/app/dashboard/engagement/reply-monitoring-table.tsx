@@ -373,12 +373,13 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
 
                       {datePickerOpen === "date" && (
                         <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
-                          <p className="text-[11px] font-semibold text-slate-custom-500 uppercase tracking-wide">
+                          <span className="block text-[11px] font-semibold text-slate-custom-500 uppercase tracking-wide">
                             Filter by Date
-                          </p>
+                          </span>
                           <div className="space-y-1.5">
-                            <label className="text-[11px] text-slate-custom-500">From</label>
+                            <label htmlFor="date-filter-from" className="text-[11px] text-slate-custom-500">From</label>
                             <input
+                              id="date-filter-from"
                               type="date"
                               value={dateFrom}
                               onChange={(e) => handleDateChange("dateFrom", e.target.value)}
@@ -386,8 +387,9 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[11px] text-slate-custom-500">To</label>
+                            <label htmlFor="date-filter-to" className="text-[11px] text-slate-custom-500">To</label>
                             <input
+                              id="date-filter-to"
                               type="date"
                               value={dateTo}
                               onChange={(e) => handleDateChange("dateTo", e.target.value)}
