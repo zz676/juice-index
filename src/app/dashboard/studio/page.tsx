@@ -1582,6 +1582,32 @@ function StudioPageInner() {
                         </button>
                       ))}
                     </div>
+                    {multiSeriesData.length > 0 && seriesKeys.length > 1 && chartData.length > 0 && (
+                      <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
+                        <button
+                          onClick={() => setChartConfig((c) => ({ ...c, chartType: "line" }))}
+                          className={`px-1.5 py-0 rounded text-[8px] font-medium flex items-center gap-px transition-colors leading-tight ${
+                            chartConfig.chartType !== "multiLine"
+                              ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
+                              : "text-slate-custom-500 hover:text-slate-custom-900"
+                          }`}
+                        >
+                          <span className="material-icons-round text-[10px]">show_chart</span>
+                          1 Line
+                        </button>
+                        <button
+                          onClick={() => setChartConfig((c) => ({ ...c, chartType: "multiLine" }))}
+                          className={`px-1.5 py-0 rounded text-[8px] font-medium flex items-center gap-px transition-colors leading-tight ${
+                            chartConfig.chartType === "multiLine"
+                              ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
+                              : "text-slate-custom-500 hover:text-slate-custom-900"
+                          }`}
+                        >
+                          <span className="material-icons-round text-[10px]">stacked_line_chart</span>
+                          {seriesKeys.length} Lines
+                        </button>
+                      </div>
+                    )}
                     <button
                       onClick={() => setShowCustomizer((v) => !v)}
                       className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all duration-200 ${
@@ -1965,7 +1991,7 @@ function StudioPageInner() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative w-full max-h-[200px] flex items-center justify-center rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                    <div className="relative w-full h-[320px] flex items-center justify-center rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
                       onWheel={(e) => {
                         e.preventDefault();
                         setImgZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.1 : -0.1))));
@@ -1993,7 +2019,7 @@ function StudioPageInner() {
                         src={chartImage}
                         alt="Generated chart"
                         draggable={false}
-                        className="max-h-[200px] max-w-full block transition-transform duration-100"
+                        className="max-h-full max-w-full block mx-auto transition-transform duration-100"
                         style={{
                           transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
                           transformOrigin: "center center",

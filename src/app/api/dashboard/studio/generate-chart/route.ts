@@ -1211,7 +1211,7 @@ export async function POST(req: Request) {
       const autoGroupField = execution.data.length ? detectGroupField(execution.data[0]) : null;
       const resolvedGroupField = typeof payload.groupField === "string" && payload.groupField
         ? payload.groupField
-        : (chartType === "multiLine" && autoGroupField) ? autoGroupField : null;
+        : autoGroupField;
 
       const multiResult = resolvedGroupField
         ? buildMultiSeriesChartData(execution.data, resolvedGroupField)
@@ -1447,7 +1447,7 @@ export async function POST(req: Request) {
       // Build multi-series data when AI chose multiLine or there's a groupField
       const aiGroupField = generated.groupField || null;
       const autoGF = execution.data.length ? detectGroupField(execution.data[0]) : null;
-      const resolvedGF = aiGroupField || (generated.chartType === "multiLine" ? autoGF : null);
+      const resolvedGF = aiGroupField || autoGF;
       const multiResult1 = resolvedGF
         ? buildMultiSeriesChartData(execution.data, resolvedGF)
         : null;
