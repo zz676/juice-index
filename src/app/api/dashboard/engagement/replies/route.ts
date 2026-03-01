@@ -36,16 +36,37 @@ export async function GET(request: NextRequest) {
   const postDateFrom = url.searchParams.get("postDateFrom");
   const postDateTo = url.searchParams.get("postDateTo");
 
+  const parseDate = (raw: string): Date | null => {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const endOfDayUTC = (raw: string): Date | null => {
+    const d = parseDate(raw);
+    if (!d) return null;
+    d.setUTCHours(23, 59, 59, 999);
+    return d;
+  };
+
+  if (
+    (dateFrom && !parseDate(dateFrom)) ||
+    (dateTo && !parseDate(dateTo)) ||
+    (postDateFrom && !parseDate(postDateFrom)) ||
+    (postDateTo && !parseDate(postDateTo))
+  ) {
+    return NextResponse.json({ error: "Invalid date parameter" }, { status: 400 });
+  }
+
   if (dateFrom || dateTo) {
     where.createdAt = {
-      ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
-      ...(dateTo ? { lte: new Date(dateTo + "T23:59:59.999Z") } : {}),
+      ...(dateFrom ? { gte: parseDate(dateFrom)! } : {}),
+      ...(dateTo ? { lte: endOfDayUTC(dateTo)! } : {}),
     };
   }
   if (postDateFrom || postDateTo) {
     where.sourceTweetCreatedAt = {
-      ...(postDateFrom ? { gte: new Date(postDateFrom) } : {}),
-      ...(postDateTo ? { lte: new Date(postDateTo + "T23:59:59.999Z") } : {}),
+      ...(postDateFrom ? { gte: parseDate(postDateFrom)! } : {}),
+      ...(postDateTo ? { lte: endOfDayUTC(postDateTo)! } : {}),
     };
   }
 
