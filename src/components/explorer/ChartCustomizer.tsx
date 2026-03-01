@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-export type ChartType = "bar" | "line" | "horizontalBar";
+export type ChartType = "bar" | "line" | "horizontalBar" | "multiLine";
 
 export interface ChartConfig {
     chartType: ChartType;
@@ -146,6 +146,7 @@ export function ChartCustomizer({
         { value: "bar", icon: "bar_chart", label: "Bar" },
         { value: "line", icon: "show_chart", label: "Line" },
         { value: "horizontalBar", icon: "align_horizontal_left", label: "H-Bar" },
+        { value: "multiLine", icon: "stacked_line_chart", label: "Multi" },
     ];
 
     const sections = [
@@ -271,10 +272,11 @@ export function ChartCustomizer({
                     <div className="space-y-4">
                         <div>
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-4 gap-1.5">
                                 {chartTypes.map((ct) => (
-                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-3 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
-                                        <span className="material-icons-round text-xl">{ct.icon}</span>
+                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex flex-col items-center justify-center gap-0.5 p-2 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
+                                        <span className="material-icons-round text-lg">{ct.icon}</span>
+                                        <span className="text-[9px] font-bold uppercase">{ct.label}</span>
                                     </button>
                                 ))}
                             </div>

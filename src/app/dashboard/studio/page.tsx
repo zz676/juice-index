@@ -28,10 +28,20 @@ import {
 } from "@/lib/studio/models";
 import type { ApiTier } from "@/lib/api/tier";
 import { encodeShareState, decodeShareState } from "@/lib/studio/share";
-import { buildChartData, deriveColumns } from "@/lib/studio/build-chart-data";
+import { buildChartData, buildMultiSeriesChartData, detectGroupField, deriveColumns, type MultiSeriesPoint } from "@/lib/studio/build-chart-data";
 import PublishModal, { type PublishInfo } from "./publish-modal";
 import SearchOverlay from "@/components/dashboard/SearchOverlay";
 import NotificationBell from "@/components/dashboard/NotificationBell";
+
+const SERIES_COLORS = [
+  "#6366f1",
+  "#f97316",
+  "#00c853",
+  "#e60012",
+  "#0ea5e9",
+  "#a855f7",
+  "#eab308",
+];
 
 type ChartPoint = { label: string; value: number };
 
@@ -156,6 +166,9 @@ function StudioPageInner() {
   const [chartConfig, setChartConfig] =
     useState<ChartConfig>(DEFAULT_CHART_CONFIG);
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [multiSeriesData, setMultiSeriesData] = useState<MultiSeriesPoint[]>([]);
+  const [seriesKeys, setSeriesKeys] = useState<string[]>([]);
+  const [groupField, setGroupField] = useState<string>("");
   const [rawData, setRawData] = useState<QueryRow[]>([]);
   const [showCustomizer, setShowCustomizer] = useState(false);
   const [chartImage, setChartImage] = useState<string | null>(null);
@@ -390,12 +403,32 @@ function StudioPageInner() {
         typeof data.queryJson === "string" ? data.queryJson : prev
       );
 
+      // Multi-series data (multiLine chart)
+      if (Array.isArray(data.multiSeriesData) && Array.isArray(data.series) && (data.series as unknown[]).length > 0) {
+        setMultiSeriesData(
+          (data.multiSeriesData as Array<Record<string, unknown>>).map((pt) => {
+            const entry: MultiSeriesPoint = { label: String(pt.label ?? "") };
+            for (const key of Object.keys(pt)) {
+              if (key !== "label") entry[key] = typeof pt[key] === "number" ? pt[key] as number : 0;
+            }
+            return entry;
+          })
+        );
+        setSeriesKeys((data.series as unknown[]).map(String));
+        setGroupField(typeof data.groupField === "string" ? data.groupField : "year");
+      } else {
+        setMultiSeriesData([]);
+        setSeriesKeys([]);
+        setGroupField("");
+      }
+
       setChartConfig((prev) => ({
         ...prev,
         chartType:
           data.chartType === "bar" ||
           data.chartType === "line" ||
-          data.chartType === "horizontalBar"
+          data.chartType === "horizontalBar" ||
+          data.chartType === "multiLine"
             ? data.chartType
             : prev.chartType,
         title:
@@ -406,7 +439,7 @@ function StudioPageInner() {
 
       showToast(
         "success",
-        previewData.length
+        previewData.length || (Array.isArray(data.multiSeriesData) && (data.multiSeriesData as unknown[]).length)
           ? "Query executed successfully."
           : "Query ran successfully but returned no chartable rows."
       );
@@ -424,8 +457,14 @@ function StudioPageInner() {
       setYField(newYField);
       const { points } = buildChartData(rawData, newXField, newYField);
       setChartData(points);
+      // Also rebuild multi-series data if there's a groupField
+      if (groupField) {
+        const multi = buildMultiSeriesChartData(rawData, groupField, newXField, newYField);
+        setMultiSeriesData(multi.points);
+        setSeriesKeys(multi.series);
+      }
     },
-    [rawData]
+    [rawData, groupField]
   );
 
   const generateRunnableQuery = async () => {
@@ -478,6 +517,9 @@ function StudioPageInner() {
         typeof data.explanation === "string" ? data.explanation : ""
       );
       setChartData([]);
+      setMultiSeriesData([]);
+      setSeriesKeys([]);
+      setGroupField("");
       setRawData([]);
       setColumns([]);
       setNumericColumns([]);
@@ -493,7 +535,8 @@ function StudioPageInner() {
         chartType:
           data.chartType === "bar" ||
           data.chartType === "line" ||
-          data.chartType === "horizontalBar"
+          data.chartType === "horizontalBar" ||
+          data.chartType === "multiLine"
             ? data.chartType
             : prev.chartType,
         title:
@@ -617,7 +660,8 @@ function StudioPageInner() {
   };
 
   const generateChartImage = useCallback(async () => {
-    if (!chartData.length) {
+    const isMultiLine = chartConfig.chartType === "multiLine" && multiSeriesData.length > 0;
+    if (!chartData.length && !isMultiLine) {
       showToast("error", "Run a query first to generate chart image.");
       return;
     }
@@ -630,7 +674,8 @@ function StudioPageInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          data: chartData,
+          data: isMultiLine ? undefined : chartData,
+          ...(isMultiLine ? { multiSeriesData, series: seriesKeys, groupField } : {}),
           chartType: chartConfig.chartType,
           title: chartConfig.title,
           resolution: chartResolution,
@@ -708,7 +753,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingImage(false);
     }
-  }, [chartConfig, chartData, chartResolution, showToast, fetchUsage]);
+  }, [chartConfig, chartData, multiSeriesData, seriesKeys, groupField, chartResolution, showToast, fetchUsage]);
 
   const generateDraft = useCallback(async () => {
     if (!prompt.trim()) {
@@ -979,7 +1024,8 @@ function StudioPageInner() {
 
   if (!mounted) return null;
 
-  const hasChartData = chartData.length > 0;
+  const hasMultiSeriesChartData = chartConfig.chartType === "multiLine" && multiSeriesData.length > 0 && seriesKeys.length > 0;
+  const hasChartData = chartData.length > 0 || hasMultiSeriesChartData;
   const queryQuotaExhausted = queryUsageCount >= queryLimitCount;
   const chartQuotaExhausted = chartUsageCount >= chartLimitCount;
   const draftQuotaExhausted = composerUsageCount >= draftLimitCount;
@@ -1429,7 +1475,9 @@ function StudioPageInner() {
                         {isRunningQuery
                           ? "Executing query and transforming data..."
                           : hasChartData
-                          ? `Mapped ${chartData.length} points (${xField || "x"} → ${yField || "y"})`
+                          ? hasMultiSeriesChartData
+                            ? `Mapped ${multiSeriesData.length} points × ${seriesKeys.length} series`
+                            : `Mapped ${chartData.length} points (${xField || "x"} → ${yField || "y"})`
                           : "Waiting for result rows..."}
                       </div>
                     </div>
@@ -1471,7 +1519,9 @@ function StudioPageInner() {
                       </div>
                       <div className="text-[13px] text-slate-custom-600">
                         {hasChartData
-                          ? `${chartData.length} points rendered • ${chartConfig.chartType} chart`
+                          ? hasMultiSeriesChartData
+                            ? `${multiSeriesData.length} points • ${seriesKeys.length} series (${seriesKeys.join(", ")}) • multiLine chart`
+                            : `${chartData.length} points rendered • ${chartConfig.chartType} chart`
                           : "Run a query to enable chart rendering."}
                       </div>
                       {analysisExplanation && (
@@ -1563,10 +1613,51 @@ function StudioPageInner() {
                     </h4>
                   )}
 
-                  <div className="h-[320px]">
+                  <div className={hasMultiSeriesChartData ? "h-[340px]" : "h-[320px]"}>
                     {hasChartData ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        {chartConfig.chartType === "line" ? (
+                        {chartConfig.chartType === "multiLine" && hasMultiSeriesChartData ? (
+                          <LineChart
+                            data={multiSeriesData}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
+                          >
+                            {chartConfig.showGrid && (
+                              <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
+                            )}
+                            <XAxis
+                              dataKey="label"
+                              tick={{
+                                fontSize: chartConfig.xAxisFontSize,
+                                fill: ensureContrast(chartConfig.xAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                            />
+                            <YAxis
+                              tick={{
+                                fontSize: chartConfig.yAxisFontSize,
+                                fill: ensureContrast(chartConfig.yAxisFontColor, chartConfig.backgroundColor, "#94a3b8"),
+                                fontFamily: chartConfig.axisFont,
+                              }}
+                              axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
+                              tickLine={{ stroke: chartConfig.yAxisLineColor }}
+                              tickFormatter={(v: number) => v.toLocaleString("en-US")}
+                            />
+                            <Tooltip formatter={(value: number | undefined) => (value ?? 0).toLocaleString("en-US")} />
+                            {seriesKeys.map((key, i) => (
+                              <Line
+                                key={key}
+                                type="monotone"
+                                dataKey={key}
+                                stroke={SERIES_COLORS[i % SERIES_COLORS.length]}
+                                strokeWidth={2.5}
+                                dot={{ r: 3, fill: SERIES_COLORS[i % SERIES_COLORS.length] }}
+                                activeDot={{ r: 5 }}
+                              />
+                            ))}
+                          </LineChart>
+                        ) : chartConfig.chartType === "line" ? (
                           <LineChart
                             data={chartData}
                             margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
@@ -1717,6 +1808,20 @@ function StudioPageInner() {
                       </div>
                     )}
                   </div>
+
+                  {hasMultiSeriesChartData && (
+                    <div className="flex flex-wrap items-center justify-center gap-3 px-4 py-1.5">
+                      {seriesKeys.map((key, i) => (
+                        <div key={key} className="flex items-center gap-1.5">
+                          <span
+                            className="inline-block w-3 h-3 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: SERIES_COLORS[i % SERIES_COLORS.length] }}
+                          />
+                          <span className="text-[11px] font-semibold text-slate-custom-600">{key}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {chartConfig.sourceText && (
                     <div

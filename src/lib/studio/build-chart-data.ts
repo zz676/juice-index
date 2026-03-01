@@ -81,3 +81,91 @@ export function buildChartData(
   }));
   return { points, xField: resolvedX, yField: resolvedY };
 }
+
+// ── Multi-series (year comparison) support ────────────────────────────────
+
+export type MultiSeriesPoint = { label: string; [series: string]: string | number };
+
+/** Returns the group field name if the row looks like time-series data with a year column. */
+export function detectGroupField(sample: DataRow): string | null {
+  if (sample.year !== undefined) return "year";
+  return null;
+}
+
+const MONTH_SHORT: Record<number, string> = {
+  1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+  7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec",
+};
+
+function toMonthLabel(row: DataRow, xField: string): string {
+  if ((xField === "month" || xField === "period") && row[xField] !== undefined) {
+    const idx = Number(row[xField]);
+    return MONTH_SHORT[idx] ?? String(row[xField]);
+  }
+  return String(row[xField] ?? "");
+}
+
+/**
+ * Pivots rows into multi-series format for year-comparison charts.
+ * Input:  [{ year: 2023, period: 1, value: 15000 }, ...]
+ * Output: [{ label: "Jan", "2023": 15000, "2024": 18000 }, ...]
+ */
+export function buildMultiSeriesChartData(
+  rows: DataRow[],
+  groupField: string,
+  xField?: string,
+  yField?: string,
+): {
+  points: MultiSeriesPoint[];
+  series: string[];
+  xField: string;
+  yField: string;
+  groupField: string;
+} {
+  if (!rows.length) return { points: [], series: [], xField: "label", yField: "value", groupField };
+
+  const sample = rows[0];
+  const resolvedX = xField || (sample.period !== undefined ? "period" : sample.month !== undefined ? "month" : detectXField(sample)) || "label";
+  const resolvedY = yField || detectYField(sample) || "value";
+
+  // Collect ordered x-axis values and series keys
+  const xValuesOrdered: string[] = [];
+  const xValuesSeen = new Set<string>();
+  const seriesSet = new Set<string>();
+
+  for (const row of rows) {
+    const xRaw = toMonthLabel(row, resolvedX);
+    if (!xValuesSeen.has(xRaw)) {
+      xValuesOrdered.push(xRaw);
+      xValuesSeen.add(xRaw);
+    }
+    seriesSet.add(String(row[groupField] ?? ""));
+  }
+
+  const series = Array.from(seriesSet).sort();
+
+  // Build pivot map: xLabel -> { seriesKey -> value }
+  const pivot = new Map<string, Record<string, number>>();
+  for (const xLabel of xValuesOrdered) {
+    pivot.set(xLabel, {});
+  }
+  for (const row of rows) {
+    const xLabel = toMonthLabel(row, resolvedX);
+    const seriesKey = String(row[groupField] ?? "");
+    const existing = pivot.get(xLabel);
+    if (existing) {
+      existing[seriesKey] = toNumber(row[resolvedY]);
+    }
+  }
+
+  const points: MultiSeriesPoint[] = xValuesOrdered.map((xLabel) => {
+    const entry: MultiSeriesPoint = { label: xLabel };
+    const vals = pivot.get(xLabel) ?? {};
+    for (const s of series) {
+      entry[s] = vals[s] ?? 0;
+    }
+    return entry;
+  });
+
+  return { points, series, xField: resolvedX, yField: resolvedY, groupField };
+}
