@@ -1003,7 +1003,7 @@ function StudioPageInner() {
   };
 
   return (
-    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "radial-gradient(ellipse at top left, rgba(163,230,53,0.28) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.20) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.45) 0%, rgba(255,255,255,1) 45%, rgba(217,249,157,0.35) 100%)" }}>
+    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(106,218,27,0.04) 0px, rgba(106,218,27,0.04) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(163,230,53,0.22) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(163,230,53,0.16) 0%, transparent 50%), linear-gradient(135deg, rgba(217,249,157,0.35) 0%, rgba(255,255,255,1) 45%, rgba(217,249,157,0.28) 100%)" }}>
 
       <header className="h-11 flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0">
         <div className="flex items-center gap-4">
