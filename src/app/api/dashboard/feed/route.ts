@@ -61,7 +61,7 @@ export async function GET() {
         const rest = upcomingSnapshots.filter((s) => !isPinned(s.ticker, s.companyName));
         const sorted = [...pinned, ...rest];
 
-        const catalysts = sorted.slice(0, 10).flatMap((s) => {
+        const catalysts = sorted.slice(0, 12).flatMap((s) => {
             const date = s.earningsDate!;
             const month = date.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
             const day = String(date.getUTCDate()).padStart(2, "0");
