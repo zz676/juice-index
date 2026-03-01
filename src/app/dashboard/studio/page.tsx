@@ -75,7 +75,7 @@ function WorkflowStepper({
   const currentStepInfo = steps.find((s) => s.stepNum === currentStep);
   return (
     <div className="space-y-3">
-      <div className="bg-white rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] overflow-hidden">
+      <div className="bg-card rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] overflow-hidden">
         <div className="bg-lime-50 px-4 py-2.5 border-b border-lime-200">
           <div className="text-[11px] font-bold uppercase tracking-widest text-lime-800 text-center">Workflow</div>
         </div>
@@ -106,8 +106,8 @@ function WorkflowStepper({
                       isComplete
                         ? "bg-primary shadow-[0_0_8px_rgba(106,218,27,0.45)]"
                         : isCurrent
-                        ? "bg-white border-2 border-primary shadow-[0_0_8px_rgba(106,218,27,0.35)]"
-                        : "bg-white border-2 border-slate-custom-200"
+                        ? "bg-card border-2 border-primary shadow-[0_0_8px_rgba(106,218,27,0.35)]"
+                        : "bg-card border-2 border-slate-custom-200"
                     }`}
                   >
                     {isComplete ? (
@@ -132,7 +132,7 @@ function WorkflowStepper({
         </div>
       </div>
       {currentStepInfo && (
-        <div className="bg-white rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_28px_rgba(106,218,27,0.22),_0_2px_8px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.3),_inset_0_-1px_0_rgba(106,218,27,0.06)] p-4">
+        <div className="bg-card rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_28px_rgba(106,218,27,0.22),_0_2px_8px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.3),_inset_0_-1px_0_rgba(106,218,27,0.06)] p-4">
           <div className="text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1">Current Step</div>
           <div className="text-[15px] font-bold text-slate-custom-800">{currentStepInfo.title}</div>
           <div className="text-[12px] text-slate-custom-500 mt-0.5">{currentStepInfo.detail}</div>
@@ -1028,7 +1028,7 @@ function StudioPageInner() {
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
                 ? "border-red-300 bg-red-200 text-red-700"
-                : "border-slate-200 bg-white text-slate-700"
+                : "border-slate-200 bg-card text-slate-700"
             }`}
           >
             {toast.message}
@@ -1045,7 +1045,7 @@ function StudioPageInner() {
         </div>
       </header>
 
-      <main className="px-6 pt-24 pb-5 max-w-[1120px] mx-auto">
+      <main className="px-6 pt-24 pb-5 w-full max-w-7xl mx-auto">
         <div className="xl:grid gap-5 xl:grid-cols-[1fr_16rem]">
 
           {/* Main content column - all steps stacked */}
@@ -1056,7 +1056,7 @@ function StudioPageInner() {
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
-              className={`bg-white rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative group pt-10 px-6 pb-3 ${activeSection === 1 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+              className={`bg-card rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative group pt-10 px-6 pb-3 ${activeSection === 1 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1081,7 +1081,7 @@ function StudioPageInner() {
               <div className="space-y-1.5">
                 {/* Sample Questions */}
                 {examplesOpen && (
-                  <div className="bg-white border border-slate-custom-200 rounded-lg shadow-sm p-3">
+                  <div className="bg-card border border-slate-custom-200 rounded-lg shadow-sm p-3">
                       <div className="grid grid-cols-3 gap-2">
                         {Object.keys(sampleQuestions).map((category) => (
                           <button
@@ -1124,7 +1124,7 @@ function StudioPageInner() {
                   ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full min-h-[66px] bg-white border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -1146,7 +1146,7 @@ function StudioPageInner() {
                           className="fixed inset-0 z-40"
                           onClick={() => setIsQueryModelDropdownOpen(false)}
                         />
-                        <div className="absolute left-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
+                        <div className="absolute left-0 top-full mt-1 z-50 w-64 bg-card border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
                           {MODEL_REGISTRY.map((model: ModelDefinition) => {
                             const accessible = canAccessModel(userTier, model.id);
                             const isSelected = model.id === queryModelId;
@@ -1249,7 +1249,7 @@ function StudioPageInner() {
                 id="step-2"
                 onFocusCapture={() => setActiveSection(2)}
                 onClickCapture={() => setActiveSection(2)}
-                className={`bg-white rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative p-6 ${activeSection === 2 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative p-6 ${activeSection === 2 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span
@@ -1270,7 +1270,7 @@ function StudioPageInner() {
                   </h3>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-5 overflow-hidden">
+                <div className="bg-card rounded-xl border border-slate-custom-200 shadow-sm hover:shadow-md transition-shadow duration-200 mb-5 overflow-hidden">
                   <div className="px-3 py-2 border-b border-slate-custom-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[13px] text-slate-custom-700">
@@ -1329,7 +1329,7 @@ function StudioPageInner() {
                           >
                             <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy SQL</span>
                         </div>
                       </div>
                       <textarea
@@ -1377,7 +1377,7 @@ function StudioPageInner() {
                         generatedSql ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isGeneratingQueryPlan ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
                       }`}
                     />
-                    <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
+                    <div className="bg-card p-3 rounded border border-slate-custom-200 shadow-sm">
                       <div className="flex items-center justify-between text-[13px] mb-1">
                         <span className="font-mono text-slate-custom-500">
                           {tableName ? `TABLE ${tableName}` : "SQL GENERATION"}
@@ -1407,7 +1407,7 @@ function StudioPageInner() {
                         hasChartData ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : isRunningQuery ? "bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.5)]" : "bg-slate-300"
                       }`}
                     />
-                    <div className="bg-white p-3 rounded border border-slate-custom-200 shadow-sm">
+                    <div className="bg-card p-3 rounded border border-slate-custom-200 shadow-sm">
                       <div className="flex items-center justify-between text-[13px] mb-1">
                         <span className="font-mono text-slate-custom-500">
                           TRANSFORM
@@ -1446,7 +1446,7 @@ function StudioPageInner() {
                       }`}
                     />
                     <div
-                      className={`bg-white p-3 rounded shadow-sm border ${
+                      className={`bg-card p-3 rounded shadow-sm border ${
                         hasChartData
                           ? "border-primary/50"
                           : "border-slate-custom-200"
@@ -1491,7 +1491,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`bg-white rounded-2xl overflow-y-auto max-h-[80vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-y-auto max-h-[80vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1521,7 +1521,7 @@ function StudioPageInner() {
                           }
                           className={`px-1.5 py-0 rounded text-[8px] font-medium flex items-center gap-px transition-colors leading-tight ${
                             chartConfig.chartType === ct.value
-                              ? "bg-white text-primary shadow-sm border border-slate-custom-200 font-bold"
+                              ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
                               : "text-slate-custom-500 hover:text-slate-custom-900"
                           }`}
                         >
@@ -1536,8 +1536,8 @@ function StudioPageInner() {
                       onClick={() => setShowCustomizer((v) => !v)}
                       className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold transition-all duration-200 ${
                         showCustomizer
-                          ? "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
-                          : "bg-white border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
+                          ? "bg-card border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] text-green-600"
+                          : "bg-card border border-green-200 shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-green-600 hover:text-green-500"
                       }`}
                     >
                       <span className="material-icons-round text-[13px]">tune</span>
@@ -1710,7 +1710,7 @@ function StudioPageInner() {
                           </ResponsiveContainer>
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="px-4 py-2 rounded-full bg-white/90 border border-slate-custom-200 text-[13px] font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
+                          <span className="px-4 py-2 rounded-full bg-card/90 border border-slate-custom-200 text-[13px] font-medium text-slate-custom-500 shadow-sm backdrop-blur-sm">
                             Run a query to visualize real data
                           </span>
                         </div>
@@ -1743,7 +1743,7 @@ function StudioPageInner() {
                         value={chartResolution}
                         onChange={(e) => setChartResolution(e.target.value as "hd" | "fhd" | "2k" | "4k")}
                         disabled={isGeneratingImage}
-                        className="text-[11px] font-mono bg-white border border-slate-custom-200 rounded-md px-1.5 py-1 text-slate-custom-600 focus:outline-none focus:border-primary/50 disabled:opacity-50"
+                        className="text-[11px] font-mono bg-card border border-slate-custom-200 rounded-md px-1.5 py-1 text-slate-custom-600 focus:outline-none focus:border-primary/50 disabled:opacity-50"
                       >
                         <option value="hd">HD  1200×675</option>
                         <option value="fhd">FHD 1920×1080</option>
@@ -1756,12 +1756,12 @@ function StudioPageInner() {
                       <button
                         onClick={generateChartImage}
                         disabled={isGeneratingImage || !hasChartData || chartQuotaExhausted}
-                      className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
-                    >
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
+                      >
                       {isGeneratingImage ? (
                         <span className="material-icons-round text-[15px] animate-spin">refresh</span>
                       ) : (
-                        <svg className="w-[18px] h-[18px]" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                           <rect x="3" y="5" width="14" height="11" rx="2" />
                           <path d="M3 13l4-4 3 3 2.5-2.5L17 13" />
                           <circle cx="7.5" cy="8.5" r="1" fill="currentColor" stroke="none" />
@@ -1782,7 +1782,7 @@ function StudioPageInner() {
                 </div>
 
                 {chartImage && (
-                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-white">
+                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-card">
                     <div className="flex items-center">
                       {/* Left: label */}
                       <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
@@ -1838,7 +1838,7 @@ function StudioPageInner() {
                           >
                             <span className="material-icons-round text-[15px]">content_copy</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
                         </div>
                         <div className="relative group">
                           <button
@@ -1847,7 +1847,7 @@ function StudioPageInner() {
                           >
                             <span className="material-icons-round text-[15px]">download</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
                         </div>
                         <div className="relative group">
                           <button
@@ -1856,7 +1856,7 @@ function StudioPageInner() {
                           >
                             <span className="material-icons-round text-[15px]">close</span>
                           </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
                         </div>
                       </div>
                     </div>
@@ -1906,7 +1906,7 @@ function StudioPageInner() {
                 id="step-4"
                 onFocusCapture={() => setActiveSection(4)}
                 onClickCapture={() => setActiveSection(4)}
-                className={`bg-white rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
@@ -1937,7 +1937,7 @@ function StudioPageInner() {
                             className="fixed inset-0 z-40"
                             onClick={() => setIsModelDropdownOpen(false)}
                           />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-white border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
+                          <div className="absolute right-0 top-full mt-1 z-50 w-64 bg-card border border-slate-custom-200 rounded-xl shadow-lg overflow-hidden">
                             {MODEL_REGISTRY.map((model: ModelDefinition) => {
                               const accessible = canAccessModel(userTier, model.id);
                               const isSelected = model.id === selectedModelId;
@@ -2025,10 +2025,10 @@ function StudioPageInner() {
                       <button
                         onClick={generateDraft}
                         disabled={isGeneratingPost || !prompt.trim() || draftQuotaExhausted || selectedComposerModelExhausted}
-                        className="flex items-center gap-1.5 bg-white border border-green-200 px-2.5 py-1.5 rounded-lg shadow-[0_0_8px_rgba(22,163,74,0.15)] hover:shadow-[0_0_14px_rgba(22,163,74,0.3)] text-[13px] font-bold text-green-600 hover:text-green-500 transition-all duration-200 disabled:opacity-50"
+                        className="px-2.5 py-1.5 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-sm hover:shadow-[0_0_14px_rgba(106,218,27,0.5)] disabled:opacity-50 transition-all duration-200 flex items-center gap-1"
                       >
                         <span
-                          className={`material-icons-round text-[15px] ${
+                          className={`material-icons-round text-[11px] ${
                             isGeneratingPost ? "animate-spin" : ""
                           }`}
                         >
@@ -2078,7 +2078,7 @@ function StudioPageInner() {
                         >
                           <span className="material-icons-round text-[15px]">share</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Chart Link</span>
                       </div>
                       <div className="relative group">
                         <button
@@ -2088,7 +2088,7 @@ function StudioPageInner() {
                         >
                           <span className="material-icons-round text-[15px]">content_copy</span>
                         </button>
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Copy Post</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -2125,7 +2125,7 @@ function StudioPageInner() {
                             Publish
                           </button>
                         )}
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-white border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">Publish</span>
                       </div>
                     </div>
                   </div>

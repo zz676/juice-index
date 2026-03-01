@@ -55,7 +55,7 @@ export default function UpgradePrompt({ plan, currentTier }: UpgradePromptProps)
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex rounded-md bg-white border border-slate-custom-200 p-0.5">
+          <div className="flex rounded-md bg-card border border-slate-custom-200 p-0.5">
             <button
               onClick={() => setInterval("month")}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${

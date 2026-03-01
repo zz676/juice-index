@@ -322,17 +322,46 @@ export default function PostsPage() {
   const failedCount = statusCounts["FAILED"] || 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-custom-900">My Posts</h2>
-          <p className="text-sm text-slate-custom-500 mt-1">
-            Compose, schedule, and manage your X posts
-          </p>
+    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Header + Stats Row */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Stat boxes */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-slate-custom-200 px-3 py-2">
+            <span className="material-icons-round text-base text-slate-custom-400">description</span>
+            <div>
+              <p className="text-sm font-bold text-slate-custom-900 leading-none">{totalCount}</p>
+              <p className="text-[10px] text-slate-custom-500 font-medium mt-0.5">Total</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-purple-200 px-3 py-2">
+            <span className="material-icons-round text-base text-purple-500">schedule</span>
+            <div>
+              <p className="text-sm font-bold text-purple-700 leading-none">{statusCounts["SCHEDULED"] || 0}</p>
+              <p className="text-[10px] text-purple-500 font-medium mt-0.5">Scheduled</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-card rounded-lg border border-green-200 px-3 py-2">
+            <span className="material-icons-round text-base text-green-500">check_circle</span>
+            <div>
+              <p className="text-sm font-bold text-green-700 leading-none">{statusCounts["PUBLISHED"] || 0}</p>
+              <p className="text-[10px] text-green-500 font-medium mt-0.5">Published</p>
+            </div>
+          </div>
+          {failedCount > 0 && (
+            <div className="flex items-center gap-2 bg-card rounded-lg border border-red-200 px-3 py-2">
+              <span className="material-icons-round text-base text-red-500">error</span>
+              <div>
+                <p className="text-sm font-bold text-red-700 leading-none">{failedCount}</p>
+                <p className="text-[10px] text-red-500 font-medium mt-0.5">Failed</p>
+              </div>
+            </div>
+          )}
         </div>
+        {/* Search + Compose */}
         <div className="flex items-center gap-3">
-          <form onSubmit={handleSearchSubmit} className="relative w-full md:w-64">
+          <form onSubmit={handleSearchSubmit} className="relative w-48">
             <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-custom-400 text-base">
               search
             </span>
@@ -341,7 +370,7 @@ export default function PostsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts..."
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-card border border-slate-custom-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
           </form>
           <button
@@ -352,40 +381,6 @@ export default function PostsPage() {
             Compose
           </button>
         </div>
-      </div>
-
-      {/* Summary Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-custom-200 px-4 py-3">
-          <span className="material-icons-round text-xl text-slate-custom-400">description</span>
-          <div>
-            <p className="text-lg font-bold text-slate-custom-900">{totalCount}</p>
-            <p className="text-[11px] text-slate-custom-500 font-medium">Total</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-purple-200 px-4 py-3">
-          <span className="material-icons-round text-xl text-purple-500">schedule</span>
-          <div>
-            <p className="text-lg font-bold text-purple-700">{statusCounts["SCHEDULED"] || 0}</p>
-            <p className="text-[11px] text-purple-500 font-medium">Scheduled</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 bg-white rounded-lg border border-green-200 px-4 py-3">
-          <span className="material-icons-round text-xl text-green-500">check_circle</span>
-          <div>
-            <p className="text-lg font-bold text-green-700">{statusCounts["PUBLISHED"] || 0}</p>
-            <p className="text-[11px] text-green-500 font-medium">Published</p>
-          </div>
-        </div>
-        {failedCount > 0 && (
-          <div className="flex items-center gap-3 bg-white rounded-lg border border-red-200 px-4 py-3">
-            <span className="material-icons-round text-xl text-red-500">error</span>
-            <div>
-              <p className="text-lg font-bold text-red-700">{failedCount}</p>
-              <p className="text-[11px] text-red-500 font-medium">Failed</p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* X Account Warning */}
@@ -421,7 +416,7 @@ export default function PostsPage() {
 
       {/* Compose Panel */}
       {composeOpen && (
-        <div className="bg-white rounded-lg border border-slate-custom-200 p-5 space-y-4">
+        <div className="bg-card rounded-lg border border-slate-custom-200 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-custom-900">
               {editingId ? "Edit Post" : "Compose New Post"}
@@ -566,11 +561,11 @@ export default function PostsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden">
+      <div className="w-full">
         {loading ? (
-          <div className="p-6 space-y-4">
+          <div className="w-full space-y-1.5">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-12 bg-slate-custom-50 rounded animate-pulse" />
+              <div key={i} className="w-full h-12 bg-white/50 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : posts.length === 0 ? (
@@ -587,22 +582,22 @@ export default function PostsPage() {
             );
           })()
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full border-separate border-spacing-y-1.5">
               <thead>
-                <tr className="border-b border-slate-custom-100 bg-slate-custom-50/50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Content</th>
+                <tr className="bg-slate-custom-50/50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider rounded-l-xl">Content</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Date</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">X Post</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider">Actions</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-custom-500 uppercase tracking-wider rounded-r-xl">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-custom-50">
+              <tbody>
                 {posts.map((post) => {
                   const isExpanded = expandedId === post.id;
                   return (
-                    <tr key={post.id} className="hover:bg-slate-custom-50/50 transition-colors group">
+                    <tr key={post.id} className="bg-white/50 hover:bg-white/75 transition-colors group [&>td:first-child]:rounded-l-xl [&>td:last-child]:rounded-r-xl">
                       {/* Content */}
                       <td className="px-4 py-3 max-w-md">
                         <div
@@ -865,13 +860,13 @@ export default function PostsPage() {
                                 type="date"
                                 value={rescheduleDate}
                                 onChange={(e) => { setRescheduleDate(e.target.value); setRescheduleError(""); }}
-                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-card"
                               />
                               <input
                                 type="time"
                                 value={rescheduleTime}
                                 onChange={(e) => { setRescheduleTime(e.target.value); setRescheduleError(""); }}
-                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-white"
+                                className="flex-1 px-2 py-1 border border-purple-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 bg-card"
                               />
                               <button
                                 onClick={() => handleReschedule(post.id)}
@@ -945,6 +940,7 @@ export default function PostsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

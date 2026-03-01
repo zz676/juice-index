@@ -42,13 +42,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     : { paymentMethod: null, invoices: [], upcomingInvoice: null };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-custom-900">Billing</h1>
-        <p className="mt-1 text-sm text-slate-custom-500">
-          Manage your plan, usage, and payment details.
-        </p>
-      </div>
+    <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
+      <div className="w-full max-w-7xl mx-auto">
 
       {/* Upgrade prompt from ?plan= (e.g., pricing page → "Get Started with Pro") */}
       {params.plan && (
@@ -116,6 +111,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           />
         </div>
 
+      </div>
       </div>
     </div>
   );

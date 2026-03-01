@@ -236,7 +236,7 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-slate-custom-100 overflow-hidden min-h-[400px]">
+      <div className="bg-card rounded-lg border border-slate-custom-100 overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="p-6 space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -294,7 +294,7 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
                       </button>
 
                       {filterOpen && (
-                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
+                        <div className="absolute left-0 top-full mt-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg py-2 z-50 w-52">
                           <button
                             onClick={() => handleSelectAccount(null)}
                             className={`w-full flex items-center gap-2.5 px-3 py-1.5 hover:bg-slate-custom-50 transition-colors ${
@@ -372,7 +372,7 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
                       </div>
 
                       {datePickerOpen === "date" && (
-                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
+                        <div className="absolute left-0 top-full mt-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
                           <span className="block text-[11px] font-semibold text-slate-custom-500 uppercase tracking-wide">
                             Filter by Date
                           </span>
@@ -428,7 +428,7 @@ export function ReplyMonitoringTable({ accounts, imageStyles = [] }: ReplyMonito
                       </div>
 
                       {datePickerOpen === "postDate" && (
-                        <div className="absolute left-0 top-full mt-2 bg-white rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
+                        <div className="absolute left-0 top-full mt-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg p-3 z-50 w-56 space-y-2">
                           <span className="block text-[11px] font-semibold text-slate-custom-500 uppercase tracking-wide">
                             Filter by Post Date
                           </span>

@@ -91,7 +91,7 @@ export function CompactPostTable() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100">
+    <div className="bg-card rounded-lg shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-custom-100">
       <div className="p-4 border-b border-slate-custom-100">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-slate-custom-900">My Posts</h3>

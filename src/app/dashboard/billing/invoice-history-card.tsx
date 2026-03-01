@@ -36,7 +36,7 @@ export default function InvoiceHistoryCard({
     }).format(amount);
 
   return (
-    <section className="bg-white rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+    <section className="bg-card rounded-lg border border-slate-custom-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
       <div className="px-6 py-4 border-b border-slate-custom-100 flex items-center gap-3">
         <span className="material-icons-round text-slate-custom-400">receipt_long</span>
         <h3 className="text-base font-semibold text-slate-custom-900">Invoice History</h3>
