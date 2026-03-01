@@ -1899,7 +1899,7 @@ function StudioPageInner() {
                       {/* Center: zoom/pan controls */}
                       <div className="flex-1 flex items-center justify-center gap-1.5">
                         <button
-                          onClick={() => { setImgZoom((z) => Math.max(0.5, z - 0.25)); }}
+                          onClick={() => { setImgZoom((z) => Math.max(0.25, Math.round((z - 0.1) * 10) / 10)); }}
                           className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
                           title="Zoom out"
                         >
@@ -1909,7 +1909,7 @@ function StudioPageInner() {
                           {Math.round(imgZoom * 100)}%
                         </span>
                         <button
-                          onClick={() => { setImgZoom((z) => Math.min(5, z + 0.25)); }}
+                          onClick={() => { setImgZoom((z) => Math.min(5, Math.round((z + 0.1) * 10) / 10)); }}
                           className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
                           title="Zoom in"
                         >
@@ -1965,10 +1965,10 @@ function StudioPageInner() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative w-full rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                    <div className="relative w-full max-h-[200px] flex items-center justify-center rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
                       onWheel={(e) => {
                         e.preventDefault();
-                        setImgZoom((z) => Math.min(5, Math.max(0.5, z + (e.deltaY < 0 ? 0.15 : -0.15))));
+                        setImgZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.1 : -0.1))));
                       }}
                       onMouseDown={(e) => {
                         if (!panMode) return;
@@ -1993,7 +1993,7 @@ function StudioPageInner() {
                         src={chartImage}
                         alt="Generated chart"
                         draggable={false}
-                        className="w-full transition-transform duration-100"
+                        className="max-h-[200px] max-w-full block transition-transform duration-100"
                         style={{
                           transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
                           transformOrigin: "center center",

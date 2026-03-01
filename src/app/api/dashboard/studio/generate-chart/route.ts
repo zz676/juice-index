@@ -296,7 +296,7 @@ const watermarkPlugin: Plugin = {
 // (Skia) does not honour Chart.js's native borderDash property.
 const dashedGridPlugin: Plugin = {
   id: "dashedGrid",
-  afterDraw: (chart, _args, options) => {
+  beforeDatasetsDraw: (chart, _args, options) => {
     const opts = options as { display?: boolean; color?: string; lineDash?: number[] } | undefined;
     if (!opts?.display) return;
 
