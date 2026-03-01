@@ -122,8 +122,24 @@ export default function DashboardPage() {
             {feed?.news.map((item, i) => (
               <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="block">
                 <div className="bg-card p-3 rounded-lg border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] hover:border-lime-300 hover:shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_36px_rgba(155,199,84,0.5)] transition-all group flex gap-3 items-start">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-custom-100 overflow-hidden flex items-center justify-center">
-                    <span className="material-icons-round text-slate-custom-400">image</span>
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-lime-50 overflow-hidden flex items-center justify-center">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="16" cy="16" r="14" fill="#a3e635" />
+                      <circle cx="16" cy="16" r="11" fill="#ecfccb" />
+                      <line x1="16" y1="5" x2="16" y2="27" stroke="#84cc16" strokeWidth="1" />
+                      <line x1="5" y1="16" x2="27" y2="16" stroke="#84cc16" strokeWidth="1" />
+                      <line x1="7.8" y1="7.8" x2="24.2" y2="24.2" stroke="#84cc16" strokeWidth="1" />
+                      <line x1="24.2" y1="7.8" x2="7.8" y2="24.2" stroke="#84cc16" strokeWidth="1" />
+                      <path d="M16 5 A11 11 0 0 1 23.78 8.78 L16 16 Z" fill="#d9f99d" opacity="0.6" />
+                      <path d="M23.78 8.78 A11 11 0 0 1 27 16 L16 16 Z" fill="#d9f99d" opacity="0.3" />
+                      <path d="M27 16 A11 11 0 0 1 23.78 23.22 L16 16 Z" fill="#d9f99d" opacity="0.6" />
+                      <path d="M23.78 23.22 A11 11 0 0 1 16 27 L16 16 Z" fill="#d9f99d" opacity="0.3" />
+                      <path d="M16 27 A11 11 0 0 1 8.22 23.22 L16 16 Z" fill="#d9f99d" opacity="0.6" />
+                      <path d="M8.22 23.22 A11 11 0 0 1 5 16 L16 16 Z" fill="#d9f99d" opacity="0.3" />
+                      <path d="M5 16 A11 11 0 0 1 8.22 8.78 L16 16 Z" fill="#d9f99d" opacity="0.6" />
+                      <path d="M8.22 8.78 A11 11 0 0 1 16 5 L16 16 Z" fill="#d9f99d" opacity="0.3" />
+                      <circle cx="16" cy="16" r="2" fill="#84cc16" />
+                    </svg>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
