@@ -544,7 +544,7 @@ export function ChartCustomizer({
             </div>
 
             {/* Reset */}
-            <div className="border-t border-slate-100 p-3">
+            <div className="border-t border-slate-100 bg-primary/[0.04]">
                 <button onClick={() => onChange(DEFAULT_CHART_CONFIG)} className="w-full py-2 text-xs font-bold text-slate-500 hover:text-primary uppercase tracking-wide transition-colors flex items-center justify-center gap-1">
                     <span className="material-icons-round text-sm">restart_alt</span>
                     Reset All
