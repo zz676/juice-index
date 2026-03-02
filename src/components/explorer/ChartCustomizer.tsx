@@ -363,6 +363,32 @@ export function ChartCustomizer({
                             </>
                         )}
 
+                        <div className="border-t border-slate-100 pt-3 mt-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Text</label>
+                        </div>
+                        <label className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-600">Axis Font</span>
+                            <select
+                                value={config.axisFont}
+                                onChange={(e) => update({ axisFont: e.target.value })}
+                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                            >
+                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                ))}
+                            </select>
+                        </label>
+                        <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
+                        <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
+                        <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
+                        <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
+
+                        <div className="border-t border-slate-100 pt-3 mt-1">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Lines</label>
+                        </div>
+                        <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
+                        <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
+
                         <div className="border-t border-slate-100 pt-3">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Layout</label>
                         </div>
@@ -405,12 +431,6 @@ export function ChartCustomizer({
                         <ColorInput label="Bar / Line Color" value={config.barColor} onChange={(v) => update({ barColor: v })} />
                         <ColorInput label="Font Color" value={config.fontColor} onChange={(v) => update({ fontColor: v })} />
                         <div className="border-t border-slate-100 pt-3 mt-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Lines</label>
-                        </div>
-                        <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
-                        <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
-
-                        <div className="border-t border-slate-100 pt-3 mt-1">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Title</label>
                         </div>
                         <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Chart title..." />
@@ -430,26 +450,6 @@ export function ChartCustomizer({
                         <NumberInput label="Title Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
                         <NumberInput label="Title Padding Top" value={config.titlePaddingTop} onChange={(v) => update({ titlePaddingTop: v ?? 18 })} min={0} max={80} />
                         <NumberInput label="Title Padding Bottom" value={config.titlePaddingBottom} onChange={(v) => update({ titlePaddingBottom: v ?? 18 })} min={0} max={80} />
-
-                        <div className="border-t border-slate-100 pt-3 mt-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Text</label>
-                        </div>
-                        <label className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-slate-600">Axis Font</span>
-                            <select
-                                value={config.axisFont}
-                                onChange={(e) => update({ axisFont: e.target.value })}
-                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                            >
-                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
-                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                ))}
-                            </select>
-                        </label>
-                        <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
-                        <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
 
                         <div className="border-t border-slate-100 pt-3 mt-1">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Source / Watermark</label>
