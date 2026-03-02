@@ -447,20 +447,22 @@ export function ChartCustomizer({
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
                             <label className="text-xs font-semibold text-primary uppercase tracking-wide bg-primary/[0.13] px-1.5 py-0.5 rounded text-center block">Title</label>
                             <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Chart title..." />
-                            <label className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-medium text-slate-600">Font</span>
-                                <select
-                                    value={config.titleFont}
-                                    onChange={(e) => update({ titleFont: e.target.value })}
-                                    className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                                >
-                                    {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
-                                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                    ))}
-                                </select>
-                            </label>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600">Font & Size</span>
+                                <div className="flex items-center gap-1.5">
+                                    <select
+                                        value={config.titleFont}
+                                        onChange={(e) => update({ titleFont: e.target.value })}
+                                        className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                        {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                            <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                        ))}
+                                    </select>
+                                    <input type="number" value={config.titleSize ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ titleSize: Number.isFinite(v) && v > 0 ? v : 24 }); }} min={10} max={48} className="h-7 w-14 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                </div>
+                            </div>
                             <ColorInput label="Color" value={config.titleColor} onChange={(v) => update({ titleColor: v })} />
-                            <NumberInput label="Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
                             <div className="grid items-center gap-x-1.5 gap-y-1.5" style={{ gridTemplateColumns: "1fr auto auto auto auto" }}>
                                 <span className="text-xs font-medium text-slate-600">Padding</span>
                                 <span className="text-xs text-slate-400 text-center">T</span>
@@ -475,20 +477,22 @@ export function ChartCustomizer({
                             <label className="text-xs font-semibold text-primary uppercase tracking-wide bg-primary/[0.13] px-1.5 py-0.5 rounded text-center block">Source / Watermark</label>
                             <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom left text..." />
                             <input type="text" value={config.bottomRightText} onChange={(e) => update({ bottomRightText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom right text..." />
-                            <label className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-medium text-slate-600">Font</span>
-                                <select
-                                    value={config.sourceFont || "Inter"}
-                                    onChange={(e) => update({ sourceFont: e.target.value })}
-                                    className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                                >
-                                    {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
-                                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                    ))}
-                                </select>
-                            </label>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600">Font & Size</span>
+                                <div className="flex items-center gap-1.5">
+                                    <select
+                                        value={config.sourceFont || "Inter"}
+                                        onChange={(e) => update({ sourceFont: e.target.value })}
+                                        className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                    >
+                                        {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                            <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                        ))}
+                                    </select>
+                                    <input type="number" value={config.sourceFontSize ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ sourceFontSize: Number.isFinite(v) && v > 0 ? v : 11 }); }} min={8} max={24} className="h-7 w-14 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                </div>
+                            </div>
                             <ColorInput label="Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
-                            <NumberInput label="Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
                             <div className="grid items-center gap-x-1.5 gap-y-1.5" style={{ gridTemplateColumns: "1fr auto auto auto auto" }}>
                                 <span className="text-xs font-medium text-slate-600">Padding</span>
                                 <span className="text-xs text-slate-400 text-center">T</span>
