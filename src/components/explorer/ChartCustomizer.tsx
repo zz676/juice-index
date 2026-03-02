@@ -461,8 +461,13 @@ export function ChartCustomizer({
                             </label>
                             <ColorInput label="Color" value={config.titleColor} onChange={(v) => update({ titleColor: v })} />
                             <NumberInput label="Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
-                            <NumberInput label="Padding Top" value={config.titlePaddingTop} onChange={(v) => update({ titlePaddingTop: v ?? 18 })} min={0} max={80} />
-                            <NumberInput label="Padding Bottom" value={config.titlePaddingBottom} onChange={(v) => update({ titlePaddingBottom: v ?? 18 })} min={0} max={80} />
+                            <div className="grid items-center gap-x-1.5 gap-y-1.5" style={{ gridTemplateColumns: "1fr auto auto auto auto" }}>
+                                <span className="text-xs font-medium text-slate-600">Padding</span>
+                                <span className="text-xs text-slate-400 text-center">T</span>
+                                <input type="number" value={config.titlePaddingTop ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ titlePaddingTop: Number.isFinite(v) ? v : 18 }); }} min={0} max={80} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                <span className="text-xs text-slate-400 text-center">B</span>
+                                <input type="number" value={config.titlePaddingBottom ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ titlePaddingBottom: Number.isFinite(v) ? v : 18 }); }} min={0} max={80} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                            </div>
                         </div>
 
                         {/* Source / Watermark */}
@@ -484,8 +489,13 @@ export function ChartCustomizer({
                             </label>
                             <ColorInput label="Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
                             <NumberInput label="Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
-                            <NumberInput label="Padding Top" value={config.sourcePaddingTop} onChange={(v) => update({ sourcePaddingTop: v ?? 6 })} min={0} max={80} />
-                            <NumberInput label="Padding Bottom" value={config.sourcePaddingBottom} onChange={(v) => update({ sourcePaddingBottom: v ?? 20 })} min={0} max={80} />
+                            <div className="grid items-center gap-x-1.5 gap-y-1.5" style={{ gridTemplateColumns: "1fr auto auto auto auto" }}>
+                                <span className="text-xs font-medium text-slate-600">Padding</span>
+                                <span className="text-xs text-slate-400 text-center">T</span>
+                                <input type="number" value={config.sourcePaddingTop ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ sourcePaddingTop: Number.isFinite(v) ? v : 6 }); }} min={0} max={80} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                <span className="text-xs text-slate-400 text-center">B</span>
+                                <input type="number" value={config.sourcePaddingBottom ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ sourcePaddingBottom: Number.isFinite(v) ? v : 20 }); }} min={0} max={80} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                            </div>
                         </div>
                     </div>
                 )}
