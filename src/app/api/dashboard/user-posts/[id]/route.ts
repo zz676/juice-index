@@ -59,21 +59,7 @@ export async function PATCH(
     );
   }
 
-  // SCHEDULED posts can only be rescheduled or cancelled back to draft
-  if (post.status === UserPostStatus.SCHEDULED) {
-    let bodyPeek: { action?: string };
-    try {
-      bodyPeek = await request.clone().json();
-    } catch {
-      bodyPeek = {};
-    }
-    if (bodyPeek.action && bodyPeek.action !== "schedule" && bodyPeek.action !== "draft") {
-      return NextResponse.json(
-        { error: "BAD_REQUEST", message: "SCHEDULED posts can only be rescheduled or cancelled to draft" },
-        { status: 400 }
-      );
-    }
-  }
+  // SCHEDULED posts can be rescheduled, cancelled back to draft, or published immediately
 
   let body: { content?: string; action?: string; scheduledFor?: string; imageBase64?: string };
   try {
@@ -209,7 +195,9 @@ export async function PATCH(
       let mediaIds: string[] | undefined;
       if (imageData) {
         try {
-          const { mediaId } = await uploadMedia(accessToken, imageData);
+          const { mediaId } = await uploadMedia(accessToken, imageData, {
+            additionalOwner: xAccountForPublish.xUserId,
+          });
           mediaIds = [mediaId];
         } catch (err) {
           console.error("[user-posts PATCH] Failed to upload media:", err);
