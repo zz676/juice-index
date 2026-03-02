@@ -1059,7 +1059,7 @@ function StudioPageInner() {
   };
 
   return (
-    <div className="font-display text-slate-custom-800 min-h-full -mx-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
+    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
       <header className="h-[61px] flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
         <div className="flex items-center gap-4">
@@ -1096,7 +1096,7 @@ function StudioPageInner() {
         </div>
       </header>
 
-      <main className="px-6 pt-24 pb-12 w-full max-w-7xl mx-auto">
+      <main className="px-6 pt-24 pb-5 w-full max-w-7xl mx-auto">
         <div className="xl:grid gap-5 xl:grid-cols-[1fr_16rem]">
 
           {/* Main content column - all steps stacked */}
@@ -1628,7 +1628,7 @@ function StudioPageInner() {
                 </div>
 
                 <div
-                  className="px-4 py-3 min-h-[370px]"
+                  className="px-4 min-h-[370px]"
                   style={{ backgroundColor: chartConfig.backgroundColor }}
                 >
                   {chartConfig.title && (
@@ -1879,6 +1879,35 @@ function StudioPageInner() {
                     Generate a high-res image for export
                   </div>
                   <div className="flex flex-col items-end gap-1">
+                    {multiSeriesData.length > 0 && seriesKeys.length > 1 && chartData.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-slate-custom-400 font-medium">Style:</span>
+                        <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
+                          <button
+                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "line" }))}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
+                              chartConfig.chartType !== "multiLine"
+                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
+                                : "text-slate-custom-500 hover:text-slate-custom-900"
+                            }`}
+                          >
+                            <span className="material-icons-round text-[10px]">show_chart</span>
+                            1 Line
+                          </button>
+                          <button
+                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "multiLine" }))}
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
+                              chartConfig.chartType === "multiLine"
+                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
+                                : "text-slate-custom-500 hover:text-slate-custom-900"
+                            }`}
+                          >
+                            <span className="material-icons-round text-[10px]">stacked_line_chart</span>
+                            {seriesKeys.length} Lines
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <select
                         value={chartResolution}
@@ -1923,8 +1952,85 @@ function StudioPageInner() {
                 </div>
 
                 {chartImage && (
-                  <div className="border-t border-slate-custom-100">
-                    <div className="relative w-full overflow-hidden select-none rounded-b-2xl"
+                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-card">
+                    <div className="flex items-center">
+                      {/* Left: label */}
+                      <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
+                        <span className="material-icons-round text-[15px] text-primary">
+                          check_circle
+                        </span>
+                        Generated Image
+                      </span>
+                      {/* Center: zoom/pan controls */}
+                      <div className="flex-1 flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => { setImgZoom((z) => Math.max(0.25, Math.round((z - 0.1) * 10) / 10)); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
+                          title="Zoom out"
+                        >
+                          <span className="material-icons-round text-[13px]">remove</span>
+                        </button>
+                        <span className="text-[10px] font-mono text-slate-custom-500 w-8 text-center">
+                          {Math.round(imgZoom * 100)}%
+                        </span>
+                        <button
+                          onClick={() => { setImgZoom((z) => Math.min(5, Math.round((z + 0.1) * 10) / 10)); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
+                          title="Zoom in"
+                        >
+                          <span className="material-icons-round text-[13px]">add</span>
+                        </button>
+                        <button
+                          onClick={() => setPanMode((v) => !v)}
+                          className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${
+                            panMode
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-slate-custom-200 text-slate-custom-500 hover:text-primary hover:border-primary/50"
+                          }`}
+                          title="Pan / drag"
+                        >
+                          <span className="material-icons-round text-[13px]">pan_tool</span>
+                        </button>
+                        <button
+                          onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
+                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
+                          title="Reset view"
+                        >
+                          <span className="material-icons-round text-[13px]">fit_screen</span>
+                        </button>
+                      </div>
+                      {/* Right: export actions */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="relative group">
+                          <button
+                            onClick={copyChartToClipboard}
+                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
+                          >
+                            <span className="material-icons-round text-[15px]">content_copy</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
+                        </div>
+                        <div className="relative group">
+                          <button
+                            onClick={downloadImage}
+                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
+                          >
+                            <span className="material-icons-round text-[15px]">download</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
+                        </div>
+                        <div className="relative group">
+                          <button
+                            onClick={() => setChartImage(null)}
+                            className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
+                          >
+                            <span className="material-icons-round text-[15px]">close</span>
+                          </button>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative w-full h-[600px] flex items-center justify-center rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
                       onWheel={(e) => {
                         e.preventDefault();
                         setImgZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.1 : -0.1))));
@@ -1952,40 +2058,12 @@ function StudioPageInner() {
                         src={chartImage}
                         alt="Generated chart"
                         draggable={false}
-                        className="block w-full h-auto transition-transform duration-100"
+                        className="max-h-full max-w-full block mx-auto transition-transform duration-100"
                         style={{
                           transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
                           transformOrigin: "center center",
                         }}
                       />
-                      {/* Floating toolbar overlay */}
-                      <div className="absolute top-0 left-0 right-0 flex items-center px-3 py-1.5 bg-gradient-to-b from-black/40 to-transparent pointer-events-none">
-                        <span className="text-[11px] font-bold text-white/90 flex items-center gap-1 flex-shrink-0">
-                          <span className="material-icons-round text-[13px] text-primary">check_circle</span>
-                          Generated Image
-                        </span>
-                        <div className="flex-1 flex items-center justify-center gap-1 pointer-events-auto">
-                          <button onClick={() => { setImgZoom((z) => Math.max(0.25, Math.round((z - 0.1) * 10) / 10)); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Zoom out"><span className="material-icons-round text-[11px]">remove</span></button>
-                          <span className="text-[9px] font-mono text-white/80 w-7 text-center">{Math.round(imgZoom * 100)}%</span>
-                          <button onClick={() => { setImgZoom((z) => Math.min(5, Math.round((z + 0.1) * 10) / 10)); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Zoom in"><span className="material-icons-round text-[11px]">add</span></button>
-                          <button onClick={() => setPanMode((v) => !v)} className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${panMode ? "border-primary bg-primary/30 text-primary" : "border-white/30 bg-black/30 text-white/80 hover:text-white hover:bg-black/50"}`} title="Pan"><span className="material-icons-round text-[11px]">pan_tool</span></button>
-                          <button onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Reset view"><span className="material-icons-round text-[11px]">fit_screen</span></button>
-                        </div>
-                        <div className="flex items-center gap-1 pointer-events-auto">
-                          <div className="relative group">
-                            <button onClick={copyChartToClipboard} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-primary hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">content_copy</span></button>
-                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Copy</span>
-                          </div>
-                          <div className="relative group">
-                            <button onClick={downloadImage} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-primary hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">download</span></button>
-                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Download</span>
-                          </div>
-                          <div className="relative group">
-                            <button onClick={() => setChartImage(null)} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-red-400 hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">close</span></button>
-                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Delete</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}
