@@ -196,6 +196,7 @@ function StudioPageInner() {
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
   const [analysisExplanation, setAnalysisExplanation] = useState("");
   const [postDraft, setPostDraft] = useState("");
+  const [userInstruction, setUserInstruction] = useState("");
   const [isGeneratingPost, setIsGeneratingPost] = useState(false);
   const [attachImage, setAttachImage] = useState(true);
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(
@@ -2193,6 +2194,19 @@ function StudioPageInner() {
                   </div>
                 </div>
                 <div className="p-3">
+                  {/* User writing instructions */}
+                  <div className="mb-3">
+                    <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1.5">
+                      Writing instructions <span className="font-normal normal-case">(optional)</span>
+                    </label>
+                    <textarea
+                      value={userInstruction}
+                      onChange={(e) => setUserInstruction(e.target.value)}
+                      placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
+                      rows={2}
+                      className="w-full bg-slate-custom-50 px-3 py-2 rounded-lg border border-slate-custom-100 text-[13px] text-slate-custom-700 placeholder:text-slate-custom-300 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    />
+                  </div>
                   <textarea
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
