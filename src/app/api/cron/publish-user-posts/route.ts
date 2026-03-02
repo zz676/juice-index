@@ -87,7 +87,9 @@ export async function POST(request: NextRequest) {
       // Upload image if stored on the post
       let mediaIds: string[] | undefined;
       if (post.imageBase64) {
-        const { mediaId } = await uploadMedia(accessToken, post.imageBase64);
+        const { mediaId } = await uploadMedia(accessToken, post.imageBase64, {
+          additionalOwner: xAccount.xUserId,
+        });
         mediaIds = [mediaId];
       }
 
