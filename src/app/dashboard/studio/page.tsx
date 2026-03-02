@@ -1923,7 +1923,7 @@ function StudioPageInner() {
                 </div>
 
                 {chartImage && (
-                  <div className="px-10 pt-1.5 pb-4 border-t border-slate-custom-100 bg-card">
+                  <div className="px-10 pt-1.5 pb-8 border-t border-slate-custom-100 bg-card">
                     <div className="flex items-center">
                       {/* Left: label */}
                       <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
