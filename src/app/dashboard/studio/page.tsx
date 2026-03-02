@@ -1923,85 +1923,8 @@ function StudioPageInner() {
                 </div>
 
                 {chartImage && (
-                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-card">
-                    <div className="flex items-center">
-                      {/* Left: label */}
-                      <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
-                        <span className="material-icons-round text-[15px] text-primary">
-                          check_circle
-                        </span>
-                        Generated Image
-                      </span>
-                      {/* Center: zoom/pan controls */}
-                      <div className="flex-1 flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => { setImgZoom((z) => Math.max(0.25, Math.round((z - 0.1) * 10) / 10)); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
-                          title="Zoom out"
-                        >
-                          <span className="material-icons-round text-[13px]">remove</span>
-                        </button>
-                        <span className="text-[10px] font-mono text-slate-custom-500 w-8 text-center">
-                          {Math.round(imgZoom * 100)}%
-                        </span>
-                        <button
-                          onClick={() => { setImgZoom((z) => Math.min(5, Math.round((z + 0.1) * 10) / 10)); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
-                          title="Zoom in"
-                        >
-                          <span className="material-icons-round text-[13px]">add</span>
-                        </button>
-                        <button
-                          onClick={() => setPanMode((v) => !v)}
-                          className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${
-                            panMode
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-slate-custom-200 text-slate-custom-500 hover:text-primary hover:border-primary/50"
-                          }`}
-                          title="Pan / drag"
-                        >
-                          <span className="material-icons-round text-[13px]">pan_tool</span>
-                        </button>
-                        <button
-                          onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }}
-                          className="w-6 h-6 rounded-md border border-slate-custom-200 flex items-center justify-center text-slate-custom-500 hover:text-primary hover:border-primary/50 hover:shadow-[0_0_8px_rgba(106,218,27,0.45)] transition-all"
-                          title="Reset view"
-                        >
-                          <span className="material-icons-round text-[13px]">fit_screen</span>
-                        </button>
-                      </div>
-                      {/* Right: export actions */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <div className="relative group">
-                          <button
-                            onClick={copyChartToClipboard}
-                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
-                          >
-                            <span className="material-icons-round text-[15px]">content_copy</span>
-                          </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Copy Image</span>
-                        </div>
-                        <div className="relative group">
-                          <button
-                            onClick={downloadImage}
-                            className="text-slate-custom-400 hover:text-primary hover:drop-shadow-[0_0_6px_rgba(106,218,27,0.6)] transition-all"
-                          >
-                            <span className="material-icons-round text-[15px]">download</span>
-                          </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Download PNG Image</span>
-                        </div>
-                        <div className="relative group">
-                          <button
-                            onClick={() => setChartImage(null)}
-                            className="text-slate-custom-400 hover:text-slate-custom-600 transition-colors"
-                          >
-                            <span className="material-icons-round text-[15px]">close</span>
-                          </button>
-                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-0.5 rounded text-[11px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">Delete the image</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="relative w-full rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                  <div className="border-t border-slate-custom-100">
+                    <div className="relative w-full overflow-hidden select-none rounded-b-2xl"
                       onWheel={(e) => {
                         e.preventDefault();
                         setImgZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.1 : -0.1))));
@@ -2035,6 +1958,34 @@ function StudioPageInner() {
                           transformOrigin: "center center",
                         }}
                       />
+                      {/* Floating toolbar overlay */}
+                      <div className="absolute top-0 left-0 right-0 flex items-center px-3 py-1.5 bg-gradient-to-b from-black/40 to-transparent pointer-events-none">
+                        <span className="text-[11px] font-bold text-white/90 flex items-center gap-1 flex-shrink-0">
+                          <span className="material-icons-round text-[13px] text-primary">check_circle</span>
+                          Generated Image
+                        </span>
+                        <div className="flex-1 flex items-center justify-center gap-1 pointer-events-auto">
+                          <button onClick={() => { setImgZoom((z) => Math.max(0.25, Math.round((z - 0.1) * 10) / 10)); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Zoom out"><span className="material-icons-round text-[11px]">remove</span></button>
+                          <span className="text-[9px] font-mono text-white/80 w-7 text-center">{Math.round(imgZoom * 100)}%</span>
+                          <button onClick={() => { setImgZoom((z) => Math.min(5, Math.round((z + 0.1) * 10) / 10)); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Zoom in"><span className="material-icons-round text-[11px]">add</span></button>
+                          <button onClick={() => setPanMode((v) => !v)} className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${panMode ? "border-primary bg-primary/30 text-primary" : "border-white/30 bg-black/30 text-white/80 hover:text-white hover:bg-black/50"}`} title="Pan"><span className="material-icons-round text-[11px]">pan_tool</span></button>
+                          <button onClick={() => { setImgZoom(1); setImgPan({ x: 0, y: 0 }); setPanMode(false); }} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-all" title="Reset view"><span className="material-icons-round text-[11px]">fit_screen</span></button>
+                        </div>
+                        <div className="flex items-center gap-1 pointer-events-auto">
+                          <div className="relative group">
+                            <button onClick={copyChartToClipboard} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-primary hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">content_copy</span></button>
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Copy</span>
+                          </div>
+                          <div className="relative group">
+                            <button onClick={downloadImage} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-primary hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">download</span></button>
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Download</span>
+                          </div>
+                          <div className="relative group">
+                            <button onClick={() => setChartImage(null)} className="w-5 h-5 rounded border border-white/30 bg-black/30 flex items-center justify-center text-white/80 hover:text-red-400 hover:bg-black/50 transition-all"><span className="material-icons-round text-[11px]">close</span></button>
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 rounded text-[10px] font-bold text-primary bg-card border border-green-200 shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">Delete</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
