@@ -1628,8 +1628,7 @@ function StudioPageInner() {
                 </div>
 
                 <div
-                  className="px-4 py-3 min-h-[370px]"
-                  style={{ backgroundColor: "#ffffff" }}
+                  className="px-4 py-3 min-h-[370px] bg-white"
                 >
                   {chartConfig.title && (
                     <h4
