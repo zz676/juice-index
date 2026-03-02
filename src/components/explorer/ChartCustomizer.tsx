@@ -14,6 +14,8 @@ export interface ChartConfig {
     titleColor: string;
     titleSize: number;
     titleFont: string;
+    titlePaddingTop: number;
+    titlePaddingBottom: number;
     xAxisFontSize: number;
     yAxisFontSize: number;
     xAxisFontColor: string;
@@ -24,6 +26,8 @@ export interface ChartConfig {
     sourceColor: string;
     sourceFontSize: number;
     sourceFont: string;
+    sourcePaddingTop: number;
+    sourcePaddingBottom: number;
     barWidth: number | undefined;
     xAxisLineColor: string;
     yAxisLineColor: string;
@@ -49,6 +53,8 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     titleColor: "#1e293b",
     titleSize: 24,
     titleFont: "Inter",
+    titlePaddingTop: 18,
+    titlePaddingBottom: 18,
     xAxisFontSize: 12,
     yAxisFontSize: 12,
     xAxisFontColor: "#64748b",
@@ -59,6 +65,8 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     sourceColor: "#6ada1b",
     sourceFontSize: 18,
     sourceFont: "Inter",
+    sourcePaddingTop: 6,
+    sourcePaddingBottom: 20,
     barWidth: undefined,
     xAxisLineColor: "#e5e7eb",
     yAxisLineColor: "#e5e7eb",
@@ -420,6 +428,8 @@ export function ChartCustomizer({
                         </label>
                         <ColorInput label="Title Color" value={config.titleColor} onChange={(v) => update({ titleColor: v })} />
                         <NumberInput label="Title Size" value={config.titleSize} onChange={(v) => update({ titleSize: v ?? 24 })} min={10} max={48} />
+                        <NumberInput label="Title Padding Top" value={config.titlePaddingTop} onChange={(v) => update({ titlePaddingTop: v ?? 18 })} min={0} max={80} />
+                        <NumberInput label="Title Padding Bottom" value={config.titlePaddingBottom} onChange={(v) => update({ titlePaddingBottom: v ?? 18 })} min={0} max={80} />
 
                         <div className="border-t border-slate-100 pt-3 mt-1">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Text</label>
@@ -466,6 +476,8 @@ export function ChartCustomizer({
                         </label>
                         <ColorInput label="Bottom Text Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
                         <NumberInput label="Bottom Text Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
+                        <NumberInput label="Bottom Row Padding Top" value={config.sourcePaddingTop} onChange={(v) => update({ sourcePaddingTop: v ?? 6 })} min={0} max={80} />
+                        <NumberInput label="Bottom Row Padding Bottom" value={config.sourcePaddingBottom} onChange={(v) => update({ sourcePaddingBottom: v ?? 20 })} min={0} max={80} />
                     </div>
                 )}
 
