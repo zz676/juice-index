@@ -96,7 +96,7 @@ export default function ChartStylesSection() {
         <div className="space-y-2">
             {deleteError && <p className="text-xs text-red-500 mb-2">{deleteError}</p>}
             {styles.map((style) => (
-                <div key={style.id} className="flex items-center gap-2">
+                <div key={style.id} className="flex items-center gap-2 bg-primary/10 hover:bg-primary/15 transition-colors rounded-xl px-3 py-2">
                     {renamingId === style.id ? (
                         <>
                             <input

@@ -147,7 +147,7 @@ export default function ConnectedAccounts({
 
                 return (
                     <div key={p.id}>
-                        <div className="flex items-center justify-between py-3 px-4 rounded-lg border border-slate-custom-100 bg-slate-custom-50/50">
+                        <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="flex-shrink-0">{p.icon}</div>
                                 <div>
