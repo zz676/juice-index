@@ -41,9 +41,11 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     seats: 1,
     xAccounts: 0,
     studioQueriesByModel: {
+      "o3-mini": 3,
       "grok-4-1-fast-reasoning": 3,
     },
     postDraftsByModel: {
+      "o3-mini": 1,
       "grok-4-1-fast-reasoning": 1,
     },
     dailyReplies: 0,
@@ -66,12 +68,14 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     seats: 1,
     xAccounts: 1,
     studioQueriesByModel: {
+      "o3-mini": 15,
       "grok-4-1-fast-reasoning": 15,
       "gpt-5-mini": 5,
       "gemini-3.1-pro-preview": 5,
       "claude-sonnet-4-6": 5,
     },
     postDraftsByModel: {
+      "o3-mini": 5,
       "grok-4-1-fast-reasoning": 5,
       "gpt-5-mini": 3,
       "gemini-3.1-pro-preview": 3,
@@ -97,6 +101,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     seats: 1,
     xAccounts: 1,
     studioQueriesByModel: {
+      "o3-mini": 50,
       "grok-4-1-fast-reasoning": 50,
       "gpt-5-mini": 25,
       "gemini-3.1-pro-preview": 25,
@@ -105,6 +110,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
       "claude-opus-4-6": 10,
     },
     postDraftsByModel: {
+      "o3-mini": 20,
       "grok-4-1-fast-reasoning": 20,
       "gpt-5-mini": 10,
       "gemini-3.1-pro-preview": 10,
@@ -132,6 +138,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
     seats: 5,
     xAccounts: 5,
     studioQueriesByModel: {
+      "o3-mini": Infinity,
       "grok-4-1-fast-reasoning": Infinity,
       "gpt-5-mini": Infinity,
       "gemini-3.1-pro-preview": Infinity,
@@ -140,6 +147,7 @@ export const TIER_QUOTAS: Record<ApiTier, TierQuota> = {
       "claude-opus-4-6": Infinity,
     },
     postDraftsByModel: {
+      "o3-mini": Infinity,
       "grok-4-1-fast-reasoning": Infinity,
       "gpt-5-mini": Infinity,
       "gemini-3.1-pro-preview": Infinity,
