@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stripe, tierFromPrice } from "@/lib/stripe";
+import { sendPaymentConfirmationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -118,6 +119,30 @@ export async function POST(request: Request) {
         cancelAtPeriodEnd: Boolean(sub.cancel_at_period_end),
       },
     });
+
+    // Send payment confirmation email
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true },
+      });
+      if (dbUser?.email) {
+        const amountTotal = session.amount_total as number | null;
+        const currency = (session.currency as string | null) ?? "usd";
+        const amountFormatted = amountTotal != null
+          ? new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(amountTotal / 100)
+          : "";
+        await sendPaymentConfirmationEmail({
+          to: dbUser.email,
+          name: dbUser.name ?? dbUser.email.split("@")[0],
+          tier,
+          amountFormatted,
+          periodEnd: new Date(sub.current_period_end * 1000),
+        });
+      }
+    } catch (emailErr) {
+      console.error("[stripe-webhook] payment confirmation email failed:", emailErr);
+    }
   }
 
   // Record event as processed for idempotency
