@@ -329,8 +329,6 @@ export function ChartCustomizer({
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Layout</label>
                             <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
-                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
-                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
                             <div>
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Padding</label>
                                 <div className="grid grid-cols-2 gap-1.5">
@@ -343,35 +341,39 @@ export function ChartCustomizer({
                         </div>
 
                         {/* Axes */}
-                        {hasMultipleColumns && (
-                            <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axes</label>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-medium text-slate-600 shrink-0">X Axis</span>
-                                    <select
-                                        value={xField}
-                                        onChange={(e) => onAxisChange?.(e.target.value, yField)}
-                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                                    >
-                                        {columns.map((col) => (
-                                            <option key={col} value={col}>{col}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs font-medium text-slate-600 shrink-0">Y Axis</span>
-                                    <select
-                                        value={yField}
-                                        onChange={(e) => onAxisChange?.(xField, e.target.value)}
-                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                                    >
-                                        {numericColumns.map((col) => (
-                                            <option key={col} value={col}>{col}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        )}
+                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axes</label>
+                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            {hasMultipleColumns && (
+                                <>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs font-medium text-slate-600 shrink-0">X Axis</span>
+                                        <select
+                                            value={xField}
+                                            onChange={(e) => onAxisChange?.(e.target.value, yField)}
+                                            className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        >
+                                            {columns.map((col) => (
+                                                <option key={col} value={col}>{col}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs font-medium text-slate-600 shrink-0">Y Axis</span>
+                                        <select
+                                            value={yField}
+                                            onChange={(e) => onAxisChange?.(xField, e.target.value)}
+                                            className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        >
+                                            {numericColumns.map((col) => (
+                                                <option key={col} value={col}>{col}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
                         {/* Axis Text */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
