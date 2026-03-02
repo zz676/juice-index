@@ -277,10 +277,21 @@ export function ChartCustomizer({
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* ── CHART tab: display + layout + type + axes + axis text + axis lines ── */}
+                {/* ── CHART tab: type + display + layout + axes + axis text + axis lines ── */}
                 {activeSection === "chart" && (
                     <div className="space-y-4">
                         <div>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
+                            <div className="grid grid-cols-4 gap-1.5">
+                                {chartTypes.map((ct) => (
+                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-2.5 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
+                                        <span className="material-icons-round text-xl">{ct.icon}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="border-t border-slate-100 pt-3">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Display</label>
                         </div>
                         <div className="flex items-center justify-between">
@@ -332,18 +343,6 @@ export function ChartCustomizer({
                                 <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 20 })} placeholder="20" min={0} max={100} />
                                 <NumberInput label="Left" value={config.paddingLeft} onChange={(v) => update({ paddingLeft: v ?? 20 })} placeholder="20" min={0} max={100} />
                                 <NumberInput label="Right" value={config.paddingRight} onChange={(v) => update({ paddingRight: v ?? 20 })} placeholder="20" min={0} max={100} />
-                            </div>
-                        </div>
-
-                        <div className="border-t border-slate-100 pt-3">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
-                            <div className="grid grid-cols-4 gap-1.5">
-                                {chartTypes.map((ct) => (
-                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex flex-col items-center justify-center gap-0.5 p-2 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
-                                        <span className="material-icons-round text-lg">{ct.icon}</span>
-                                        <span className="text-[9px] font-bold uppercase">{ct.label}</span>
-                                    </button>
-                                ))}
                             </div>
                         </div>
 
