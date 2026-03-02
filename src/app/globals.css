@@ -89,6 +89,7 @@
 
 .studio-textarea {
   caret-color: #6ada1b;
+  font-family: 'JetBrains Mono', monospace;
   transition: border-color 0.15s ease;
 }
 
