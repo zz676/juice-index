@@ -453,7 +453,7 @@ export function ChartCustomizer({
                             <input type="text" value={config.bottomRightText} onChange={(e) => update({ bottomRightText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="e.g. Source: Company data" />
                         </div>
                         <label className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-slate-600">Source Font</span>
+                            <span className="text-xs font-medium text-slate-600">Bottom Text Font</span>
                             <select
                                 value={config.sourceFont || "Inter"}
                                 onChange={(e) => update({ sourceFont: e.target.value })}
@@ -464,8 +464,8 @@ export function ChartCustomizer({
                                 ))}
                             </select>
                         </label>
-                        <ColorInput label="Source Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
-                        <NumberInput label="Source Font Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
+                        <ColorInput label="Bottom Text Color" value={config.sourceColor} onChange={(v) => update({ sourceColor: v })} />
+                        <NumberInput label="Bottom Text Size" value={config.sourceFontSize} onChange={(v) => update({ sourceFontSize: v ?? 11 })} min={8} max={24} />
                     </div>
                 )}
 
