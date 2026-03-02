@@ -1051,7 +1051,7 @@ function StudioPageInner() {
     { id: "step-1", stepNum: 1, title: "Ask Intelligence", detail: "Enter your data question" },
     { id: "step-2", stepNum: 2, title: "Review Query", detail: "Review and run SQL" },
     { id: "step-3", stepNum: 3, title: "Visualization & Data", detail: "Explore your chart" },
-    { id: "step-4", stepNum: 4, title: "Analyst Composer", detail: "Draft and publish" },
+    { id: "step-4", stepNum: 4, title: "AI Composer", detail: "Draft and publish" },
   ];
   const scrollToStep = (stepId: string) => {
     const el = document.getElementById(stepId);
@@ -2055,7 +2055,7 @@ function StudioPageInner() {
                       4
                     </span>
                     <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
-                      Analyst Composer
+                      AI Composer
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
