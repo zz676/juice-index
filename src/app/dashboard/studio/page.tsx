@@ -1873,7 +1873,7 @@ function StudioPageInner() {
                   )}
                 </div>
 
-                <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
+                <div className="px-5 py-2 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[13px] text-slate-custom-500">
                     <span className="material-icons-round text-[15px]">info</span>
                     Generate a high-res image for export
