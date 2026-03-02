@@ -22,6 +22,7 @@ import {
 import {
   MODEL_REGISTRY,
   DEFAULT_MODEL_ID,
+  DEFAULT_QUERY_MODEL_ID,
   DEFAULT_TEMPERATURE,
   canAccessModel,
   type ModelDefinition,
@@ -206,7 +207,7 @@ function StudioPageInner() {
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [userTier, setUserTier] = useState<ApiTier>("FREE");
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
-  const [queryModelId, setQueryModelId] = useState(DEFAULT_MODEL_ID);
+  const [queryModelId, setQueryModelId] = useState(DEFAULT_QUERY_MODEL_ID);
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<number>(1);
   const [queryUsageCount, setQueryUsageCount] = useState(0);
