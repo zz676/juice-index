@@ -782,6 +782,7 @@ function StudioPageInner() {
           data: rawData.slice(0, 60),
           model: selectedModelId,
           temperature,
+          userInstructions: userInstruction,
         }),
       });
 
@@ -815,7 +816,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingPost(false);
     }
-  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, showToast, fetchUsage]);
+  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, userInstruction, showToast, fetchUsage]);
 
   const copyDraft = useCallback(async () => {
     if (!postDraft) return;
