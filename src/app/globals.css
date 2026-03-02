@@ -91,6 +91,13 @@
   caret-color: #6ada1b;
   font-family: 'JetBrains Mono', monospace;
   transition: border-color 0.15s ease;
+  /* Gradient text: lime green → deep forest black, field bg preserved via padding-box layer */
+  background:
+    linear-gradient(135deg, #6ada1b 15%, #1c2e08 100%),
+    rgba(106, 218, 27, 0.04);
+  -webkit-background-clip: text, padding-box;
+  background-clip: text, padding-box;
+  -webkit-text-fill-color: transparent;
 }
 
 .studio-textarea:focus {

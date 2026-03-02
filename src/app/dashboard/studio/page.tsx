@@ -1203,7 +1203,7 @@ function StudioPageInner() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onInput={(e) => handleTypingEffect(e.currentTarget)}
-                  className="studio-textarea w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-8 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="studio-textarea w-full min-h-[66px] border border-slate-custom-300 rounded-lg pt-3 px-8 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -2231,7 +2231,7 @@ function StudioPageInner() {
                       onChange={(e) => setUserInstruction(e.target.value)}
                       placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
                       onInput={(e) => handleTypingEffect(e.currentTarget)}
-                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-8 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 px-8 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                     />
                   </div>
                   <textarea
@@ -2239,7 +2239,7 @@ function StudioPageInner() {
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
                     onInput={(e) => handleTypingEffect(e.currentTarget)}
-                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-8 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 px-8 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;
