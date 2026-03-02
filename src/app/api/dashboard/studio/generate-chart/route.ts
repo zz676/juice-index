@@ -211,7 +211,7 @@ const sourceAttributionPlugin: Plugin = {
     const fontSize = pluginOptions?.fontSize ?? 12;
     const fontFamily = pluginOptions?.fontFamily || "Inter, Arial, sans-serif";
     const color = pluginOptions?.color || "#65a30d";
-    const y = chart.height - fontSize * 0.4 - 4;
+    const y = chart.height - fontSize * 0.4 - 20;
 
     ctx.save();
     ctx.font = `italic ${fontSize}px ${fontFamily}`;
