@@ -4,24 +4,24 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-const STOCKS: { symbol: string; brand: string }[] = [
-  { symbol: "TSLA",       brand: "Tesla"     },
-  { symbol: "NIO",        brand: "NIO"       },
-  { symbol: "XPEV",       brand: "Xpeng"     },
-  { symbol: "LI",         brand: "Li Auto"   },
+const STOCKS: { symbol: string; brand: string; market?: string }[] = [
+  { symbol: "TSLA",       brand: "Tesla",     market: "US" },
+  { symbol: "NIO",        brand: "NIO",       market: "US" },
+  { symbol: "XPEV",       brand: "Xpeng",     market: "US" },
+  { symbol: "LI",         brand: "Li Auto",   market: "US" },
   { symbol: "1810.HK",    brand: "Xiaomi"    },
-  { symbol: "LCID",       brand: "Lucid"     },
-  { symbol: "RIVN",       brand: "Rivian"    },
-  { symbol: "BYDDY",      brand: "BYD"       },
-  { symbol: "TM",         brand: "Toyota"    },
+  { symbol: "LCID",       brand: "Lucid",     market: "US" },
+  { symbol: "RIVN",       brand: "Rivian",    market: "US" },
+  { symbol: "BYDDY",      brand: "BYD",       market: "US" },
+  { symbol: "TM",         brand: "Toyota",    market: "US" },
   { symbol: "005380.KS",  brand: "Hyundai"   },
-  { symbol: "GM",         brand: "GM"        },
+  { symbol: "GM",         brand: "GM",        market: "US" },
   { symbol: "BMW.DE",     brand: "BMW"       },
   { symbol: "MBG.DE",     brand: "Mercedes"  },
   { symbol: "VOW3.DE",    brand: "VW"        },
-  { symbol: "F",          brand: "Ford"      },
+  { symbol: "F",          brand: "Ford",      market: "US" },
   { symbol: "000270.KS",  brand: "Kia"       },
-  { symbol: "HMC",        brand: "Honda"     },
+  { symbol: "HMC",        brand: "Honda",     market: "US" },
   { symbol: "P911.DE",    brand: "Porsche"   },
   { symbol: "7261.T",     brand: "Mazda"     },
   { symbol: "9863.HK",    brand: "Leapmotor" },
@@ -158,7 +158,45 @@ async function tryCrumbBatch(): Promise<StockQuote[] | null> {
   }
 }
 
-// ─── Strategy 3: individual v8/chart with 300 ms gaps (last resort) ──────────
+// ─── Strategy 3: Finnhub quote for US-listed stocks (fallback when Yahoo 429) ─
+async function tryFinnhubBatch(): Promise<StockQuote[] | null> {
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) return null;
+
+  const usStocks = STOCKS.filter((s) => s.market === "US");
+  if (usStocks.length === 0) return null;
+
+  try {
+    const results = await Promise.all(
+      usStocks.map(async ({ symbol, brand }) => {
+        const ac = new AbortController();
+        setTimeout(() => ac.abort(), 8_000);
+        try {
+          const res = await fetch(
+            `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}`,
+            { signal: ac.signal, headers: { "X-Finnhub-Token": apiKey }, next: { revalidate: 0 } },
+          );
+          if (!res.ok) return null;
+          const q = await res.json();
+          const price: number | null = q.c ?? null;
+          if (!price) return null;
+          const change: number = q.dp ?? 0;
+          return { symbol, brand, price, change, currency: "USD" } as StockQuote;
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    const quotes = results.filter((q): q is StockQuote => q !== null);
+    return quotes.length > 0 ? quotes : null;
+  } catch (e) {
+    console.warn("[stocks] finnhub batch error:", e);
+    return null;
+  }
+}
+
+// ─── Strategy 4: individual v8/chart with 300 ms gaps (last resort) ──────────
 async function tryIndividual(): Promise<StockQuote[]> {
   const quotes: StockQuote[] = [];
   for (let i = 0; i < STOCKS.length; i++) {
@@ -218,6 +256,7 @@ export async function GET() {
   let quotes: StockQuote[] | null =
     await tryNoCrumbBatch() ??
     await tryCrumbBatch() ??
+    await tryFinnhubBatch() ??
     await tryIndividual();
 
   // tryIndividual always returns an array (may have nulls); treat all-null prices as failure
