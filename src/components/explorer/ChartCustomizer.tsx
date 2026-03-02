@@ -281,7 +281,6 @@ export function ChartCustomizer({
                 {activeSection === "chart" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Chart Type</label>
                             <div className="grid grid-cols-4 gap-1.5">
                                 {chartTypes.map((ct) => (
                                     <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-2.5 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
@@ -351,24 +350,24 @@ export function ChartCustomizer({
                                 <div className="border-t border-slate-100 pt-3">
                                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axes</label>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-medium text-slate-600 mb-1 block">X Axis</label>
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-medium text-slate-600 shrink-0">X Axis</span>
                                     <select
                                         value={xField}
                                         onChange={(e) => onAxisChange?.(e.target.value, yField)}
-                                        className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {columns.map((col) => (
                                             <option key={col} value={col}>{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-medium text-slate-600 mb-1 block">Y Axis</label>
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-medium text-slate-600 shrink-0">Y Axis</span>
                                     <select
                                         value={yField}
                                         onChange={(e) => onAxisChange?.(xField, e.target.value)}
-                                        className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {numericColumns.map((col) => (
                                             <option key={col} value={col}>{col}</option>
