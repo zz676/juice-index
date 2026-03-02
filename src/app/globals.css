@@ -62,23 +62,44 @@
   animation: pricing-card-shine 2.4s ease-in-out infinite;
 }
 
-/* ─── Studio textarea: subtle breathing glow on focus + green caret ─── */
-@keyframes textarea-typing-glow {
+/* ─── Studio textarea: breathing glow on focus, active burst while typing ─── */
+@keyframes textarea-focus-glow {
   0%, 100% {
-    box-shadow: 0 0 0 2px rgba(106, 218, 27, 0.12), 0 0 8px rgba(106, 218, 27, 0.07);
+    box-shadow: 0 0 0 2px rgba(106, 218, 27, 0.14), 0 0 10px rgba(106, 218, 27, 0.08);
   }
   50% {
-    box-shadow: 0 0 0 2px rgba(106, 218, 27, 0.28), 0 0 18px rgba(106, 218, 27, 0.13);
+    box-shadow: 0 0 0 2px rgba(106, 218, 27, 0.32), 0 0 22px rgba(106, 218, 27, 0.15);
+  }
+}
+
+@keyframes textarea-active-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px rgba(106, 218, 27, 0.50),
+      0 0 22px rgba(106, 218, 27, 0.28),
+      inset 0 0 14px rgba(106, 218, 27, 0.07);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(106, 218, 27, 0.75),
+      0 0 38px rgba(106, 218, 27, 0.42),
+      inset 0 0 24px rgba(106, 218, 27, 0.12);
   }
 }
 
 .studio-textarea {
   caret-color: #6ada1b;
+  transition: border-color 0.15s ease;
 }
 
 .studio-textarea:focus {
-  animation: textarea-typing-glow 2.2s ease-in-out infinite;
+  animation: textarea-focus-glow 2.2s ease-in-out infinite;
   outline: none;
+}
+
+.studio-textarea.is-typing {
+  animation: textarea-active-glow 0.65s ease-in-out infinite !important;
+  border-color: rgba(106, 218, 27, 0.6) !important;
 }
 
 /* ─── Range input track: soft muted green instead of harsh black ─── */

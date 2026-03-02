@@ -279,6 +279,7 @@ function StudioPageInner() {
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typewriterRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -763,6 +764,14 @@ function StudioPageInner() {
     }
   }, [chartConfig, chartData, multiSeriesData, seriesKeys, groupField, chartResolution, showToast, fetchUsage]);
 
+  const handleTypingEffect = useCallback((el: HTMLTextAreaElement) => {
+    el.classList.add("is-typing");
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      el.classList.remove("is-typing");
+    }, 800);
+  }, []);
+
   const typeContent = useCallback((text: string) => {
     if (typewriterRef.current) clearInterval(typewriterRef.current);
     setPostDraft("");
@@ -1193,7 +1202,8 @@ function StudioPageInner() {
                   ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="studio-textarea w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  onInput={(e) => handleTypingEffect(e.currentTarget)}
+                  className="studio-textarea w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-5 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -2220,14 +2230,16 @@ function StudioPageInner() {
                       value={userInstruction}
                       onChange={(e) => setUserInstruction(e.target.value)}
                       placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
-                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                      onInput={(e) => handleTypingEffect(e.currentTarget)}
+                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-5 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                     />
                   </div>
                   <textarea
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                    onInput={(e) => handleTypingEffect(e.currentTarget)}
+                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-5 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;
