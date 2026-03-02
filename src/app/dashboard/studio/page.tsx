@@ -2047,7 +2047,7 @@ function StudioPageInner() {
                 id="step-4"
                 onFocusCapture={() => setActiveSection(4)}
                 onClickCapture={() => setActiveSection(4)}
-                className={`bg-card rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 pb-4 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
