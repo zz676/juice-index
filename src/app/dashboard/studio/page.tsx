@@ -2058,7 +2058,7 @@ function StudioPageInner() {
                         src={chartImage}
                         alt="Generated chart"
                         draggable={false}
-                        className="max-h-full max-w-full block mx-auto transition-transform duration-100"
+                        className="w-full h-full object-contain block transition-transform duration-100"
                         style={{
                           transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
                           transformOrigin: "center center",
