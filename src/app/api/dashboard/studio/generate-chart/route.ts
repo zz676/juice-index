@@ -228,7 +228,7 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = color;
     ctx.textBaseline = "bottom";
 
-    const outerPad = Math.round(chart.width * 0.035) + 16;
+    const outerPad = Math.round(chart.width * 0.035) + 48;
     if (leftText?.trim()) {
       ctx.textAlign = "left";
       ctx.fillText(leftText, outerPad, y);
