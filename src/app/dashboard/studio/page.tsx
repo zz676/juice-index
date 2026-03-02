@@ -1149,7 +1149,7 @@ function StudioPageInner() {
                   onClick={() => setExamplesOpen((v) => !v)}
                   className="flex items-center gap-1 text-[12px] font-medium text-slate-custom-500 hover:text-primary transition-colors"
                 >
-                  <span className="material-icons-round text-[15px]">lightbulb</span>
+                  <span className="bulb-flash material-icons-round text-[15px]">lightbulb</span>
                   Examples
                   <span className="material-icons-round text-[15px] transition-transform duration-200" style={{ transform: examplesOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
                     expand_more

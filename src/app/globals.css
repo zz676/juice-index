@@ -91,9 +91,9 @@
   caret-color: #6ada1b;
   font-family: 'JetBrains Mono', monospace;
   transition: border-color 0.15s ease;
-  /* Gradient text: lime green → deep forest black, field bg preserved via padding-box layer */
+  /* Gradient text: dark lime → deep forest black, field bg preserved via padding-box layer */
   background:
-    linear-gradient(135deg, #6ada1b 15%, #1c2e08 100%),
+    linear-gradient(135deg, #3a9010 10%, #0a1802 100%),
     rgba(106, 218, 27, 0.04);
   -webkit-background-clip: text, padding-box;
   background-clip: text, padding-box;
@@ -108,6 +108,16 @@
 .studio-textarea.is-typing {
   animation: textarea-active-glow 0.65s ease-in-out infinite !important;
   border-color: rgba(106, 218, 27, 0.6) !important;
+}
+
+/* ─── Examples lightbulb: slow lime flash ─── */
+@keyframes bulb-flash {
+  0%, 100% { color: #94a3b8; opacity: 0.7; }
+  50%       { color: #a8e85a; opacity: 1;   }
+}
+
+.bulb-flash {
+  animation: bulb-flash 2.8s ease-in-out infinite;
 }
 
 /* ─── Range input track: soft muted green instead of harsh black ─── */
