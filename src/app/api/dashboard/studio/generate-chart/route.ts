@@ -228,13 +228,14 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = color;
     ctx.textBaseline = "bottom";
 
+    const outerPad = Math.round(chart.width * 0.035) + 16;
     if (leftText?.trim()) {
       ctx.textAlign = "left";
-      ctx.fillText(leftText, 24, y);
+      ctx.fillText(leftText, outerPad, y);
     }
     if (rightText?.trim()) {
       ctx.textAlign = "right";
-      ctx.fillText(rightText, chart.width - 24, y);
+      ctx.fillText(rightText, chart.width - outerPad, y);
     }
     ctx.restore();
   },
