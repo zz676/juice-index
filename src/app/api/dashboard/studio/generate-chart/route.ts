@@ -653,12 +653,12 @@ function renderChartConfig(params: {
       layout: {
         padding: {
           top: style.paddingTop ?? 20,
-          right: style.paddingRight ?? 28,
+          right: style.paddingRight ?? 50,
           bottom: Math.max(
             style.paddingBottom ?? 20,
             Math.round(((style.sourceFontSize ?? 12) + (style.xAxisFontSize ?? 12) * 2.5 + 20) * 0.7)
           ),
-          left: style.paddingLeft ?? (isHorizontal ? 36 : 24),
+          left: style.paddingLeft ?? (isHorizontal ? 60 : 50),
         },
       },
     },
@@ -816,12 +816,12 @@ function renderMultiLineChartConfig(params: {
       layout: {
         padding: {
           top: style.paddingTop ?? 20,
-          right: style.paddingRight ?? 28,
+          right: style.paddingRight ?? 50,
           bottom: Math.max(
             style.paddingBottom ?? 20,
             Math.round(((style.sourceFontSize ?? 12) + (style.xAxisFontSize ?? 12) * 2.5 + 20) * 0.7)
           ),
-          left: style.paddingLeft ?? 24,
+          left: style.paddingLeft ?? 50,
         },
       },
     },
@@ -1583,8 +1583,8 @@ export async function POST(req: Request) {
       sourceFontSize: Math.round((rawStyle.sourceFontSize ?? 12) * scale),
       paddingTop:    Math.round((rawStyle.paddingTop    ?? 20) * scale),
       paddingBottom: Math.round((rawStyle.paddingBottom ?? 20) * scale),
-      paddingLeft:   Math.round((rawStyle.paddingLeft   ?? 24) * scale),
-      paddingRight:  Math.round((rawStyle.paddingRight  ?? 28) * scale),
+      paddingLeft:   Math.round((rawStyle.paddingLeft   ?? 50) * scale),
+      paddingRight:  Math.round((rawStyle.paddingRight  ?? 50) * scale),
       barWidth:      rawStyle.barWidth && rawStyle.barWidth > 0 ? Math.round(rawStyle.barWidth * scale) : undefined,
       xAxisLineWidth: Math.round((rawStyle.xAxisLineWidth ?? 1) * scale),
       yAxisLineWidth: Math.round((rawStyle.yAxisLineWidth ?? 1) * scale),
