@@ -110,9 +110,9 @@ export function getStudioModelInstance(modelDef: ModelDefinition): LanguageModel
   }
 }
 
-/** Per-token pricing in USD (input / output per token). */
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
-  "o3-mini":                 { input: 1.10  / 1_000_000, output: 4.40  / 1_000_000 },
+/** Per-token pricing in USD (input / cachedInput / output per token). */
+const MODEL_PRICING: Record<string, { input: number; cachedInput?: number; output: number }> = {
+  "o3-mini":                 { input: 1.10  / 1_000_000, cachedInput: 0.55 / 1_000_000, output: 4.40  / 1_000_000 },
   "grok-4-1-fast-reasoning": { input: 0.20  / 1_000_000, output: 0.50  / 1_000_000 },
   "gpt-5-mini":              { input: 0.25  / 1_000_000, output: 2.00  / 1_000_000 },
   "gemini-3.1-pro-preview":  { input: 2.00  / 1_000_000, output: 12.00 / 1_000_000 },

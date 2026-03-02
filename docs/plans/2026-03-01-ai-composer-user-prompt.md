@@ -267,3 +267,27 @@ gh pr create --title "feat: add user prompt textbox to AI Composer (Step 4)" \
 ```
 
 Full PR body should follow the project template (What / Why / Changes / Testing).
+
+---
+
+### Addendum: o3-mini added as default Query generation model
+
+**Committed separately** on the same branch after the original plan.
+
+**Files:**
+- Modify: `src/lib/studio/models.ts`
+- Modify: `src/app/dashboard/studio/page.tsx`
+
+**Changes:**
+- `MODEL_REGISTRY` — o3-mini entry added at the top (appears first in query model dropdown), `minTier: "FREE"` (accessible to all tiers)
+- `DEFAULT_QUERY_MODEL_ID = "o3-mini"` exported
+- `queryModelId` state in `StudioPageInner` defaults to `DEFAULT_QUERY_MODEL_ID`
+- `MODEL_PRICING` type extended with optional `cachedInput` field; o3-mini entry includes all three rates
+
+**o3-mini pricing (per 1M tokens):**
+
+| Type         | Price  |
+|--------------|--------|
+| Input        | $1.10  |
+| Cached input | $0.55  |
+| Output       | $4.40  |
