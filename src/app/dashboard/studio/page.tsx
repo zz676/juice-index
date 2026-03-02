@@ -1546,7 +1546,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`bg-card rounded-2xl relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-y-auto relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1629,7 +1629,7 @@ function StudioPageInner() {
 
                 <div
                   className="px-8 py-3 min-h-[370px]"
-                  style={{ backgroundColor: chartConfig.backgroundColor }}
+                  style={{ backgroundColor: "#ffffff" }}
                 >
                   {chartConfig.title && (
                     <h4
@@ -1873,7 +1873,7 @@ function StudioPageInner() {
                   )}
                 </div>
 
-                <div className="px-5 py-4 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
+                <div className="px-5 py-2 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[13px] text-slate-custom-500">
                     <span className="material-icons-round text-[15px]">info</span>
                     Generate a high-res image for export
