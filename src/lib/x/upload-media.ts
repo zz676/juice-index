@@ -1,15 +1,16 @@
 /**
- * Upload an image to X via the v1.1 Media Upload endpoint.
+ * Upload an image to X via the v2 Media Upload endpoint.
  *
- * The upload uses the user's OAuth 2.0 PKCE access token (Bearer auth).
- * X's media upload endpoint accepts OAuth 2.0 user-context tokens, and
- * media_ids are scoped to the uploading user — so the same token must be
- * used for both upload and the subsequent POST /2/tweets call.
+ * The v1.1 media upload endpoint (upload.twitter.com) only supports OAuth 1.0a
+ * and rejects OAuth 2.0 Bearer tokens entirely.  The v2 endpoint
+ * (api.x.com/2/media/upload) accepts the user's OAuth 2.0 PKCE access token,
+ * keeping upload and tweet-post under the same user credentials so X accepts
+ * the returned media_id.
+ *
+ * v2 response shape: { data: { id: "...", media_key: "..." } }
  */
 
-import crypto from "crypto";
-
-const UPLOAD_URL = "https://upload.twitter.com/1.1/media/upload.json";
+const UPLOAD_URL = "https://api.x.com/2/media/upload";
 
 export function stripBase64Prefix(dataUrl: string): string {
   const match = dataUrl.match(/^data:[^;]+;base64,/);
@@ -20,80 +21,6 @@ function detectMimeType(dataUrl: string): string {
   const match = dataUrl.match(/^data:([^;]+);base64,/);
   return match ? match[1] : "image/png";
 }
-
-/* ------------------------------------------------------------------ */
-/*  OAuth 1.0a signing                                                 */
-/* ------------------------------------------------------------------ */
-
-function getOAuth1Credentials() {
-  const apiKey = process.env.X_API_KEY?.trim();
-  const apiSecret = process.env.X_API_SECRET?.trim();
-  const accessToken = process.env.X_ACCESS_TOKEN?.trim();
-  const accessTokenSecret = process.env.X_ACCESS_TOKEN_SECRET?.trim();
-  if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
-    throw new Error(
-      "X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, and X_ACCESS_TOKEN_SECRET must be configured for media upload"
-    );
-  }
-  return { apiKey, apiSecret, accessToken, accessTokenSecret };
-}
-
-function percentEncode(str: string): string {
-  return encodeURIComponent(str).replace(
-    /[!'()*]/g,
-    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
-  );
-}
-
-function generateOAuthHeader(
-  method: string,
-  url: string,
-  params: Record<string, string>
-): string {
-  const { apiKey, apiSecret, accessToken, accessTokenSecret } =
-    getOAuth1Credentials();
-
-  const oauthParams: Record<string, string> = {
-    oauth_consumer_key: apiKey,
-    oauth_nonce: crypto.randomBytes(16).toString("hex"),
-    oauth_signature_method: "HMAC-SHA1",
-    oauth_timestamp: String(Math.floor(Date.now() / 1000)),
-    oauth_token: accessToken,
-    oauth_version: "1.0",
-  };
-
-  // Combine oauth params + request params for signature base
-  const allParams = { ...oauthParams, ...params };
-  const sortedKeys = Object.keys(allParams).sort();
-  const paramString = sortedKeys
-    .map((k) => `${percentEncode(k)}=${percentEncode(allParams[k])}`)
-    .join("&");
-
-  const signatureBase = [
-    method.toUpperCase(),
-    percentEncode(url),
-    percentEncode(paramString),
-  ].join("&");
-
-  const signingKey = `${percentEncode(apiSecret)}&${percentEncode(accessTokenSecret)}`;
-  const signature = crypto
-    .createHmac("sha1", signingKey)
-    .update(signatureBase)
-    .digest("base64");
-
-  oauthParams.oauth_signature = signature;
-
-  const headerParts = Object.keys(oauthParams)
-    .sort()
-    .map((k) => `${percentEncode(k)}="${percentEncode(oauthParams[k])}"`)
-    .join(", ");
-
-  return `OAuth ${headerParts}`;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Upload via multipart/form-data (OAuth 2.0 user Bearer token)       */
-/* ------------------------------------------------------------------ */
 
 export async function uploadMedia(
   accessToken: string,
@@ -122,5 +49,5 @@ export async function uploadMedia(
   }
 
   const json = await res.json();
-  return { mediaId: json.media_id_string };
+  return { mediaId: json.data.id };
 }
