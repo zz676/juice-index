@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
           globalPaused: true,
           scheduleOverride: true,
           timezone: true,
+          replyModel: true,
           PauseSchedules: {
             where: { enabled: true },
             select: {
@@ -259,6 +260,7 @@ export async function POST(request: NextRequest) {
             accountContext: account.accountContext,
             recentReplies: recentReplyTexts,
             temperature: account.temperature,
+            model: config?.replyModel ?? "grok-4-1-fast-reasoning",
           });
           const textDurationMs = Date.now() - textStart;
           replyText = generated.text;
@@ -267,7 +269,7 @@ export async function POST(request: NextRequest) {
           prisma.aIUsage.create({
             data: {
               type: "text",
-              model: "gpt-4.1-mini",
+              model: config?.replyModel ?? "grok-4-1-fast-reasoning",
               source: "engagement-reply",
               inputTokens,
               outputTokens,
@@ -539,12 +541,13 @@ export async function POST(request: NextRequest) {
               accountContext: account.accountContext,
               recentReplies: recentReplyTexts,
               temperature: account.temperature,
+              model: config?.replyModel ?? "grok-4-1-fast-reasoning",
             });
             const textDurationMs = Date.now() - textStart;
             prisma.aIUsage.create({
               data: {
                 type: "text",
-                model: "gpt-4.1-mini",
+                model: config?.replyModel ?? "grok-4-1-fast-reasoning",
                 source: "engagement-reply",
                 inputTokens: generated.inputTokens,
                 outputTokens: generated.outputTokens,
