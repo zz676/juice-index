@@ -55,13 +55,13 @@ export async function POST(request: Request) {
 
   console.log(`[resend-webhook] ${event.type}`, {
     emailId: event.data.email_id,
-    to: event.data.to,
+    recipientCount: event.data.to.length,
     subject: event.data.subject,
     createdAt: event.created_at,
   });
 
   if (event.type === "email.bounced" || event.type === "email.complained") {
-    console.warn(`[resend-webhook] ⚠️  ${event.type} for`, event.data.to);
+    console.warn(`[resend-webhook] ⚠️  ${event.type} — emailId: ${event.data.email_id}, recipientCount: ${event.data.to.length}`);
   }
 
   return NextResponse.json({ received: true });

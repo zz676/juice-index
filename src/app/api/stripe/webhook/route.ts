@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         const currency = (session.currency as string | null) ?? "usd";
         const amountFormatted = amountTotal != null
           ? new Intl.NumberFormat("en-US", { style: "currency", currency: currency.toUpperCase() }).format(amountTotal / 100)
-          : "";
+          : "N/A";
         await sendPaymentConfirmationEmail({
           to: dbUser.email,
           name: dbUser.name ?? dbUser.email.split("@")[0],

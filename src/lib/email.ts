@@ -1,11 +1,11 @@
 import { Resend } from "resend";
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error("Missing required env var: RESEND_API_KEY");
-}
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY ?? "");
 const FROM = process.env.EMAIL_FROM ?? "Juice Index <noreply@juiceindex.io>";
+
+function isEmailConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY);
+}
 
 export { resend, FROM };
 
@@ -19,6 +19,10 @@ function escapeHtml(str: string): string {
 }
 
 export async function sendWelcomeEmail(to: string, name: string) {
+  if (!isEmailConfigured()) {
+    console.warn("[email] RESEND_API_KEY not set — skipping welcome email");
+    return;
+  }
   if (!to || !to.includes("@")) {
     throw new Error(`sendWelcomeEmail: invalid recipient address "${to}"`);
   }
@@ -58,6 +62,11 @@ export async function sendPaymentConfirmationEmail(opts: {
   periodEnd: Date;
 }) {
   const { to, name, tier, amountFormatted, periodEnd } = opts;
+
+  if (!isEmailConfigured()) {
+    console.warn("[email] RESEND_API_KEY not set — skipping payment confirmation email");
+    return;
+  }
 
   if (!to || !to.includes("@")) {
     throw new Error(`sendPaymentConfirmationEmail: invalid recipient address "${to}"`);
