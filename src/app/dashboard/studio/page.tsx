@@ -2204,15 +2204,14 @@ function StudioPageInner() {
                       value={userInstruction}
                       onChange={(e) => setUserInstruction(e.target.value)}
                       placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
-                      rows={2}
-                      className="w-full bg-slate-custom-50 px-3 py-2 rounded-lg border border-slate-custom-100 text-[13px] text-slate-custom-700 placeholder:text-slate-custom-300 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                      className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                     />
                   </div>
                   <textarea
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                    className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-[15px] text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;
