@@ -193,15 +193,9 @@ const backgroundColorPlugin: Plugin = {
     const ctx = chart.ctx;
     const w = chart.width;
     const h = chart.height;
-    // Outer horizontal margin (white canvas border) — ~3.5% of width on each side
-    const outerPad = Math.round(w * 0.035);
     ctx.save();
-    // White canvas background
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-    // Chart background color fills the inset area only
     ctx.fillStyle = color;
-    ctx.fillRect(outerPad, 0, w - outerPad * 2, h);
+    ctx.fillRect(0, 0, w, h);
     ctx.restore();
   },
 };
@@ -228,7 +222,7 @@ const sourceAttributionPlugin: Plugin = {
     ctx.fillStyle = color;
     ctx.textBaseline = "bottom";
 
-    const outerPad = Math.round(chart.width * 0.035) + 48;
+    const outerPad = 48;
     if (leftText?.trim()) {
       ctx.textAlign = "left";
       ctx.fillText(leftText, outerPad, y);

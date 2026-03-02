@@ -1546,7 +1546,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`bg-card rounded-2xl overflow-y-auto max-h-[80vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1652,7 +1652,7 @@ function StudioPageInner() {
                         {chartConfig.chartType === "multiLine" && hasMultiSeriesChartData ? (
                           <LineChart
                             data={multiSeriesData}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1693,7 +1693,7 @@ function StudioPageInner() {
                         ) : chartConfig.chartType === "line" ? (
                           <LineChart
                             data={chartData}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1731,7 +1731,7 @@ function StudioPageInner() {
                           <BarChart
                             data={chartData}
                             layout="vertical"
-                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1778,7 +1778,7 @@ function StudioPageInner() {
                         ) : (
                           <BarChart
                             data={chartData}
-                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
+                            margin={{ top: chartConfig.paddingTop, right: chartConfig.paddingRight, bottom: chartConfig.paddingBottom, left: chartConfig.paddingLeft }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1858,7 +1858,7 @@ function StudioPageInner() {
 
                   {(chartConfig.sourceText || chartConfig.bottomRightText) && (
                     <div
-                      className="flex justify-between items-end italic px-4"
+                      className="flex justify-between items-end italic px-8"
                       style={{
                         color: chartConfig.sourceColor,
                         fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
@@ -1873,41 +1873,12 @@ function StudioPageInner() {
                   )}
                 </div>
 
-                <div className="px-5 py-1 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
+                <div className="px-5 py-2.5 border-t border-slate-custom-100 bg-slate-custom-50/50 flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[13px] text-slate-custom-500">
                     <span className="material-icons-round text-[15px]">info</span>
                     Generate a high-res image for export
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    {multiSeriesData.length > 0 && seriesKeys.length > 1 && chartData.length > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-slate-custom-400 font-medium">Style:</span>
-                        <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
-                          <button
-                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "line" }))}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
-                              chartConfig.chartType !== "multiLine"
-                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
-                                : "text-slate-custom-500 hover:text-slate-custom-900"
-                            }`}
-                          >
-                            <span className="material-icons-round text-[10px]">show_chart</span>
-                            1 Line
-                          </button>
-                          <button
-                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "multiLine" }))}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
-                              chartConfig.chartType === "multiLine"
-                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
-                                : "text-slate-custom-500 hover:text-slate-custom-900"
-                            }`}
-                          >
-                            <span className="material-icons-round text-[10px]">stacked_line_chart</span>
-                            {seriesKeys.length} Lines
-                          </button>
-                        </div>
-                      </div>
-                    )}
                     <div className="flex items-center gap-2">
                       <select
                         value={chartResolution}
@@ -1952,7 +1923,7 @@ function StudioPageInner() {
                 </div>
 
                 {chartImage && (
-                  <div className="px-5 pt-1.5 pb-4 border-t border-slate-custom-100 bg-card">
+                  <div className="px-10 pt-1.5 pb-8 border-t border-slate-custom-100 bg-card">
                     <div className="flex items-center">
                       {/* Left: label */}
                       <span className="text-[13px] font-bold text-slate-custom-700 uppercase tracking-wide flex items-center gap-1 flex-shrink-0">
@@ -2030,7 +2001,7 @@ function StudioPageInner() {
                         </div>
                       </div>
                     </div>
-                    <div className="relative w-full h-[320px] flex items-center justify-center rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
+                    <div className="relative w-full rounded-lg border border-slate-custom-200 shadow-[0_4px_24px_rgba(0,0,0,0.10)] overflow-hidden select-none"
                       onWheel={(e) => {
                         e.preventDefault();
                         setImgZoom((z) => Math.min(5, Math.max(0.25, z + (e.deltaY < 0 ? 0.1 : -0.1))));
@@ -2058,7 +2029,7 @@ function StudioPageInner() {
                         src={chartImage}
                         alt="Generated chart"
                         draggable={false}
-                        className="w-full h-full object-contain block transition-transform duration-100"
+                        className="w-full h-auto block transition-transform duration-100"
                         style={{
                           transform: `scale(${imgZoom}) translate(${imgPan.x / imgZoom}px, ${imgPan.y / imgZoom}px)`,
                           transformOrigin: "center center",
@@ -2076,7 +2047,7 @@ function StudioPageInner() {
                 id="step-4"
                 onFocusCapture={() => setActiveSection(4)}
                 onClickCapture={() => setActiveSection(4)}
-                className={`bg-card rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`bg-card rounded-2xl overflow-auto border-[1.3px] border-lime-300 transition-all duration-200 mb-8 ${activeSection === 4 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
                   <div className="flex items-center gap-2">
