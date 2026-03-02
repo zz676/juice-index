@@ -573,3 +573,19 @@ ORDER BY 1 DESC;
 Redis keys expire at UTC midnight. Keys:
 - `engagement:reply:<userId>:<YYYYMMDD>` — daily reply counter
 - `engagement:image:<userId>:<YYYYMMDD>` — daily image counter
+
+---
+
+## Settings Tab
+
+The Settings tab (Engagement Center → Settings) provides global per-user configuration:
+
+- **Reply Model**: LLM used for all auto-generated replies. Stored as `replyModel` on `EngagementConfig` (PostgreSQL, not Redis). Defaults to `grok-4-1-fast-reasoning`. See `src/lib/engagement/models.ts` for the full model list.
+- **Auto-Reply Status**: Global pause toggle (replaces the old top-of-page banner).
+- **Pause Schedules**: Timezone and time-window schedule management.
+
+### Architecture Notes
+
+- `replyModel` is persisted to `EngagementConfig` via `PATCH /api/dashboard/engagement/config`.
+- The cron job (`/api/cron/engagement-poll`) reads `replyModel` per user and passes it to `generateReply()` and logs it in `AIUsage`.
+- The `GlobalPauseBanner` component was removed; all its functionality is now in `EngagementSettingsPanel`.

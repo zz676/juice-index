@@ -1957,6 +1957,8 @@ model EngagementConfig {
   scheduleOverride Boolean         @default(false)
   /// IANA timezone for evaluating pause schedules (e.g. "America/New_York").
   timezone         String          @default("America/New_York")
+  /// LLM model used for auto-reply generation. Must match a REPLY_MODELS id.
+  replyModel       String          @default("grok-4-1-fast-reasoning")
   /// Timestamp when the record was created.
   createdAt        DateTime        @default(now())
   /// Timestamp when the record was last updated.

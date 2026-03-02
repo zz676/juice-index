@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { hasTier, normalizeTier } from "@/lib/api/tier";
+import { REPLY_MODELS } from "@/lib/engagement/models";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,7 @@ export async function GET() {
       globalPaused: true,
       scheduleOverride: true,
       timezone: true,
+      replyModel: true,
       PauseSchedules: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -39,6 +41,7 @@ export async function GET() {
     globalPaused: config?.globalPaused ?? false,
     scheduleOverride: config?.scheduleOverride ?? false,
     timezone: config?.timezone ?? "America/New_York",
+    replyModel: config?.replyModel ?? "grok-4-1-fast-reasoning",
     schedules: config?.PauseSchedules ?? [],
   });
 }
@@ -60,7 +63,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  let body: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string };
+  let body: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string; replyModel?: string };
   try {
     body = await request.json();
   } catch {
@@ -83,10 +86,17 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const updateData: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string } = {};
+  if (body.replyModel !== undefined) {
+    if (!REPLY_MODELS.some((m) => m.id === body.replyModel)) {
+      return NextResponse.json({ error: "BAD_REQUEST", message: "Unknown reply model" }, { status: 400 });
+    }
+  }
+
+  const updateData: { globalPaused?: boolean; scheduleOverride?: boolean; timezone?: string; replyModel?: string } = {};
   if (body.globalPaused !== undefined) updateData.globalPaused = body.globalPaused;
   if (body.scheduleOverride !== undefined) updateData.scheduleOverride = body.scheduleOverride;
   if (body.timezone !== undefined) updateData.timezone = body.timezone;
+  if (body.replyModel !== undefined) updateData.replyModel = body.replyModel;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ error: "BAD_REQUEST", message: "No fields to update" }, { status: 400 });
@@ -96,12 +106,13 @@ export async function PATCH(request: NextRequest) {
     where: { userId: user.id },
     update: updateData,
     create: { userId: user.id, ...updateData },
-    select: { globalPaused: true, scheduleOverride: true, timezone: true },
+    select: { globalPaused: true, scheduleOverride: true, timezone: true, replyModel: true },
   });
 
   return NextResponse.json({
     globalPaused: config.globalPaused,
     scheduleOverride: config.scheduleOverride,
     timezone: config.timezone,
+    replyModel: config.replyModel ?? "grok-4-1-fast-reasoning",
   });
 }

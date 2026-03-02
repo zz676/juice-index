@@ -40,19 +40,23 @@ Each AI model has its own daily sub-limit within the global cap. Both the global
 
 | Model | Free | Starter | Pro | Enterprise |
 |-------|------|---------|-----|------------|
-| GPT-4o Mini | 3 | 15 | 50 | Unlimited |
-| GPT-4o | — | 5 | 25 | Unlimited |
-| Claude 3.5 Sonnet | — | 5 | 25 | Unlimited |
-| Claude Opus 4 | — | — | 10 | Unlimited |
+| Grok 4.1 Fast | 3 | 15 | 50 | Unlimited |
+| GPT-5 Mini | — | 5 | 25 | Unlimited |
+| Gemini 3.1 Pro | — | 5 | 25 | Unlimited |
+| Claude Sonnet 4.6 | — | 5 | 25 | Unlimited |
+| GPT-5.2 | — | — | 10 | Unlimited |
+| Claude Opus 4.6 | — | — | 10 | Unlimited |
 
 ### Post Drafts (per day)
 
 | Model | Free | Starter | Pro | Enterprise |
 |-------|------|---------|-----|------------|
-| GPT-4o Mini | 1 | 5 | 20 | Unlimited |
-| GPT-4o | — | 3 | 10 | Unlimited |
-| Claude 3.5 Sonnet | — | 3 | 10 | Unlimited |
-| Claude Opus 4 | — | — | 5 | Unlimited |
+| Grok 4.1 Fast | 1 | 5 | 20 | Unlimited |
+| GPT-5 Mini | — | 3 | 10 | Unlimited |
+| Gemini 3.1 Pro | — | 3 | 10 | Unlimited |
+| Claude Sonnet 4.6 | — | 3 | 10 | Unlimited |
+| GPT-5.2 | — | — | 5 | Unlimited |
+| Claude Opus 4.6 | — | — | 5 | Unlimited |
 
 ## Architecture
 
@@ -108,10 +112,12 @@ The Studio Analyst Composer (Step 4) supports multiple AI models gated by tier. 
 
 | Model | Provider | Min Tier | API Pricing (per MTok) | Description |
 |-------|----------|----------|------------------------|-------------|
-| GPT-4o Mini | OpenAI | FREE | $0.15 in / $0.60 out | Fast & affordable |
-| GPT-4o | OpenAI | STARTER | $2.50 in / $10.00 out | Best reasoning from OpenAI |
-| Claude 3.5 Sonnet | Anthropic | STARTER | $3.00 in / $15.00 out | Balanced speed & quality |
-| Claude Opus 4 | Anthropic | PRO | $15.00 in / $75.00 out | Most capable model |
+| Grok 4.1 Fast | xAI | FREE | $0.20 in / $0.50 out | Fast & affordable |
+| GPT-5 Mini | OpenAI | STARTER | $0.25 in / $2.00 out | Versatile from OpenAI |
+| Gemini 3.1 Pro | Google | STARTER | $2.00 in / $12.00 out | Latest from Google |
+| Claude Sonnet 4.6 | Anthropic | STARTER | $3.00 in / $15.00 out | Balanced speed & quality |
+| GPT-5.2 | OpenAI | PRO | $1.75 in / $14.00 out | Advanced reasoning from OpenAI |
+| Claude Opus 4.6 | Anthropic | PRO | $15.00 in / $75.00 out | Most capable model |
 
 *Pricing reflects provider API costs (OpenAI / Anthropic) as of early 2025. These are the costs Juice Index pays per request — end users are not billed per token.*
 

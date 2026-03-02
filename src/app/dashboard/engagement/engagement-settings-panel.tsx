@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { REPLY_MODELS } from "@/lib/engagement/models";
 
 type PauseException = { id: string; date: string };
 
@@ -19,6 +20,7 @@ type ConfigData = {
   globalPaused: boolean;
   scheduleOverride: boolean;
   timezone: string;
+  replyModel: string;
   schedules: PauseSchedule[];
 };
 
@@ -72,10 +74,9 @@ function getActiveSchedule(schedules: PauseSchedule[], timezone: string): PauseS
   return schedules.find((sc) => sc.enabled && isWithinWindow(now, timezone, sc)) ?? null;
 }
 
-export function GlobalPauseBanner({ onPauseStateChange }: Props) {
+export function EngagementSettingsPanel({ onPauseStateChange }: Props) {
   const [config, setConfig] = useState<ConfigData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(false);
 
   // New schedule form state
   const [newLabel, setNewLabel] = useState("");
@@ -133,13 +134,41 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
   };
 
   const updateTimezone = async (tz: string) => {
-    if (!config) return;
+    if (!config || loading) return;
+    const previous = config.timezone;
     setConfig({ ...config, timezone: tz });
-    await fetch("/api/dashboard/engagement/config", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ timezone: tz }),
-    });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/engagement/config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timezone: tz }),
+      });
+      if (!res.ok) setConfig({ ...config, timezone: previous });
+    } catch {
+      setConfig({ ...config, timezone: previous });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateReplyModel = async (modelId: string) => {
+    if (!config || loading) return;
+    const previous = config.replyModel;
+    setConfig({ ...config, replyModel: modelId });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/engagement/config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ replyModel: modelId }),
+      });
+      if (!res.ok) setConfig({ ...config, replyModel: previous });
+    } catch {
+      setConfig({ ...config, replyModel: previous });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleScheduleEnabled = async (schedule: PauseSchedule) => {
@@ -255,14 +284,27 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
     }
   };
 
-  if (!config) return null;
+  if (!config) {
+    return (
+      <div className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5 animate-pulse"
+          >
+            <div className="h-4 bg-slate-custom-200 rounded w-1/3 mb-3" />
+            <div className="h-3 bg-slate-custom-100 rounded w-2/3" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const activeSchedule = getActiveSchedule(config.schedules, config.timezone);
   const isScheduleOverridden = !config.globalPaused && activeSchedule !== null && config.scheduleOverride;
   const isSchedulePaused = !config.globalPaused && activeSchedule !== null && !config.scheduleOverride && !activeSchedule.frequencyOverride;
   const isPaused = config.globalPaused || isSchedulePaused;
 
-  const bannerBg = isPaused ? "bg-amber-50 border-amber-200" : "bg-green-50 border-green-200";
   const statusIcon = isPaused ? "pause_circle" : "check_circle";
   const statusIconClass = isPaused ? "text-amber-600" : "text-green-600";
   const statusText = config.globalPaused
@@ -277,159 +319,166 @@ export function GlobalPauseBanner({ onPauseStateChange }: Props) {
   const statusTextClass = isPaused ? "text-amber-800" : "text-green-700";
 
   return (
-    <div className={`border rounded-xl overflow-hidden ${bannerBg}`}>
-      {/* ── Top bar ── */}
-      <div className="px-4 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={`material-icons-round text-[18px] shrink-0 ${statusIconClass}`}>
-            {statusIcon}
-          </span>
-          <p className={`text-sm font-medium truncate ${statusTextClass}`}>{statusText}</p>
-          {config.schedules.length > 0 && (
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-white/60 text-slate-custom-600 border border-slate-custom-200 shrink-0">
-              {config.schedules.filter((s) => s.enabled).length}/{config.schedules.length} schedule
-              {config.schedules.length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+    <div className="space-y-6">
 
-        <div className="flex items-center gap-2 shrink-0">
-          {config.globalPaused ? (
-            <button
-              onClick={toggleGlobalPause}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
-            >
-              <span className="material-icons-round text-[15px]">play_arrow</span>
-              Resume
-            </button>
-          ) : isSchedulePaused ? (
-            <button
-              onClick={() => setScheduleOverride(true)}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
-            >
-              <span className="material-icons-round text-[15px]">play_arrow</span>
-              Override On
-            </button>
-          ) : isScheduleOverridden ? (
-            <button
-              onClick={() => setScheduleOverride(false)}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-slate-custom-300 text-slate-custom-600 bg-white rounded-lg hover:bg-slate-custom-50 transition-colors disabled:opacity-50"
-            >
-              <span className="material-icons-round text-[15px]">cancel</span>
-              Cancel Override
-            </button>
-          ) : (
-            <button
-              onClick={toggleGlobalPause}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
-            >
-              <span className="material-icons-round text-[15px]">pause</span>
-              Pause All
-            </button>
-          )}
+      {/* ── Reply Model ── */}
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5">
+        <h2 className="text-sm font-semibold text-slate-custom-900 mb-1">Reply Model</h2>
+        <p className="text-xs text-slate-custom-500 mb-3">
+          LLM used for all auto-generated replies.
+        </p>
+        <select
+          value={config.replyModel}
+          onChange={(e) => updateReplyModel(e.target.value)}
+          className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
+        >
+          <optgroup label="Standard">
+            {REPLY_MODELS.filter((m) => m.tier === "standard").map((m) => (
+              <option key={m.id} value={m.id}>{m.label}</option>
+            ))}
+          </optgroup>
+          <optgroup label="Enterprise">
+            {REPLY_MODELS.filter((m) => m.tier === "enterprise").map((m) => (
+              <option key={m.id} value={m.id}>{m.label}</option>
+            ))}
+          </optgroup>
+        </select>
+      </div>
 
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-slate-custom-500 hover:text-slate-custom-700 transition-colors"
-            aria-label={expanded ? "Collapse schedules" : "Manage schedules"}
-          >
-            <span className="material-icons-round text-[16px]">schedule</span>
-            <span
-              className="material-icons-round text-[14px] transition-transform duration-200"
-              style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
-            >
-              expand_more
-            </span>
-          </button>
+      {/* ── Auto-Reply Status ── */}
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5">
+        <h2 className="text-sm font-semibold text-slate-custom-900 mb-3">Auto-Reply Status</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className={`material-icons-round text-[18px] ${statusIconClass}`}>{statusIcon}</span>
+            <p className={`text-sm font-medium ${statusTextClass}`}>{statusText}</p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {config.globalPaused ? (
+              <button
+                onClick={toggleGlobalPause}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-round text-[15px]">play_arrow</span>
+                Resume
+              </button>
+            ) : isSchedulePaused ? (
+              <button
+                onClick={() => setScheduleOverride(true)}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-round text-[15px]">play_arrow</span>
+                Override On
+              </button>
+            ) : isScheduleOverridden ? (
+              <button
+                onClick={() => setScheduleOverride(false)}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-slate-custom-300 text-slate-custom-600 bg-white rounded-lg hover:bg-slate-custom-50 transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-round text-[15px]">cancel</span>
+                Cancel Override
+              </button>
+            ) : (
+              <button
+                onClick={toggleGlobalPause}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+              >
+                <span className="material-icons-round text-[15px]">pause</span>
+                Pause All
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* ── Expanded panel ── */}
-      {expanded && (
-        <div className="border-t border-slate-custom-100 bg-white px-4 py-4 space-y-4">
-          {/* Timezone */}
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-slate-custom-500 w-20 shrink-0">Timezone</span>
-            <select
-              value={config.timezone}
-              onChange={(e) => updateTimezone(e.target.value)}
-              className="flex-1 text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700"
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* ── Pause Schedules ── */}
+      <div className="bg-card rounded-xl border border-lime-200 shadow-[0_2px_10px_rgba(0,0,0,0.04),0_0_28px_rgba(155,199,84,0.35)] p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-slate-custom-900">Pause Schedules</h2>
 
-          {/* Existing schedules */}
-          {config.schedules.length > 0 && (
-            <div className="space-y-2">
-              {config.schedules.map((schedule) => (
-                <ScheduleRow
-                  key={schedule.id}
-                  schedule={schedule}
-                  onToggle={() => toggleScheduleEnabled(schedule)}
-                  onDelete={() => deleteSchedule(schedule.id)}
-                  onFrequencyUpdate={(patch) => updateScheduleFrequency(schedule.id, patch)}
-                  onAddException={(date) => addException(schedule.id, date)}
-                  onDeleteException={(exId) => deleteException(schedule.id, exId)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Add new schedule form */}
-          <form onSubmit={addSchedule} className="pt-1 border-t border-slate-custom-100">
-            <p className="text-xs font-medium text-slate-custom-600 mb-2 mt-3">Add Schedule</p>
-            <div className="flex flex-wrap gap-2 items-end">
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-slate-custom-400">Label (optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Overnight"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  className="w-36 text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-slate-custom-400">Start</label>
-                <input
-                  type="time"
-                  value={newStart}
-                  onChange={(e) => setNewStart(e.target.value)}
-                  required
-                  className="text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-slate-custom-400">End</label>
-                <input
-                  type="time"
-                  value={newEnd}
-                  onChange={(e) => setNewEnd(e.target.value)}
-                  required
-                  className="text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={addingSchedule}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                <span className="material-icons-round text-[14px]">add</span>
-                {addingSchedule ? "Adding…" : "Add"}
-              </button>
-            </div>
-          </form>
+        {/* Timezone */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-custom-500 w-20 shrink-0">Timezone</span>
+          <select
+            value={config.timezone}
+            onChange={(e) => updateTimezone(e.target.value)}
+            className="flex-1 text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white text-slate-custom-700"
+          >
+            {TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+
+        {/* Existing schedules */}
+        {config.schedules.length > 0 && (
+          <div className="space-y-2">
+            {config.schedules.map((schedule) => (
+              <ScheduleRow
+                key={schedule.id}
+                schedule={schedule}
+                onToggle={() => toggleScheduleEnabled(schedule)}
+                onDelete={() => deleteSchedule(schedule.id)}
+                onFrequencyUpdate={(patch) => updateScheduleFrequency(schedule.id, patch)}
+                onAddException={(date) => addException(schedule.id, date)}
+                onDeleteException={(exId) => deleteException(schedule.id, exId)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Add new schedule form */}
+        <form onSubmit={addSchedule} className="pt-1 border-t border-slate-custom-100">
+          <p className="text-xs font-medium text-slate-custom-600 mb-2 mt-3">Add Schedule</p>
+          <div className="flex flex-wrap gap-2 items-end">
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-slate-custom-400">Label (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. Overnight"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                className="w-36 text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-slate-custom-400">Start</label>
+              <input
+                type="time"
+                value={newStart}
+                onChange={(e) => setNewStart(e.target.value)}
+                required
+                className="text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[11px] text-slate-custom-400">End</label>
+              <input
+                type="time"
+                value={newEnd}
+                onChange={(e) => setNewEnd(e.target.value)}
+                required
+                className="text-xs px-2 py-1.5 border border-slate-custom-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={addingSchedule}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-primary text-slate-custom-900 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              <span className="material-icons-round text-[14px]">add</span>
+              {addingSchedule ? "Adding…" : "Add"}
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   );
 }

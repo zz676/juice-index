@@ -2,8 +2,6 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { anthropic } from "@ai-sdk/anthropic";
 import prisma from "@/lib/prisma";
 import { enforceStudioPostDraftLimits } from "@/lib/ratelimit";
 import { normalizeTier, type ApiTier } from "@/lib/api/tier";
@@ -12,6 +10,7 @@ import { TIER_QUOTAS, getModelQuota } from "@/lib/api/quotas";
 import {
   getModelById,
   canAccessModel,
+  getStudioModelInstance,
   DEFAULT_MODEL_ID,
   DEFAULT_TEMPERATURE,
   estimateCost,
@@ -123,10 +122,6 @@ async function enforceRateLimit(
   return { tier };
 }
 
-function resolveModel(provider: string, providerModelId: string) {
-  if (provider === "anthropic") return anthropic(providerModelId);
-  return openai(providerModelId);
-}
 
 function summarizeResults(data: DataRow[]): string {
   if (!data.length) return "No rows returned.";
@@ -264,7 +259,7 @@ export async function POST(request: Request) {
     const aiStart = Date.now();
     try {
       result = await generateText({
-        model: resolveModel(modelDef.provider, modelDef.providerModelId),
+        model: getStudioModelInstance(modelDef),
         prompt,
         temperature,
         maxOutputTokens: modelDef.defaultMaxTokens,

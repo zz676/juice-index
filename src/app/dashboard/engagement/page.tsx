@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { UserTone, UserImageStyle } from "@prisma/client";
-import { GlobalPauseBanner } from "./global-pause-banner";
+import { EngagementSettingsPanel } from "./engagement-settings-panel";
 import { UsageBar } from "./usage-bar";
 import { AccountCard, DEFAULT_TONES, type MonitoredAccountRow } from "./account-card";
 import { ImportFollowingModal } from "./import-following-modal";
@@ -10,7 +10,7 @@ import { ReplyMonitoringTable } from "./reply-monitoring-table";
 import { AccountAnalyticsChart } from "./account-analytics-chart";
 import { ToneSettings, type PlaygroundPreset } from "./tone-settings";
 
-type TabId = "accounts" | "replies" | "analytics" | "tones";
+type TabId = "accounts" | "replies" | "analytics" | "tones" | "settings";
 
 export default function EngagementPage() {
   const [activeTab, setActiveTab] = useState<TabId>("accounts");
@@ -198,9 +198,6 @@ export default function EngagementPage() {
   return (
     <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8 h-full overflow-y-auto">
       <div className="w-full max-w-7xl mx-auto space-y-6">
-      {/* Global pause banner */}
-      <GlobalPauseBanner onPauseStateChange={setGlobalPaused} />
-
       {xTokenError && (
         <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
           <span className="material-icons-round text-amber-500 text-[20px]">warning</span>
@@ -225,6 +222,7 @@ export default function EngagementPage() {
               { id: "replies", label: "Reply Monitoring", icon: "forum" },
               { id: "analytics", label: "Account Analytics", icon: "insights" },
               { id: "tones", label: "Tone Settings", icon: "tune" },
+              { id: "settings", label: "Settings", icon: "settings" },
             ] as const
           ).map((tab) => (
             <button
@@ -345,6 +343,11 @@ export default function EngagementPage() {
           onImageStylesChange={setImageStyles}
           playgroundPreset={playgroundPreset}
         />
+      )}
+
+      {/* Tab: Settings */}
+      {activeTab === "settings" && (
+        <EngagementSettingsPanel onPauseStateChange={setGlobalPaused} />
       )}
       </div>
     </div>
