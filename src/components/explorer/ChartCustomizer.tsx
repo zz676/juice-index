@@ -373,11 +373,6 @@ export function ChartCustomizer({
                                     </div>
                                 </>
                             )}
-                        </div>
-
-                        {/* Axis Text */}
-                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axis Text</label>
                             <label className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-slate-600">Axis Font</span>
                                 <select
@@ -394,13 +389,8 @@ export function ChartCustomizer({
                             <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
                             <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
                             <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
-                        </div>
-
-                        {/* Axis Lines */}
-                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axis Lines</label>
-                            <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
-                            <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
+                            <ColorInput label="X-Axis Line Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
+                            <ColorInput label="Y-Axis Line Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
                         </div>
                     </div>
                 )}
