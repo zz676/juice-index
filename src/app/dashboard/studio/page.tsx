@@ -278,6 +278,7 @@ function StudioPageInner() {
   };
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typewriterRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -762,6 +763,20 @@ function StudioPageInner() {
     }
   }, [chartConfig, chartData, multiSeriesData, seriesKeys, groupField, chartResolution, showToast, fetchUsage]);
 
+  const typeContent = useCallback((text: string) => {
+    if (typewriterRef.current) clearInterval(typewriterRef.current);
+    setPostDraft("");
+    let i = 0;
+    typewriterRef.current = setInterval(() => {
+      i++;
+      setPostDraft(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(typewriterRef.current!);
+        typewriterRef.current = null;
+      }
+    }, 14);
+  }, []);
+
   const generateDraft = useCallback(async () => {
     if (!prompt.trim()) {
       showToast("error", "Run a query first before generating a draft.");
@@ -805,7 +820,7 @@ function StudioPageInner() {
         throw new Error("Draft generation returned empty content.");
       }
 
-      setPostDraft(content);
+      typeContent(content);
       fetchUsage();
       showToast("success", "Draft generated.");
     } catch (err) {
@@ -817,7 +832,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingPost(false);
     }
-  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, userInstruction, showToast, fetchUsage]);
+  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, userInstruction, typeContent, showToast, fetchUsage]);
 
   const copyDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -1178,7 +1193,7 @@ function StudioPageInner() {
                   ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  className="studio-textarea w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -2205,14 +2220,14 @@ function StudioPageInner() {
                       value={userInstruction}
                       onChange={(e) => setUserInstruction(e.target.value)}
                       placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
-                      className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                     />
                   </div>
                   <textarea
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                    className="w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 bg-primary/5 px-3 py-2 text-[12px] font-mono text-slate-custom-700 focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;
