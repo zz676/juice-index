@@ -371,8 +371,15 @@ export function ChartCustomizer({
                                     </div>
                                 </>
                             )}
-                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
-                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600 shrink-0">Thickness</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-slate-400">X</span>
+                                    <input type="number" value={config.xAxisLineWidth ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ xAxisLineWidth: Number.isFinite(v) ? v : 1 }); }} min={0} max={10} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                    <span className="text-xs text-slate-400">Y</span>
+                                    <input type="number" value={config.yAxisLineWidth ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ yAxisLineWidth: Number.isFinite(v) ? v : 1 }); }} min={0} max={10} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                </div>
+                            </div>
                             <label className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-slate-600">Axis Font</span>
                                 <select
