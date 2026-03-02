@@ -692,6 +692,7 @@ function StudioPageInner() {
             yAxisFontColor: chartConfig.yAxisFontColor,
             axisFont: chartConfig.axisFont,
             sourceText: chartConfig.sourceText,
+            bottomRightText: chartConfig.bottomRightText,
             sourceColor: chartConfig.sourceColor,
             sourceFontSize: chartConfig.sourceFontSize,
             sourceFont: chartConfig.sourceFont,
@@ -1849,16 +1850,17 @@ function StudioPageInner() {
                     </div>
                   )}
 
-                  {chartConfig.sourceText && (
+                  {(chartConfig.sourceText || chartConfig.bottomRightText) && (
                     <div
-                      className="text-right italic -mt-3 pb-[2px]"
+                      className="flex justify-between items-end italic -mt-3 pb-[2px]"
                       style={{
                         color: chartConfig.sourceColor,
                         fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
                         fontFamily: chartConfig.sourceFont,
                       }}
                     >
-                      {chartConfig.sourceText}
+                      <span>{chartConfig.sourceText}</span>
+                      <span>{chartConfig.bottomRightText}</span>
                     </div>
                   )}
                 </div>

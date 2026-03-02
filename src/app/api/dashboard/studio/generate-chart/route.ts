@@ -71,6 +71,7 @@ type ChartStyleOptions = {
   yAxisFontColor?: string;
   axisFont?: string;
   sourceText?: string;
+  bottomRightText?: string;
   sourceColor?: string;
   sourceFontSize?: number;
   sourceFont?: string;
@@ -199,21 +200,32 @@ const sourceAttributionPlugin: Plugin = {
   id: "sourceAttribution",
   afterDraw: (chart, _args, options) => {
     const pluginOptions = options as
-      | { text?: string; color?: string; fontSize?: number; fontFamily?: string }
+      | { text?: string; bottomRightText?: string; color?: string; fontSize?: number; fontFamily?: string }
       | undefined;
-    const rawText = pluginOptions?.text ?? DEFAULT_SOURCE_TEXT;
-    if (!rawText?.trim()) return;
+    const leftText = pluginOptions?.text ?? DEFAULT_SOURCE_TEXT;
+    const rightText = pluginOptions?.bottomRightText ?? "";
+
+    if (!leftText?.trim() && !rightText?.trim()) return;
 
     const ctx = chart.ctx;
     const fontSize = pluginOptions?.fontSize ?? 12;
     const fontFamily = pluginOptions?.fontFamily || "Inter, Arial, sans-serif";
+    const color = pluginOptions?.color || "#65a30d";
+    const y = chart.height - fontSize * 0.4 - 4;
 
     ctx.save();
     ctx.font = `italic ${fontSize}px ${fontFamily}`;
-    ctx.fillStyle = pluginOptions?.color || "#65a30d";
-    ctx.textAlign = "right";
+    ctx.fillStyle = color;
     ctx.textBaseline = "bottom";
-    ctx.fillText(rawText, chart.width - 24, chart.height - fontSize * 0.4 - 4);
+
+    if (leftText?.trim()) {
+      ctx.textAlign = "left";
+      ctx.fillText(leftText, 24, y);
+    }
+    if (rightText?.trim()) {
+      ctx.textAlign = "right";
+      ctx.fillText(rightText, chart.width - 24, y);
+    }
     ctx.restore();
   },
 };
@@ -384,6 +396,7 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
       typeof obj.yAxisFontColor === "string" ? obj.yAxisFontColor : undefined,
     axisFont: typeof obj.axisFont === "string" ? obj.axisFont : undefined,
     sourceText: typeof obj.sourceText === "string" ? obj.sourceText : undefined,
+    bottomRightText: typeof obj.bottomRightText === "string" ? obj.bottomRightText : undefined,
     sourceColor:
       typeof obj.sourceColor === "string" ? obj.sourceColor : undefined,
     sourceFontSize: asNumber(obj.sourceFontSize),
@@ -548,6 +561,7 @@ function renderChartConfig(params: {
         },
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
+          bottomRightText: style.bottomRightText || "",
           color: ensureContrast(style.sourceColor || "#65a30d", bgColor),
           fontSize:
             style.sourceFontSize && style.sourceFontSize > 0
@@ -729,6 +743,7 @@ function renderMultiLineChartConfig(params: {
         backgroundColorFill: { color: style.backgroundColor || "#ffffff" },
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
+          bottomRightText: style.bottomRightText || "",
           color: ensureContrast(style.sourceColor || "#65a30d", bgColor),
           fontSize: style.sourceFontSize && style.sourceFontSize > 0 ? style.sourceFontSize : 12,
           fontFamily: style.sourceFont || "Inter, Arial, sans-serif",

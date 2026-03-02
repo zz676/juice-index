@@ -20,6 +20,7 @@ export interface ChartConfig {
     yAxisFontColor: string;
     axisFont: string;
     sourceText: string;
+    bottomRightText: string;
     sourceColor: string;
     sourceFontSize: number;
     sourceFont: string;
@@ -54,6 +55,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
     yAxisFontColor: "#64748b",
     axisFont: "Inter",
     sourceText: "Powered by juiceindex.io",
+    bottomRightText: "",
     sourceColor: "#6ada1b",
     sourceFontSize: 18,
     sourceFont: "Inter",
@@ -443,8 +445,12 @@ export function ChartCustomizer({
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Source / Watermark</label>
                         </div>
                         <div>
-                            <span className="text-xs font-medium text-slate-600 mb-1 block">Source Text</span>
+                            <span className="text-xs font-medium text-slate-600 mb-1 block">Bottom Left Text</span>
                             <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Powered by juiceindex.io" />
+                        </div>
+                        <div>
+                            <span className="text-xs font-medium text-slate-600 mb-1 block">Bottom Right Text</span>
+                            <input type="text" value={config.bottomRightText} onChange={(e) => update({ bottomRightText: e.target.value })} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="e.g. Source: Company data" />
                         </div>
                         <label className="flex items-center justify-between gap-2">
                             <span className="text-xs font-medium text-slate-600">Source Font</span>
