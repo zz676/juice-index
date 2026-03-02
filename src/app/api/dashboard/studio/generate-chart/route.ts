@@ -191,9 +191,17 @@ const backgroundColorPlugin: Plugin = {
     const pluginOptions = options as { color?: string } | undefined;
     const color = pluginOptions?.color || "#ffffff";
     const ctx = chart.ctx;
+    const w = chart.width;
+    const h = chart.height;
+    // Outer horizontal margin (white canvas border) — ~3.5% of width on each side
+    const outerPad = Math.round(w * 0.035);
     ctx.save();
+    // White canvas background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    // Chart background color fills the inset area only
     ctx.fillStyle = color;
-    ctx.fillRect(0, 0, chart.width, chart.height);
+    ctx.fillRect(outerPad, 0, w - outerPad * 2, h);
     ctx.restore();
   },
 };
