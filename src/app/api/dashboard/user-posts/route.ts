@@ -184,7 +184,9 @@ export async function POST(request: NextRequest) {
     let mediaIds: string[] | undefined;
     if (imageBase64) {
       try {
-        const { mediaId } = await uploadMedia(accessToken, imageBase64);
+        const { mediaId } = await uploadMedia(accessToken, imageBase64, {
+          additionalOwner: xAccountForPublish.xUserId,
+        });
         mediaIds = [mediaId];
       } catch (err) {
         console.error("[user-posts POST] Failed to upload media:", err);
