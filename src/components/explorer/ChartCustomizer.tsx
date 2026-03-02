@@ -279,37 +279,33 @@ export function ChartCustomizer({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* ── CHART tab: type + display + layout + axes + axis text + axis lines ── */}
                 {activeSection === "chart" && (
-                    <div className="space-y-4">
-                        <div>
-                            <div className="grid grid-cols-4 gap-1.5">
-                                {chartTypes.map((ct) => (
-                                    <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-2.5 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
-                                        <span className="material-icons-round text-xl">{ct.icon}</span>
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="space-y-2">
+                        {/* Chart type icons */}
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {chartTypes.map((ct) => (
+                                <button key={ct.value} onClick={() => update({ chartType: ct.value })} title={ct.label} className={`flex items-center justify-center p-2 rounded-lg border transition-all ${config.chartType === ct.value ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}>
+                                    <span className="material-icons-round text-xl">{ct.icon}</span>
+                                </button>
+                            ))}
                         </div>
 
-                        <div className="border-t border-slate-100 pt-3">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Display</label>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-600">Show Values</span>
-                            <button onClick={() => update({ showValues: !config.showValues })} className={`w-9 h-5 rounded-full transition-colors relative ${config.showValues ? "bg-primary" : "bg-slate-300"}`}>
-                                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${config.showValues ? "left-[18px]" : "left-0.5"}`} />
-                            </button>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-600">Show Grid</span>
-                            <button onClick={() => update({ showGrid: !config.showGrid })} className={`w-9 h-5 rounded-full transition-colors relative ${config.showGrid ? "bg-primary" : "bg-slate-300"}`}>
-                                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${config.showGrid ? "left-[18px]" : "left-0.5"}`} />
-                            </button>
-                        </div>
-                        {config.showGrid && (
-                            <>
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Grid Line Style</label>
-                                    <div className="grid grid-cols-3 gap-1.5">
+                        {/* Show Values + Show Grid toggles */}
+                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-slate-600">Show Values</span>
+                                <button onClick={() => update({ showValues: !config.showValues })} className={`w-9 h-5 rounded-full transition-colors relative ${config.showValues ? "bg-primary" : "bg-slate-300"}`}>
+                                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${config.showValues ? "left-[18px]" : "left-0.5"}`} />
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-slate-600">Show Grid</span>
+                                <button onClick={() => update({ showGrid: !config.showGrid })} className={`w-9 h-5 rounded-full transition-colors relative ${config.showGrid ? "bg-primary" : "bg-slate-300"}`}>
+                                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${config.showGrid ? "left-[18px]" : "left-0.5"}`} />
+                                </button>
+                            </div>
+                            {config.showGrid && (
+                                <div className="space-y-1.5 pt-0.5">
+                                    <div className="grid grid-cols-3 gap-1">
                                         {([
                                             { value: "solid", label: "Solid" },
                                             { value: "dashed", label: "Dashed" },
@@ -318,44 +314,44 @@ export function ChartCustomizer({
                                             <button
                                                 key={opt.value}
                                                 onClick={() => update({ gridLineStyle: opt.value })}
-                                                className={`py-1.5 text-[10px] font-bold rounded border transition-all ${config.gridLineStyle === opt.value ? "border-primary bg-primary/10 text-primary" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}
+                                                className={`py-1 text-[10px] font-bold rounded border transition-all ${config.gridLineStyle === opt.value ? "border-primary bg-primary/10 text-primary" : "border-slate-200 text-slate-500 hover:border-primary/50 hover:text-primary"}`}
                                             >
                                                 {opt.label}
                                             </button>
                                         ))}
                                     </div>
+                                    <ColorInput label="Grid Color" value={config.gridColor} onChange={(v) => update({ gridColor: v })} />
                                 </div>
-                                <ColorInput label="Grid Color" value={config.gridColor} onChange={(v) => update({ gridColor: v })} />
-                            </>
-                        )}
-
-                        <div className="border-t border-slate-100 pt-3">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 block">Layout</label>
+                            )}
                         </div>
-                        <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
-                        <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
-                        <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
-                        <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Padding</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <NumberInput label="Top" value={config.paddingTop} onChange={(v) => update({ paddingTop: v ?? 20 })} placeholder="20" min={0} max={100} />
-                                <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 20 })} placeholder="20" min={0} max={100} />
-                                <NumberInput label="Left" value={config.paddingLeft} onChange={(v) => update({ paddingLeft: v ?? 20 })} placeholder="20" min={0} max={100} />
-                                <NumberInput label="Right" value={config.paddingRight} onChange={(v) => update({ paddingRight: v ?? 20 })} placeholder="20" min={0} max={100} />
+
+                        {/* Layout */}
+                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Layout</label>
+                            <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
+                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            <div>
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Padding</label>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    <NumberInput label="Top" value={config.paddingTop} onChange={(v) => update({ paddingTop: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                    <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                    <NumberInput label="Left" value={config.paddingLeft} onChange={(v) => update({ paddingLeft: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                    <NumberInput label="Right" value={config.paddingRight} onChange={(v) => update({ paddingRight: v ?? 20 })} placeholder="20" min={0} max={100} />
+                                </div>
                             </div>
                         </div>
 
+                        {/* Axes */}
                         {hasMultipleColumns && (
-                            <>
-                                <div className="border-t border-slate-100 pt-3">
-                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axes</label>
-                                </div>
+                            <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axes</label>
                                 <div className="flex items-center justify-between gap-2">
                                     <span className="text-xs font-medium text-slate-600 shrink-0">X Axis</span>
                                     <select
                                         value={xField}
                                         onChange={(e) => onAxisChange?.(e.target.value, yField)}
-                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {columns.map((col) => (
                                             <option key={col} value={col}>{col}</option>
@@ -367,41 +363,43 @@ export function ChartCustomizer({
                                     <select
                                         value={yField}
                                         onChange={(e) => onAxisChange?.(xField, e.target.value)}
-                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {numericColumns.map((col) => (
                                             <option key={col} value={col}>{col}</option>
                                         ))}
                                     </select>
                                 </div>
-                            </>
+                            </div>
                         )}
 
-                        <div className="border-t border-slate-100 pt-3 mt-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Text</label>
+                        {/* Axis Text */}
+                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axis Text</label>
+                            <label className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600">Axis Font</span>
+                                <select
+                                    value={config.axisFont}
+                                    onChange={(e) => update({ axisFont: e.target.value })}
+                                    className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                    {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
+                                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
+                            <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
+                            <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
+                            <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
                         </div>
-                        <label className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-slate-600">Axis Font</span>
-                            <select
-                                value={config.axisFont}
-                                onChange={(e) => update({ axisFont: e.target.value })}
-                                className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
-                            >
-                                {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
-                                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                                ))}
-                            </select>
-                        </label>
-                        <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
-                        <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
-                        <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
 
-                        <div className="border-t border-slate-100 pt-3 mt-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Axis Lines</label>
+                        {/* Axis Lines */}
+                        <div className="border-t border-slate-100 pt-2 space-y-1.5">
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axis Lines</label>
+                            <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
+                            <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
                         </div>
-                        <ColorInput label="X-Axis Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
-                        <ColorInput label="Y-Axis Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
                     </div>
                 )}
 
