@@ -1858,7 +1858,7 @@ function StudioPageInner() {
 
                   {(chartConfig.sourceText || chartConfig.bottomRightText) && (
                     <div
-                      className="flex justify-between items-end italic"
+                      className="flex justify-between items-end italic px-4"
                       style={{
                         color: chartConfig.sourceColor,
                         fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
