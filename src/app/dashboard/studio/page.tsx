@@ -1879,35 +1879,6 @@ function StudioPageInner() {
                     Generate a high-res image for export
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    {multiSeriesData.length > 0 && seriesKeys.length > 1 && chartData.length > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-slate-custom-400 font-medium">Style:</span>
-                        <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
-                          <button
-                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "line" }))}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
-                              chartConfig.chartType !== "multiLine"
-                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
-                                : "text-slate-custom-500 hover:text-slate-custom-900"
-                            }`}
-                          >
-                            <span className="material-icons-round text-[10px]">show_chart</span>
-                            1 Line
-                          </button>
-                          <button
-                            onClick={() => setChartConfig((c) => ({ ...c, chartType: "multiLine" }))}
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 transition-colors leading-tight ${
-                              chartConfig.chartType === "multiLine"
-                                ? "bg-card text-primary shadow-sm border border-slate-custom-200 font-bold"
-                                : "text-slate-custom-500 hover:text-slate-custom-900"
-                            }`}
-                          >
-                            <span className="material-icons-round text-[10px]">stacked_line_chart</span>
-                            {seriesKeys.length} Lines
-                          </button>
-                        </div>
-                      </div>
-                    )}
                     <div className="flex items-center gap-2">
                       <select
                         value={chartResolution}
