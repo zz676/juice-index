@@ -343,8 +343,6 @@ export function ChartCustomizer({
                         {/* Axes */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axes</label>
-                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
-                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
                             {hasMultipleColumns && (
                                 <>
                                     <div className="flex items-center justify-between gap-2">
@@ -373,6 +371,8 @@ export function ChartCustomizer({
                                     </div>
                                 </>
                             )}
+                            <NumberInput label="X-Axis Thickness" value={config.xAxisLineWidth} onChange={(v) => update({ xAxisLineWidth: v ?? 1 })} min={0} max={10} />
+                            <NumberInput label="Y-Axis Thickness" value={config.yAxisLineWidth} onChange={(v) => update({ yAxisLineWidth: v ?? 1 })} min={0} max={10} />
                             <label className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-slate-600">Axis Font</span>
                                 <select
