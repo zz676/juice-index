@@ -1652,7 +1652,7 @@ function StudioPageInner() {
                         {chartConfig.chartType === "multiLine" && hasMultiSeriesChartData ? (
                           <LineChart
                             data={multiSeriesData}
-                            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1693,7 +1693,7 @@ function StudioPageInner() {
                         ) : chartConfig.chartType === "line" ? (
                           <LineChart
                             data={chartData}
-                            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1731,7 +1731,7 @@ function StudioPageInner() {
                           <BarChart
                             data={chartData}
                             layout="vertical"
-                            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
@@ -1778,7 +1778,7 @@ function StudioPageInner() {
                         ) : (
                           <BarChart
                             data={chartData}
-                            margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                            margin={{ top: 5, right: 20, bottom: 5, left: 10 }}
                           >
                             {chartConfig.showGrid && (
                               <CartesianGrid stroke={chartConfig.gridColor} strokeDasharray={chartConfig.gridLineStyle === "dotted" ? "2 4" : chartConfig.gridLineStyle === "solid" ? "0" : "4 4"} />
