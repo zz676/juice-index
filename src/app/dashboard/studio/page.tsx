@@ -85,7 +85,7 @@ function WorkflowStepper({
 }) {
   const currentStepInfo = steps.find((s) => s.stepNum === currentStep);
   return (
-    <div className="space-y-3">
+    <div className="animate-fade-in-up space-y-3">
       <div className="bg-card rounded-2xl border-[1.3px] border-lime-300 shadow-[0_0_20px_rgba(106,218,27,0.12),_0_1px_4px_rgba(0,0,0,0.05),_inset_0_1px_0_rgba(106,218,27,0.15)] overflow-hidden">
         <div className="bg-lime-50 px-4 py-2.5 border-b border-lime-200">
           <div className="text-[11px] font-bold uppercase tracking-widest text-lime-800 text-center">Workflow</div>
@@ -1106,7 +1106,7 @@ function StudioPageInner() {
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
                 ? "border-red-300 bg-red-200 text-red-700"
-                : "border-slate-200 bg-card text-slate-700"
+                : "border-primary bg-primary text-green-900"
             }`}
           >
             {toast.message}
@@ -1124,10 +1124,10 @@ function StudioPageInner() {
       </header>
 
       <main className="px-6 pt-24 pb-5 w-full max-w-7xl mx-auto">
-        <div className="xl:grid gap-5 xl:grid-cols-[1fr_16rem]">
+        <div className={`w-full ${currentStep > 1 ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
-          <div className="space-y-5 min-w-0">
+          <div className={`space-y-5 min-w-0 ${currentStep === 1 ? "xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-16" : ""}`}>
 
             {/* Step 1 - Always visible */}
             <section
@@ -1328,7 +1328,7 @@ function StudioPageInner() {
                 id="step-2"
                 onFocusCapture={() => setActiveSection(2)}
                 onClickCapture={() => setActiveSection(2)}
-                className={`bg-card rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative p-6 ${activeSection === 2 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`animate-fade-in-up bg-card rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative p-6 ${activeSection === 2 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="flex items-center gap-2 mb-4">
                   <span
@@ -2332,13 +2332,13 @@ function StudioPageInner() {
                 yField={yField}
                 onAxisChange={handleAxisChange}
               />
-            ) : (
+            ) : currentStep > 1 ? (
               <WorkflowStepper
                 currentStep={currentStep}
                 steps={workflowSteps}
                 onStepClick={scrollToStep}
               />
-            )}
+            ) : null}
           </aside>
 
         </div>

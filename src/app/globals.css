@@ -22,6 +22,22 @@
   --spacing: 0.25rem;
 }
 
+/* ─── Fade-in-up entrance animation ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* ─── Account card save flash ─── */
 @keyframes card-save-flash {
   0%   { box-shadow: 0 0 0 0 rgba(106, 218, 27, 0); border-color: #e2e8f0; background-color: #ffffff; }
