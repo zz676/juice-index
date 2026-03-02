@@ -97,7 +97,7 @@ export default function XPostingAccount({ xAccount, tier, hasXLoginIdentity }: X
               <p className="text-sm font-medium text-slate-custom-900">
                 {xAccount.displayName || xAccount.username}
               </p>
-              <p className="text-xs text-slate-custom-500">@{xAccount.username}</p>
+              <p className="text-xs text-slate-custom-550">@{xAccount.username}</p>
             </div>
           </div>
           <button

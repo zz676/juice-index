@@ -152,7 +152,7 @@ export default function ConnectedAccounts({
                                 <div className="flex-shrink-0">{p.icon}</div>
                                 <div>
                                     <p className="text-sm font-medium text-slate-custom-900">{p.name}</p>
-                                    <p className="text-xs text-slate-custom-500">
+                                    <p className="text-xs text-slate-custom-550">
                                         {linked ? linked.email || linked.name || "Connected" : "Not connected"}
                                     </p>
                                 </div>
@@ -310,7 +310,7 @@ export default function ConnectedAccounts({
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-between py-2">
-                                        <p className="text-xs text-slate-custom-500">
+                                        <p className="text-xs text-slate-custom-550">
                                             {hasXLoginIdentity
                                                 ? "Enable posting with your X account in one click."
                                                 : "Connect X for posting to publish from your dashboard."}
