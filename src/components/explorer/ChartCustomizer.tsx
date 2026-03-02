@@ -392,12 +392,33 @@ export function ChartCustomizer({
                                     ))}
                                 </select>
                             </label>
-                            <NumberInput label="X-Axis Font Size" value={config.xAxisFontSize} onChange={(v) => update({ xAxisFontSize: v ?? 12 })} min={8} max={24} />
-                            <ColorInput label="X-Axis Font Color" value={config.xAxisFontColor} onChange={(v) => update({ xAxisFontColor: v })} />
-                            <NumberInput label="Y-Axis Font Size" value={config.yAxisFontSize} onChange={(v) => update({ yAxisFontSize: v ?? 12 })} min={8} max={24} />
-                            <ColorInput label="Y-Axis Font Color" value={config.yAxisFontColor} onChange={(v) => update({ yAxisFontColor: v })} />
-                            <ColorInput label="X-Axis Line Color" value={config.xAxisLineColor} onChange={(v) => update({ xAxisLineColor: v })} />
-                            <ColorInput label="Y-Axis Line Color" value={config.yAxisLineColor} onChange={(v) => update({ yAxisLineColor: v })} />
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600 shrink-0">Font Size</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-slate-400">X</span>
+                                    <input type="number" value={config.xAxisFontSize ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ xAxisFontSize: Number.isFinite(v) ? v : 12 }); }} min={8} max={24} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                    <span className="text-xs text-slate-400">Y</span>
+                                    <input type="number" value={config.yAxisFontSize ?? ""} onChange={(e) => { const v = Number(e.target.value); update({ yAxisFontSize: Number.isFinite(v) ? v : 12 }); }} min={8} max={24} className="h-7 w-12 rounded border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600 shrink-0">Font Color</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-slate-400">X</span>
+                                    <input type="color" value={config.xAxisFontColor || "#64748b"} onChange={(e) => update({ xAxisFontColor: e.target.value })} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                    <span className="text-xs text-slate-400">Y</span>
+                                    <input type="color" value={config.yAxisFontColor || "#64748b"} onChange={(e) => update({ yAxisFontColor: e.target.value })} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-medium text-slate-600 shrink-0">Line Color</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs text-slate-400">X</span>
+                                    <input type="color" value={config.xAxisLineColor || "#e5e7eb"} onChange={(e) => update({ xAxisLineColor: e.target.value })} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                    <span className="text-xs text-slate-400">Y</span>
+                                    <input type="color" value={config.yAxisLineColor || "#e5e7eb"} onChange={(e) => update({ yAxisLineColor: e.target.value })} className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
