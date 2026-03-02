@@ -453,7 +453,7 @@ export function ChartCustomizer({
                                     <select
                                         value={config.titleFont}
                                         onChange={(e) => update({ titleFont: e.target.value })}
-                                        className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="h-7 w-24 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
                                             <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
@@ -483,7 +483,7 @@ export function ChartCustomizer({
                                     <select
                                         value={config.sourceFont || "Inter"}
                                         onChange={(e) => update({ sourceFont: e.target.value })}
-                                        className="h-7 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                                        className="h-7 w-24 rounded border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                         {["Inter", "Arial", "Helvetica", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS"].map((f) => (
                                             <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
