@@ -22,6 +22,7 @@ import {
 import {
   MODEL_REGISTRY,
   DEFAULT_MODEL_ID,
+  DEFAULT_QUERY_MODEL_ID,
   DEFAULT_TEMPERATURE,
   canAccessModel,
   type ModelDefinition,
@@ -196,6 +197,7 @@ function StudioPageInner() {
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
   const [analysisExplanation, setAnalysisExplanation] = useState("");
   const [postDraft, setPostDraft] = useState("");
+  const [userInstruction, setUserInstruction] = useState("");
   const [isGeneratingPost, setIsGeneratingPost] = useState(false);
   const [attachImage, setAttachImage] = useState(true);
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(
@@ -205,7 +207,7 @@ function StudioPageInner() {
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [userTier, setUserTier] = useState<ApiTier>("FREE");
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
-  const [queryModelId, setQueryModelId] = useState(DEFAULT_MODEL_ID);
+  const [queryModelId, setQueryModelId] = useState(DEFAULT_QUERY_MODEL_ID);
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<number>(1);
   const [queryUsageCount, setQueryUsageCount] = useState(0);
@@ -276,6 +278,8 @@ function StudioPageInner() {
   };
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typewriterRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -760,6 +764,28 @@ function StudioPageInner() {
     }
   }, [chartConfig, chartData, multiSeriesData, seriesKeys, groupField, chartResolution, showToast, fetchUsage]);
 
+  const handleTypingEffect = useCallback((el: HTMLTextAreaElement) => {
+    el.classList.add("is-typing");
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = setTimeout(() => {
+      el.classList.remove("is-typing");
+    }, 800);
+  }, []);
+
+  const typeContent = useCallback((text: string) => {
+    if (typewriterRef.current) clearInterval(typewriterRef.current);
+    setPostDraft("");
+    let i = 0;
+    typewriterRef.current = setInterval(() => {
+      i++;
+      setPostDraft(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(typewriterRef.current!);
+        typewriterRef.current = null;
+      }
+    }, 14);
+  }, []);
+
   const generateDraft = useCallback(async () => {
     if (!prompt.trim()) {
       showToast("error", "Run a query first before generating a draft.");
@@ -781,6 +807,7 @@ function StudioPageInner() {
           data: rawData.slice(0, 60),
           model: selectedModelId,
           temperature,
+          userInstructions: userInstruction,
         }),
       });
 
@@ -802,7 +829,7 @@ function StudioPageInner() {
         throw new Error("Draft generation returned empty content.");
       }
 
-      setPostDraft(content);
+      typeContent(content);
       fetchUsage();
       showToast("success", "Draft generated.");
     } catch (err) {
@@ -814,7 +841,7 @@ function StudioPageInner() {
     } finally {
       setIsGeneratingPost(false);
     }
-  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, showToast, fetchUsage]);
+  }, [chartConfig.chartType, chartConfig.title, generatedSql, prompt, rawData, selectedModelId, temperature, userInstruction, typeContent, showToast, fetchUsage]);
 
   const copyDraft = useCallback(async () => {
     if (!postDraft) return;
@@ -1051,7 +1078,7 @@ function StudioPageInner() {
     { id: "step-1", stepNum: 1, title: "Ask Intelligence", detail: "Enter your data question" },
     { id: "step-2", stepNum: 2, title: "Review Query", detail: "Review and run SQL" },
     { id: "step-3", stepNum: 3, title: "Visualization & Data", detail: "Explore your chart" },
-    { id: "step-4", stepNum: 4, title: "Analyst Composer", detail: "Draft and publish" },
+    { id: "step-4", stepNum: 4, title: "AI Composer", detail: "Draft and publish" },
   ];
   const scrollToStep = (stepId: string) => {
     const el = document.getElementById(stepId);
@@ -1122,7 +1149,7 @@ function StudioPageInner() {
                   onClick={() => setExamplesOpen((v) => !v)}
                   className="flex items-center gap-1 text-[12px] font-medium text-slate-custom-500 hover:text-primary transition-colors"
                 >
-                  <span className="material-icons-round text-[15px]">lightbulb</span>
+                  <span className="bulb-flash material-icons-round text-[15px]">lightbulb</span>
                   Examples
                   <span className="material-icons-round text-[15px] transition-transform duration-200" style={{ transform: examplesOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
                     expand_more
@@ -1175,7 +1202,8 @@ function StudioPageInner() {
                   ref={promptRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full min-h-[66px] bg-card border border-slate-custom-300 rounded-lg pt-3 px-3 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400 text-slate-custom-800"
+                  onInput={(e) => handleTypingEffect(e.currentTarget)}
+                  className="studio-textarea w-full min-h-[66px] border border-slate-custom-300 rounded-lg pt-3 px-8 pb-0 text-[15px] focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none transition-colors resize-y shadow-sm placeholder-slate-custom-400"
                   placeholder="e.g. Compare Tesla Shanghai exports vs domestic sales for Q1 2024..."
                 />
                 <div className="flex items-center justify-between">
@@ -2055,7 +2083,7 @@ function StudioPageInner() {
                       4
                     </span>
                     <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 4 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
-                      Analyst Composer
+                      AI Composer
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
@@ -2193,11 +2221,25 @@ function StudioPageInner() {
                   </div>
                 </div>
                 <div className="p-3">
+                  {/* User writing instructions */}
+                  <div className="mb-3">
+                    <label className="block text-[11px] font-bold uppercase tracking-wide text-slate-custom-400 mb-1.5">
+                      Writing instructions <span className="font-normal normal-case">(optional)</span>
+                    </label>
+                    <textarea
+                      value={userInstruction}
+                      onChange={(e) => setUserInstruction(e.target.value)}
+                      placeholder={'e.g. "Focus on BYD\'s lead, write in a bullish tone, keep it under 2 sentences"'}
+                      onInput={(e) => handleTypingEffect(e.currentTarget)}
+                      className="studio-textarea w-full h-[120px] rounded border border-primary/40 px-8 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
+                    />
+                  </div>
                   <textarea
                     value={postDraft}
                     onChange={(e) => setPostDraft(e.target.value)}
                     placeholder="Generate a draft to turn your data result into a publish-ready analyst summary."
-                    className="w-full bg-slate-custom-50 p-4 rounded-lg border border-slate-custom-100 text-[15px] text-slate-custom-800 leading-relaxed min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                    onInput={(e) => handleTypingEffect(e.currentTarget)}
+                    className="studio-textarea w-full h-[120px] rounded border border-primary/40 px-8 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-primary/40 cursor-text resize-y"
                   />
                   {postDraft && (() => {
                     const limit = publishInfo?.charLimit ?? 280;

@@ -147,6 +147,7 @@ function buildPrompt(input: {
   chartType?: string;
   data?: DataRow[];
   charLimit?: number;
+  userInstructions?: string;
 }): string {
   const question = input.question?.trim() || "(not provided)";
   const sql = input.sql?.trim() || "(not provided)";
@@ -155,7 +156,7 @@ function buildPrompt(input: {
   const dataSummary = summarizeResults(Array.isArray(input.data) ? input.data : []);
   const charLimit = input.charLimit ?? 280;
 
-  return `You are an EV market analyst writing a concise social post.
+  let base = `You are an EV market analyst writing a concise social post.
 
 Question:
 ${question}
@@ -176,6 +177,12 @@ Write one short post (2-4 sentences) with:
 3. one implication for the EV market.
 
 Your response MUST be under ${charLimit} characters. Keep tone factual and publish-ready. No hashtags. No markdown.`;
+
+  if (input.userInstructions?.trim()) {
+    base += `\n\nAdditional instructions from the user: ${input.userInstructions.trim()}`;
+  }
+
+  return base;
 }
 
 export async function POST(request: Request) {
@@ -246,6 +253,7 @@ export async function POST(request: Request) {
               ? (body.data as DataRow[])
               : undefined,
             charLimit,
+            userInstructions: typeof body.userInstructions === "string" ? body.userInstructions : undefined,
           });
 
     if (prompt.length < 20) {

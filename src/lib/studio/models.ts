@@ -19,6 +19,15 @@ export interface ModelDefinition {
 
 export const MODEL_REGISTRY: ModelDefinition[] = [
   {
+    id: "o3-mini",
+    displayName: "o3-mini",
+    provider: "openai",
+    providerModelId: "o3-mini",
+    minTier: "FREE",
+    defaultMaxTokens: 500,
+    description: "Fast reasoning from OpenAI",
+  },
+  {
     id: "grok-4-1-fast-reasoning",
     displayName: "Grok 4.1 Fast",
     provider: "xai",
@@ -75,6 +84,7 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
 ];
 
 export const DEFAULT_MODEL_ID = "grok-4-1-fast-reasoning";
+export const DEFAULT_QUERY_MODEL_ID = "o3-mini";
 export const DEFAULT_TEMPERATURE = 0.4;
 
 export function getModelById(id: string): ModelDefinition | undefined {
@@ -100,8 +110,9 @@ export function getStudioModelInstance(modelDef: ModelDefinition): LanguageModel
   }
 }
 
-/** Per-token pricing in USD (input / output per token). */
-const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+/** Per-token pricing in USD (input / cachedInput / output per token). */
+const MODEL_PRICING: Record<string, { input: number; cachedInput?: number; output: number }> = {
+  "o3-mini":                 { input: 1.10  / 1_000_000, cachedInput: 0.55 / 1_000_000, output: 4.40  / 1_000_000 },
   "grok-4-1-fast-reasoning": { input: 0.20  / 1_000_000, output: 0.50  / 1_000_000 },
   "gpt-5-mini":              { input: 0.25  / 1_000_000, output: 2.00  / 1_000_000 },
   "gemini-3.1-pro-preview":  { input: 2.00  / 1_000_000, output: 12.00 / 1_000_000 },
