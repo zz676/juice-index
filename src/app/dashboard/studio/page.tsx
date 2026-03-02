@@ -686,6 +686,8 @@ function StudioPageInner() {
             titleColor: chartConfig.titleColor,
             titleSize: chartConfig.titleSize,
             titleFont: chartConfig.titleFont,
+            titlePaddingTop: chartConfig.titlePaddingTop,
+            titlePaddingBottom: chartConfig.titlePaddingBottom,
             xAxisFontSize: chartConfig.xAxisFontSize,
             yAxisFontSize: chartConfig.yAxisFontSize,
             xAxisFontColor: chartConfig.xAxisFontColor,
@@ -696,6 +698,8 @@ function StudioPageInner() {
             sourceColor: chartConfig.sourceColor,
             sourceFontSize: chartConfig.sourceFontSize,
             sourceFont: chartConfig.sourceFont,
+            sourcePaddingTop: chartConfig.sourcePaddingTop,
+            sourcePaddingBottom: chartConfig.sourcePaddingBottom,
             barWidth: chartConfig.barWidth,
             showValues: chartConfig.showValues,
             showGrid: chartConfig.showGrid,
@@ -1629,11 +1633,13 @@ function StudioPageInner() {
                 >
                   {chartConfig.title && (
                     <h4
-                      className="text-center font-bold pt-3 pb-1"
+                      className="text-center font-bold"
                       style={{
                         color: ensureContrast(chartConfig.titleColor, chartConfig.backgroundColor, "#f1f5f9"),
                         fontSize: `${chartConfig.titleSize}px`,
                         fontFamily: chartConfig.titleFont,
+                        paddingTop: `${chartConfig.titlePaddingTop}px`,
+                        paddingBottom: `${chartConfig.titlePaddingBottom}px`,
                       }}
                     >
                       {chartConfig.title}
@@ -1852,11 +1858,13 @@ function StudioPageInner() {
 
                   {(chartConfig.sourceText || chartConfig.bottomRightText) && (
                     <div
-                      className="flex justify-between items-end italic -mt-3 pb-[2px]"
+                      className="flex justify-between items-end italic"
                       style={{
                         color: chartConfig.sourceColor,
                         fontSize: `${chartConfig.sourceFontSize * 0.7}px`,
                         fontFamily: chartConfig.sourceFont,
+                        paddingTop: `${chartConfig.sourcePaddingTop}px`,
+                        paddingBottom: `${chartConfig.sourcePaddingBottom}px`,
                       }}
                     >
                       <span>{chartConfig.sourceText}</span>

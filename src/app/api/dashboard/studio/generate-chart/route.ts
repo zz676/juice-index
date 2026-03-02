@@ -65,6 +65,8 @@ type ChartStyleOptions = {
   titleColor?: string;
   titleSize?: number;
   titleFont?: string;
+  titlePaddingTop?: number;
+  titlePaddingBottom?: number;
   xAxisFontSize?: number;
   yAxisFontSize?: number;
   xAxisFontColor?: string;
@@ -75,6 +77,8 @@ type ChartStyleOptions = {
   sourceColor?: string;
   sourceFontSize?: number;
   sourceFont?: string;
+  sourcePaddingTop?: number;
+  sourcePaddingBottom?: number;
   barWidth?: number;
   paddingTop?: number;
   paddingBottom?: number;
@@ -200,7 +204,7 @@ const sourceAttributionPlugin: Plugin = {
   id: "sourceAttribution",
   afterDraw: (chart, _args, options) => {
     const pluginOptions = options as
-      | { text?: string; bottomRightText?: string; color?: string; fontSize?: number; fontFamily?: string }
+      | { text?: string; bottomRightText?: string; color?: string; fontSize?: number; fontFamily?: string; sourcePaddingBottom?: number; sourcePaddingTop?: number }
       | undefined;
     const leftText = pluginOptions?.text ?? DEFAULT_SOURCE_TEXT;
     const rightText = pluginOptions?.bottomRightText ?? "";
@@ -211,7 +215,7 @@ const sourceAttributionPlugin: Plugin = {
     const fontSize = pluginOptions?.fontSize ?? 12;
     const fontFamily = pluginOptions?.fontFamily || "Inter, Arial, sans-serif";
     const color = pluginOptions?.color || "#65a30d";
-    const y = chart.height - fontSize * 0.4 - 20;
+    const y = chart.height - (pluginOptions?.sourcePaddingBottom ?? 20);
 
     ctx.save();
     ctx.font = `italic ${fontSize}px ${fontFamily}`;
@@ -388,6 +392,8 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
     titleColor: typeof obj.titleColor === "string" ? obj.titleColor : undefined,
     titleSize: asNumber(obj.titleSize),
     titleFont: typeof obj.titleFont === "string" ? obj.titleFont : undefined,
+    titlePaddingTop: asNumber(obj.titlePaddingTop),
+    titlePaddingBottom: asNumber(obj.titlePaddingBottom),
     xAxisFontSize: asNumber(obj.xAxisFontSize),
     yAxisFontSize: asNumber(obj.yAxisFontSize),
     xAxisFontColor:
@@ -401,6 +407,8 @@ function normalizeStyleOptions(raw: unknown): ChartStyleOptions {
       typeof obj.sourceColor === "string" ? obj.sourceColor : undefined,
     sourceFontSize: asNumber(obj.sourceFontSize),
     sourceFont: typeof obj.sourceFont === "string" ? obj.sourceFont : undefined,
+    sourcePaddingTop: asNumber(obj.sourcePaddingTop),
+    sourcePaddingBottom: asNumber(obj.sourcePaddingBottom),
     barWidth: asNumber(obj.barWidth),
     paddingTop: asNumber(obj.paddingTop),
     paddingBottom: asNumber(obj.paddingBottom),
@@ -540,7 +548,7 @@ function renderChartConfig(params: {
             size: style.titleSize && style.titleSize > 0 ? style.titleSize : 24,
             weight: "bold",
           },
-          padding: { top: 18, bottom: 18 },
+          padding: { top: style.titlePaddingTop ?? 18, bottom: style.titlePaddingBottom ?? 18 },
         },
         legend: { display: false },
         datalabels: {
@@ -562,6 +570,8 @@ function renderChartConfig(params: {
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
           bottomRightText: style.bottomRightText || "",
+          sourcePaddingBottom: style.sourcePaddingBottom ?? 20,
+          sourcePaddingTop: style.sourcePaddingTop ?? 6,
           color: ensureContrast(style.sourceColor || "#65a30d", bgColor),
           fontSize:
             style.sourceFontSize && style.sourceFontSize > 0
@@ -724,7 +734,7 @@ function renderMultiLineChartConfig(params: {
             size: style.titleSize && style.titleSize > 0 ? style.titleSize : 24,
             weight: "bold",
           },
-          padding: { top: 18, bottom: 18 },
+          padding: { top: style.titlePaddingTop ?? 18, bottom: style.titlePaddingBottom ?? 18 },
         },
         legend: {
           display: true,
@@ -744,6 +754,8 @@ function renderMultiLineChartConfig(params: {
         sourceAttribution: {
           text: style.sourceText || DEFAULT_SOURCE_TEXT,
           bottomRightText: style.bottomRightText || "",
+          sourcePaddingBottom: style.sourcePaddingBottom ?? 20,
+          sourcePaddingTop: style.sourcePaddingTop ?? 6,
           color: ensureContrast(style.sourceColor || "#65a30d", bgColor),
           fontSize: style.sourceFontSize && style.sourceFontSize > 0 ? style.sourceFontSize : 12,
           fontFamily: style.sourceFont || "Inter, Arial, sans-serif",
