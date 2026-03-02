@@ -448,7 +448,7 @@ export function ChartCustomizer({
                             <label className="text-xs font-semibold text-primary uppercase tracking-wide bg-primary/[0.13] px-1.5 py-0.5 rounded text-center block">Title</label>
                             <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Chart title..." />
                             <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-medium text-slate-600">Font & Size</span>
+                                <span className="text-xs font-medium text-slate-600">Font</span>
                                 <div className="flex items-center gap-1.5">
                                     <select
                                         value={config.titleFont}
@@ -478,7 +478,7 @@ export function ChartCustomizer({
                             <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom left text..." />
                             <input type="text" value={config.bottomRightText} onChange={(e) => update({ bottomRightText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom right text..." />
                             <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs font-medium text-slate-600">Font & Size</span>
+                                <span className="text-xs font-medium text-slate-600">Font</span>
                                 <div className="flex items-center gap-1.5">
                                     <select
                                         value={config.sourceFont || "Inter"}
