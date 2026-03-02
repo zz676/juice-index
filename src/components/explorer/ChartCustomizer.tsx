@@ -327,10 +327,10 @@ export function ChartCustomizer({
 
                         {/* Layout */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Layout</label>
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded block">Layout</label>
                             <NumberInput label="Bar Width" value={config.barWidth} onChange={(v) => update({ barWidth: v })} min={1} max={100} />
                             <div>
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1 block">Padding</label>
+                                <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded mb-1 block">Padding</label>
                                 <div className="grid grid-cols-2 gap-1.5">
                                     <NumberInput label="Top" value={config.paddingTop} onChange={(v) => update({ paddingTop: v ?? 20 })} placeholder="20" min={0} max={100} />
                                     <NumberInput label="Bottom" value={config.paddingBottom} onChange={(v) => update({ paddingBottom: v ?? 20 })} placeholder="20" min={0} max={100} />
@@ -342,7 +342,7 @@ export function ChartCustomizer({
 
                         {/* Axes */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Axes</label>
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded block">Axes</label>
                             {hasMultipleColumns && (
                                 <>
                                     <div className="flex items-center justify-between gap-2">
@@ -425,7 +425,7 @@ export function ChartCustomizer({
 
                         {/* Title */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Title</label>
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded block">Title</label>
                             <input type="text" value={config.title} onChange={(e) => update({ title: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Chart title..." />
                             <label className="flex items-center justify-between gap-2">
                                 <span className="text-xs font-medium text-slate-600">Font</span>
@@ -447,7 +447,7 @@ export function ChartCustomizer({
 
                         {/* Source / Watermark */}
                         <div className="border-t border-slate-100 pt-2 space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block">Source / Watermark</label>
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded block">Source / Watermark</label>
                             <input type="text" value={config.sourceText} onChange={(e) => update({ sourceText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom left text..." />
                             <input type="text" value={config.bottomRightText} onChange={(e) => update({ bottomRightText: e.target.value })} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary" placeholder="Bottom right text..." />
                             <label className="flex items-center justify-between gap-2">
@@ -474,7 +474,7 @@ export function ChartCustomizer({
                     <div className="space-y-5">
                         {/* Saved styles picker */}
                         <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded mb-2 block">
                                 Saved Styles
                             </label>
                             {savedStyles.length === 0 ? (
@@ -518,7 +518,7 @@ export function ChartCustomizer({
 
                         {/* Save current as */}
                         <div>
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">
+                            <label className="text-xs font-semibold text-primary/70 uppercase tracking-wide bg-primary/[0.07] px-1.5 py-0.5 rounded mb-2 block">
                                 Save Current As
                             </label>
                             <input
