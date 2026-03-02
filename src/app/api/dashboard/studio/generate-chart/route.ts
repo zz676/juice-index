@@ -678,7 +678,7 @@ function renderMultiLineChartConfig(params: {
   const niceYTicks = !isNaN(dataMax) ? getNiceYTicks(dataMax, 6) : undefined;
 
   const datasets = series.map((seriesKey, i) => ({
-    label: seriesKey,
+    label: `   ${seriesKey}`,
     data: points.map((p) => {
       const v = p[seriesKey];
       return typeof v === "number" ? v : 0;
