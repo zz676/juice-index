@@ -40,9 +40,14 @@ import { prisma } from '@/lib/prisma'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { syncAccounts } from '@/lib/auth/sync-accounts'
 import { checkXPostingToken } from '@/lib/auth/check-x-posting-token'
+import { sendWelcomeEmail } from '@/lib/email'
 
 async function syncUser(user: SupabaseUser) {
     if (!user.email) return
+
+    // Detect first-time signup BEFORE upsert
+    const existingUser = await prisma.user.findUnique({ where: { id: user.id }, select: { id: true } })
+    const isNewUser = existingUser === null
 
     // 1. Sync User
     await prisma.user.upsert({
@@ -79,6 +84,12 @@ async function syncUser(user: SupabaseUser) {
     // 3. Sync OAuth accounts (juice_accounts)
     await syncAccounts(user.id, user.identities ?? [])
 
-    // 4. Proactively check X posting token health (fire-and-forget)
+    // 4. Send welcome email to new users (fire-and-forget)
+    if (isNewUser) {
+      const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0]
+      sendWelcomeEmail(user.email, displayName).catch(console.error)
+    }
+
+    // 5. Proactively check X posting token health (fire-and-forget)
     checkXPostingToken(user.id).catch(console.error)
 }
