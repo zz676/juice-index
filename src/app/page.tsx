@@ -356,9 +356,9 @@ export default function LandingPage() {
       </section>
 
       {/* 8. Footer */}
-      <footer className="bg-white border-t border-slate-custom-200 pt-16 pb-8">
+      <footer className="bg-white border-t border-slate-custom-200 pt-3 pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-[1.25fr_1fr_1fr_1fr_1fr] gap-8">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
                 <Image
@@ -373,15 +373,14 @@ export default function LandingPage() {
                 </span>
               </div>
               <p className="text-sm text-slate-custom-500 leading-relaxed">
-                Providing clarity in the world&apos;s most dynamic automotive
-                market.
+                AI-powered charts and market insights for the global EV industry.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-slate-custom-900 mb-4 text-sm">
                 Platform
               </h4>
-              <ul className="space-y-2.5 text-sm text-slate-custom-500">
+              <ul className="space-y-1 text-sm text-slate-custom-500">
                 <li>
                   <Link
                     href="/dashboard/studio"
@@ -398,32 +397,24 @@ export default function LandingPage() {
                     Pricing
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/docs"
-                    className="hover:text-slate-custom-900 transition-colors"
-                  >
-                    API Docs
-                  </Link>
-                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-slate-custom-900 mb-4 text-sm">
                 Company
               </h4>
-              <ul className="space-y-2.5 text-sm text-slate-custom-500">
+              <ul className="space-y-1 text-sm text-slate-custom-500">
                 <li>
                   <Link
-                    href="/docs"
+                    href="/help"
                     className="hover:text-slate-custom-900 transition-colors"
                   >
-                    Methodology
+                    Help
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="mailto:support@juiceindex.com"
+                    href="mailto:ai.compute.index@gmail.com"
                     className="hover:text-slate-custom-900 transition-colors"
                   >
                     Contact
@@ -435,7 +426,7 @@ export default function LandingPage() {
               <h4 className="font-semibold text-slate-custom-900 mb-4 text-sm">
                 Legal
               </h4>
-              <ul className="space-y-2.5 text-sm text-slate-custom-500">
+              <ul className="space-y-1 text-sm text-slate-custom-500">
                 <li>
                   <Link
                     href="/privacy"
@@ -454,8 +445,27 @@ export default function LandingPage() {
                 </li>
               </ul>
             </div>
+            <div className="flex items-start justify-center">
+              <Link
+                href="https://x.com/juice_index"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-75 hover:opacity-100 transition-opacity"
+                aria-label="Juice Index on X"
+              >
+                <svg className="w-12 h-12" viewBox="0 0 24 24" fill="url(#xGradient)">
+                  <defs>
+                    <linearGradient id="xGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#6ada1b" />
+                      <stop offset="55%" stopColor="#1e293b" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631 5.905-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </Link>
+            </div>
           </div>
-          <div className="border-t border-slate-custom-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="border-t border-slate-custom-200 pt-3 mt-2 flex flex-col md:flex-row justify-between items-center gap-5">
             <p className="text-xs text-slate-custom-400">
               &copy; {new Date().getFullYear()} Juice Index Ltd. All rights
               reserved.
