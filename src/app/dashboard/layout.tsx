@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const supabase = createClient();
-    const [collapsed, setCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(true);
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
@@ -237,11 +237,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <main className="flex-1 flex flex-col h-full overflow-hidden relative" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
                 {/* Top Header — hidden on studio (which has its own combined header) */}
                 {pathname !== "/dashboard/studio" && (
-                <header className="h-[51px] flex items-center px-4 md:px-8 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
+                <header className="h-[51px] flex items-center px-4 md:px-6 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
                     <Link href="/dashboard" className="flex md:hidden items-center gap-2 flex-shrink-0">
                         <img src="/logo.png" alt="Juice Index" className="w-8 h-8" />
                         <span className="text-lg font-extrabold text-primary">Juice</span>
                     </Link>
+                    {collapsed && (
+                        <button
+                            onClick={() => setCollapsed(false)}
+                            title="Open sidebar ⌘."
+                            className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all flex-shrink-0"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="3" width="16" height="14" rx="2" />
+                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
+                                <path d="M8 8l2 2-2 2" />
+                            </svg>
+                        </button>
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />

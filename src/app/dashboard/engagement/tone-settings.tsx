@@ -302,6 +302,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<PlaygroundResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Populate from preset and auto-scroll
   useEffect(() => {
@@ -629,7 +630,23 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
           <div className="space-y-3 pt-1">
             <div className="p-4 bg-slate-custom-50 rounded-xl border border-slate-custom-200">
               <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-xs font-semibold text-slate-custom-700">Generated Reply</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-semibold text-slate-custom-700">Generated Reply</p>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(result.replyText).then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      });
+                    }}
+                    title="Copy reply"
+                    className="text-slate-custom-400 hover:text-slate-custom-700 transition-colors"
+                  >
+                    <span className="material-icons-round text-[14px]">
+                      {copied ? "check" : "content_copy"}
+                    </span>
+                  </button>
+                </div>
                 <div className="flex items-center gap-1.5 flex-wrap justify-end">
                   <span className="text-[10px] text-slate-custom-400 bg-card border border-slate-custom-200 rounded px-1.5 py-0.5">
                     {result.toneUsed}
