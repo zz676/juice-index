@@ -82,15 +82,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.025) 0px, rgba(112,185,60,0.025) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.22) 0%, transparent 65%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.10) 0%, transparent 55%), linear-gradient(180deg, rgba(212,233,173,0.20) 0%, rgba(255,255,255,0.98) 40%)" }}
             >
                 {/* Top: Logo + Toggle */}
-                <div className={`flex items-center ${collapsed ? "justify-center px-0" : "justify-between px-6"} h-20 flex-shrink-0`}>
+                <div className={`flex items-center ${collapsed ? "flex-col justify-center gap-1 px-0" : "justify-between px-6"} h-20 flex-shrink-0`}>
                     {collapsed ? (
-                        <button
-                            onClick={() => setCollapsed(false)}
-                            className="flex items-center"
-                            title="Expand sidebar"
-                        >
+                        <Link href="/dashboard" className="flex items-center">
                             <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
-                        </button>
+                        </Link>
                     ) : (
                         <Link href="/dashboard" className="flex items-center gap-3">
                             <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
@@ -100,19 +96,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                             </h1>
                         </Link>
                     )}
-                    {!collapsed && (
-                        <button
-                            onClick={() => setCollapsed(true)}
-                            className="p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
-                            title="Collapse sidebar"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="3" width="16" height="14" rx="2" />
-                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
-                                <path d="M12 8l-2 2 2 2" />
-                            </svg>
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
+                        title={collapsed ? "Open sidebar ⌘." : "Collapse sidebar"}
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="3" width="16" height="14" rx="2" />
+                            <line x1="7.5" y1="3" x2="7.5" y2="17" />
+                            {collapsed
+                                ? <path d="M8 8l2 2-2 2" />
+                                : <path d="M12 8l-2 2 2 2" />
+                            }
+                        </svg>
+                    </button>
                 </div>
 
                 {/* Nav Items */}
@@ -242,19 +239,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <img src="/logo.png" alt="Juice Index" className="w-8 h-8" />
                         <span className="text-lg font-extrabold text-primary">Juice</span>
                     </Link>
-                    {collapsed && (
-                        <button
-                            onClick={() => setCollapsed(false)}
-                            title="Open sidebar ⌘."
-                            className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all flex-shrink-0"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="3" width="16" height="14" rx="2" />
-                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
-                                <path d="M8 8l2 2-2 2" />
-                            </svg>
-                        </button>
-                    )}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />
