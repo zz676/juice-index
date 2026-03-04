@@ -234,6 +234,9 @@ function StudioPageInner() {
 
   const [examplesOpen, setExamplesOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [showQuery, setShowQuery] = useState(false);
+  const [workflowStarted, setWorkflowStarted] = useState(false);
+  const [showStep1, setShowStep1] = useState(true);
 
   const sampleQuestions: Record<string, string[]> = {
     "Brand Deliveries": [
@@ -303,6 +306,7 @@ function StudioPageInner() {
         setChartConfig(s.chartConfig);
         if (s.postDraft) setPostDraft(s.postDraft);
         setActiveSection(s.postDraft ? 4 : 3);
+        setWorkflowStarted(true);
         if (expired) {
           setTimeout(() => showToast("info", "This share link is older than 7 days. Data may be outdated."), 300);
         }
@@ -448,8 +452,14 @@ function StudioPageInner() {
           : "Query ran successfully but returned no chartable rows."
       );
 
+      setShowStep1(false);
+
       setTimeout(() => {
-        document.getElementById("step-3")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const el = document.getElementById("step-3");
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
       }, 350);
     },
     [showToast]
@@ -553,11 +563,16 @@ function StudioPageInner() {
             : prev.description,
       }));
 
+      setWorkflowStarted(true);
       showToast("success", "Runnable query generated. Review and click Run Query.");
       fetchUsage();
 
       setTimeout(() => {
-        document.getElementById("step-2")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const el = document.getElementById("step-2");
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top, behavior: "smooth" });
+        }
       }, 100);
     } catch (err) {
       console.log("[studio] generate-query unexpected error:", err);
@@ -567,6 +582,137 @@ function StudioPageInner() {
       );
     } finally {
       setIsGeneratingQueryPlan(false);
+    }
+  };
+
+  const generateGraph = async () => {
+    if (!prompt.trim()) {
+      showToast("error", "Please enter a query first.");
+      return;
+    }
+
+    setIsGeneratingQueryPlan(true);
+    showToast("info", "Generating graph...");
+
+    try {
+      const genRes = await fetch("/api/dashboard/studio/generate-chart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, previewOnly: true, modelId: queryModelId }),
+      });
+
+      const genData = (await genRes.json().catch(() => ({}))) as Record<string, unknown>;
+
+      if (!genRes.ok) {
+        const msg =
+          (typeof genData.message === "string" && genData.message) ||
+          (typeof genData.error === "string" && genData.error) ||
+          "Failed to process query";
+        showToast("error", msg);
+        return;
+      }
+
+      const nextSql =
+        typeof genData.sql === "string" && genData.sql.trim().length > 0
+          ? genData.sql
+          : "-- SQL preview unavailable for this query.";
+      const nextQueryJson =
+        typeof genData.queryJson === "string" && genData.queryJson.trim().length > 0
+          ? genData.queryJson
+          : genData.query && typeof genData.query === "object"
+          ? JSON.stringify(genData.query, null, 2)
+          : "{}";
+      const nextTableName = typeof genData.table === "string" ? genData.table : "";
+
+      setGeneratedSql(nextSql);
+      setSqlUserEdited(false);
+      setTableName(nextTableName);
+      setQueryJsonText(nextQueryJson);
+      setAnalysisExplanation(typeof genData.explanation === "string" ? genData.explanation : "");
+      setChartData([]);
+      setMultiSeriesData([]);
+      setSeriesKeys([]);
+      setGroupField("");
+      setRawData([]);
+      setColumns([]);
+      setNumericColumns([]);
+      setXField("");
+      setYField("");
+      setRowCount(0);
+      setExecutionTimeMs(null);
+      setChartImage(null);
+      setPostDraft("");
+
+      setChartConfig((prev) => ({
+        ...prev,
+        chartType:
+          genData.chartType === "bar" ||
+          genData.chartType === "line" ||
+          genData.chartType === "horizontalBar" ||
+          genData.chartType === "multiLine"
+            ? genData.chartType
+            : prev.chartType,
+        title:
+          typeof genData.chartTitle === "string" && genData.chartTitle.trim()
+            ? genData.chartTitle
+            : prev.title,
+        description:
+          typeof genData.explanation === "string" && genData.explanation.trim()
+            ? genData.explanation
+            : prev.description,
+      }));
+
+      fetchUsage();
+      setWorkflowStarted(true);
+      setIsGeneratingQueryPlan(false);
+
+      // Immediately run the query without showing Step 2
+      setIsRunningQuery(true);
+      showToast("info", "Running query...");
+
+      let runRes: Response;
+      if (!nextTableName) {
+        runRes = await fetch("/api/dashboard/studio/generate-chart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rawSql: nextSql }),
+        });
+      } else {
+        let parsedQuery: Record<string, unknown> = {};
+        try {
+          parsedQuery = JSON.parse(nextQueryJson) as Record<string, unknown>;
+        } catch {
+          parsedQuery = {};
+        }
+        runRes = await fetch("/api/dashboard/studio/generate-chart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            table: nextTableName,
+            query: parsedQuery,
+            chartType: genData.chartType ?? chartConfig.chartType,
+            chartTitle: genData.chartTitle ?? chartConfig.title,
+          }),
+        });
+      }
+
+      const runData = (await runRes.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!runRes.ok) {
+        throw new Error(
+          (typeof runData.message === "string" && runData.message) ||
+            (typeof runData.error === "string" && runData.error) ||
+            "Failed to run query"
+        );
+      }
+
+      applyQueryExecutionResult(runData);
+      fetchUsage();
+    } catch (err) {
+      console.log("[studio] generate-graph unexpected error:", err);
+      showToast("error", err instanceof Error ? err.message : "Failed to generate graph");
+    } finally {
+      setIsGeneratingQueryPlan(false);
+      setIsRunningQuery(false);
     }
   };
 
@@ -1073,16 +1219,36 @@ function StudioPageInner() {
     return mu.draftUsed >= mu.draftLimit;
   })();
 
-  const currentStep = chartImage ? 4 : chartData.length > 0 ? 3 : (generatedSql || tableName) ? 2 : 1;
+  const currentStep = chartImage ? 4 : chartData.length > 0 ? 3 : (showQuery && (generatedSql || tableName)) ? 2 : 1;
   const workflowSteps = [
     { id: "step-1", stepNum: 1, title: "Ask Intelligence", detail: "Enter your data question" },
     { id: "step-2", stepNum: 2, title: "Review Query", detail: "Review and run SQL" },
     { id: "step-3", stepNum: 3, title: "Visualization & Data", detail: "Explore your chart" },
     { id: "step-4", stepNum: 4, title: "AI Composer", detail: "Draft and publish" },
   ];
+  const reviseQuestion = () => {
+    setShowStep1(true);
+    setActiveSection(1);
+    setTimeout(() => {
+      const el = document.getElementById("step-1");
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
+      promptRef.current?.focus();
+    }, 50);
+  };
+
   const scrollToStep = (stepId: string) => {
+    if (stepId === "step-1" && (chartData.length > 0 || rawData.length > 0)) {
+      reviseQuestion();
+      return;
+    }
     const el = document.getElementById(stepId);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
   };
 
   return (
@@ -1124,12 +1290,13 @@ function StudioPageInner() {
       </header>
 
       <main className="px-6 pt-24 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
-        <div className={`w-full ${currentStep > 1 ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
+        <div className={`w-full ${(workflowStarted || currentStep > 1) ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
-          <div className={`space-y-5 min-w-0 ${currentStep === 1 ? "xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-16" : ""}`}>
+          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-16" : ""}`}>
 
-            {/* Step 1 - Always visible */}
+            {/* Step 1 - Hidden once chart data arrives; shown again via reviseQuestion */}
+            {showStep1 && (
             <section
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
@@ -1292,19 +1459,36 @@ function StudioPageInner() {
                     </span>
                   </div>
                   <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-1.5 text-[11px] text-slate-custom-500 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={showQuery}
+                        onChange={(e) => setShowQuery(e.target.checked)}
+                        className="w-3 h-3 accent-primary"
+                      />
+                      Query Fan
+                    </label>
                     <button
-                      onClick={generateRunnableQuery}
-                      disabled={isGeneratingQueryPlan || !prompt.trim() || queryQuotaExhausted || selectedQueryModelExhausted}
+                      onClick={showQuery ? generateRunnableQuery : generateGraph}
+                      disabled={isGeneratingQueryPlan || isRunningQuery || !prompt.trim() || queryQuotaExhausted || selectedQueryModelExhausted}
                       className="px-2.5 py-1 rounded-full bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[11px] font-bold shadow-[0_0_12px_rgba(106,218,27,0.5)] hover:shadow-[0_0_22px_rgba(106,218,27,0.8),0_0_40px_rgba(106,218,27,0.3)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1"
                     >
-                      {isGeneratingQueryPlan && (
+                      {(isGeneratingQueryPlan || isRunningQuery) && (
                         <span className="material-icons-round text-[13px] animate-spin">refresh</span>
                       )}
-                      {!isGeneratingQueryPlan && (
+                      {!isGeneratingQueryPlan && !isRunningQuery && (
                         <span className="material-icons-round text-[13px]">auto_awesome</span>
                       )}
-                      {isGeneratingQueryPlan ? "Generating..." : "Generate Query"}
+                      {isGeneratingQueryPlan
+                        ? "Generating..."
+                        : isRunningQuery
+                        ? "Running..."
+                        : showQuery
+                        ? "Generate Query"
+                        : "Generate Graph"}
                     </button>
+                    </div>
                     {queryQuotaExhausted && (
                       <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
                         <span className="material-icons-round text-[13px]">info</span>
@@ -1321,9 +1505,10 @@ function StudioPageInner() {
                 </div>
               </div>
             </section>
+            )}
 
-            {/* Step 2 - Visible when generatedSql || tableName */}
-            {(generatedSql || tableName) && (
+            {/* Step 2 - Visible when showQuery is enabled and query has been generated */}
+            {showQuery && (generatedSql || tableName) && (
               <section
                 id="step-2"
                 onFocusCapture={() => setActiveSection(2)}
@@ -1574,7 +1759,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`animate-step-fly-in bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -1585,6 +1770,12 @@ function StudioPageInner() {
                     <h3 className={`font-bold text-[15px] uppercase tracking-wide transition-colors duration-300 ${activeSection === 3 ? "text-slate-custom-900" : "text-slate-custom-500"}`}>
                       Visualization &amp; Data
                     </h3>
+                    <button
+                      onClick={reviseQuestion}
+                      className="text-[11px] text-primary hover:underline flex items-center gap-0.5"
+                    >
+                      ← New question
+                    </button>
                   </div>
                   <div className="flex items-start gap-1.5 pb-1">
                     <div className="flex bg-slate-custom-100 rounded p-px border border-slate-custom-200">
@@ -2332,7 +2523,7 @@ function StudioPageInner() {
                 yField={yField}
                 onAxisChange={handleAxisChange}
               />
-            ) : currentStep > 1 ? (
+            ) : (workflowStarted || currentStep > 1) ? (
               <WorkflowStepper
                 currentStep={currentStep}
                 steps={workflowSteps}
