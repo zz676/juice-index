@@ -358,8 +358,8 @@ export default function LandingPage() {
       {/* 8. Footer */}
       <footer className="bg-white border-t border-slate-custom-200 pt-3 pb-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-[1.25fr_1fr_1fr_1fr_1fr] gap-8">
-            <div className="col-span-2 md:col-span-1">
+          <div className="grid grid-cols-2 md:grid-cols-[2.246fr_1fr_1fr_1fr_1fr] gap-8">
+            <div className="col-span-2 md:col-span-1 md:pr-14">
               <div className="flex items-center gap-2.5 mb-4">
                 <Image
                   src="/logo.png"
