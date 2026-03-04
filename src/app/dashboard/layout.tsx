@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="bg-background-light font-display text-slate-custom-800 antialiased overflow-hidden h-screen flex">
             {/* Sidebar */}
             <aside
-                className={`${collapsed ? "w-16" : "w-64"} border-r border-green-100 flex flex-col h-full flex-shrink-0 z-20 transition-all duration-300`}
+                className={`${collapsed ? "w-16" : "w-64"} border-r border-green-100 hidden md:flex flex-col h-full flex-shrink-0 z-20 transition-all duration-300`}
                 style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.025) 0px, rgba(112,185,60,0.025) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.22) 0%, transparent 65%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.10) 0%, transparent 55%), linear-gradient(180deg, rgba(212,233,173,0.20) 0%, rgba(255,255,255,0.98) 40%)" }}
             >
                 {/* Top: Logo + Toggle */}
@@ -237,7 +237,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <main className="flex-1 flex flex-col h-full overflow-hidden relative" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
                 {/* Top Header — hidden on studio (which has its own combined header) */}
                 {pathname !== "/dashboard/studio" && (
-                <header className="h-[51px] flex items-center px-8 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
+                <header className="h-[51px] flex items-center px-4 md:px-8 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
+                    <Link href="/dashboard" className="flex md:hidden items-center gap-2 flex-shrink-0">
+                        <img src="/logo.png" alt="Juice Index" className="w-8 h-8" />
+                        <span className="text-lg font-extrabold text-primary">Juice</span>
+                    </Link>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />
@@ -273,10 +277,36 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 )}
 
                 {/* Page Content */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-0 pb-0">
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-0 pb-20 md:pb-0">
                     {children}
                 </div>
             </main>
+
+            {/* Mobile bottom tab bar */}
+            <nav
+                className="fixed bottom-0 left-0 right-0 h-16 flex md:hidden items-center justify-around border-t border-green-100 z-30 overflow-x-auto"
+                style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.025) 0px, rgba(112,185,60,0.025) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.22) 0%, transparent 65%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.10) 0%, transparent 55%), linear-gradient(180deg, rgba(212,233,173,0.20) 0%, rgba(255,255,255,0.98) 40%)" }}
+            >
+                {finalNavItems.map((item) => {
+                    const isActive = item.href === "/dashboard"
+                        ? pathname === "/dashboard"
+                        : pathname === item.href || pathname.startsWith(item.href + "/");
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 text-[10px] font-medium transition-colors ${
+                                isActive ? "text-primary" : "text-slate-custom-500"
+                            }`}
+                        >
+                            <span className={`material-icons-round text-[22px] ${isActive ? "text-primary" : ""}`}>
+                                {item.icon}
+                            </span>
+                            <span className="mt-0.5 truncate max-w-[72px]">{item.label}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
         </div>
     );
 }

@@ -1088,7 +1088,7 @@ function StudioPageInner() {
   return (
     <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
-      <header className="h-[61px] flex items-center justify-between px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
+      <header className="h-[61px] flex items-center justify-between px-4 md:px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
         <div className="flex items-center gap-4">
           <h1 className="font-extrabold text-[20px] flex items-center gap-1.5">
             <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
@@ -1123,7 +1123,7 @@ function StudioPageInner() {
         </div>
       </header>
 
-      <main className="px-6 pt-24 pb-5 w-full max-w-7xl mx-auto">
+      <main className="px-6 pt-24 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
         <div className={`w-full ${currentStep > 1 ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
@@ -1160,7 +1160,7 @@ function StudioPageInner() {
                 {/* Sample Questions */}
                 {examplesOpen && (
                   <div className="bg-card border border-slate-custom-200 rounded-lg shadow-sm p-3">
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {Object.keys(sampleQuestions).map((category) => (
                           <button
                             key={category}

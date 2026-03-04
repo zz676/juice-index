@@ -214,14 +214,14 @@ export default function EngagementPage() {
       <UsageBar />
 
       {/* Tabs */}
-      <div className="border-b border-slate-custom-200">
-        <nav className="flex gap-1">
+      <div className="border-b border-slate-custom-200 overflow-x-auto">
+        <nav className="flex gap-1 whitespace-nowrap">
           {(
             [
-              { id: "accounts", label: "Monitored Accounts", icon: "manage_accounts" },
-              { id: "replies", label: "Reply Monitoring", icon: "forum" },
-              { id: "analytics", label: "Account Analytics", icon: "insights" },
-              { id: "tones", label: "Tone Settings", icon: "tune" },
+              { id: "accounts", label: "Accounts", icon: "manage_accounts" },
+              { id: "replies", label: "Replies", icon: "forum" },
+              { id: "analytics", label: "Analytics", icon: "insights" },
+              { id: "tones", label: "Tones", icon: "tune" },
               { id: "settings", label: "Settings", icon: "settings" },
             ] as const
           ).map((tab) => (
