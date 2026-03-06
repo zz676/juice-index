@@ -28,7 +28,18 @@ A critical part of our architecture is the synchronization between Supabase `aut
 ### 3. Session Management
 - **Client-Side**: `createClient()` in `@/lib/supabase/client` using `@supabase/ssr` (Browser Client).
 - **Server-Side**: `createClient()` in `@/lib/supabase/server` using `@supabase/ssr` (Server Client).
-- **Middleware**: `src/middleware.ts` ensures session token is refreshed and protects private routes.
+- **Middleware**: `src/middleware.ts` ensures session token is refreshed. **Note:** `/dashboard/*` routes are publicly accessible — the auth wall was removed so anonymous users can access Studio with FREE tier limits tracked by IP.
+
+## Public Dashboard Access (Anonymous Users)
+
+`/dashboard/*` routes no longer require authentication. Anonymous visitors get FREE tier treatment:
+
+- **Rate limiting**: Tracked by IP address using the key `anon:<ip>` in Redis (3 queries/day, 1 chart/day, 1 draft/day).
+- **Studio API routes** (`generate-chart`, `generate-post`, `usage`) accept anonymous requests and apply FREE tier quotas.
+- **Publish-info** and **chart-styles** return empty/default responses for anonymous users (publishing requires a connected X account).
+- **`/api/dashboard/tier`** returns `{ tier: "FREE", isAnonymous: true }` for unauthenticated requests.
+- **Dashboard layout** detects auth state client-side and shows different sidebar nav: logged-in users see Dashboard/Juice AI/Posts/Billing/Settings; anonymous users see Home/Features/How It Works/Pricing.
+- **Root URL** (`/`) redirects to `/dashboard/studio` instead of showing the old marketing landing page.
 
 ## Files
 - `src/app/login/page.tsx`: Unified login UI.

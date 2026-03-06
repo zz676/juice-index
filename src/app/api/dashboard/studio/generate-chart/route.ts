@@ -1165,12 +1165,21 @@ function parseGeneratedQuery(queryText: string): Record<string, unknown> {
 export async function POST(req: Request) {
   const reqStart = Date.now();
   try {
-    const userId = await getAuthedSupabaseUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED", message: "Unauthorized" },
-        { status: 401 }
-      );
+    const authedUserId = await getAuthedSupabaseUserId();
+
+    // For anonymous users, use IP-based identifier with FREE tier
+    let userId: string;
+    let tier: ApiTier;
+    if (!authedUserId) {
+      const ip =
+        (req as Request & { headers: Headers }).headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        (req as Request & { headers: Headers }).headers.get("x-real-ip") ||
+        "unknown";
+      userId = `anon:${ip}`;
+      tier = "FREE";
+    } else {
+      userId = authedUserId;
+      tier = await resolveUserTier(userId);
     }
 
     const payload = (await req.json().catch(() => null)) as
@@ -1183,8 +1192,6 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    const tier = await resolveUserTier(userId);
 
     // Mode 0: Execute an explicit runnable query (from reviewed/edited query JSON)
     // No AI model is used, so only the global limit applies.

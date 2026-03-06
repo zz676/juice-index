@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { user, error } = await requireUser();
-  if (error) return error;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Anonymous users: return empty styles
+  if (!user) {
+    return NextResponse.json({ styles: [] });
+  }
 
   const styles = await prisma.userChartStyle.findMany({
     where: { userId: user.id },

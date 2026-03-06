@@ -188,12 +188,18 @@ Your response MUST be under ${charLimit} characters. Keep tone factual and publi
 export async function POST(request: Request) {
   const reqStart = Date.now();
   try {
-    const userId = await getAuthedSupabaseUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "UNAUTHORIZED", message: "Unauthorized" },
-        { status: 401 }
-      );
+    const authedUserId = await getAuthedSupabaseUserId();
+
+    // For anonymous users, use IP-based identifier with FREE tier
+    let userId: string;
+    if (!authedUserId) {
+      const ip =
+        (request as Request & { headers: Headers }).headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        (request as Request & { headers: Headers }).headers.get("x-real-ip") ||
+        "unknown";
+      userId = `anon:${ip}`;
+    } else {
+      userId = authedUserId;
     }
 
     const body = (await request.json().catch(() => null)) as

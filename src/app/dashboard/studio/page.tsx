@@ -206,6 +206,7 @@ function StudioPageInner() {
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [userTier, setUserTier] = useState<ApiTier>("FREE");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [queryModelId, setQueryModelId] = useState(DEFAULT_QUERY_MODEL_ID);
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
@@ -362,6 +363,7 @@ function StudioPageInner() {
       .then((res) => res.json())
       .then((data: Record<string, unknown>) => {
         if (typeof data.tier === "string") setUserTier(data.tier as ApiTier);
+        if (data.isAnonymous === true) setIsAnonymous(true);
       })
       .catch(() => {});
     fetchUsage();
@@ -1490,9 +1492,12 @@ function StudioPageInner() {
                     </button>
                     </div>
                     {queryQuotaExhausted && (
-                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                         <span className="material-icons-round text-[13px]">info</span>
                         Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                        {isAnonymous && (
+                          <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                        )}
                       </span>
                     )}
                     {selectedQueryModelExhausted && !queryQuotaExhausted && (
@@ -1569,9 +1574,12 @@ function StudioPageInner() {
                         {isRunningQuery ? "Running..." : "Run Query"}
                       </button>
                       {queryQuotaExhausted && (
-                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                           <span className="material-icons-round text-[13px]">info</span>
                           Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                          {isAnonymous && (
+                            <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                          )}
                         </span>
                       )}
                     </div>
@@ -2133,9 +2141,12 @@ function StudioPageInner() {
                       </button>
                     </div>
                     {chartQuotaExhausted && (
-                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                         <span className="material-icons-round text-[13px]">info</span>
                         Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
+                        {isAnonymous && (
+                          <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                        )}
                       </span>
                     )}
                   </div>
@@ -2397,9 +2408,12 @@ function StudioPageInner() {
                         {isGeneratingPost ? "Generating..." : "Generate Draft"}
                       </button>
                       {draftQuotaExhausted && (
-                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                           <span className="material-icons-round text-[13px]">info</span>
                           Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
+                          {isAnonymous && (
+                            <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                          )}
                         </span>
                       )}
                       {selectedComposerModelExhausted && !draftQuotaExhausted && (
@@ -2482,6 +2496,15 @@ function StudioPageInner() {
                       )}
                       <div className="relative group">
                         {userTier === "FREE" ? (
+                          isAnonymous ? (
+                            <a
+                              href="/login?mode=magic&intent=signup"
+                              className="px-4 py-1.5 bg-slate-custom-900 text-white text-[13px] font-bold rounded-full flex items-center gap-1.5 hover:bg-slate-custom-800 transition-colors"
+                            >
+                              <span className="material-icons-round text-[15px]">login</span>
+                              Log in to Publish
+                            </a>
+                          ) : (
                           <button
                             className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-[13px] font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
                             onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
@@ -2489,6 +2512,7 @@ function StudioPageInner() {
                             <span className="material-icons-round text-[15px]">lock</span>
                             Publish
                           </button>
+                          )
                         ) : (
                           <button
                             className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[13px] font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"
