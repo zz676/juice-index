@@ -267,9 +267,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <Link
                             href="/login"
                             title="Log in"
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-custom-600 hover:text-primary hover:bg-slate-custom-50 transition-all mt-1"
+                            className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white hover:bg-slate-custom-700 transition-all mt-1 flex-shrink-0"
                         >
-                            <span className="material-icons-round text-[20px]">login</span>
+                            <span className="material-icons-round text-[18px]">person</span>
                         </Link>
                     ))}
                 </div>
