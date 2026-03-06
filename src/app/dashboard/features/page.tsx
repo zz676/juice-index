@@ -39,7 +39,7 @@ const categories = [
 
 export default function FeaturesPage() {
   return (
-    <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="pt-16 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
         {/* Features Grid */}
         <section className="mb-16">
