@@ -334,13 +334,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 )}
 
                 {/* Page Content */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-0 pb-20 md:pb-0">
+                <div className={`flex-1 min-h-0 overflow-y-auto p-8 pt-0 md:pb-0 ${isLoggedIn === false ? "pb-32" : "pb-20"}`}>
                     {children}
                 </div>
             </main>
 
             {/* Login Modal */}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
+            {/* Mobile anonymous: Log in + Get Started bar above tab bar */}
+            {isLoggedIn === false && (
+                <div className="fixed bottom-16 left-0 right-0 flex md:hidden gap-2 px-4 py-2 bg-white/95 backdrop-blur-sm border-t border-slate-custom-100 z-30">
+                    <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="flex-1 py-2 text-center text-sm font-semibold rounded-full border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 transition-all"
+                    >
+                        Log in
+                    </button>
+                    <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="flex-1 py-2 text-center text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-all"
+                    >
+                        Get Started
+                    </button>
+                </div>
+            )}
 
             {/* Mobile bottom tab bar */}
             <nav
