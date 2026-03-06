@@ -249,31 +249,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </div>
                     )}
 
-                    {/* Anonymous: Login + Get Started buttons */}
-                    {isLoggedIn === false && (!collapsed ? (
-                        <div className="flex flex-col gap-2 mt-1 mx-1">
-                            <button
-                                onClick={() => setShowLoginModal(true)}
-                                className="block w-full py-2 text-center text-sm font-semibold rounded-full border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 transition-all"
-                            >
-                                Log in
-                            </button>
-                            <button
-                                onClick={() => setShowLoginModal(true)}
-                                className="block w-full py-2 text-center text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-all"
-                            >
-                                Get Started
-                            </button>
-                        </div>
-                    ) : (
+                    {/* Anonymous: Log in row */}
+                    {isLoggedIn === false && (
                         <button
                             onClick={() => setShowLoginModal(true)}
                             title="Log in"
-                            className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white hover:bg-slate-custom-700 transition-all mt-1 flex-shrink-0"
+                            className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} mt-1 hover:bg-slate-custom-50 transition-all`}
                         >
-                            <span className="material-icons-round text-[18px]">person</span>
+                            <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white flex-shrink-0">
+                                <span className="material-icons-round text-[18px]">person</span>
+                            </div>
+                            {!collapsed && (
+                                <>
+                                    <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Log in</span>
+                                    <span className="material-icons-round text-[18px] text-slate-custom-400">chevron_right</span>
+                                </>
+                            )}
                         </button>
-                    ))}
+                    )}
                 </div>
             </aside>
 
