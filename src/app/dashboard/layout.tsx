@@ -102,10 +102,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {collapsed ? (
                         <button
                             onClick={() => setCollapsed(false)}
-                            className="flex items-center"
+                            className="flex items-center text-slate-custom-500 hover:text-primary transition-colors"
                             title="Expand sidebar"
                         >
-                            <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
+                            <svg width="20" height="20" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1.5" y="1.5" width="33" height="33" rx="8.5" stroke="currentColor" strokeWidth="2"/>
+                                <line x1="25" y1="2" x2="25" y2="34" stroke="currentColor" strokeWidth="2"/>
+                                <polyline points="14,13 19,18 14,23" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            </svg>
                         </button>
                     ) : (
                         <Link href="/dashboard/studio" className="flex items-center gap-3">
@@ -119,13 +123,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {!collapsed && (
                         <button
                             onClick={() => setCollapsed(true)}
-                            className="p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
+                            className="text-slate-custom-400 hover:text-primary transition-colors"
                             title="Collapse sidebar"
                         >
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="3" width="16" height="14" rx="2" />
-                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
-                                <path d="M12 8l-2 2 2 2" />
+                            <svg width="20" height="20" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1.5" y="1.5" width="33" height="33" rx="8.5" stroke="currentColor" strokeWidth="2"/>
+                                <line x1="11" y1="2" x2="11" y2="34" stroke="currentColor" strokeWidth="2"/>
+                                <polyline points="22,13 17,18 22,23" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                             </svg>
                         </button>
                     )}
@@ -334,6 +338,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Login Modal */}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
+            {/* X (Twitter) link — fixed bottom-right */}
+            <style>{`
+                @keyframes x-shine {
+                    0%, 100% { filter: drop-shadow(0 0 3px rgba(112,185,60,0.4)) drop-shadow(0 0 8px rgba(112,185,60,0.15)); opacity: 0.7; }
+                    50% { filter: drop-shadow(0 0 6px rgba(112,185,60,0.8)) drop-shadow(0 0 16px rgba(112,185,60,0.4)); opacity: 1; }
+                }
+                .x-icon-shine { animation: x-shine 2.8s ease-in-out infinite; }
+                .x-icon-shine:hover { animation: none; filter: drop-shadow(0 0 8px rgba(112,185,60,1)) drop-shadow(0 0 20px rgba(112,185,60,0.6)); opacity: 1; }
+            `}</style>
+            <a
+                href="https://x.com/juice_index"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-20 right-6 md:bottom-5 z-20 x-icon-shine transition-all"
+                aria-label="Follow us on X"
+            >
+                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#70B93C" }}>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+            </a>
 
             {/* Mobile bottom tab bar */}
             <nav

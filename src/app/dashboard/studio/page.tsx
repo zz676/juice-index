@@ -1256,20 +1256,11 @@ function StudioPageInner() {
   return (
     <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
-      <header className="h-[61px] flex items-center justify-between px-4 md:px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
-        <div className="flex items-center gap-4">
-          <h1 className="font-extrabold text-[20px] flex items-center gap-1.5">
-            <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
-              Juice AI
-            </span>
-            <span className="material-icons-round text-primary text-[18px] animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
-              auto_awesome
-            </span>
-          </h1>
-        </div>
-        {toast ? (
+      {/* Floating notification bell */}
+      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
+        {toast && (
           <div
-            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm transition-all whitespace-nowrap ${
+            className={`px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm whitespace-nowrap ${
               toast.type === "success"
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
@@ -1279,26 +1270,26 @@ function StudioPageInner() {
           >
             {toast.message}
           </div>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="pointer-events-auto">
-              <SearchOverlay />
-            </div>
-          </div>
         )}
-        <div className="flex items-center gap-3">
-          <NotificationBell />
-        </div>
-      </header>
+        <NotificationBell />
+      </div>
 
-      <main className="px-6 pt-24 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
+      <main className="px-6 pt-6 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
         <div className={`w-full ${(workflowStarted || currentStep > 1) ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
-          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-16" : ""}`}>
+          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "mt-32 md:mt-48 xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-64" : ""}`}>
 
             {/* Step 1 - Hidden once chart data arrives; shown again via reviseQuestion */}
             {showStep1 && (
+            <>
+            {/* Logo + brand above step 1 */}
+            {!workflowStarted && (
+              <div className="flex items-center justify-center gap-5 mb-8 mt-4">
+                <img src="/logo.png" alt="Juice Index" className="w-20 h-20" />
+                <span className="text-5xl font-light tracking-tight"><span className="text-primary">Juice</span><span className="text-slate-custom-900"> Index</span></span>
+              </div>
+            )}
             <section
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
@@ -1510,6 +1501,7 @@ function StudioPageInner() {
                 </div>
               </div>
             </section>
+            </>
             )}
 
             {/* Step 2 - Visible when showQuery is enabled and query has been generated */}
