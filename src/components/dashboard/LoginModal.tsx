@@ -122,9 +122,7 @@ export default function LoginModal({ onClose }: LoginModalProps) {
           {/* Header */}
           <div className="text-center mb-6">
             <Link href="/" className="inline-flex items-center gap-2 mb-5" onClick={onClose}>
-              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-primary/30">
-                J
-              </div>
+              <img src="/logo.png" alt="Juice Index" className="w-9 h-9 rounded-lg" />
               <span className="font-bold text-xl text-slate-900 tracking-tight">Juice Index</span>
             </Link>
             <h2 className="text-2xl font-extrabold text-slate-900">Sign in to your account</h2>
