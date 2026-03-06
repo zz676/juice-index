@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { HexColorPicker } from "react-colorful";
 
 export type ChartType = "bar" | "line" | "horizontalBar" | "multiLine";
 
@@ -98,30 +99,129 @@ interface ChartCustomizerProps {
 }
 
 function ColorInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-    const [inputVal, setInputVal] = useState(value || "#000000");
-    useEffect(() => { setInputVal(value || "#000000"); }, [value]);
+    const [popupVal, setPopupVal] = useState(value || "#000000");
+    const [open, setOpen] = useState(false);
+    const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+    const swatchRef = useRef<HTMLButtonElement>(null);
+    const wrapRef = useRef<HTMLDivElement>(null);
+    useEffect(() => { setPopupVal(value || "#000000"); }, [value]);
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
+    const handleSwatchClick = () => {
+        if (!open && swatchRef.current) {
+            const rect = swatchRef.current.getBoundingClientRect();
+            setPopupPos({ top: rect.top - 8, left: rect.left });
+        }
+        setOpen((v) => !v);
+    };
     return (
         <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-slate-600">{label}</span>
-            <div className="flex items-center gap-1.5">
-                <input
-                    type="color"
-                    value={value || "#000000"}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5 shrink-0"
+            <div className="flex items-center gap-1.5 relative" ref={wrapRef}>
+                {/* Rectangular swatch button — opens hex popup */}
+                <button
+                    ref={swatchRef}
+                    type="button"
+                    onClick={handleSwatchClick}
+                    className="h-[22px] w-16 rounded border border-slate-200 shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    style={{ backgroundColor: value || "#000000" }}
                 />
-                <input
-                    type="text"
-                    value={inputVal}
-                    onChange={(e) => {
-                        setInputVal(e.target.value);
-                        if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value);
-                    }}
-                    onBlur={() => setInputVal(value || "#000000")}
-                    className="w-20 text-xs font-mono border border-slate-200 rounded px-2 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                    maxLength={7}
-                />
+                {open && (
+                    <div
+                        className="fixed z-[9999] bg-white border border-slate-200 rounded-lg shadow-xl p-3 w-48"
+                        style={{ top: popupPos.top, left: popupPos.left, transform: "translateY(-100%)" }}
+                    >
+                        <HexColorPicker
+                            color={value || "#000000"}
+                            onChange={(c) => { onChange(c); setPopupVal(c); }}
+                            style={{ width: "100%" }}
+                        />
+                        <div className="flex items-center gap-2 mt-2">
+                            <div className="w-5 h-5 rounded border border-slate-200 shrink-0" style={{ backgroundColor: popupVal }} />
+                            <input
+                                type="text"
+                                value={popupVal}
+                                onChange={(e) => {
+                                    setPopupVal(e.target.value);
+                                    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value);
+                                }}
+                                onBlur={() => setPopupVal(value || "#000000")}
+                                className="flex-1 text-xs font-mono border border-slate-200 rounded px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                maxLength={7}
+                                placeholder="#000000"
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
+        </div>
+    );
+}
+
+function ColorSwatch({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const [popupVal, setPopupVal] = useState(value || "#000000");
+    const [open, setOpen] = useState(false);
+    const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+    const swatchRef = useRef<HTMLButtonElement>(null);
+    const wrapRef = useRef<HTMLDivElement>(null);
+    useEffect(() => { setPopupVal(value || "#000000"); }, [value]);
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e: MouseEvent) => {
+            if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, [open]);
+    const handleClick = () => {
+        if (!open && swatchRef.current) {
+            const rect = swatchRef.current.getBoundingClientRect();
+            setPopupPos({ top: rect.top - 8, left: rect.left });
+        }
+        setOpen((v) => !v);
+    };
+    return (
+        <div className="relative" ref={wrapRef}>
+            <button
+                ref={swatchRef}
+                type="button"
+                onClick={handleClick}
+                className="h-[22px] w-12 rounded border border-slate-200 shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                style={{ backgroundColor: value || "#000000" }}
+            />
+            {open && (
+                <div
+                    className="fixed z-[9999] bg-white border border-slate-200 rounded-lg shadow-xl p-3 w-48"
+                    style={{ top: popupPos.top, left: popupPos.left, transform: "translateY(-100%)" }}
+                >
+                    <HexColorPicker
+                        color={value || "#000000"}
+                        onChange={(c) => { onChange(c); setPopupVal(c); }}
+                        style={{ width: "100%" }}
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className="w-5 h-5 rounded border border-slate-200 shrink-0" style={{ backgroundColor: popupVal }} />
+                        <input
+                            type="text"
+                            value={popupVal}
+                            onChange={(e) => {
+                                setPopupVal(e.target.value);
+                                if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) onChange(e.target.value);
+                            }}
+                            onBlur={() => setPopupVal(value || "#000000")}
+                            className="flex-1 text-xs font-mono border border-slate-200 rounded px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                            maxLength={7}
+                            placeholder="#000000"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -401,15 +501,15 @@ export function ChartCustomizer({
 
                                 <span className="text-xs font-medium text-slate-600">Font Color</span>
                                 <span className="text-xs text-slate-400 text-center">X</span>
-                                <input type="color" value={config.xAxisFontColor || "#64748b"} onChange={(e) => update({ xAxisFontColor: e.target.value })} className="h-7 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                <ColorSwatch value={config.xAxisFontColor || "#64748b"} onChange={(v) => update({ xAxisFontColor: v })} />
                                 <span className="text-xs text-slate-400 text-center">Y</span>
-                                <input type="color" value={config.yAxisFontColor || "#64748b"} onChange={(e) => update({ yAxisFontColor: e.target.value })} className="h-7 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                <ColorSwatch value={config.yAxisFontColor || "#64748b"} onChange={(v) => update({ yAxisFontColor: v })} />
 
                                 <span className="text-xs font-medium text-slate-600">Line Color</span>
                                 <span className="text-xs text-slate-400 text-center">X</span>
-                                <input type="color" value={config.xAxisLineColor || "#e5e7eb"} onChange={(e) => update({ xAxisLineColor: e.target.value })} className="h-7 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                <ColorSwatch value={config.xAxisLineColor || "#e5e7eb"} onChange={(v) => update({ xAxisLineColor: v })} />
                                 <span className="text-xs text-slate-400 text-center">Y</span>
-                                <input type="color" value={config.yAxisLineColor || "#e5e7eb"} onChange={(e) => update({ yAxisLineColor: e.target.value })} className="h-7 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5" />
+                                <ColorSwatch value={config.yAxisLineColor || "#e5e7eb"} onChange={(v) => update({ yAxisLineColor: v })} />
                             </div>
                         </div>
                     </div>
