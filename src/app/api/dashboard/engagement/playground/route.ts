@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { refreshTokenIfNeeded } from "@/lib/x/refresh-token";
 import { fetchTweetById } from "@/lib/engagement/fetch-tweets";
 import { generateReply } from "@/lib/engagement/generate-reply";
-import { generateImage } from "@/lib/engagement/generate-image";
+import { generateImage, type ImagePresetId } from "@/lib/engagement/generate-image";
 import { computeTotalReplyCost } from "@/lib/engagement/cost-utils";
 import { pickToneByWeights, FALLBACK_TONE_PROMPTS } from "@/lib/engagement/pick-tone";
 import { REPLY_MODELS, DEFAULT_REPLY_MODEL } from "@/lib/engagement/models";
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     accountContext?: string;
     generateImage?: boolean;
     imageStyleId?: string;
+    imageModel?: ImagePresetId;
     model?: string;
   };
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { tweetInput, toneId, toneWeights, adHocTone, temperature, accountContext, generateImage: doImage, imageStyleId, model: requestedModel } = body;
+  const { tweetInput, toneId, toneWeights, adHocTone, temperature, accountContext, generateImage: doImage, imageStyleId, imageModel, model: requestedModel } = body;
 
   // Validate model ID
   const modelId = requestedModel && REPLY_MODELS.some((m) => m.id === requestedModel)
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const imgResult = await generateImage(tweetText, generated.text, imageStylePrompt);
+      const imgResult = await generateImage(tweetText, generated.text, imageStylePrompt, imageModel);
       if (imgResult.generated) {
         imageBase64 = imgResult.imageBase64;
         imageGenerated = true;
@@ -171,7 +172,7 @@ export async function POST(request: NextRequest) {
   }
 
   // --- Compute costs ---
-  const costs = computeTotalReplyCost(generated.inputTokens, generated.outputTokens, imageGenerated, modelId);
+  const costs = computeTotalReplyCost(generated.inputTokens, generated.outputTokens, imageGenerated, modelId, imageModel);
 
   return NextResponse.json({
     replyText: generated.text,

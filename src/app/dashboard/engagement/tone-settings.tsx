@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UserTone, UserImageStyle } from "@prisma/client";
 import { REPLY_MODELS, DEFAULT_REPLY_MODEL } from "@/lib/engagement/models";
+import { IMAGE_PRESETS, type ImagePresetId } from "@/lib/engagement/generate-image";
 
 const COLOR_OPTIONS = [
   { key: "slate", label: "Slate", dot: "bg-slate-500" },
@@ -290,6 +291,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
   const [adHocPrompt, setAdHocPrompt] = useState("");
   const [doImage, setDoImage] = useState(false);
   const [selectedImageStyleId, setSelectedImageStyleId] = useState<string>("");
+  const [selectedImagePreset, setSelectedImagePreset] = useState<ImagePresetId>("dall-e-3");
 
   // Sync selected image style when imageStyles loads
   useEffect(() => {
@@ -342,6 +344,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
         model: selectedModel,
         accountContext: useAccountContext ? accountContext.trim() || undefined : undefined,
         generateImage: doImage,
+        imageModel: selectedImagePreset,
       };
 
       if (toneMode === "single" && selectedToneId) {
@@ -373,7 +376,7 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
     } finally {
       setGenerating(false);
     }
-  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, selectedModel, accountContext, useAccountContext, adHocPrompt, doImage, selectedImageStyleId]);
+  }, [tweetInput, toneMode, selectedToneId, toneWeights, temperature, selectedModel, accountContext, useAccountContext, adHocPrompt, doImage, selectedImageStyleId, selectedImagePreset]);
 
   return (
     <div ref={sectionRef} className="space-y-4">
@@ -586,19 +589,35 @@ function PlaygroundSection({ tones, imageStyles, preset }: PlaygroundSectionProp
           </div>
         </div>
 
-        {/* Image style selector — shown when image is enabled */}
-        {doImage && imageStyles.length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-slate-custom-700 mb-1">Image Style</p>
-            <select
-              value={selectedImageStyleId}
-              onChange={(e) => setSelectedImageStyleId(e.target.value)}
-              className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
-            >
-              {imageStyles.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+        {/* Image style + model selectors — shown when image is enabled */}
+        {doImage && (
+          <div className="space-y-2">
+            {imageStyles.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-slate-custom-700 mb-1">Image Style</p>
+                <select
+                  value={selectedImageStyleId}
+                  onChange={(e) => setSelectedImageStyleId(e.target.value)}
+                  className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
+                >
+                  {imageStyles.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-medium text-slate-custom-700 mb-1">Image Model</p>
+              <select
+                value={selectedImagePreset}
+                onChange={(e) => setSelectedImagePreset(e.target.value as ImagePresetId)}
+                className="w-full text-sm border border-slate-custom-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-card text-slate-custom-700"
+              >
+                {(Object.entries(IMAGE_PRESETS) as [ImagePresetId, typeof IMAGE_PRESETS[ImagePresetId]][]).map(([id, preset]) => (
+                  <option key={id} value={id}>{preset.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
         )}
 

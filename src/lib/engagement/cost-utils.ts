@@ -2,14 +2,14 @@
  * Cost computation utilities for engagement auto-reply feature.
  *
  * Text generation pricing is looked up dynamically from the model config.
- * DALL-E 3 standard 1024x1024: $0.040/image
+ * Image generation pricing is looked up from IMAGE_PRESETS in generate-image.ts.
  * X API (pay-by-use): Content: Create $0.005/request, Media Metadata $0.005/request
  * See docs/aiusage/x-api-costs.md
  */
 
 import { REPLY_MODELS, DEFAULT_REPLY_MODEL } from "./models";
+import { IMAGE_PRESETS, type ImagePresetId } from "./generate-image";
 
-const DALLE3_STANDARD_1024_COST = 0.04;
 const X_CONTENT_CREATE_COST = 0.005; // POST /2/tweets
 const X_MEDIA_METADATA_COST = 0.005; // POST /1.1/media/upload.json
 
@@ -21,8 +21,9 @@ export function computeTextGenerationCost(inputTokens: number, outputTokens: num
   return inputTokens * inputCostPerToken + outputTokens * outputCostPerToken;
 }
 
-export function computeImageGenerationCost(generated: boolean): number {
-  return generated ? DALLE3_STANDARD_1024_COST : 0;
+export function computeImageGenerationCost(generated: boolean, imagePresetId?: ImagePresetId): number {
+  if (!generated) return 0;
+  return imagePresetId ? (IMAGE_PRESETS[imagePresetId]?.cost ?? 0.04) : 0.04;
 }
 
 export function computeTotalReplyCost(
@@ -30,9 +31,10 @@ export function computeTotalReplyCost(
   outputTokens: number,
   imageGenerated: boolean,
   modelId?: string,
+  imagePresetId?: ImagePresetId,
 ): { textCost: number; imageCost: number; apiCost: number; totalCost: number } {
   const textCost = computeTextGenerationCost(inputTokens, outputTokens, modelId);
-  const imageCost = computeImageGenerationCost(imageGenerated);
+  const imageCost = computeImageGenerationCost(imageGenerated, imagePresetId);
   const apiCost = X_CONTENT_CREATE_COST + (imageGenerated ? X_MEDIA_METADATA_COST : 0);
   return { textCost, imageCost, apiCost, totalCost: textCost + imageCost + apiCost };
 }
