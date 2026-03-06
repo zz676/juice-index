@@ -37,6 +37,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [role, setRole] = useState<string>("USER");
     const [xTokenError, setXTokenError] = useState<boolean>(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [emailCopied, setEmailCopied] = useState(false);
+
+    const copyEmail = () => {
+        navigator.clipboard.writeText("ai.compute.index@gmail.com");
+        setEmailCopied(true);
+        setTimeout(() => setEmailCopied(false), 2000);
+    };
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -190,6 +197,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </Link>
                     ))}
 
+                    {/* Email copy button */}
+                    <div className="relative">
+                        <button
+                            onClick={copyEmail}
+                            aria-label="Copy email"
+                            className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} hover:bg-slate-custom-50 transition-all`}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-slate-custom-100 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#70B93C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                    <polyline points="2,4 12,13 22,4" />
+                                </svg>
+                            </div>
+                            {!collapsed && (
+                                <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Email me</span>
+                            )}
+                        </button>
+                        {emailCopied && (
+                            <div className={`absolute ${collapsed ? "left-full ml-2" : "right-3"} bottom-full mb-1.5 px-2.5 py-1 bg-slate-custom-900 text-white text-xs font-medium rounded-lg whitespace-nowrap shadow-lg pointer-events-none`}>
+                                Email copied!
+                            </div>
+                        )}
+                    </div>
+
+                    {/* X (Twitter) link */}
+                    <a
+                        href="https://x.com/juice_index"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on X"
+                        className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} hover:bg-slate-custom-50 transition-all`}
+                    >
+                        <div className="w-8 h-8 rounded-full bg-slate-custom-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#70B93C" }}>
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                        </div>
+                        {!collapsed && (
+                            <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Follow on X</span>
+                        )}
+                    </a>
+
                     {/* Divider */}
                     <div className={`border-t border-slate-custom-200 ${collapsed ? "w-8" : "mx-1"}`}></div>
 
@@ -338,27 +387,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Login Modal */}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-
-            {/* X (Twitter) link — fixed bottom-right */}
-            <style>{`
-                @keyframes x-shine {
-                    0%, 100% { filter: drop-shadow(0 0 3px rgba(112,185,60,0.4)) drop-shadow(0 0 8px rgba(112,185,60,0.15)); opacity: 0.7; }
-                    50% { filter: drop-shadow(0 0 6px rgba(112,185,60,0.8)) drop-shadow(0 0 16px rgba(112,185,60,0.4)); opacity: 1; }
-                }
-                .x-icon-shine { animation: x-shine 2.8s ease-in-out infinite; }
-                .x-icon-shine:hover { animation: none; filter: drop-shadow(0 0 8px rgba(112,185,60,1)) drop-shadow(0 0 20px rgba(112,185,60,0.6)); opacity: 1; }
-            `}</style>
-            <a
-                href="https://x.com/juice_index"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fixed bottom-20 right-6 md:bottom-5 z-20 x-icon-shine transition-all"
-                aria-label="Follow us on X"
-            >
-                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#70B93C" }}>
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-            </a>
 
             {/* Mobile bottom tab bar */}
             <nav
