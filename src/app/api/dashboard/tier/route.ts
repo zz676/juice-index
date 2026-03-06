@@ -34,7 +34,7 @@ export async function GET() {
     } = await supabase.auth.getUser();
 
     if (error || !user) {
-      return NextResponse.json({ tier: "FREE", role: "USER" }, { status: 200 });
+      return NextResponse.json({ tier: "FREE", role: "USER", isAnonymous: true }, { status: 200 });
     }
 
     const [subscription, dbUser, xAccount] = await Promise.all([

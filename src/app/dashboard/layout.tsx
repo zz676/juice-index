@@ -6,13 +6,21 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import SearchOverlay from "@/components/dashboard/SearchOverlay";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import StockTicker from "@/components/dashboard/StockTicker";
+import LoginModal from "@/components/dashboard/LoginModal";
 
-const navItems = [
-    { href: "/dashboard", icon: "dashboard", label: "Overview" },
+const authedNavItems = [
+    { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
     { href: "/dashboard/studio", icon: "auto_awesome", label: "Juice AI" },
     { href: "/dashboard/posts", icon: "article", label: "Posts" },
     { href: "/dashboard/billing", icon: "credit_card", label: "Billing" },
     { href: "/dashboard/settings", icon: "settings", label: "Settings" },
+];
+
+const anonNavItems = [
+    { href: "/dashboard/studio", icon: "home", label: "Home" },
+    { href: "/dashboard/features", icon: "star", label: "Features" },
+    { href: "/dashboard/how-it-works", icon: "help_outline", label: "How It Works" },
+    { href: "/dashboard/pricing", icon: "sell", label: "Pricing" },
 ];
 
 import { createClient } from "@/lib/supabase/client";
@@ -24,13 +32,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [profileOpen, setProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl: string | null } | null>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = loading
     const [tier, setTier] = useState<string | null>(null);
     const [role, setRole] = useState<string>("USER");
     const [xTokenError, setXTokenError] = useState<boolean>(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [emailCopied, setEmailCopied] = useState(false);
+
+    const copyEmail = () => {
+        navigator.clipboard.writeText("ai.compute.index@gmail.com");
+        setEmailCopied(true);
+        setTimeout(() => setEmailCopied(false), 2000);
+    };
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
-            if (!authUser) return;
+            if (!authUser) {
+                setIsLoggedIn(false);
+                return;
+            }
+            setIsLoggedIn(true);
             const meta = authUser.user_metadata ?? {};
             setUser({
                 name: meta.full_name || meta.name || "",
@@ -48,9 +69,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             .catch(() => {});
     }, [supabase]);
 
-    const finalNavItems = role === "ADMIN"
-        ? [...navItems, { href: "/dashboard/engagement", icon: "forum", label: "Engagement" }, { href: "/dashboard/admin", icon: "admin_panel_settings", label: "Admin Console" }]
-        : navItems;
+    const baseNavItems = isLoggedIn ? authedNavItems : anonNavItems;
+
+    const finalNavItems = isLoggedIn && role === "ADMIN"
+        ? [...authedNavItems, { href: "/dashboard/engagement", icon: "forum", label: "Engagement" }, { href: "/dashboard/admin", icon: "admin_panel_settings", label: "Admin Console" }]
+        : baseNavItems;
 
     const displayName = user?.name || user?.email || "";
     const initials = user?.name
@@ -86,13 +109,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {collapsed ? (
                         <button
                             onClick={() => setCollapsed(false)}
-                            className="flex items-center"
+                            className="flex items-center text-slate-custom-500 hover:text-primary transition-colors"
                             title="Expand sidebar"
                         >
-                            <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
+                            <svg width="20" height="20" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1.5" y="1.5" width="33" height="33" rx="8.5" stroke="currentColor" strokeWidth="2"/>
+                                <line x1="25" y1="2" x2="25" y2="34" stroke="currentColor" strokeWidth="2"/>
+                                <polyline points="14,13 19,18 14,23" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            </svg>
                         </button>
                     ) : (
-                        <Link href="/dashboard" className="flex items-center gap-3">
+                        <Link href="/dashboard/studio" className="flex items-center gap-3">
                             <img src="/logo.png" alt="Juice Index" className="w-10 h-10 transition-all flex-shrink-0" />
                             <h1 className="text-xl tracking-tight whitespace-nowrap">
                                 <span className="font-extrabold text-primary">Juice</span>{" "}
@@ -103,13 +130,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {!collapsed && (
                         <button
                             onClick={() => setCollapsed(true)}
-                            className="p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
+                            className="text-slate-custom-400 hover:text-primary transition-colors"
                             title="Collapse sidebar"
                         >
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="3" width="16" height="14" rx="2" />
-                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
-                                <path d="M12 8l-2 2 2 2" />
+                            <svg width="20" height="20" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1.5" y="1.5" width="33" height="33" rx="8.5" stroke="currentColor" strokeWidth="2"/>
+                                <line x1="11" y1="2" x2="11" y2="34" stroke="currentColor" strokeWidth="2"/>
+                                <polyline points="22,13 17,18 22,23" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                             </svg>
                         </button>
                     )}
@@ -118,8 +145,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {/* Nav Items */}
                 <nav className={`flex-1 flex flex-col gap-1 ${collapsed ? "items-center px-2" : "px-4"} mt-2`}>
                     {finalNavItems.map((item) => {
-                        const isActive = item.href === "/dashboard"
-                            ? pathname === "/dashboard"
+                        const isActive = (item.href === "/dashboard" || item.href === "/dashboard/studio")
+                            ? pathname === item.href
                             : pathname === item.href || pathname.startsWith(item.href + "/");
                         return (
                             <Link
@@ -147,8 +174,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                 {/* Bottom Section */}
                 <div className={`flex flex-col ${collapsed ? "items-center px-2" : "px-4"} pb-4 gap-2`}>
-                    {/* Pro Upgrade — only shown for confirmed FREE tier (hidden until tier is loaded) */}
-                    {tier === "FREE" && (!collapsed ? (
+                    {/* Pro Upgrade — only shown for logged-in FREE tier users */}
+                    {isLoggedIn && tier === "FREE" && (!collapsed ? (
                         <div className="bg-slate-custom-900 rounded-xl p-4 text-center relative overflow-hidden group cursor-pointer mx-1 mb-2">
                             <div className="absolute top-0 right-0 -mr-4 -mt-4 w-20 h-20 bg-primary/20 rounded-full blur-xl group-hover:bg-primary/30 transition-all"></div>
                             <h3 className="text-white font-semibold text-sm mb-1 relative z-10">Juice Pro</h3>
@@ -170,66 +197,129 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </Link>
                     ))}
 
-                    {/* Divider */}
-                    <div className={`border-t border-slate-custom-200 ${collapsed ? "w-8" : "mx-1"}`}></div>
-
-                    {/* User Avatar with Popover */}
-                    <div ref={profileRef} className="relative">
+                    {/* Email copy button */}
+                    <div className="relative">
                         <button
-                            onClick={() => setProfileOpen((v) => !v)}
-                            className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-3 w-full"} py-2 mt-1 rounded-xl hover:bg-slate-custom-50 transition-all cursor-pointer`}
-                            title="Account menu"
+                            onClick={copyEmail}
+                            aria-label="Copy email"
+                            className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} hover:bg-slate-custom-50 transition-all`}
                         >
-                            {user?.avatarUrl ? (
-                                <img
-                                    src={user.avatarUrl}
-                                    alt={displayName || "Avatar"}
-                                    referrerPolicy="no-referrer"
-                                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                                    {initials}
-                                </div>
-                            )}
+                            <div className="w-8 h-8 rounded-full bg-slate-custom-100 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#70B93C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                    <polyline points="2,4 12,13 22,4" />
+                                </svg>
+                            </div>
                             {!collapsed && (
-                                <>
-                                    <div className="flex-1 min-w-0 text-left">
-                                        <p className="text-sm font-semibold text-slate-custom-900 truncate">{displayName}</p>
-                                        <p className="text-xs text-slate-custom-500 truncate">{user?.email || ""}</p>
-                                    </div>
-                                    <span className="material-icons-round text-[16px] text-slate-custom-400">
-                                        {profileOpen ? "expand_more" : "expand_less"}
-                                    </span>
-                                </>
+                                <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Email me</span>
                             )}
                         </button>
-
-                        {/* Popover Menu */}
-                        {profileOpen && (
-                            <div className={`absolute ${collapsed ? "left-full ml-2" : "left-0 right-0 mx-1"} bottom-full mb-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg py-1 z-50`}>
-                                <div className="px-4 py-3 border-b border-slate-custom-100">
-                                    <p className="text-sm font-semibold text-slate-custom-900">{displayName}</p>
-                                    <p className="text-xs text-slate-custom-500">{user?.email || ""}</p>
-                                </div>
-                                <Link
-                                    href="/dashboard/settings"
-                                    onClick={() => setProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-custom-600 hover:bg-slate-custom-50 transition-all"
-                                >
-                                    <span className="material-icons-round text-[18px]">settings</span>
-                                    Settings
-                                </Link>
-                                <button
-                                    onClick={handleSignOut}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-all w-full"
-                                >
-                                    <span className="material-icons-round text-[18px]">logout</span>
-                                    Log out
-                                </button>
+                        {emailCopied && (
+                            <div className={`absolute ${collapsed ? "left-full ml-2" : "right-3"} bottom-full mb-1.5 px-2.5 py-1 bg-slate-custom-900 text-white text-xs font-medium rounded-lg whitespace-nowrap shadow-lg pointer-events-none`}>
+                                Email copied!
                             </div>
                         )}
                     </div>
+
+                    {/* X (Twitter) link */}
+                    <a
+                        href="https://x.com/juice_index"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Follow us on X"
+                        className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} hover:bg-slate-custom-50 transition-all`}
+                    >
+                        <div className="w-8 h-8 rounded-full bg-slate-custom-100 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" style={{ color: "#70B93C" }}>
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                        </div>
+                        {!collapsed && (
+                            <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Follow on X</span>
+                        )}
+                    </a>
+
+                    {/* Divider */}
+                    <div className={`border-t border-slate-custom-200 ${collapsed ? "w-8" : "mx-1"}`}></div>
+
+                    {/* Logged-in: User Avatar with Popover */}
+                    {isLoggedIn && (
+                        <div ref={profileRef} className="relative">
+                            <button
+                                onClick={() => setProfileOpen((v) => !v)}
+                                className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-3 w-full"} py-2 mt-1 rounded-xl hover:bg-slate-custom-50 transition-all cursor-pointer`}
+                                title="Account menu"
+                            >
+                                {user?.avatarUrl ? (
+                                    <img
+                                        src={user.avatarUrl}
+                                        alt={displayName || "Avatar"}
+                                        referrerPolicy="no-referrer"
+                                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                        {initials}
+                                    </div>
+                                )}
+                                {!collapsed && (
+                                    <>
+                                        <div className="flex-1 min-w-0 text-left">
+                                            <p className="text-sm font-semibold text-slate-custom-900 truncate">{displayName}</p>
+                                            <p className="text-xs text-slate-custom-500 truncate">{user?.email || ""}</p>
+                                        </div>
+                                        <span className="material-icons-round text-[16px] text-slate-custom-400">
+                                            {profileOpen ? "expand_more" : "expand_less"}
+                                        </span>
+                                    </>
+                                )}
+                            </button>
+
+                            {/* Popover Menu */}
+                            {profileOpen && (
+                                <div className={`absolute ${collapsed ? "left-full ml-2" : "left-0 right-0 mx-1"} bottom-full mb-2 bg-card rounded-xl border border-slate-custom-200 shadow-lg py-1 z-50`}>
+                                    <div className="px-4 py-3 border-b border-slate-custom-100">
+                                        <p className="text-sm font-semibold text-slate-custom-900">{displayName}</p>
+                                        <p className="text-xs text-slate-custom-500">{user?.email || ""}</p>
+                                    </div>
+                                    <Link
+                                        href="/dashboard/settings"
+                                        onClick={() => setProfileOpen(false)}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-custom-600 hover:bg-slate-custom-50 transition-all"
+                                    >
+                                        <span className="material-icons-round text-[18px]">settings</span>
+                                        Settings
+                                    </Link>
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-all w-full"
+                                    >
+                                        <span className="material-icons-round text-[18px]">logout</span>
+                                        Log out
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Anonymous: Log in row */}
+                    {isLoggedIn === false && (
+                        <button
+                            onClick={() => setShowLoginModal(true)}
+                            title="Log in"
+                            className={`flex items-center ${collapsed ? "justify-center w-10 h-10 rounded-xl" : "gap-3 px-3 py-2 rounded-xl w-full"} mt-1 hover:bg-slate-custom-50 transition-all`}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white flex-shrink-0">
+                                <span className="material-icons-round text-[18px]">person</span>
+                            </div>
+                            {!collapsed && (
+                                <>
+                                    <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Log in</span>
+                                    <span className="material-icons-round text-[18px] text-slate-custom-400">chevron_right</span>
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             </aside>
 
@@ -238,7 +328,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {/* Top Header — hidden on studio (which has its own combined header) */}
                 {pathname !== "/dashboard/studio" && (
                 <header className="h-[51px] flex items-center px-4 md:px-6 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
-                    <Link href="/dashboard" className="flex md:hidden items-center gap-2 flex-shrink-0">
+                    <Link href="/dashboard/studio" className="flex md:hidden items-center gap-2 flex-shrink-0">
                         <img src="/logo.png" alt="Juice Index" className="w-8 h-8" />
                         <span className="text-lg font-extrabold text-primary">Juice</span>
                     </Link>
@@ -295,14 +385,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </div>
             </main>
 
+            {/* Login Modal */}
+            {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
             {/* Mobile bottom tab bar */}
             <nav
                 className="fixed bottom-0 left-0 right-0 h-16 flex md:hidden items-center justify-around border-t border-green-100 z-30 overflow-x-auto"
                 style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.025) 0px, rgba(112,185,60,0.025) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.22) 0%, transparent 65%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.10) 0%, transparent 55%), linear-gradient(180deg, rgba(212,233,173,0.20) 0%, rgba(255,255,255,0.98) 40%)" }}
             >
                 {finalNavItems.map((item) => {
-                    const isActive = item.href === "/dashboard"
-                        ? pathname === "/dashboard"
+                    const isActive = (item.href === "/dashboard" || item.href === "/dashboard/studio")
+                        ? pathname === item.href
                         : pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
                         <Link
@@ -319,6 +412,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </Link>
                     );
                 })}
+                {isLoggedIn === false && (
+                    <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 text-[10px] font-medium text-slate-custom-500 transition-colors"
+                    >
+                        <span className="material-icons-round text-[22px]">person</span>
+                        <span className="mt-0.5">Log in</span>
+                    </button>
+                )}
             </nav>
         </div>
     );

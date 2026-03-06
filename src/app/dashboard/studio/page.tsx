@@ -206,6 +206,7 @@ function StudioPageInner() {
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
   const [temperature, setTemperature] = useState(DEFAULT_TEMPERATURE);
   const [userTier, setUserTier] = useState<ApiTier>("FREE");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [queryModelId, setQueryModelId] = useState(DEFAULT_QUERY_MODEL_ID);
   const [isQueryModelDropdownOpen, setIsQueryModelDropdownOpen] = useState(false);
@@ -362,6 +363,7 @@ function StudioPageInner() {
       .then((res) => res.json())
       .then((data: Record<string, unknown>) => {
         if (typeof data.tier === "string") setUserTier(data.tier as ApiTier);
+        if (data.isAnonymous === true) setIsAnonymous(true);
       })
       .catch(() => {});
     fetchUsage();
@@ -1254,20 +1256,11 @@ function StudioPageInner() {
   return (
     <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
-      <header className="h-[61px] flex items-center justify-between px-4 md:px-6 border-b border-slate-custom-200 bg-gradient-to-r from-white via-white to-slate-custom-50/80 backdrop-blur-sm z-10 sticky top-0 relative">
-        <div className="flex items-center gap-4">
-          <h1 className="font-extrabold text-[20px] flex items-center gap-1.5">
-            <span className="bg-gradient-to-r from-primary via-emerald-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_8px_rgba(106,218,27,0.4)] animate-[pulse_3s_ease-in-out_infinite]">
-              Juice AI
-            </span>
-            <span className="material-icons-round text-primary text-[18px] animate-[spin_4s_linear_infinite] drop-shadow-[0_0_6px_rgba(106,218,27,0.5)]">
-              auto_awesome
-            </span>
-          </h1>
-        </div>
-        {toast ? (
+      {/* Floating notification bell */}
+      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
+        {toast && (
           <div
-            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm transition-all whitespace-nowrap ${
+            className={`px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm whitespace-nowrap ${
               toast.type === "success"
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
@@ -1277,26 +1270,26 @@ function StudioPageInner() {
           >
             {toast.message}
           </div>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="pointer-events-auto">
-              <SearchOverlay />
-            </div>
-          </div>
         )}
-        <div className="flex items-center gap-3">
-          <NotificationBell />
-        </div>
-      </header>
+        <NotificationBell />
+      </div>
 
-      <main className="px-6 pt-24 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
+      <main className="px-6 pt-6 pb-20 md:pb-5 w-full max-w-7xl mx-auto">
         <div className={`w-full ${(workflowStarted || currentStep > 1) ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
-          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-16" : ""}`}>
+          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "mt-32 md:mt-48 xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-64" : ""}`}>
 
             {/* Step 1 - Hidden once chart data arrives; shown again via reviseQuestion */}
             {showStep1 && (
+            <>
+            {/* Logo + brand above step 1 */}
+            {!workflowStarted && (
+              <div className="flex items-center justify-center gap-5 mb-8 mt-4">
+                <img src="/logo.png" alt="Juice Index" className="w-20 h-20" />
+                <span className="text-5xl font-light tracking-tight"><span className="text-primary">Juice</span><span className="text-slate-custom-900"> Index</span></span>
+              </div>
+            )}
             <section
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
@@ -1490,9 +1483,12 @@ function StudioPageInner() {
                     </button>
                     </div>
                     {queryQuotaExhausted && (
-                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                         <span className="material-icons-round text-[13px]">info</span>
                         Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                        {isAnonymous && (
+                          <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                        )}
                       </span>
                     )}
                     {selectedQueryModelExhausted && !queryQuotaExhausted && (
@@ -1505,6 +1501,7 @@ function StudioPageInner() {
                 </div>
               </div>
             </section>
+            </>
             )}
 
             {/* Step 2 - Visible when showQuery is enabled and query has been generated */}
@@ -1569,9 +1566,12 @@ function StudioPageInner() {
                         {isRunningQuery ? "Running..." : "Run Query"}
                       </button>
                       {queryQuotaExhausted && (
-                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                           <span className="material-icons-round text-[13px]">info</span>
                           Daily query limit reached ({queryLimitCount}/{queryLimitCount})
+                          {isAnonymous && (
+                            <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                          )}
                         </span>
                       )}
                     </div>
@@ -2133,9 +2133,12 @@ function StudioPageInner() {
                       </button>
                     </div>
                     {chartQuotaExhausted && (
-                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                         <span className="material-icons-round text-[13px]">info</span>
                         Daily chart limit reached ({chartLimitCount}/{chartLimitCount})
+                        {isAnonymous && (
+                          <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                        )}
                       </span>
                     )}
                   </div>
@@ -2397,9 +2400,12 @@ function StudioPageInner() {
                         {isGeneratingPost ? "Generating..." : "Generate Draft"}
                       </button>
                       {draftQuotaExhausted && (
-                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-0.5">
+                        <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
                           <span className="material-icons-round text-[13px]">info</span>
                           Daily draft limit reached ({draftLimitCount}/{draftLimitCount})
+                          {isAnonymous && (
+                            <a href="/login?mode=magic&intent=signup" className="underline text-primary ml-1">Sign up for more</a>
+                          )}
                         </span>
                       )}
                       {selectedComposerModelExhausted && !draftQuotaExhausted && (
@@ -2482,6 +2488,15 @@ function StudioPageInner() {
                       )}
                       <div className="relative group">
                         {userTier === "FREE" ? (
+                          isAnonymous ? (
+                            <a
+                              href="/login?mode=magic&intent=signup"
+                              className="px-4 py-1.5 bg-slate-custom-900 text-white text-[13px] font-bold rounded-full flex items-center gap-1.5 hover:bg-slate-custom-800 transition-colors"
+                            >
+                              <span className="material-icons-round text-[15px]">login</span>
+                              Log in to Publish
+                            </a>
+                          ) : (
                           <button
                             className="px-4 py-1.5 bg-slate-custom-200 text-slate-custom-500 text-[13px] font-bold rounded-full cursor-not-allowed flex items-center gap-1.5"
                             onClick={() => showToast("info", "Publishing requires a Starter plan or higher. Upgrade to publish.")}
@@ -2489,6 +2504,7 @@ function StudioPageInner() {
                             <span className="material-icons-round text-[15px]">lock</span>
                             Publish
                           </button>
+                          )
                         ) : (
                           <button
                             className="px-4 py-1.5 bg-gradient-to-r from-primary to-green-400 text-slate-custom-900 text-[13px] font-bold rounded-full shadow-[0_0_10px_rgba(106,218,27,0.3)] hover:shadow-[0_0_22px_rgba(106,218,27,0.55)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-1.5"

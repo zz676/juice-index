@@ -27,11 +27,6 @@ export async function updateSession(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    // PROTECTED ROUTES
-    if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
     // Redirect logged-in users away from /login or /register.
     // Preserve ?plan= param so "Get Started with Pro" lands on billing.
     if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register') && user) {
