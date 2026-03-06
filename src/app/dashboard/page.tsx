@@ -116,7 +116,6 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-custom-900 text-lg">Latest News</h3>
-            <Link href="/dashboard/posts" className="text-xs font-semibold text-primary hover:text-primary/80 uppercase tracking-wide">View All</Link>
           </div>
           <div className="space-y-2">
             {feed?.news.map((item, i) => (
