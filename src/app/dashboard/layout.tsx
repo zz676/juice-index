@@ -342,22 +342,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {/* Login Modal */}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
 
-            {/* Mobile anonymous: Log in + Get Started bar above tab bar */}
+            {/* Mobile anonymous: Log in row above tab bar */}
             {isLoggedIn === false && (
-                <div className="fixed bottom-16 left-0 right-0 flex md:hidden gap-2 px-4 py-2 bg-white/95 backdrop-blur-sm border-t border-slate-custom-100 z-30">
-                    <button
-                        onClick={() => setShowLoginModal(true)}
-                        className="flex-1 py-2 text-center text-sm font-semibold rounded-full border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 transition-all"
-                    >
-                        Log in
-                    </button>
-                    <button
-                        onClick={() => setShowLoginModal(true)}
-                        className="flex-1 py-2 text-center text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-all"
-                    >
-                        Get Started
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowLoginModal(true)}
+                    className="fixed bottom-16 left-0 right-0 md:hidden flex items-center gap-3 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-slate-custom-100 z-30 hover:bg-slate-custom-50 transition-colors"
+                >
+                    <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white flex-shrink-0">
+                        <span className="material-icons-round text-[18px]">person</span>
+                    </div>
+                    <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Log in</span>
+                    <span className="material-icons-round text-[18px] text-slate-custom-400">chevron_right</span>
+                </button>
             )}
 
             {/* Mobile bottom tab bar */}
