@@ -327,27 +327,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 )}
 
                 {/* Page Content */}
-                <div className={`flex-1 min-h-0 overflow-y-auto p-8 pt-0 md:pb-0 ${isLoggedIn === false ? "pb-32" : "pb-20"}`}>
+                <div className="flex-1 min-h-0 overflow-y-auto p-8 pt-0 pb-20 md:pb-0">
                     {children}
                 </div>
             </main>
 
             {/* Login Modal */}
             {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-
-            {/* Mobile anonymous: Log in row above tab bar */}
-            {isLoggedIn === false && (
-                <button
-                    onClick={() => setShowLoginModal(true)}
-                    className="fixed bottom-16 left-0 right-0 md:hidden flex items-center gap-3 px-5 py-3 bg-white/95 backdrop-blur-sm border-t border-slate-custom-100 z-30 hover:bg-slate-custom-50 transition-colors"
-                >
-                    <div className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white flex-shrink-0">
-                        <span className="material-icons-round text-[18px]">person</span>
-                    </div>
-                    <span className="flex-1 text-sm font-semibold text-slate-custom-800 text-left">Log in</span>
-                    <span className="material-icons-round text-[18px] text-slate-custom-400">chevron_right</span>
-                </button>
-            )}
 
             {/* Mobile bottom tab bar */}
             <nav
@@ -373,6 +359,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </Link>
                     );
                 })}
+                {isLoggedIn === false && (
+                    <button
+                        onClick={() => setShowLoginModal(true)}
+                        className="flex flex-col items-center justify-center min-w-[64px] px-2 py-1.5 text-[10px] font-medium text-slate-custom-500 transition-colors"
+                    >
+                        <span className="material-icons-round text-[22px]">person</span>
+                        <span className="mt-0.5">Log in</span>
+                    </button>
+                )}
             </nav>
         </div>
     );
