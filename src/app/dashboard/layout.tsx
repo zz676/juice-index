@@ -142,6 +142,23 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     )}
                 </div>
 
+                {/* Expand button — only shown in collapsed mode, right below logo */}
+                {collapsed && (
+                    <div className="flex justify-center px-2 mb-1">
+                        <button
+                            onClick={() => setCollapsed(false)}
+                            title="Open sidebar ⌘."
+                            className="flex items-center justify-center w-10 h-10 rounded-xl text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="3" width="16" height="14" rx="2" />
+                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
+                                <path d="M8 8l2 2-2 2" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+
                 {/* Nav Items */}
                 <nav className={`flex-1 flex flex-col gap-1 ${collapsed ? "items-center px-2" : "px-4"} mt-2`}>
                     {finalNavItems.map((item) => {
@@ -332,19 +349,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <img src="/logo.png" alt="Juice Index" className="w-8 h-8" />
                         <span className="text-lg font-extrabold text-primary">Juice</span>
                     </Link>
-                    {collapsed && (
-                        <button
-                            onClick={() => setCollapsed(false)}
-                            title="Open sidebar ⌘."
-                            className="hidden md:flex items-center justify-center p-1.5 rounded-lg text-slate-custom-400 hover:text-primary hover:bg-slate-custom-50 transition-all flex-shrink-0"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="3" width="16" height="14" rx="2" />
-                                <line x1="7.5" y1="3" x2="7.5" y2="17" />
-                                <path d="M8 8l2 2-2 2" />
-                            </svg>
-                        </button>
-                    )}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="pointer-events-auto">
                             <SearchOverlay />
