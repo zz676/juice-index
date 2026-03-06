@@ -32,7 +32,7 @@ const steps = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="pt-8 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="pt-28 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
         <AnimatedSection className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-custom-900 mb-4">
