@@ -1,6 +1,43 @@
 import type { GenerateImageResult } from "./types";
 
-const DALLE3_ENDPOINT = "https://api.openai.com/v1/images/generations";
+const IMAGE_GENERATIONS_ENDPOINT = "https://api.openai.com/v1/images/generations";
+
+// ─── Image presets ────────────────────────────────────────────────────────────
+
+export type ImagePresetId =
+  | "dall-e-3"
+  | "gpt-image-1-medium"
+  | "gpt-image-1-high"
+  | "gpt-image-1-mini-medium"
+  | "gpt-image-1-mini-high"
+  | "gpt-image-latest-low"
+  | "gpt-image-latest-medium"
+  | "gpt-image-latest-high";
+
+interface ImagePreset {
+  model: string;
+  size: string;
+  quality: string;
+  /** Only needed for dall-e-3 */
+  responseFormat?: string;
+  /** Cost per image in USD */
+  cost: number;
+  label: string;
+}
+
+export const IMAGE_PRESETS: Record<ImagePresetId, ImagePreset> = {
+  "dall-e-3":                { model: "dall-e-3",         size: "1792x1024", quality: "standard", responseFormat: "b64_json", cost: 0.040, label: "DALL-E 3 · 1792×1024 · $0.040" },
+  "gpt-image-1-medium":      { model: "gpt-image-1",      size: "1536x1024", quality: "medium",   cost: 0.063, label: "GPT Image 1 · Medium · $0.063" },
+  "gpt-image-1-high":        { model: "gpt-image-1",      size: "1536x1024", quality: "high",     cost: 0.250, label: "GPT Image 1 · High · $0.250" },
+  "gpt-image-1-mini-medium": { model: "gpt-image-1-mini", size: "1536x1024", quality: "medium",   cost: 0.020, label: "GPT Image 1 Mini · Medium · $0.020" },
+  "gpt-image-1-mini-high":   { model: "gpt-image-1-mini", size: "1536x1024", quality: "high",     cost: 0.060, label: "GPT Image 1 Mini · High · $0.060" },
+  "gpt-image-latest-low":    { model: "gpt-image-latest", size: "1536x1024", quality: "low",      cost: 0.016, label: "GPT Image Latest · Low · $0.016" },
+  "gpt-image-latest-medium": { model: "gpt-image-latest", size: "1536x1024", quality: "medium",   cost: 0.063, label: "GPT Image Latest · Medium · $0.063" },
+  "gpt-image-latest-high":   { model: "gpt-image-latest", size: "1536x1024", quality: "high",     cost: 0.250, label: "GPT Image Latest · High · $0.250" },
+};
+
+/** @deprecated use ImagePresetId */
+export type ImageModel = ImagePresetId;
 
 const FALLBACK_STYLE_PROMPT = `CRITICAL REQUIREMENT: This image must contain ABSOLUTELY NO TEXT, WORDS, LETTERS, NUMBERS, OR TYPOGRAPHY OF ANY KIND. Pure visual only.
 
@@ -41,40 +78,46 @@ export async function generateImage(
   sourceTweetText: string,
   replyText: string,
   stylePrompt?: string,
+  presetId: ImagePresetId = "dall-e-3",
 ): Promise<GenerateImageResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error("Missing OPENAI_API_KEY for DALL-E image generation");
+    throw new Error("Missing OPENAI_API_KEY for image generation");
   }
 
+  const preset = IMAGE_PRESETS[presetId];
   const prompt = buildImagePrompt(sourceTweetText, replyText, stylePrompt);
 
-  const res = await fetch(DALLE3_ENDPOINT, {
+  const requestBody: Record<string, unknown> = {
+    model: preset.model,
+    prompt,
+    n: 1,
+    size: preset.size,
+    quality: preset.quality,
+  };
+  if (preset.responseFormat) {
+    requestBody.response_format = preset.responseFormat;
+  }
+
+  const res = await fetch(IMAGE_GENERATIONS_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: "dall-e-3",
-      prompt,
-      n: 1,
-      size: "1792x1024",
-      quality: "standard",
-      response_format: "b64_json",
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`DALL-E API error (${res.status}): ${body}`);
+    throw new Error(`Image generation API error (${res.status}): ${body}`);
   }
 
   const json = (await res.json()) as { data: Array<{ b64_json: string }> };
   const b64 = json.data[0]?.b64_json;
 
   if (!b64) {
-    throw new Error("DALL-E returned no image data");
+    throw new Error("Image generation returned no image data");
   }
 
   return { generated: true, imageBase64: b64 };
