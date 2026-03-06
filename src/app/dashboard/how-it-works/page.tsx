@@ -1,4 +1,7 @@
+import { Suspense } from "react";
+import Link from "next/link";
 import AnimatedSection from "@/components/landing/AnimatedSection";
+import HeroViz from "@/components/landing/HeroViz";
 
 const steps = [
   {
@@ -34,6 +37,62 @@ export default function HowItWorksPage() {
   return (
     <div className="pt-28 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
+
+        {/* Hero Section */}
+        <section className="mb-20">
+          <div className="flex flex-col lg:flex-row items-center lg:items-stretch gap-8">
+            {/* Left column */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-8">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-custom-700">
+                  Live Data &mdash; Updated Daily
+                </span>
+              </div>
+
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-custom-900 tracking-tight leading-[1.1] mb-6">
+                Ask anything about{" "}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-slate-custom-800 via-slate-custom-600 to-slate-custom-800">
+                  the EV market
+                </span>
+              </h1>
+
+              <p className="text-lg text-slate-custom-500 max-w-xl mb-10 leading-relaxed mx-auto lg:mx-0">
+                AI-powered data intelligence on production, insurance
+                registrations, and supply chain dynamics for the world&apos;s
+                fastest-growing industry.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link
+                  href="/login?mode=magic&intent=signup"
+                  className="inline-flex items-center justify-center px-7 py-3.5 text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-colors"
+                >
+                  Start Free
+                  <span className="material-icons-round ml-2 text-base">arrow_forward</span>
+                </Link>
+                <Link
+                  href="/dashboard/studio"
+                  className="inline-flex items-center justify-center px-7 py-3.5 text-sm font-semibold rounded-full text-slate-custom-700 border border-slate-custom-200 hover:border-slate-custom-300 hover:bg-slate-custom-50 transition-all"
+                >
+                  Try Juice AI
+                </Link>
+              </div>
+            </div>
+
+            {/* Right column — animated viz */}
+            <div className="flex-1 w-full max-w-[36.8rem] flex flex-col">
+              <Suspense>
+                <HeroViz />
+              </Suspense>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Steps */}
         <AnimatedSection className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-slate-custom-900 mb-4">
             How it works
@@ -70,6 +129,7 @@ export default function HowItWorksPage() {
             </AnimatedSection>
           ))}
         </div>
+
       </div>
     </div>
   );
