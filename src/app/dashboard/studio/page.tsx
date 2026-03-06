@@ -667,6 +667,7 @@ function StudioPageInner() {
 
       fetchUsage();
       setWorkflowStarted(true);
+      setShowStep1(false);
       setIsGeneratingQueryPlan(false);
 
       // Immediately run the query without showing Step 2
@@ -1257,11 +1258,11 @@ function StudioPageInner() {
   return (
     <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
-      {/* Floating notification bell */}
-      <div className="fixed top-4 right-4 z-20 flex items-center gap-3">
-        {toast && (
+      {/* Toast — centered horizontally, 20% from top */}
+      {toast && (
+        <div className="fixed left-0 right-0 z-50 flex justify-center pointer-events-none" style={{ top: "8vh" }}>
           <div
-            className={`px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm whitespace-nowrap ${
+            className={`px-4 py-1.5 rounded-lg border text-[13px] font-medium shadow-sm whitespace-nowrap pointer-events-auto ${
               toast.type === "success"
                 ? "border-primary bg-primary text-green-900"
                 : toast.type === "error"
@@ -1271,7 +1272,11 @@ function StudioPageInner() {
           >
             {toast.message}
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Floating notification bell */}
+      <div className="fixed top-4 right-4 z-20">
         <NotificationBell />
       </div>
 
@@ -1279,7 +1284,7 @@ function StudioPageInner() {
         <div className={`w-full ${(workflowStarted || currentStep > 1) ? "xl:grid gap-5 xl:grid-cols-[1fr_16rem]" : ""}`}>
 
           {/* Main content column - all steps stacked */}
-          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "mt-32 md:mt-48 xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-64" : ""}`}>
+          <div className={`space-y-5 min-w-0 ${(!workflowStarted && currentStep === 1) ? "mt-32 md:mt-48 xl:w-[calc(100%-17.25rem)] xl:mx-auto xl:mt-64" : "xl:mt-28"}`}>
 
             {/* Step 1 - Hidden once chart data arrives; shown again via reviseQuestion */}
             {showStep1 && (
@@ -1760,7 +1765,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`animate-step-fly-in bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] mt-28 ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`animate-step-fly-in bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">

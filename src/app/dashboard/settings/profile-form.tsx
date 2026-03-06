@@ -110,9 +110,9 @@ export default function ProfileForm({ name, email, avatarUrl }: ProfileFormProps
 
             {/* Toast Notification */}
             {showToast && (
-                <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="fixed left-0 right-0 z-50 flex justify-center pointer-events-none" style={{ top: "8vh" }}>
                     <div
-                        className={`rounded-lg p-4 shadow-lg border flex items-center gap-3 ${
+                        className={`rounded-lg px-4 py-1.5 shadow-lg border flex items-center gap-3 pointer-events-auto ${
                             state.type === "success"
                                 ? "bg-card border-green-200 text-green-800"
                                 : "bg-card border-red-200 text-red-800"
