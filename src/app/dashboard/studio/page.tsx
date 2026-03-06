@@ -566,6 +566,7 @@ function StudioPageInner() {
       }));
 
       setWorkflowStarted(true);
+      setShowStep1(false);
       showToast("success", "Runnable query generated. Review and click Run Query.");
       fetchUsage();
 
@@ -1759,7 +1760,7 @@ function StudioPageInner() {
                 id="step-3"
                 onFocusCapture={() => setActiveSection(3)}
                 onClickCapture={() => setActiveSection(3)}
-                className={`animate-step-fly-in bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+                className={`animate-step-fly-in bg-card rounded-2xl overflow-y-auto max-h-[95vh] relative border-[1.3px] border-lime-300 transition-all duration-200 pt-[18px] mt-28 ${activeSection === 3 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary to-transparent opacity-30" />
                 <div className="px-5 pt-1 border-b border-slate-custom-100 flex justify-between items-center bg-slate-custom-50/50">
@@ -2526,7 +2527,7 @@ function StudioPageInner() {
           </div>
 
           {/* Right sidebar - WorkflowStepper or ChartCustomizer */}
-          <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+          <aside className="hidden xl:block xl:sticky xl:top-16 xl:self-start xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto xl:mt-28">
             {showCustomizer ? (
               <ChartCustomizer
                 config={chartConfig}

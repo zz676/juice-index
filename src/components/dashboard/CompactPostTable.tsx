@@ -95,12 +95,6 @@ export function CompactPostTable() {
       <div className="p-4 border-b border-slate-custom-100">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-slate-custom-900">My Posts</h3>
-          <Link
-            href="/dashboard/posts"
-            className="text-xs font-semibold text-primary hover:text-primary/80 uppercase tracking-wide"
-          >
-            View All
-          </Link>
         </div>
 
         {/* Status tabs */}
