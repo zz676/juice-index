@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import SearchOverlay from "@/components/dashboard/SearchOverlay";
 import NotificationBell from "@/components/dashboard/NotificationBell";
 import StockTicker from "@/components/dashboard/StockTicker";
+import LoginModal from "@/components/dashboard/LoginModal";
 
 const authedNavItems = [
     { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
@@ -35,6 +36,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const [tier, setTier] = useState<string | null>(null);
     const [role, setRole] = useState<string>("USER");
     const [xTokenError, setXTokenError] = useState<boolean>(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user: authUser } }) => {
@@ -250,27 +252,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {/* Anonymous: Login + Get Started buttons */}
                     {isLoggedIn === false && (!collapsed ? (
                         <div className="flex flex-col gap-2 mt-1 mx-1">
-                            <Link
-                                href="/login"
+                            <button
+                                onClick={() => setShowLoginModal(true)}
                                 className="block w-full py-2 text-center text-sm font-semibold rounded-full border border-slate-custom-200 text-slate-custom-700 hover:bg-slate-custom-50 transition-all"
                             >
                                 Log in
-                            </Link>
-                            <Link
-                                href="/login?mode=magic&intent=signup"
+                            </button>
+                            <button
+                                onClick={() => setShowLoginModal(true)}
                                 className="block w-full py-2 text-center text-sm font-semibold rounded-full bg-slate-custom-900 text-white hover:bg-slate-custom-800 transition-all"
                             >
                                 Get Started
-                            </Link>
+                            </button>
                         </div>
                     ) : (
-                        <Link
-                            href="/login"
+                        <button
+                            onClick={() => setShowLoginModal(true)}
                             title="Log in"
                             className="w-8 h-8 rounded-full bg-slate-custom-800 flex items-center justify-center text-white hover:bg-slate-custom-700 transition-all mt-1 flex-shrink-0"
                         >
                             <span className="material-icons-round text-[18px]">person</span>
-                        </Link>
+                        </button>
                     ))}
                 </div>
             </aside>
@@ -336,6 +338,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     {children}
                 </div>
             </main>
+
+            {/* Login Modal */}
+            {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
 
             {/* Mobile bottom tab bar */}
             <nav
