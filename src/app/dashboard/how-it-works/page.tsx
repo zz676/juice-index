@@ -35,7 +35,7 @@ const steps = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="pt-28 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="pt-40 pb-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
 
         {/* Hero Section */}
