@@ -528,3 +528,11 @@ body {
 .ticker-track:hover {
   animation-play-state: paused;
 }
+
+/* Hide boundary grid lines in Recharts that appear solid due to SVG clip-path */
+/* Horizontal lines: ticks render bottom→top, so last-child = top boundary line */
+/* Vertical lines: ticks render left→right, so last-child = right boundary line */
+.recharts-cartesian-grid-horizontal line:last-child,
+.recharts-cartesian-grid-vertical line:last-child {
+  stroke: transparent !important;
+}

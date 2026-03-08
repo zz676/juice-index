@@ -39,10 +39,15 @@ export default function Navbar() {
               height={62}
               className=""
             />
-            <span className="text-xl tracking-tight">
-              <span className="font-extrabold text-primary">Juice</span>{" "}
-              <span className="font-bold text-slate-custom-900">Index</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl tracking-tight">
+                <span className="font-extrabold text-primary">Juice</span>{" "}
+                <span className="font-bold text-slate-custom-900">Index</span>
+              </span>
+              <span className="text-[11px] text-slate-custom-500 font-medium tracking-tight leading-tight">
+                The EV market: Narrated by you, visualized by AI
+              </span>
+            </div>
           </Link>
 
           {/* Desktop links */}
