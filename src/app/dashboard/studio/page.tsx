@@ -1256,7 +1256,7 @@ function StudioPageInner() {
   };
 
   return (
-    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
+    <div className="font-display text-slate-custom-800 min-h-full -m-8" style={{ background: "radial-gradient(circle, rgba(80,120,50,0.2) 1.8px, transparent 1.8px) 0 0 / 56px 56px, repeating-linear-gradient(45deg, rgba(112,185,60,0.07) 0px, rgba(112,185,60,0.07) 1px, transparent 1px, transparent 8px), radial-gradient(ellipse at top left, rgba(155,199,84,0.28) 0%, transparent 50%), radial-gradient(ellipse at top right, rgba(176,208,91,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom left, rgba(133,192,72,0.30) 0%, transparent 50%), radial-gradient(ellipse at bottom right, rgba(155,199,84,0.26) 0%, transparent 50%), linear-gradient(135deg, rgba(212,233,173,0.55) 0%, rgba(255,255,255,0.92) 45%, rgba(212,233,173,0.50) 100%)" }}>
 
       {/* Toast — centered horizontally, 20% from top */}
       {toast && (
@@ -1291,16 +1291,19 @@ function StudioPageInner() {
             <>
             {/* Logo + brand above step 1 */}
             {!workflowStarted && (
-              <div className="flex items-center justify-center gap-5 mb-8 mt-4">
+              <div className="flex items-center gap-5 mb-8 mt-4 justify-center">
                 <img src="/logo.png" alt="Juice Index" className="w-20 h-20" />
-                <span className="text-5xl font-light tracking-tight"><span className="text-primary">Juice</span><span className="text-slate-custom-900"> Index</span></span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-5xl font-light tracking-tight"><span className="text-primary">Juice</span><span className="text-slate-custom-900"> Index</span></span>
+                  <p className="text-xl font-light tracking-widest text-slate-custom-500 uppercase">EV Insights, Unlocked by AI</p>
+                </div>
               </div>
             )}
             <section
               id="step-1"
               onFocusCapture={() => setActiveSection(1)}
               onClickCapture={() => setActiveSection(1)}
-              className={`bg-card rounded-2xl border-[1.3px] border-lime-300 transition-all duration-200 relative group pt-10 px-6 pb-3 ${activeSection === 1 ? "shadow-[0_0_22px_rgba(106,218,27,0.22),_0_4px_12px_rgba(106,218,27,0.1),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
+              className={`bg-card rounded-2xl transition-all duration-200 relative group pt-10 px-6 pb-3 ${activeSection === 1 ? "shadow-[0_0_120px_rgba(106,218,27,0.32),_0_12px_60px_rgba(106,218,27,0.18),_inset_0_1px_0_rgba(106,218,27,0.2)]" : "shadow-sm hover:shadow-md"}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1891,6 +1894,7 @@ function StudioPageInner() {
                               }}
                               axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
                               tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                              padding={{ right: 10 }}
                             />
                             <YAxis
                               tick={{
@@ -1901,6 +1905,7 @@ function StudioPageInner() {
                               axisLine={{ stroke: chartConfig.yAxisLineColor, strokeWidth: chartConfig.yAxisLineWidth }}
                               tickLine={{ stroke: chartConfig.yAxisLineColor }}
                               tickFormatter={(v: number) => v.toLocaleString("en-US")}
+                              padding={{ top: 10 }}
                             />
                             <Tooltip formatter={(value: number | undefined) => (value ?? 0).toLocaleString("en-US")} />
                             {seriesKeys.map((key, i) => (
@@ -1932,6 +1937,7 @@ function StudioPageInner() {
                               }}
                               axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
                               tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                              padding={{ right: 10 }}
                             />
                             <YAxis
                               tick={{
@@ -1970,6 +1976,7 @@ function StudioPageInner() {
                               }}
                               axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
                               tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                              padding={{ right: 10 }}
                             />
                             <YAxis
                               type="category"
@@ -2017,6 +2024,7 @@ function StudioPageInner() {
                               }}
                               axisLine={{ stroke: chartConfig.xAxisLineColor, strokeWidth: chartConfig.xAxisLineWidth }}
                               tickLine={{ stroke: chartConfig.xAxisLineColor }}
+                              padding={{ right: 10 }}
                             />
                             <YAxis
                               tick={{
